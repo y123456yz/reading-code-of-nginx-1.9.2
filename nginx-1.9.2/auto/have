@@ -1,0 +1,13 @@
+
+# Copyright (C) Igor Sysoev
+# Copyright (C) Nginx, Inc.
+
+#init文件中NGX_AUTO_CONFIG_H=$NGX_OBJS/ngx_auto_config.h
+#这个文件就是把END前面的三行内容，have变量替换后，拷贝到ngx_auto_config.h文件
+cat << END >> $NGX_AUTO_CONFIG_H
+
+#ifndef $have
+#define $have  1
+#endif
+
+END
