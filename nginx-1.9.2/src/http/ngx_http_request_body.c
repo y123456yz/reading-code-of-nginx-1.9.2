@@ -49,8 +49,8 @@ ngx_int_t  //一般都是需要访问上游服务器的时候才会读取包体，例如ngx_http_proxy_ha
 /*
 一般都是如果解析头部行后，后面有携带包体，则会走到这里，如果包体还没读完，下次也不会走到该函数，而是走ngx_http_do_read_client_request_body
 实际上走到这里面的包体内容是在读取头部的时候，一起读出来的，读取地方见ngx_http_wait_request_handler*/
-ngx_http_read_client_request_body(ngx_http_request_t *r,
-    ngx_http_client_body_handler_pt post_handler) //post_handler在ngx_http_do_read_client_request_body接收完所有包体后执行
+ngx_http_read_client_request_body(ngx_http_request_t *r,  //只有在连接后端服务器的时候才会读取客户端请求包体，见ngx_http_xxx_handler(proxy fastcgi等)
+    ngx_http_client_body_handler_pt post_handler) //post_handler在ngx_http_do_read_client_request_body接收完所有包体后执行，或者在本函数能读取完包体后也会执行
     //post_handler方法被回调时，务必调用类似ngx_http_finalize_request的方法去结束请求，否则引用计数会始终无法清零，从而导致请求无法释放。
 {
     size_t                     preread;
@@ -272,7 +272,7 @@ content-length头部指定的长度，如果大干或等于则说明已经接收到完整的包体 */
     /*
      设置请求ngx_http_request_t结构体的read_ event_ handler成员为上面介绍过的ngx_http_read_client_request_body_handler方法，
      它意味着如果epoll再次检测到可读事件或者读事件的定时器超时，HTTP框架将调用ngx_http_read_client_request_body_handler方法处理
-     */printf("yang test ............333333333333333333.............. discared requ body\n");
+     */
     r->read_event_handler = ngx_http_read_client_request_body_handler;
     r->write_event_handler = ngx_http_request_empty_handler;
 

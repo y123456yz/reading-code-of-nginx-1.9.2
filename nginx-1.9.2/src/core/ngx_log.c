@@ -92,6 +92,17 @@ static const char *debug_levels[] = {
     "debug_http", "debug_mail", "debug_mysql", "debug_stream"
 };
 
+void ngx_str_t_2buf(char *buf, ngx_str_t *str)
+{
+    if(buf == NULL || str == NULL)
+        return;
+    
+    if(str->data != NULL && str->len != 0) {
+        strncpy(buf, (char*)str->data, ngx_min(str->len, NGX_STR2BUF_LEN - 1));
+        buf[str->len] = '\0';
+    }
+}
+
 /*
 ngx_log_error宏和ngx_log_debug宏都包括参数level、log、err、fmt，下面分别解释这
 4个参数的意义。
@@ -214,8 +225,7 @@ ngx_log_error_core(ngx_uint_t level, ngx_log_t *log, const char* filename, int l
     p = ngx_slprintf(p, last, " [%V] ", &err_levels[level]);
 
     /* pid#tid */
-    p = ngx_slprintf(p, last, "%P#" NGX_TID_T_FMT ": ",
-                    ngx_log_pid, ngx_log_tid);
+    p = ngx_slprintf(p, last, "%P#" NGX_TID_T_FMT ": ", ngx_log_pid, ngx_log_tid);
     
     if (log->connection) {
         p = ngx_slprintf(p, last, "*%uA ", log->connection);

@@ -23,10 +23,10 @@ struct ngx_list_part_s { //ngx_list_part_tÖ»ÃèÊöÁ´±íµÄÒ»¸öÔªËØ   Êý¾Ý²¿·Ö×ÜµÄ¿Õ¼
     ngx_list_part_t  *next; //ÏÂÒ»¸öÁ´±íÔªËØngx_list_part_tµÄµØÖ·¡£
 };
 
-
+//ÓÃ·¨ºÍÊý×é±éÀú·½·¨¿ÉÒÔ²Î¿¼//ngx_http_request_s->headers_in.headers£¬ÀýÈç¿ÉÒÔ²Î¿¼º¯Êýngx_http_fastcgi_create_request
 typedef struct { //ngx_list_tÃèÊöÕû¸öÁ´±í
     ngx_list_part_t  *last; //Ö¸ÏòÁ´±íµÄ×îºóÒ»¸öÊý×éÔªËØ¡£
-    ngx_list_part_t   part; //Á´±íµÄÊ×¸öÊý×éÔªËØ¡£
+    ngx_list_part_t   part; //Á´±íµÄÊ×¸öÊý×éÔªËØ¡£ part¿ÉÄÜÖ¸Ïò¶à¸öÊý×é£¬Í¨¹ýpart->nextÀ´Ö¸Ïòµ±Ç°Êý×éËùÔÚµÄÏÂÒ»¸öÊý×éµÄÍ·²¿
     /*
     Á´±íÖÐµÄÃ¿¸öngx_list_part_tÔªËØ¶¼ÊÇÒ»¸öÊý×é¡£ÒòÎªÊý×é´æ´¢µÄÊÇÄ³ÖÖÀàÐÍµÄÊý¾Ý½á¹¹£¬ÇÒngx_list_t ÊÇ·Ç³£Áé»îµÄÊý¾Ý½á¹¹£¬ËùÒÔËü²»»áÏÞÖÆ´æ´¢
     Ê²Ã´ÑùµÄÊý¾Ý£¬Ö»ÊÇÍ¨¹ýsizeÏÞÖÆÃ¿Ò»¸öÊý×éÔªËØµÄÕ¼ÓÃµÄ¿Õ¼ä´óÐ¡£¬Ò²¾ÍÊÇÓÃ»§Òª´æ´¢µÄÒ»¸öÊý¾ÝËùÕ¼ÓÃµÄ×Ö½ÚÊý±ØÐëÐ¡ÓÚ»òµÈÓÚsize¡£

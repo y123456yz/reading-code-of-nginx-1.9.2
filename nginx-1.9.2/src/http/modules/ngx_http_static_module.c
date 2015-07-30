@@ -74,7 +74,7 @@ ngx_http_static_handler(ngx_http_request_t *r)
      * so we do not need to reserve memory for '/' for possible redirect
      */
 
-    last = ngx_http_map_uri_to_path(r, &path, &root, 0);
+    last = ngx_http_map_uri_to_path(r, &path, &root, 0); //通过r->uri获取整个路径或者文件绝对路径
     if (last == NULL) {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }

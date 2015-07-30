@@ -600,7 +600,7 @@ ngx_http_get_variable_index(ngx_conf_t *cf, ngx_str_t *name)
     v = cmcf->variables.elts;
 
     if (v == NULL) {
-        if (ngx_array_init(&cmcf->variables, cf->pool, 4,
+        if (ngx_array_init(&cmcf->variables, cf->pool, 4, 
                            sizeof(ngx_http_variable_t))
             != NGX_OK)
         {
@@ -665,6 +665,7 @@ ngx_http_get_indexed_variable(ngx_http_request_t *r, ngx_uint_t index)
 
     v = cmcf->variables.elts;
 
+    //ngx_http_rewrite_set中设置为ngx_http_rewrite_var  args的get_handler是ngx_http_variable_request ngx_http_variables_init_vars中设置"http_"等的get_handler
     if (v[index].get_handler(r, &r->variables[index], v[index].data)
         == NGX_OK)
     {
@@ -2495,7 +2496,7 @@ ngx_http_regex_compile(ngx_conf_t *cf, ngx_regex_compile_t *rc)
 
     n = (ngx_uint_t) rc->named_captures;//命名的子模式: pcre_fullinfo(re, NULL, PCRE_INFO_NAMECOUNT, &rc->named_captures);
 
-    if (n == 0) {
+    if (n == 0) { //如果命名子模式(?<name>exp)没有
         return re;
     }
 
@@ -2511,12 +2512,15 @@ ngx_http_regex_compile(ngx_conf_t *cf, ngx_regex_compile_t *rc)
     p = rc->names; //正则的命名子模式的二维表，里面记录了子模式的名称，以及在所有模式中的下标.
     //names是这么得到的: pcre_fullinfo(re, NULL, PCRE_INFO_NAMETABLE, &rc->names);
     //一个命名子模式的二维表存储在p的位置。每一行是一个命名模式，每行的字节数为name_size
+    //参考http://blog.csdn.net/kofiory/article/details/5829697
 
+    ///ngx_http_regex_compile中分配空间,保存变量   ngx_http_regex_exec获取对应变量的值
     for (i = 0; i < n; i++) { //遍历每一个named_captures，
         rv[i].capture = 2 * ((p[0] << 8) + p[1]); //第一个自己左移8位+第二个字节等于这个命名子模式在所有模式中的下标。
 
         name.data = &p[2]; //第三个字节开始就是命名的名字。
         name.len = ngx_strlen(name.data); //名字长度
+        
         ///将这个命名子模式加入到cmcf->variables_keys中
         v = ngx_http_add_variable(cf, &name, NGX_HTTP_VAR_CHANGEABLE);
         if (v == NULL) {
@@ -2538,7 +2542,7 @@ ngx_http_regex_compile(ngx_conf_t *cf, ngx_regex_compile_t *rc)
     return re;
 }
 
-
+//用已经编译的regex 跟e->line,也就是s去匹配，看看是否匹配成功。如果匹配成功，整理存放在r->variables里面、
 ngx_int_t
 ngx_http_regex_exec(ngx_http_request_t *r, ngx_http_regex_t *re, ngx_str_t *s)
 {
@@ -2549,7 +2553,7 @@ ngx_http_regex_exec(ngx_http_request_t *r, ngx_http_regex_t *re, ngx_str_t *s)
 
     cmcf = ngx_http_get_module_main_conf(r, ngx_http_core_module);
 
-    if (re->ncaptures) {
+    if (re->ncaptures) { //根据ncaptures大小，申请内存用于存放正则匹配的结果。
         len = cmcf->ncaptures;
 
         if (r->captures == NULL) {
@@ -2563,7 +2567,8 @@ ngx_http_regex_exec(ngx_http_request_t *r, ngx_http_regex_t *re, ngx_str_t *s)
         len = 0;
     }
 
-    rc = ngx_regex_exec(re->regex, s, r->captures, len);
+    //根据正则表达式到指定的字符串中进行查找和匹配,并输出匹配的结果.
+    rc = ngx_regex_exec(re->regex, s, r->captures, len); //len的取值见http://www.rosoo.net/a/201004/9082.html
 
     if (rc == NGX_REGEX_NO_MATCHED) {
         return NGX_DECLINED;
@@ -2576,18 +2581,24 @@ ngx_http_regex_exec(ngx_http_request_t *r, ngx_http_regex_t *re, ngx_str_t *s)
         return NGX_ERROR;
     }
 
-    for (i = 0; i < re->nvariables; i++) {
-
+    ////ngx_http_regex_compile中分配空间,保存变量   ngx_http_regex_exec获取对应变量的值
+    for (i = 0; i < re->nvariables; i++) { //把正则表达式中的命名子模式的变量获取到
+        /*
+           例如:rewrite   ^(?<name1>/download/.*)/media/(?<name2>.*)\..*$    $name1/mp3/$name2.mp3  break;
+           如果uri为/download/aaa/media/bbb.com，则name1变量为/download/aaa  name2变量为bbb 
+           下面的vv->len和vv->data分别指向"/download/aaa"字符串长度，和字符串"/download/aaa"
+          */
         n = re->variables[i].capture;
         index = re->variables[i].index;
         vv = &r->variables[index];
 
+        //从s和re的对应关系中，从s中获取re中的变量的值
         vv->len = r->captures[n + 1] - r->captures[n];
         vv->valid = 1;
         vv->no_cacheable = 0;
         vv->not_found = 0;
         vv->data = &s->data[r->captures[n]];
-
+        
 #if (NGX_DEBUG)
         {
         ngx_http_variable_t  *v;
@@ -2601,9 +2612,15 @@ ngx_http_regex_exec(ngx_http_request_t *r, ngx_http_regex_t *re, ngx_str_t *s)
 #endif
     }
 
-    r->ncaptures = rc * 2;
-    r->captures_data = s->data;
+    /*  
+     例如正则表达式语句re.name= ^(/download/.*)/media/(.*)/tt/(.*)$，  s=/download/aa/media/bdb/tt/ad,则他们会匹配，同时匹配的
+     变量数有3个，则返回值为3+1=4,如果不匹配则返回-1
 
+     这里*2是因为获取前面例子中的3个变量对应的值需要成对使用r->captures，参考ngx_http_script_copy_capture_code等
+     */
+    r->ncaptures = rc * 2;  
+    r->captures_data = s->data;
+    
     return NGX_OK;
 }
 

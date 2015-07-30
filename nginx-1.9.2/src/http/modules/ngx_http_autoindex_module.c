@@ -170,6 +170,7 @@ ngx_http_autoindex_handler(ngx_http_request_t *r)
         return NGX_DECLINED;
     }
 
+    //如果没有配置index或者try_files，则匹配location / {}到后会默认使用html/index.html 
     if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD))) {
         return NGX_DECLINED;
     }

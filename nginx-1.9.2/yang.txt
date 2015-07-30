@@ -1,1 +1,23 @@
-Sat Feb  1 16:27:24 CST 2025
+/*
+server {} host定位过程
+
+当客户端建立连接后，并发送请求数据过来后，在ngx_http_create_request中从ngx_http_connection_t->conf_ctx获取这三个值，也就是根据客户端连接
+本端所处IP:port所对应的默认server{}块上下文，如果是以下情况:ip:port相同，单在不同的server{}块中，那么有可能客户端请求过来的时候携带的host
+头部项的server_name不在默认的server{}中，而在另外的server{}中，所以需要通过ngx_http_set_virtual_server重新获取server{}和location{}上下文配置
+例如:
+    server {  #1
+        listen 1.1.1.1:80;
+        server_name aaa
+    }
+
+    server {   #2
+        listen 1.1.1.1:80;
+        server_name bbb
+    }
+    这两个server{}占用同一个ngx_http_conf_addr_t，但他们拥有两个不同的ngx_http_core_srv_conf_t(存在于ngx_http_conf_addr_t->servers),
+    这个配置在ngx_http_init_connection中获取这个ngx_http_port_t(1个ngx_http_port_t对应一个ngx_http_conf_addr_t)把ngx_http_connection_t->conf_ctx
+    指向ngx_http_addr_conf_s->default_server,也就是指向#1,然后ngx_http_create_request中把main_conf srv_conf  loc_conf 指向#1,
+    但如果请求行的头部的host:bbb，那么需要重新获取对应的server{} #2,见ngx_http_set_virtual_server->ngx_http_find_virtual_server
+
+	如果请求中不带host，则直接#1为知道server{]
+ */

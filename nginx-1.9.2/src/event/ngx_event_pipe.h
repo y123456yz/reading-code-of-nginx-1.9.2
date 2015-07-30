@@ -22,7 +22,7 @@ typedef ngx_int_t (*ngx_event_pipe_output_filter_pt)(void *data,
                                                      ngx_chain_t *chain);
 
 
-struct ngx_event_pipe_s {
+struct ngx_event_pipe_s { //ngx_http_XXX_handler(ngx_http_fastcgi_handler)中创建
     ngx_connection_t  *upstream;
     ngx_connection_t  *downstream;
 
@@ -39,7 +39,7 @@ struct ngx_event_pipe_s {
      * from the raw bufs to an incoming chain
      */
 
-    ngx_event_pipe_input_filter_pt    input_filter;
+    ngx_event_pipe_input_filter_pt    input_filter;//ngx_http_XXX_input_filter(如ngx_http_fastcgi_input_filter)
     void                             *input_ctx;
 
     ngx_event_pipe_output_filter_pt   output_filter;

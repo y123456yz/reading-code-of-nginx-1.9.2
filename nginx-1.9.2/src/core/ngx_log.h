@@ -147,6 +147,9 @@ struct ngx_log_s {
     ngx_log_t           *next;
 };
 
+#define NGX_STR2BUF_LEN 256
+void ngx_str_t_2buf(char *buf, ngx_str_t *str);
+
 
 #define NGX_MAX_ERROR_STR   2048
 
@@ -260,7 +263,7 @@ void ngx_cdecl ngx_log_debug_core(ngx_log_t *log, ngx_err_t err,
 #if (NGX_DEBUG)
 
 #if (NGX_HAVE_VARIADIC_MACROS)
-
+/* 注意不能用%V输出，否则会出现段错误 */
 #define ngx_log_debug0(level, log, err, fmt)                                  \
         ngx_log_debug(level, log, err, fmt)
 

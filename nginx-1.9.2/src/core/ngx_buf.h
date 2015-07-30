@@ -55,7 +55,7 @@ struct ngx_buf_s { //可以参考ngx_create_temp_buf         函数空间在ngx_create_te
     ngx_buf_tag_t    tag;/*表示当前缓冲区的类型，例如由哪个模块使用就指向这个模块ngx_module_t变量的地址*/
     ngx_file_t      *file;//引用的文件  用于存储接收到所有包体后，把包体内容写入到file文件中，赋值见ngx_http_read_client_request_body
     
- /*当前缓冲区的影子缓冲区，该成员很少用到，仅仅在12.8节描述的使用缓冲区转发上游服务器的响应时才使用了shadow成员，
+ /*当前缓冲区的影子缓冲区，该成员很少用到，仅仅在使用缓冲区转发上游服务器的响应时才使用了shadow成员，
  这是因为Nginx太节约内存了，分配一块内存并使用ngx_buf_t表示接收到的上游服务器响应后，在向下游客户端转发时可能会
  把这块内存存储到文件中，也可能直接向下游发送，此时Nginx绝不会重新复制一份内存用于新的目的，而是再次建立一个
  ngx_buf_t结构体指向原内存，这样多个ngx_buf_t结构体指向了同一块内存，它们之间的关系就通过shadow成员来引用。
@@ -164,15 +164,15 @@ struct ngx_output_chain_ctx_s {
                                                  ngx_file_t *file);
     ngx_thread_task_t           *thread_task;
 #endif
-
-    off_t                        alignment;
+    //赋值见ngx_http_upstream_init_request
+    off_t                        alignment;//directio_alignment 512;  它与directio配合使用，指定以directio方式读取文件时的对齐方式
 
     ngx_pool_t                  *pool;
     ngx_int_t                    allocated;
     ngx_bufs_t                   bufs;
-    ngx_buf_tag_t                tag;
+    ngx_buf_tag_t                tag; //标识自己所属的模块，例如参考ngx_http_fastcgi_handler
 
-    ngx_output_chain_filter_pt   output_filter;
+    ngx_output_chain_filter_pt   output_filter; //ngx_output_chain中执行
     void                        *filter_ctx;
 };
 
@@ -181,7 +181,7 @@ typedef struct {
     ngx_chain_t                 *out;
     ngx_chain_t                **last;
     ngx_connection_t            *connection;
-    ngx_pool_t                  *pool;
+    ngx_pool_t                  *pool; //等于request对应的pool，见ngx_http_upstream_init_request
     off_t                        limit;
 } ngx_chain_writer_ctx_t;
 

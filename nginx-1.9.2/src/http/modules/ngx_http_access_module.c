@@ -65,8 +65,37 @@ static char *ngx_http_access_merge_loc_conf(ngx_conf_t *cf,
 static ngx_int_t ngx_http_access_init(ngx_conf_t *cf);
 
 
-static ngx_command_t  ngx_http_access_commands[] = {
+/*
+HttpAccess模块可以和error_page指令搭配使用来重定向一个未经验证的访问请求。 
+error_page  403  http://example.com/forbidden.html;
+location / {
+  deny    192.168.1.1;
+  allow   192.168.1.0/24;
+  allow   10.1.1.0/16;
+  deny    all;
+}
 
+
+这个模块提供简单的基于主机的访问控制。
+ngx_http_access_module这个模块可以详细的检查客户端IP，并且按顺序执行第一条匹配的规则。
+如下例：
+
+location / {
+  deny    192.168.1.1;
+  allow   192.168.1.0/24;
+  allow   10.1.1.0/16;
+  deny    all;
+}上面的例子中仅允许192.168.1.0/24和10.1.1.0/16网络段访问，但192.168.1.1是个例外。
+如果要实施很多复杂的规则，那么最好使用GeoIP module模块。
+*/
+static ngx_command_t  ngx_http_access_commands[] = {
+    /*
+     allow 
+     语法：allow [ address | CIDR | all ] 
+     默认值：no 
+     使用字段：http, server, location, limit_except 
+     指令指定了允许访问的IP或网络段。
+     */
     { ngx_string("allow"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_HTTP_LMT_CONF
                         |NGX_CONF_TAKE1,
@@ -75,6 +104,12 @@ static ngx_command_t  ngx_http_access_commands[] = {
       0,
       NULL },
 
+    /*
+    语法：deny [ address | CIDR | all ] 
+默认值：no 
+使用字段：http, server, location, limit_except 
+指令指定了拒绝访问的IP或网络段。
+     */
     { ngx_string("deny"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_HTTP_LMT_CONF
                         |NGX_CONF_TAKE1,

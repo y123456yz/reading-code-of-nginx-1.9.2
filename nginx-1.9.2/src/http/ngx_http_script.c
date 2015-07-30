@@ -53,7 +53,7 @@ ngx_http_script_flush_complex_value(ngx_http_request_t *r,
     }
 }
 
-
+//¥”val->lengths∫Õval->values(“ª∞„∂º «“ª–©±‰¡øªÚ’ﬂ’˝‘Ú±Ì¥Ô Ω)  ’‚¿Ô√Êµƒcode÷–Ω‚Œˆ≥ˆ∂‘”¶µƒ∆’Õ®◊÷∑˚¥Æ÷µµΩvalue÷–
 ngx_int_t
 ngx_http_complex_value(ngx_http_request_t *r, ngx_http_complex_value_t *val,
     ngx_str_t *value)
@@ -357,7 +357,13 @@ ngx_http_script_add_var_code - Œ™±‰¡ø¥¥Ω®»°÷µ–Ë“™µƒΩ≈±æ°£‘⁄ µº ±‰¡ø»°÷µπ˝≥Ã÷–£¨Œ
 Nginx Ω´»°÷µπ˝≥Ã∑÷≥…¡Ω∏ˆΩ≈±æ£¨“ª∏ˆ∏∫‘º∆À„±‰¡øµƒ÷µ≥§∂»£¨¡Ì“ª∏ˆ∏∫‘»°≥ˆ∂‘”¶µƒ÷µ°£
 */
 //Ω´∞¸∫¨±‰¡øµƒ≤Œ ˝Ω≈±æªØ£¨“‘±„–Ë“™∂‘≤Œ ˝æﬂÃÂªØ ±µ˜”√Ω≈±æΩ¯––«Û÷µ°£
-ngx_int_t
+
+/*¿˝»Áset $name ${value}abc’‚÷÷£¨‘Úname±‰¡øµƒ÷µª·Õ®π˝¡¨–¯µ˜”√ngx_http_script_add_var_code∫Õngx_http_script_add_copy_code∞—∂‘”¶µƒcode∑≈»Î
+ngx_http_rewrite_loc_conf_t->codes÷–£¨‘⁄ngx_http_rewrite_handler÷–±È¿˙÷¥––codesæÕø…“‘∞—$value◊÷∑˚¥Æ∫Õabc◊÷∑˚¥Æ∆¥Ω”‘⁄“ª∆£¨¥Ê»Îname±‰¡ø
+∂‘”¶µƒ ˝◊È÷–r->variables[code->index]
+*/
+//≤Œ ˝÷–µƒ±‰¡ø ◊÷∑˚¥Æ≥£¡øµ»∂ºÕ®π˝∏√∫Ø ˝∞—∂‘”¶µƒcodeÃÌº”µΩcodes ˝◊È÷–
+ngx_int_t 
 ngx_http_script_compile(ngx_http_script_compile_t *sc)
 //ngx_http_script_compile ∫Ø ˝∂‘≤Œ ˝œÓΩ¯––’˚¿Ì£¨¥Ê»Î ngx_http_log_script_t ±‰¡ø÷–£∫ø…“‘≤Œøºaccess_log£¨ngx_http_log_set_log
 {
@@ -381,34 +387,34 @@ ngx_http_script_compile(ngx_http_script_compile_t *sc)
 
 #if (NGX_PCRE)
             {
-            ngx_uint_t  n;
-           /* 
-              ◊¢“‚£¨‘⁄’‚¿ÔÀ˘ŒΩµƒ±‰¡ø”–¡Ω÷÷£¨“ª÷÷ «$∫Û√Ê∏˙◊÷∑˚¥Æµƒ£¨“ª÷÷ «∏˙ ˝◊÷µƒ°£ 
-              ’‚¿Ô≈–∂œ «∑Ò « ˝◊÷–Œ Ωµƒ±‰¡ø°£ 
-             */ 
-            if (sc->source->data[i] >= '1' && sc->source->data[i] <= '9') {
+                ngx_uint_t  n;
+               /* 
+                  ◊¢“‚£¨‘⁄’‚¿ÔÀ˘ŒΩµƒ±‰¡ø”–¡Ω÷÷£¨“ª÷÷ «$∫Û√Ê∏˙◊÷∑˚¥Æµƒ£¨“ª÷÷ «∏˙ ˝◊÷µƒ°£ 
+                  ’‚¿Ô≈–∂œ «∑Ò « ˝◊÷–Œ Ωµƒ±‰¡ø°£ 
+                 */ 
+                if (sc->source->data[i] >= '1' && sc->source->data[i] <= '9') {//“‘Œª“∆µƒ–Œ Ω±£¥Ê$1,$2...$9µ»±‰¡ø
 
-                n = sc->source->data[i] - '0';
+                    n = sc->source->data[i] - '0';
 
-                if (sc->captures_mask & (1 << n)) {
-                    sc->dup_capture = 1;
+                    //“‘Œª“∆µƒ–Œ Ω±£¥Ê$1,$2...$9µ»±‰¡ø£¨º¥œÏ”¶Œª÷√…œ÷√1¿¥±Ì æ£¨÷˜“™µƒ◊˜”√ «Œ™dup_capture◊º±∏£¨ 
+                    if (sc->captures_mask & (1 << n)) {
+                        sc->dup_capture = 1;
+                    }
+
+                        
+                     /* 
+                        ‘⁄sc->captures_mask÷–Ω´ ˝◊÷∂‘”¶µƒŒª÷√1£¨ƒ«√¥captures_maskµƒ◊˜”√ « ≤√¥£ø ‘⁄∫Û√Ê∂‘scΩ·ππÃÂ∑÷Œˆ ±ª·Ã·µΩ°£ 
+                        */  
+                    sc->captures_mask |= 1 << n;
+                
+                    if (ngx_http_script_add_capture_code(sc, n) != NGX_OK) {
+                        return NGX_ERROR;
+                    }
+
+                    i++;
+
+                    continue;
                 }
-
-                    
-                 /* 
-                    ‘⁄sc->captures_mask÷–Ω´ ˝◊÷∂‘”¶µƒŒª÷√1£¨ƒ«√¥captures_maskµƒ◊˜”√ « ≤√¥£ø 
-                    ‘⁄∫Û√Ê∂‘scΩ·ππÃÂ∑÷Œˆ ±ª·Ã·µΩ°£ 
-                    */  
-                sc->captures_mask |= 1 << n;
-            
-                if (ngx_http_script_add_capture_code(sc, n) != NGX_OK) {
-                    return NGX_ERROR;
-                }
-
-                i++;
-
-                continue;
-            }
             }
 #endif
 
@@ -752,15 +758,15 @@ ngx_http_script_add_code(ngx_array_t *codes, size_t size, void *code)
 
     elts = codes->elts;
 
-    new = ngx_array_push_n(codes, size);
+    new = ngx_array_push_n(codes, size);//codes->eltsø…ƒ‹ª·±‰ªØµƒ°£»Áπ˚ ˝◊È“—æ≠¬˙¡À–Ë“™…Í«Î“ªøÈ¥Ûµƒƒ⁄¥Ê
     if (new == NULL) {
         return NULL;
     }
 
     if (code) {
-        if (elts != codes->elts) {
-            p = code;
-            *p += (u_char *) codes->elts - elts;
+        if (elts != codes->elts) { //»Áπ˚ƒ⁄¥Ê±‰ªØ¡À£¨
+            p = code; //“ÚŒ™code≤Œ ˝±Ìµƒ «&sc->main’‚÷÷£¨“≤æÕ «÷∏œÚ±æ ˝◊Èµƒ ˝æ›£¨“Ú¥À–Ë“™∏¸–¬“ªœ¬Œª“∆–≈œ¢°£
+            *p += (u_char *) codes->elts - elts; //’‚ « ≤√¥“‚Àº£¨º”…œ¡À–¬…Í«Îµƒƒ⁄¥ÊµƒŒª“∆°£
         }
     }
 
@@ -873,6 +879,11 @@ ngx_http_script_add_var_code - Œ™±‰¡ø¥¥Ω®»°÷µ–Ë“™µƒΩ≈±æ°£‘⁄ µº ±‰¡ø»°÷µπ˝≥Ã÷–£¨Œ
 Nginx Ω´»°÷µπ˝≥Ã∑÷≥…¡Ω∏ˆΩ≈±æ£¨“ª∏ˆ∏∫‘º∆À„±‰¡øµƒ÷µ≥§∂»£¨¡Ì“ª∏ˆ∏∫‘»°≥ˆ∂‘”¶µƒ÷µ°£
 */ //Õ®π˝name≤È’“µΩvariables÷–µƒ–°±Í£¨»ª∫Û¥” ˝◊È÷–ªÒ»°ngx_http_script_var_code_tΩ⁄µ„£¨∞—index∫Õcode∏≥÷µ∏¯À˚
 //≈‰÷√÷–µƒ$name’‚÷÷±‰¡ø◊÷∑˚¥Æµ˜”√ngx_http_script_add_var_code£¨∆’Õ®µƒ◊÷∑˚¥Æµ˜”√ngx_http_script_add_copy_code
+
+/*
+»Áπ˚ «set $xxx $bbb∏√∫Ø ˝≈‰∫œngx_http_script_complex_value_code∂¡»°£¨ngx_http_script_complex_value_code∏˘æ›code->lengths(ngx_http_script_copy_var_len_code)
+¿¥»∑∂®±‰¡ø◊÷∑˚¥Æµƒ≥§∂»£¨»ª∫Ûø™±Ÿ∂‘”¶µƒe->bufø’º‰£¨◊Ó∫Û‘⁄ngx_http_script_copy_var_code÷–∞—±‰¡ø√˚øΩ±¥µΩe->bufø’º‰÷–
+*/
 static ngx_int_t
 ngx_http_script_add_var_code(ngx_http_script_compile_t *sc, ngx_str_t *name)//nameÃÌº”µΩflushes  lengths  values÷–
 {
@@ -900,15 +911,13 @@ ngx_http_script_add_var_code(ngx_http_script_compile_t *sc, ngx_str_t *name)//na
           µƒø’º‰¥Ê∑≈”√”⁄ªÒ»°±‰¡ø∂‘”¶µƒ÷µ≥§∂»µƒΩ≈±æ
         */ //lengths ˝◊È÷–µƒ√ø∏ˆ≥…‘±æÕ“ª◊÷Ω⁄
     code = ngx_http_script_add_code(*sc->lengths,
-                                    sizeof(ngx_http_script_var_code_t), NULL);
+                                    sizeof(ngx_http_script_var_code_t), NULL); //lengths÷–µƒΩ⁄µ„‘⁄ngx_http_script_complex_value_code÷¥––
     if (code == NULL) {
         return NGX_ERROR;
     }
 
     code->code = (ngx_http_script_code_pt) ngx_http_script_copy_var_len_code;
     code->index = (uintptr_t) index;
-
-
 
     code = ngx_http_script_add_code(*sc->values,
                                     sizeof(ngx_http_script_var_code_t),
@@ -924,7 +933,7 @@ ngx_http_script_add_var_code(ngx_http_script_compile_t *sc, ngx_str_t *name)//na
     return NGX_OK;
 }
 
-
+//ªÒ»°inex∂‘”¶±‰¡ø÷µµƒ◊÷∑˚¥Æ≥§∂»
 size_t
 ngx_http_script_copy_var_len_code(ngx_http_script_engine_t *e)
 {
@@ -950,7 +959,7 @@ ngx_http_script_copy_var_len_code(ngx_http_script_engine_t *e)
 }
 
 // /* ngx_http_script_copy_var_code ”√”⁄ªÒ»° index ∂‘”¶µƒ±‰¡ø»°÷µ */
-void
+void //ªÒ»°±‰¡ø÷µ
 ngx_http_script_copy_var_code(ngx_http_script_engine_t *e)
 {
     u_char                      *p;
@@ -972,7 +981,7 @@ ngx_http_script_copy_var_code(ngx_http_script_engine_t *e)
 
         if (value && !value->not_found) {
             p = e->pos;
-            e->pos = ngx_copy(p, value->data, value->len);
+            e->pos = ngx_copy(p, value->data, value->len); //◊™¥Êindex∂‘”¶µƒ±‰¡ø÷µµΩe->buf÷–
 
             ngx_log_debug2(NGX_LOG_DEBUG_HTTP,
                            e->request->connection->log, 0,
@@ -981,7 +990,7 @@ ngx_http_script_copy_var_code(ngx_http_script_engine_t *e)
     }
 }
 
-
+//set $ttt  xxxx?bbb’‚÷÷£¨Ω‚Œˆµƒ≤Œ ˝÷–¥¯”–?ª·÷¥––∏√∫Ø ˝£¨
 static ngx_int_t
 ngx_http_script_add_args_code(ngx_http_script_compile_t *sc)
 {
@@ -1029,9 +1038,16 @@ ngx_http_script_start_args_code(ngx_http_script_engine_t *e)
 
 #if (NGX_PCRE)
 
+/*
+1.	µ˜”√’˝‘Ú±Ì¥Ô Ω“˝«Ê±‡“ÎURL≤Œ ˝––£¨»Áπ˚∆•≈‰ ß∞‹£¨‘Úe->ip += code->next;»√µ˜”√∑Ωµ˜µΩœ¬“ª∏ˆ±Ì¥Ô ΩøÈΩ¯––Ω‚Œˆ°£
+2.»Áπ˚≥…π¶£¨µ˜”√code->lengths£¨¥”∂¯ªÒ»°’˝‘Ú±Ì¥Ô ΩÃÊªª∫Ûµƒ◊÷∑˚¥Æ≥§∂»£¨“‘±∏‘⁄¥À∫Ø ˝∑µªÿ∫Ûµƒcode∫Ø ˝µ˜”√÷–ƒ‹πª¥Ê¥¢–¬◊÷∑˚¥Æ≥§∂»°£
+*/
+//ngx_http_script_regex_start_code”Îngx_http_script_regex_end_code≈‰∂‘ π”√
 void
 ngx_http_script_regex_start_code(ngx_http_script_engine_t *e)
 {
+//∆•≈‰’˝‘Ú±Ì¥Ô Ω£¨º∆À„ƒø±Í◊÷∑˚¥Æ≥§∂»≤¢∑÷≈‰ø’º‰°£’‚∏ˆ∫Ø ˝ «√øÃırewrite”Ôæ‰◊Óœ»µ˜”√µƒΩ‚Œˆ∫Ø ˝£¨
+//±æ∫Ø ˝∏∫‘∆•≈‰£¨∫Õƒø±Í◊÷∑˚¥Æ≥§∂»º∆À„£¨“¿æ›lengths lcodes ˝◊ÈΩ¯––
     size_t                         len;
     ngx_int_t                      rc;
     ngx_uint_t                     n;
@@ -1047,14 +1063,15 @@ ngx_http_script_regex_start_code(ngx_http_script_engine_t *e)
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                    "http script regex: \"%V\"", &code->name);
 
-    if (code->uri) {
+    if (code->uri) { //rewrite≈‰÷√,æÕ «±»Ωœuri∫Õrewrite xxx yyy break;÷–µƒyyy «∑Ò∆•≈‰£¨
         e->line = r->uri;
-    } else {
+    } else { //if≈‰÷√
         e->sp--;
         e->line.len = e->sp->len;
         e->line.data = e->sp->data;
     }
 
+    //œ¬√Ê”√“—æ≠±‡“Îµƒregex ∏˙e->line»•∆•≈‰£¨ø¥ø¥ «∑Ò∆•≈‰≥…π¶°£
     rc = ngx_http_regex_exec(r, code->regex, &e->line);
 
     if (rc == NGX_DECLINED) {
@@ -1066,8 +1083,8 @@ ngx_http_script_regex_start_code(ngx_http_script_engine_t *e)
 
         r->ncaptures = 0;
 
-        if (code->test) {
-            if (code->negative_test) {
+        if (code->test) { //if{}≈‰÷√≤≈ª·÷√1
+            if (code->negative_test) {   
                 e->sp->len = 1;
                 e->sp->data = (u_char *) "1";
 
@@ -1076,12 +1093,13 @@ ngx_http_script_regex_start_code(ngx_http_script_engine_t *e)
                 e->sp->data = (u_char *) "";
             }
 
-            e->sp++;
+            e->sp++; //“∆∂ØµΩœ¬“ª∏ˆΩ⁄µ„°£∑µªÿ°£
 
-            e->ip += sizeof(ngx_http_script_regex_code_t);
+            e->ip += sizeof(ngx_http_script_regex_code_t); 
             return;
         }
-
+        
+        //nextµƒ∫¨“ÂŒ™;»Áπ˚µ±«∞code∆•≈‰ ß∞‹£¨ƒ«√¥œ¬“ª∏ˆcodeµƒŒª“∆ «‘⁄ ≤√¥µÿ∑Ω£¨’‚–©∂´Œ˜»´≤ø∑≈‘⁄“ª∏ˆ ˝◊È¿Ô√Êµƒ°£
         e->ip += code->next;
         return;
     }
@@ -1097,7 +1115,7 @@ ngx_http_script_regex_start_code(ngx_http_script_engine_t *e)
                       "\"%V\" matches \"%V\"", &code->name, &e->line);
     }
 
-    if (code->test) {
+    if (code->test) {//if{}≈‰÷√≤≈ª·÷√1 //»Áπ˚∆•≈‰≥…π¶¡À£¨ƒ«…Ë÷√“ª∏ˆ±Í÷æ∞…£¨’‚—˘±»»Á◊ˆif∆•≈‰µƒ ±∫ÚæÕƒ‹Õ®π˝≤Èø¥∂—’ªµƒ÷µ¿¥÷™µ¿ «∑Ò≥…π¶°£
         if (code->negative_test) {
             e->sp->len = 0;
             e->sp->data = (u_char *) "";
@@ -1113,7 +1131,7 @@ ngx_http_script_regex_start_code(ngx_http_script_engine_t *e)
         return;
     }
 
-    if (code->status) {
+    if (code->status) { //»Áπ˚ «rewrite√¸¡Ó≈‰÷√£¨º˚ngx_http_rewrite∏≥÷µ
         e->status = code->status;
 
         if (!code->redirect) {
@@ -1126,16 +1144,18 @@ ngx_http_script_regex_start_code(ngx_http_script_engine_t *e)
         r->internal = 1;
         r->valid_unparsed_uri = 0;
 
-        if (code->break_cycle) {
+        if (code->break_cycle) { //rewrite◊Ó∫Ûµƒ≤Œ ˝ «break£¨Ω´rewrite∫Ûµƒµÿ÷∑‘⁄µ±«∞location±Í«©÷–÷¥––
             r->valid_location = 0;
-            r->uri_changed = 0;
+            r->uri_changed = 0; //Ω´uri_changed…Ë÷√Œ™0∫Û£¨“≤æÕ±Í÷æÀµURL√ª”–±‰ªØ£¨ƒ«√¥£¨
+            //‘⁄ngx_http_core_post_rewrite_phase÷–æÕ≤ªª·÷¥––¿Ô√Êµƒif”Ôæ‰£¨“≤æÕ≤ªª·‘Ÿ¥Œ◊ﬂµΩfind configµƒπ˝≥Ã¡À£¨∂¯ «ºÃ–¯¥¶¿Ì∫Û√Êµƒ°£
+            //≤ª»ª’˝≥£«Èøˆ£¨rewrite≥…π¶∫Û «ª·÷ÿ–¬¿¥“ª¥Œµƒ£¨œ‡µ±”⁄“ª∏ˆ»´–¬µƒ«Î«Û°£
 
         } else {
-            r->uri_changed = 1;
+            r->uri_changed = 1; //–Ë“™rewrite¥”–¬—≠ª∑£¨º˚ngx_http_core_post_rewrite_phase  ÷ÿ–¬Ω¯––÷ÿ∂®œÚ≤È’“π˝≥Ã
         }
     }
 
-    if (code->lengths == NULL) {
+    if (code->lengths == NULL) {//»Áπ˚∫Û√Ê≤ø∑÷ «ºÚµ•◊÷∑˚¥Æ±»»Á rewrite ^(.*)$ http://chenzhenianqing.cn break;
         e->buf.len = code->size;
 
         if (code->uri) {
@@ -1149,7 +1169,17 @@ ngx_http_script_regex_start_code(ngx_http_script_engine_t *e)
             e->buf.len += r->captures[n + 1] - r->captures[n];
         }
 
-    } else {
+    } else { /*“ª∏ˆ∏ˆ»•¥¶¿Ì∏¥‘”±Ì¥Ô Ω£¨µ´ «’‚¿Ô∆‰ µ÷ª «À„“ªœ¬¥Û–°µƒ£¨
+        ’Ê’˝µƒ ˝æ›øΩ±¥‘⁄…œ≤„µƒcodeªÒ»°°£±»»Á rewrite ^(.*)$ http://$http_host.mp4 break;
+        //œ¬√Êª·∑÷≤Ωµƒ£¨∆¥◊∞≥ˆ∫Û√Êµƒurl,∂‘”⁄…œ√Êµƒ¿˝◊”£¨Œ™
+			ngx_http_script_copy_len_code		7
+			ngx_http_script_copy_var_len_code 	18
+			ngx_http_script_copy_len_code		4	=== 29 
+		’‚¿Ô÷ª ««Û“ªœ¬≥§∂»£¨µ˜”√lengths«Û≥§∂»°£ ˝æ›øΩ±¥‘⁄ngx_http_rewrite_handler÷–£¨±æ∫Ø ˝∑µªÿ∫ÛæÕµ˜”√»Áœ¬π˝≥ÃøΩ±¥ ˝æ›: 
+			ngx_http_script_copy_code		øΩ±¥"http://" µΩe->buf
+			ngx_http_script_copy_var_code	øΩ±¥"115.28.34.175:8881"
+			ngx_http_script_copy_code 		øΩ±¥".mp4"
+        */
         ngx_memzero(&le, sizeof(ngx_http_script_engine_t));
 
         le.ip = code->lengths->elts;
@@ -1158,19 +1188,20 @@ ngx_http_script_regex_start_code(ngx_http_script_engine_t *e)
         le.quote = code->redirect;
 
         len = 0;
-
-        while (*(uintptr_t *) le.ip) {
-            lcode = *(ngx_http_script_len_code_pt *) le.ip;
+ 
+        while (*(uintptr_t *) le.ip) { //«Û◊÷∑˚¥Æµƒ◊‹≥§∂»
+            lcode = *(ngx_http_script_len_code_pt *) le.ip;  
             len += lcode(&le);
         }
 
-        e->buf.len = len;
+        e->buf.len = len;//º«◊°◊‹≥§∂»°£
     }
 
-    if (code->add_args && r->args.len) {
-        e->buf.len += r->args.len + 1;
+    if (code->add_args && r->args.len) { // «∑Ò–Ë“™◊‘∂Ø‘ˆº”≤Œ ˝°£»Áπ˚≈‰÷√––µƒ∫Û√Êœ‘ æµƒº”…œ¡À?∑˚∫≈£¨‘Únginx≤ªª·◊∑º”≤Œ ˝°£
+        e->buf.len += r->args.len + 1; //Œ™∫Û√Êµƒngx_http_script_regex_end_code◊ˆ◊º±∏
     }
 
+    //Œ™«∞√Ê’‚–©codeΩ‚ŒˆµƒµΩµƒ≤Œ ˝÷µµƒ◊‹≥§∂»º∆À„≥ˆ¿¥¡À£¨”√”⁄‘⁄÷¥––ngx_http_script_regex_end_codeµƒ ±∫Ú∞—œ‡πÿ◊÷∑˚¥ÆøΩ±¥µΩe->buf
     e->buf.data = ngx_pnalloc(r->pool, e->buf.len);
     if (e->buf.data == NULL) {
         e->ip = ngx_http_script_exit;
@@ -1186,9 +1217,10 @@ ngx_http_script_regex_start_code(ngx_http_script_engine_t *e)
 }
 
 
+//ngx_http_script_regex_start_code”Îngx_http_script_regex_end_code≈‰∂‘ π”√
 void
 ngx_http_script_regex_end_code(ngx_http_script_engine_t *e)
-{
+{//√≤À∆√ª∏… ≤√¥ ¬«È£¨»Áπ˚ «redirect£¨º±…Ë÷√¡À“ªœ¬Õ∑≤øheaderµƒlocation£¨∏√302¡À°£
     u_char                            *dst, *src;
     ngx_http_request_t                *r;
     ngx_http_script_regex_end_code_t  *code;
@@ -1211,14 +1243,14 @@ ngx_http_script_regex_end_code(ngx_http_script_engine_t *e)
                          NGX_UNESCAPE_REDIRECT);
 
         if (src < e->pos) {
-            dst = ngx_movemem(dst, src, e->pos - src);
+            dst = ngx_movemem(dst, src, e->pos - src); //ªÒ»°∑¥±‡¬ÎµƒΩ·π˚
         }
 
         e->pos = dst;
 
-        if (code->add_args && r->args.len) {
+        if (code->add_args && r->args.len) {//»Áπ˚uri”–¥¯?,‘ÚÃÌº”?∫ÕŒ ∫≈∫Û√Êµƒ≤Œ ˝µΩ∑¥±‡¬Îµƒ◊÷∑˚¥Æ∫Û√Ê£¨∆‰ µæÕ «∞—«Î«Ûµƒuri÷–?«∞√Êµƒ◊÷∑˚¥Æ∑¥±‡¬Î
             *e->pos++ = (u_char) (code->args ? '&' : '?');
-            e->pos = ngx_copy(e->pos, r->args.data, r->args.len);
+            e->pos = ngx_copy(e->pos, r->args.data, r->args.len); //
         }
 
         e->buf.len = e->pos - e->buf.data;
@@ -1237,9 +1269,12 @@ ngx_http_script_regex_end_code(ngx_http_script_engine_t *e)
             return;
         }
 
+        /*
+          rewrite ^(.*)$ http://$1.mp4 break; »Áπ˚uriŒ™http://10.135.0.1/aaa,‘Úlocation÷–¥Ê¥¢µƒ «aaa.mp4
+          */
         r->headers_out.location->hash = 1;
         ngx_str_set(&r->headers_out.location->key, "Location");
-        r->headers_out.location->value = e->buf;
+        r->headers_out.location->value = e->buf; //÷∏œÚrewrite∫Ûµƒ–¬µƒ÷ÿ∂®œÚuri
 
         e->ip += sizeof(ngx_http_script_regex_end_code_t);
         return;
@@ -1266,6 +1301,13 @@ ngx_http_script_regex_end_code(ngx_http_script_engine_t *e)
         }
     }
 
+    /* 
+      ≈‰÷√Œ™:
+      location ~* /1mytest  {			
+            rewrite   ^.*$ www.11.com/ last;		
+       }  
+      uriŒ™:http://10.135.10.167/1mytest ,‘Ú◊ﬂµΩ’‚¿Ô∫Û£¨uriª·±‰Œ™www.11.com/
+     */
     if (e->log || (r->connection->log->log_level & NGX_LOG_DEBUG_HTTP)) {
         ngx_log_error(NGX_LOG_NOTICE, r->connection->log, 0,
                       "rewritten data: \"%V\", args: \"%V\"",
@@ -1273,7 +1315,7 @@ ngx_http_script_regex_end_code(ngx_http_script_engine_t *e)
     }
 
     if (code->uri) {
-        r->uri = e->buf;
+        r->uri = e->buf; //uri÷∏œÚ–¬µƒrewrite∫Ûµƒuri
 
         if (r->uri.len == 0) {
             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
@@ -1289,9 +1331,9 @@ ngx_http_script_regex_end_code(ngx_http_script_engine_t *e)
     e->ip += sizeof(ngx_http_script_regex_end_code_t);
 }
 
-
+//$1,$2...$9µ»±‰¡ø  ≈‰∫œngx_http_script_complex_value_code‘ƒ∂¡
 static ngx_int_t
-ngx_http_script_add_capture_code(ngx_http_script_compile_t *sc, ngx_uint_t n)
+ngx_http_script_add_capture_code(ngx_http_script_compile_t *sc, ngx_uint_t n) //nŒ™$3÷–µƒ3
 {
     ngx_http_script_copy_capture_code_t  *code;
 
@@ -1303,7 +1345,7 @@ ngx_http_script_add_capture_code(ngx_http_script_compile_t *sc, ngx_uint_t n)
     }
 
     code->code = (ngx_http_script_code_pt)
-                      ngx_http_script_copy_capture_len_code;
+                      ngx_http_script_copy_capture_len_code; //∂®Œª$1±‰¡ø÷µµƒ◊÷∑˚¥Æ≥§∂»
     code->n = 2 * n;
 
 
@@ -1314,7 +1356,7 @@ ngx_http_script_add_capture_code(ngx_http_script_compile_t *sc, ngx_uint_t n)
         return NGX_ERROR;
     }
 
-    code->code = ngx_http_script_copy_capture_code;
+    code->code = ngx_http_script_copy_capture_code; //ªÒ»°±‰¡ø$1±‰¡ø÷µµƒ◊÷∑˚¥Æ
     code->n = 2 * n;
 
     if (sc->ncaptures < n) {
@@ -1496,16 +1538,16 @@ ngx_http_script_return_code(ngx_http_script_engine_t *e)
         e->status = code->status;
     }
 
-    e->ip = ngx_http_script_exit;
+    e->ip = ngx_http_script_exit; //÷¥––∏√code∫Û£¨≤ªª·‘Ÿ÷¥––÷Æ«∞±æ¿¥‘⁄∏√code∫Û√Êµƒ∆‰À˚À˘”–code
 }
 
 
 void
 ngx_http_script_break_code(ngx_http_script_engine_t *e)
 {
-    e->request->uri_changed = 0;
+    e->request->uri_changed = 0; //∏√÷µŒ™0£¨±Ì æ≤ªª·‘Ÿ÷ÿ∏¥rewrite find
 
-    e->ip = ngx_http_script_exit;
+    e->ip = ngx_http_script_exit; //Õ£÷π∫Û√Êµƒ∏˜÷÷±‰¡ø∏≥÷µΩ‚Œˆµ»£¨“≤æÕ «Õ£÷πΩ≈±æ“˝«Ê
 }
 
 
@@ -1728,8 +1770,15 @@ true_value:
     return;
 }
 
+//ngx_http_rewrite_handler÷–÷¥––
+/*
+»Áπ˚value÷µ «$name±‰¡ø≤Œ ˝£¨‘Ú∏√∫Ø ˝≈‰∫œngx_http_script_add_var_code∂¡»°£¨ngx_http_script_complex_value_code∏˘æ›code->lengths(ngx_http_script_copy_var_len_code)
+¿¥»∑∂®±‰¡ø◊÷∑˚¥Æµƒ≥§∂»£¨»ª∫Ûø™±Ÿ∂‘”¶µƒe->bufø’º‰£¨◊Ó∫Û‘⁄ngx_http_script_copy_var_code÷–∞—±‰¡ø√˚øΩ±¥µΩe->bufø’º‰÷–
 
-void
+»Áπ˚≤Œ ˝÷–¥¯”–?£¨‘Ú◊Ó÷’ª·‘⁄÷¥––ngx_http_script_add_args_code
+
+»Áπ˚≤Œ ˝ «$1,‘Ú◊Ó÷’ª·÷¥––ngx_http_script_add_capture_code
+*/void
 ngx_http_script_complex_value_code(ngx_http_script_engine_t *e)
 {
     size_t                                 len;
@@ -1751,8 +1800,9 @@ ngx_http_script_complex_value_code(ngx_http_script_engine_t *e)
     le.request = e->request;
     le.quote = e->quote;
 
-    for (len = 0; *(uintptr_t *) le.ip; len += lcode(&le)) {
-        lcode = *(ngx_http_script_len_code_pt *) le.ip;
+    //≈‰∫œngx_http_rewrite_value->ngx_http_script_compile->ngx_http_script_add_var_code‘ƒ∂¡
+    for (len = 0; *(uintptr_t *) le.ip; len += lcode(&le)) {//ªÒ»°∏√±‰¡ø◊÷∑˚¥Æµƒ≥§∂»
+        lcode = *(ngx_http_script_len_code_pt *) le.ip; 
     }
 
     e->buf.len = len;

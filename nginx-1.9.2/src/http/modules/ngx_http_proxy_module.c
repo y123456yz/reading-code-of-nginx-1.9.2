@@ -336,6 +336,17 @@ location /one/ {
       offsetof(ngx_http_proxy_loc_conf_t, upstream.store_access),
       NULL },
 
+/*
+语法：proxy_buffering on|off 
+默认值：proxy_buffering on 
+使用字段：http, server, location 
+为后端的服务器启用应答缓冲。
+如果启用缓冲，nginx假设被代理服务器能够非常快的传递应答，并将其放入缓冲区，可以使用 proxy_buffer_size和proxy_buffers设置相关参数。
+如果响应无法全部放入内存，则将其写入硬盘。
+如果禁用缓冲，从后端传来的应答将立即被传送到客户端。
+nginx忽略被代理服务器的应答数目和所有应答的大小，接受proxy_buffer_size所指定的值。
+对于基于长轮询的Comet应用需要关闭这个指令，否则异步的应答将被缓冲并且Comet无法正常工作。
+*/
     { ngx_string("proxy_buffering"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
       ngx_conf_set_flag_slot,
@@ -376,6 +387,13 @@ location /one/ {
       offsetof(ngx_http_proxy_loc_conf_t, upstream.local),
       NULL },
 
+/*
+默认值：proxy_connect_timeout 60 
+使用字段：http, server, location 
+指定一个连接到代理服务器的超时时间，需要注意的是这个时间最好不要超过75秒。
+这个时间并不是指服务器传回页面的时间（这个时间由proxy_read_timeout声明）。如果你的前端代理服务器是正常运行的，但是遇到一些状况
+（例如没有足够的线程去处理请求，请求将被放在一个连接池中延迟处理），那么这个声明无助于服务器去建立连接。
+*/
     { ngx_string("proxy_connect_timeout"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
@@ -383,6 +401,13 @@ location /one/ {
       offsetof(ngx_http_proxy_loc_conf_t, upstream.connect_timeout),
       NULL },
 
+/*
+默认值：proxy_connect_timeout 60 
+使用字段：http, server, location 
+指定一个连接到代理服务器的超时时间，需要注意的是这个时间最好不要超过75秒。
+这个时间并不是指服务器传回页面的时间（这个时间由proxy_read_timeout声明）。如果你的前端代理服务器是正常运行的，但是遇到一些状
+况（例如没有足够的线程去处理请求，请求将被放在一个连接池中延迟处理），那么这个声明无助于服务器去建立连接。
+*/
     { ngx_string("proxy_send_timeout"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
@@ -478,6 +503,15 @@ proxy_method POST;
       offsetof(ngx_http_proxy_loc_conf_t, upstream.pass_request_body),
       NULL },
 
+/*
+proxy_buffer_size 
+语法：proxy_buffer_size the_size 
+默认值：proxy_buffer_size 4k/8k 
+使用字段：http, server, location 
+设置从被代理服务器读取的第一部分应答的缓冲区大小。
+通常情况下这部分应答中包含一个小的应答头。
+默认情况下这个值的大小为指令proxy_buffers中指定的一个缓冲区的大小，不过可以将其设置为更小。
+*/
     { ngx_string("proxy_buffer_size"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_size_slot,
@@ -492,6 +526,12 @@ proxy_method POST;
       offsetof(ngx_http_proxy_loc_conf_t, upstream.read_timeout),
       NULL },
 
+    /*
+     语法：proxy_buffers the_number is_size; 
+     默认值：proxy_buffers 8 4k/8k; 
+     使用字段：http, server, location 
+     设置用于读取应答（来自被代理服务器）的缓冲区数目和大小，默认情况也为分页大小，根据操作系统的不同可能是4k或者8k。
+     */
     { ngx_string("proxy_buffers"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE2,
       ngx_conf_set_bufs_slot,
@@ -499,6 +539,7 @@ proxy_method POST;
       offsetof(ngx_http_proxy_loc_conf_t, upstream.bufs),
       NULL },
 
+    //默认值：proxy_busy_buffers_size ["#proxy buffer size"] * 2; 
     { ngx_string("proxy_busy_buffers_size"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_size_slot,
@@ -521,7 +562,17 @@ proxy_method POST;
       NULL },
 
 #if (NGX_HTTP_CACHE)
-
+    /*
+     语法：proxy_cache zone_name; 
+默认值：None 
+使用字段：http, server, location 
+设置一个缓存区域的名称，一个相同的区域可以在不同的地方使用。
+在0.7.48后，缓存遵循后端的"Expires", "Cache-Control: no-cache", "Cache-Control: max-age=XXX"头部字段，0.7.66版本以后，
+"Cache-Control:"private"和"no-store"头同样被遵循。nginx在缓存过程中不会处理"Vary"头，为了确保一些私有数据不被所有的用户看到，
+后端必须设置 "no-cache"或者"max-age=0"头，或者proxy_cache_key包含用户指定的数据如$cookie_xxx，使用cookie的值作为proxy_cache_key
+的一部分可以防止缓存私有数据，所以可以在不同的location中分别指定proxy_cache_key的值以便分开私有数据和公有数据。
+缓存指令依赖代理缓冲区(buffers)，如果proxy_buffers设置为off，缓存不会生效。
+     */
     { ngx_string("proxy_cache"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_http_proxy_cache,
@@ -529,6 +580,16 @@ proxy_method POST;
       0,
       NULL },
 
+/*
+语法：proxy_cache_key line; 
+默认值：$scheme$proxy_host$request_uri; 
+使用字段：http, server, location 
+指令指定了包含在缓存中的缓存关键字。
+proxy_cache_key "$host$request_uri$cookie_user";注意默认情况下服务器的主机名并没有包含到缓存关键字中，如果你为你的站点在不同的location中使用二级域，
+你可能需要在缓存关键字中包换主机名：
+
+proxy_cache_key "$scheme$host$request_uri";
+*/
     { ngx_string("proxy_cache_key"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_http_proxy_cache_key,
@@ -536,6 +597,26 @@ proxy_method POST;
       0,
       NULL },
 
+/*
+proxy_cache_path 
+语法：proxy_cache_path path [levels=number] keys_zone=zone_name:zone_size [inactive=time] [max_size=size]; 
+默认值：None 
+使用字段：http 
+指令指定缓存的路径和一些其他参数，缓存的数据存储在文件中，并且使用代理url的哈希值作为关键字与文件名。levels参数指定缓存的子目录数，例如： 
+proxy_cache_path  /data/nginx/cache  levels=1:2   keys_zone=one:10m;文件名类似于：
+
+/data/nginx/cache/c/29/b7f54b2df7773722d382f4809d65029c 
+可以使用任意的1位或2位数字作为目录结构，如 X, X:X,或X:X:X e.g.: "2", "2:2", "1:1:2"，但是最多只能是三级目录。
+所有活动的key和元数据存储在共享的内存池中，这个区域用keys_zone参数指定。
+注意每一个定义的内存池必须是不重复的路径，例如：
+
+proxy_cache_path  /data/nginx/cache/one    levels=1      keys_zone=one:10m;
+proxy_cache_path  /data/nginx/cache/two    levels=2:2    keys_zone=two:100m;
+proxy_cache_path  /data/nginx/cache/three  levels=1:1:2  keys_zone=three:1000m;如果在inactive参数指定的时间内缓存的数据没有被请求则被删除，默认inactive为10分钟。
+一个名为cache manager的进程控制磁盘的缓存大小，它被用来删除不活动的缓存和控制缓存大小，这些都在max_size参数中定义，当目前缓存的值超出max_size指定的值之后，超过其大小后最少使用数据（LRU替换算法）将被删除。
+内存池的大小按照缓存页面数的比例进行设置，一个页面（文件）的元数据大小按照操作系统来定，FreeBSD/i386下为64字节，FreeBSD/amd64下为128字节。
+proxy_cache_path和proxy_temp_path应该使用在相同的文件系统上。
+*/
     { ngx_string("proxy_cache_path"),
       NGX_HTTP_MAIN_CONF|NGX_CONF_2MORE,
       ngx_http_file_cache_set_slot,
@@ -557,6 +638,20 @@ proxy_method POST;
       offsetof(ngx_http_proxy_loc_conf_t, upstream.no_cache),
       NULL },
 
+/*
+语法：proxy_cache_valid reply_code [reply_code ...] time; 
+默认值：None 
+使用字段：http, server, location 
+为不同的应答设置不同的缓存时间，例如： 
+  proxy_cache_valid  200 302  10m;
+  proxy_cache_valid  404      1m;为应答代码为200和302的设置缓存时间为10分钟，404代码缓存1分钟。
+如果只定义时间：
+ proxy_cache_valid 5m;那么只对代码为200, 301和302的应答进行缓存。
+同样可以使用any参数任何应答。 
+  proxy_cache_valid  200 302 10m;
+  proxy_cache_valid  301 1h;
+  proxy_cache_valid  any 1m;
+*/
     { ngx_string("proxy_cache_valid"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_1MORE,
       ngx_http_file_cache_valid_set_slot,
@@ -564,6 +659,12 @@ proxy_method POST;
       offsetof(ngx_http_proxy_loc_conf_t, upstream.cache_valid),
       NULL },
 
+/*
+语法：proxy_cache_min_uses the_number; 
+默认值：proxy_cache_min_uses 1; 
+使用字段：http, server, location 
+多少次的查询后应答将被缓存，默认1。
+*/
     { ngx_string("proxy_cache_min_uses"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_num_slot,
@@ -571,6 +672,14 @@ proxy_method POST;
       offsetof(ngx_http_proxy_loc_conf_t, upstream.cache_min_uses),
       NULL },
 
+/*
+语法：proxy_cache_use_stale [error|timeout|updating|invalid_header|http_500|http_502|http_503|http_504|http_404|off] [...]; 
+默认值：proxy_cache_use_stale off; 
+使用字段：http, server, location 
+这个指令告诉nginx何时从代理缓存中提供一个过期的响应，参数类似于proxy_next_upstream指令。
+为了防止缓存失效（在多个线程同时更新本地缓存时），你可以指定'updating'参数，它将保证只有一个线程去更新缓存，并且在这个线程更
+新缓存的过程中其他的线程只会响应当前缓存中的过期版本。
+*/
     { ngx_string("proxy_cache_use_stale"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_1MORE,
       ngx_conf_set_bitmask_slot,
@@ -578,6 +687,13 @@ proxy_method POST;
       offsetof(ngx_http_proxy_loc_conf_t, upstream.cache_use_stale),
       &ngx_http_proxy_next_upstream_masks },
 
+/*
+语法：proxy_cache_methods [GET HEAD POST]; 
+默认值：proxy_cache_methods GET HEAD; 
+使用字段：http, server, location 
+GET/HEAD用来装饰语句，即你无法禁用GET/HEAD即使你只使用下列语句设置： 
+proxy_cache_methods POST;
+*/
     { ngx_string("proxy_cache_methods"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_1MORE,
       ngx_conf_set_bitmask_slot,
@@ -705,9 +821,29 @@ proxy_pass_header X-Accel-Redirect;
 proxy_hide_header
 语法：proxy_hide_header the_header;
 配置块：http、server、location
-Nginx会将上游服务器的响应转发给客户端，但默认不会转发以下HTTP头部字段：Date、Server、X-Pad和X-Accel-*。使用proxy_hide_header后可以任意地指定哪些HTTP头部字段不能被转发。例如：
+Nginx会将上游服务器的响应转发给客户端，但默认不会转发以下HTTP头部字段：Date、Server、X-Pad和X-Accel-*。使用proxy_hide_header后可以
+任意地指定哪些HTTP头部字段不能被转发。例如：
 proxy_hide_header Cache-Control;
 proxy_hide_header MicrosoftOfficeWebServer;
+
+语法：proxy_hide_header the_header 
+使用字段：http, server, location 
+nginx不对从被代理服务器传来的"Date", "Server", "X-Pad"和"X-Accel-..."应答进行转发，这个参数允许隐藏一些其他的头部字段，但是如果
+上述提到的头部字段必须被转发，可以使用proxy_pass_header指令，例如：需要隐藏MS-OfficeWebserver和AspNet-Version可以使用如下配置： 
+location / {
+  proxy_hide_header X-AspNet-Version;
+  proxy_hide_header MicrosoftOfficeWebServer;
+}当使用X-Accel-Redirect时这个指令非常有用。例如，你可能要在后端应用服务器对一个需要下载的文件设置一个返回头，其中X-Accel-Redirect
+字段即为这个文件，同时要有恰当的Content-Type，但是，重定向的URL将指向包含这个文件的文件服务器，而这个服务器传递了它自己的Content-Type，
+可能这并不是正确的，这样就忽略了后端应用服务器传递的Content-Type。为了避免这种情况你可以使用这个指令： 
+location / {
+  proxy_pass http://backend_servers;
+}
+ 
+location /files/ {
+  proxy_pass http://fileserver;
+  proxy_hide_header Content-Type;
+
 */ //proxy_hide_header和proxy_pass_header功能相反
     { ngx_string("proxy_hide_header"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
@@ -1029,7 +1165,7 @@ static ngx_int_t ngx_http_proxy_handler(ngx_http_request_t *r)
     /*
 在阅读HTTP反向代理模块(ngx_http_proxy_module)源代码时，会发现它并没有调用r->main->count++，其中proxy模块是这样启动upstream机制的：
 ngx_http_read_client_request_body(r，ngx_http_upstream_init);，这表示读取完用户请求的HTTP包体后才会调用ngx_http_upstream_init方法
-启动upstream机制（参见3.6.4节）。由于ngx_http_read_client_request_body的第一行有效语句是r->maln->count++，所以HTTP反向代理模块不能
+启动upstream机制。由于ngx_http_read_client_request_body的第一行有效语句是r->maln->count++，所以HTTP反向代理模块不能
 再次在其代码中执行r->main->count++。
 
 这个过程看起来似乎让人困惑。为什么有时需要把引用计数加1，有时却不需要呢？因为ngx_http_read- client_request_body读取请求包体是
@@ -1253,7 +1389,11 @@ ngx_http_proxy_create_key(ngx_http_request_t *r)
 
 #endif
 
-
+/*
+如果是FCGI。下面组建好FCGI的各种头部，包括请求开始头，请求参数头，请求STDIN头。存放在u->request_bufs链接表里面。
+如果是Proxy模块，ngx_http_proxy_create_request组件反向代理的头部啥的,放到u->request_bufs里面
+FastCGI memcached  uwsgi  scgi proxy都会用到upstream模块
+ */
 static ngx_int_t
 ngx_http_proxy_create_request(ngx_http_request_t *r)
 {

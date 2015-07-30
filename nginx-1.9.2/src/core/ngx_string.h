@@ -66,7 +66,7 @@ typedef struct {
     */
     unsigned    no_cacheable:1;  
             
-    unsigned    not_found:1; /* 变量没有找到，一般是指某个变量没用能够通过get获取到其变量值 */  
+    unsigned    not_found:1; /* 变量没有找到，一般是指某个变量没用能够通过get获取到其变量值，见ngx_http_variable_not_found */  
     unsigned    escape:1;  /* 变量值是否需要作转义处理*/  
 
     u_char     *data;  /* 变量值 */  
@@ -147,7 +147,7 @@ void *ngx_memcpy(void *dst, const void *src, size_t n);
  * the simple inline cycle copies the variable length strings up to 16
  * bytes faster than icc8 autodetecting _intel_fast_memcpy()
  */
-
+//返回地址是copy后的字节末尾处
 static ngx_inline u_char *
 ngx_copy(u_char *dst, u_char *src, size_t len)
 {

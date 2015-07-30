@@ -51,7 +51,7 @@ location / {
     index /index.html /html/index.php /index.php;
 }
 接收到请求后，Nginx首先会尝试访问path/index.php文件，如果可以访问，就直接返回文件内容结束请求，否则再试图返回path/html/index.php文件的内容，依此类推。
-*/
+*/ //注意:如果URI以斜线结尾，文件名将追加到URI后面，参考ngx_http_index_handler
 static ngx_command_t  ngx_http_index_commands[] = {
 
     { ngx_string("index"),
@@ -105,7 +105,48 @@ ngx_module_t  ngx_http_index_module = {
  * Unix has ENOTDIR error; however, it's less helpful than Win32's one:
  * it only indicates that path points to a regular file, not a directory.
  */
-
+/*  配置index index.html index_large.html  gmime-gmime-cipher-context.html;
+2025/02/14 08:24:04[   ngx_http_process_request_headers,  1412]  [debug] 2955#2955: *2 http header done
+2025/02/14 08:24:04[                ngx_event_del_timer,    39]  [debug] 2955#2955: *2 < ngx_http_process_request,  2013>  event timer del: 3: 30909486
+2025/02/14 08:24:04[        ngx_http_core_rewrite_phase,  1810]  [debug] 2955#2955: *2 rewrite phase: 0 (NGX_HTTP_SERVER_REWRITE_PHASE)
+2025/02/14 08:24:04[    ngx_http_core_find_config_phase,  1868]  [debug] 2955#2955: *2 find config phase: 1 (NGX_HTTP_FIND_CONFIG_PHASE), uri:/
+2025/02/14 08:24:04[ ngx_http_core_find_static_location,  2753]  [debug] 2955#2955: *2 static_locations test location: "/", client uri:/
+2025/02/14 08:24:04[        ngx_http_core_find_location,  2693]  [debug] 2955#2955: *2 ngx pcre test location: ~ "/1mytest"
+2025/02/14 08:24:04[    ngx_http_core_find_config_phase,  1888]  [debug] 2955#2955: *2 using configuration "/"
+2025/02/14 08:24:04[    ngx_http_core_find_config_phase,  1895]  [debug] 2955#2955: *2 http cl:-1 max:1048576
+2025/02/14 08:24:04[        ngx_http_core_rewrite_phase,  1810]  [debug] 2955#2955: *2 rewrite phase: 2 (NGX_HTTP_REWRITE_PHASE)
+2025/02/14 08:24:04[   ngx_http_core_post_rewrite_phase,  1963]  [debug] 2955#2955: *2 post rewrite phase: 3 (NGX_HTTP_POST_REWRITE_PHASE)
+2025/02/14 08:24:04[        ngx_http_core_generic_phase,  1746]  [debug] 2955#2955: *2 generic phase: 4 (NGX_HTTP_PREACCESS_PHASE)
+2025/02/14 08:24:04[        ngx_http_core_generic_phase,  1746]  [debug] 2955#2955: *2 generic phase: 5 (NGX_HTTP_PREACCESS_PHASE)
+2025/02/14 08:24:04[         ngx_http_core_access_phase,  2061]  [debug] 2955#2955: *2 access phase: 6 (NGX_HTTP_ACCESS_PHASE)
+2025/02/14 08:24:04[         ngx_http_core_access_phase,  2061]  [debug] 2955#2955: *2 access phase: 7 (NGX_HTTP_ACCESS_PHASE)
+2025/02/14 08:24:04[    ngx_http_core_post_access_phase,  2163]  [debug] 2955#2955: *2 post access phase: 8 (NGX_HTTP_POST_ACCESS_PHASE)
+2025/02/14 08:24:04[        ngx_http_core_content_phase,  2491]  [debug] 2955#2955: *2 content phase: 9 (NGX_HTTP_CONTENT_PHASE)
+2025/02/14 08:24:04[             ngx_http_index_handler,   144]  [debug] 2955#2955: *2 yang test ... index-count:3
+2025/02/14 08:24:04[             ngx_http_index_handler,   216]  [debug] 2955#2955: *2 open index "/usr/local/nginx/html/index.html"
+2025/02/14 08:24:04[         ngx_http_internal_redirect,  3853]  [debug] 2955#2955: *2 internal redirect: "/index.html?"
+2025/02/14 08:24:04[        ngx_http_core_rewrite_phase,  1810]  [debug] 2955#2955: *2 rewrite phase: 0 (NGX_HTTP_SERVER_REWRITE_PHASE)
+2025/02/14 08:24:04[    ngx_http_core_find_config_phase,  1868]  [debug] 2955#2955: *2 find config phase: 1 (NGX_HTTP_FIND_CONFIG_PHASE), uri:/index.html
+2025/02/14 08:24:04[ ngx_http_core_find_static_location,  2753]  [debug] 2955#2955: *2 static_locations test location: "/", client uri:/index.html
+2025/02/14 08:24:04[ ngx_http_core_find_static_location,  2753]  [debug] 2955#2955: *2 static_locations test location: "proxy1", client uri:/index.html
+2025/02/14 08:24:04[ ngx_http_core_find_static_location,  2753]  [debug] 2955#2955: *2 static_locations test location: "mytest", client uri:/index.html
+2025/02/14 08:24:04[        ngx_http_core_find_location,  2693]  [debug] 2955#2955: *2 ngx pcre test location: ~ "/1mytest"
+2025/02/14 08:24:04[    ngx_http_core_find_config_phase,  1888]  [debug] 2955#2955: *2 using configuration "/"
+2025/02/14 08:24:04[    ngx_http_core_find_config_phase,  1895]  [debug] 2955#2955: *2 http cl:-1 max:1048576
+2025/02/14 08:24:04[        ngx_http_core_rewrite_phase,  1810]  [debug] 2955#2955: *2 rewrite phase: 2 (NGX_HTTP_REWRITE_PHASE)
+2025/02/14 08:24:04[   ngx_http_core_post_rewrite_phase,  1963]  [debug] 2955#2955: *2 post rewrite phase: 3 (NGX_HTTP_POST_REWRITE_PHASE)
+2025/02/14 08:24:04[        ngx_http_core_generic_phase,  1746]  [debug] 2955#2955: *2 generic phase: 4 (NGX_HTTP_PREACCESS_PHASE)
+2025/02/14 08:24:04[        ngx_http_core_generic_phase,  1746]  [debug] 2955#2955: *2 generic phase: 5 (NGX_HTTP_PREACCESS_PHASE)
+2025/02/14 08:24:04[         ngx_http_core_access_phase,  2061]  [debug] 2955#2955: *2 access phase: 6 (NGX_HTTP_ACCESS_PHASE)
+2025/02/14 08:24:04[         ngx_http_core_access_phase,  2061]  [debug] 2955#2955: *2 access phase: 7 (NGX_HTTP_ACCESS_PHASE)
+2025/02/14 08:24:04[    ngx_http_core_post_access_phase,  2163]  [debug] 2955#2955: *2 post access phase: 8 (NGX_HTTP_POST_ACCESS_PHASE)
+2025/02/14 08:24:04[        ngx_http_core_content_phase,  2491]  [debug] 2955#2955: *2 content phase: 9 (NGX_HTTP_CONTENT_PHASE)
+2025/02/14 08:24:04[        ngx_http_core_content_phase,  2491]  [debug] 2955#2955: *2 content phase: 10 (NGX_HTTP_CONTENT_PHASE)
+2025/02/14 08:24:04[        ngx_http_core_content_phase,  2491]  [debug] 2955#2955: *2 content phase: 11 (NGX_HTTP_CONTENT_PHASE)
+2025/02/14 08:24:04[            ngx_http_static_handler,    85]  [debug] 2955#2955: *2 http filename: "/usr/local/nginx/html/index.html"
+2025/02/14 08:24:04[            ngx_http_static_handler,   145]  [debug] 2955#2955: *2 http static fd: 11
+2025/02/14 08:24:04[      ngx_http_discard_request_body,   734]  [debug] 2955#2955: *2 http set discard body
+*/
 static ngx_int_t
 ngx_http_index_handler(ngx_http_request_t *r)
 {
@@ -122,7 +163,39 @@ ngx_http_index_handler(ngx_http_request_t *r)
     ngx_http_index_loc_conf_t    *ilcf;
     ngx_http_script_len_code_pt   lcode;
 
-    if (r->uri.data[r->uri.len - 1] != '/') {
+    /*
+      一般匹配到location / {
+    
+      }的时候，才会执行下面的index，然后进行内部跳转
+     */
+
+    /*
+    如果浏览器输入:http://10.135.10.167/ABC/,则也会满足要求，uri会变为/ABC/index.html,打印如下
+     2015/10/16 12:08:03[                ngx_event_del_timer,    39]  [debug] 12610#12610: *2 < ngx_http_process_request,  2013>  event timer del: 3: 1859492499
+     2015/10/16 12:08:03[        ngx_http_core_rewrite_phase,  1810]  [debug] 12610#12610: *2 rewrite phase: 0 (NGX_HTTP_SERVER_REWRITE_PHASE)
+     2015/10/16 12:08:03[    ngx_http_core_find_config_phase,  1868]  [debug] 12610#12610: *2 find config phase: 1 (NGX_HTTP_FIND_CONFIG_PHASE), uri:/ABC/
+     2015/10/16 12:08:03[ ngx_http_core_find_static_location,  2753]  [debug] 12610#12610: *2 static_locations test location: "/", client uri:/ABC/
+     2015/10/16 12:08:03[ ngx_http_core_find_static_location,  2753]  [debug] 12610#12610: *2 static_locations test location: "proxy1", client uri:/ABC/
+     2015/10/16 12:08:03[ ngx_http_core_find_static_location,  2753]  [debug] 12610#12610: *2 static_locations test location: "mytest", client uri:/ABC/
+     2015/10/16 12:08:03[        ngx_http_core_find_location,  2693]  [debug] 12610#12610: *2 ngx pcre test location: ~ "\.php$"
+     2015/10/16 12:08:03[        ngx_http_core_find_location,  2693]  [debug] 12610#12610: *2 ngx pcre test location: ~ "/1mytest"
+     2015/10/16 12:08:03[    ngx_http_core_find_config_phase,  1888]  [debug] 12610#12610: *2 using configuration "/"
+     2015/10/16 12:08:03[    ngx_http_core_find_config_phase,  1895]  [debug] 12610#12610: *2 http cl:-1 max:1048576
+     2015/10/16 12:08:03[        ngx_http_core_rewrite_phase,  1810]  [debug] 12610#12610: *2 rewrite phase: 2 (NGX_HTTP_REWRITE_PHASE)
+     2015/10/16 12:08:03[   ngx_http_core_post_rewrite_phase,  1963]  [debug] 12610#12610: *2 post rewrite phase: 3 (NGX_HTTP_POST_REWRITE_PHASE)
+     2015/10/16 12:08:03[        ngx_http_core_generic_phase,  1746]  [debug] 12610#12610: *2 generic phase: 4 (NGX_HTTP_PREACCESS_PHASE)
+     2015/10/16 12:08:03[        ngx_http_core_generic_phase,  1746]  [debug] 12610#12610: *2 generic phase: 5 (NGX_HTTP_PREACCESS_PHASE)
+     2015/10/16 12:08:03[         ngx_http_core_access_phase,  2061]  [debug] 12610#12610: *2 access phase: 6 (NGX_HTTP_ACCESS_PHASE)
+     2015/10/16 12:08:03[         ngx_http_core_access_phase,  2061]  [debug] 12610#12610: *2 access phase: 7 (NGX_HTTP_ACCESS_PHASE)
+     2015/10/16 12:08:03[    ngx_http_core_post_access_phase,  2163]  [debug] 12610#12610: *2 post access phase: 8 (NGX_HTTP_POST_ACCESS_PHASE)
+     2015/10/16 12:08:03[        ngx_http_core_content_phase,  2491]  [debug] 12610#12610: *2 content phase: 9 (NGX_HTTP_CONTENT_PHASE)
+     2015/10/16 12:08:03[             ngx_http_index_handler,   191]  [debug] 12610#12610: *2 yang test ... index-count:3
+     2015/10/16 12:08:03[             ngx_http_index_handler,   263]  [debug] 12610#12610: *2 open index "/var/yyz/www/ABC/index.html"
+     2015/10/16 12:08:03[             ngx_http_index_handler,   283]  [debug] 12610#12610: *2 stat() "/var/yyz/www/ABC/index.html" failed (2: No such file or directory)
+     2015/10/16 12:08:03[            ngx_http_index_test_dir,   364]  [debug] 12610#12610: *2 http index check dir: "/var/yyz/www/ABC"
+
+     */
+    if (r->uri.data[r->uri.len - 1] != '/') { //末尾不是/，直接跳转到下一阶段
         return NGX_DECLINED;
     }
 
@@ -140,6 +213,8 @@ ngx_http_index_handler(ngx_http_request_t *r)
     /* suppress MSVC warning */
     path.data = NULL;
 
+    ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, of.err,
+                           "yang test ... index-count:%ui", ilcf->indices->nelts);
     index = ilcf->indices->elts;
     for (i = 0; i < ilcf->indices->nelts; i++) {
 
@@ -287,7 +362,7 @@ ngx_http_index_handler(ngx_http_request_t *r)
             ngx_memcpy(p, name, len - 1);
         }
 
-        return ngx_http_internal_redirect(r, &uri, &r->args);
+        return ngx_http_internal_redirect(r, &uri, &r->args); //内部重定向
     }
 
     return NGX_DECLINED;

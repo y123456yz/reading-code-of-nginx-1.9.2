@@ -121,8 +121,9 @@ VAR_NOCACHEABLE标记，因为既然会被修改，自然也是不可缓存的
 这个值存放在哪儿，但是却需要比较复杂的逻辑获取（上面讲的内部变量$remote_port情况），此时就必须靠回调函数get_handler()来执行这部分逻辑。
 总之，不管简单或复杂，回调函数get_handler0帮我们去在合适的地方通过合适的方式，获取到该内部变量的值，这也是为什么我们并没有给Nginx内部变量赋值，
 却义能读到值，因为有这个回调函数的存在。来看看这两个示例变量的data字段与get_handler()回调字段情况。
-     */ //gethandler()回调字段，这个字段主要实现获取变量值的功能
-    ngx_http_get_variable_pt      get_handler; //ngx_http_rewrite_set中设置为ngx_http_rewrite_var  args的get_handler是ngx_http_variable_request
+     */ //gethandler()回调字段，这个字段主要实现获取变量值的功能  
+     //ngx_http_rewrite_set中设置为ngx_http_rewrite_var  args的get_handler是ngx_http_variable_request ngx_http_variables_init_vars中设置"http_"等的get_handler
+    ngx_http_get_variable_pt      get_handler; 
 
     /*
     举个例子，Nginx内部变量$args表示的是客户端GET请求时uri里的参数，结构体ngxhttp_request_t有一个ngx_str_t类型字段为
@@ -155,18 +156,19 @@ ngx_int_t ngx_http_variable_unknown_header(ngx_http_variable_value_t *v,
 
 #if (NGX_PCRE)
 
+//ngx_http_regex_compile中分配空间,保存变量   ngx_http_regex_exec获取对应的值
 typedef struct {
     ngx_uint_t                    capture;
     ngx_int_t                     index;
-} ngx_http_regex_variable_t;
+} ngx_http_regex_variable_t; //ngx_http_regex_t中包含该成员结构
 
 //该结构包含在ngx_http_script_regex_code_t中
-typedef struct {//ngx_http_regex_compile函数中使用
-    ngx_regex_t                  *regex;
-    ngx_uint_t                    ncaptures;
-    ngx_http_regex_variable_t    *variables;
-    ngx_uint_t                    nvariables;
-    ngx_str_t                     name;
+typedef struct {//ngx_http_regex_compile函数中使用，赋值见ngx_http_regex_compile
+    ngx_regex_t                  *regex; //ngx_regex_compile_t->regex一样
+    ngx_uint_t                    ncaptures;//ngx_regex_compile_t->captures一样 命名子模式和非命名子模式的总个数
+    ngx_http_regex_variable_t    *variables; //命名子模式对应的变量，赋值见ngx_http_regex_compile
+    ngx_uint_t                    nvariables; //有多少个命名子模式，赋值见ngx_http_regex_compile， ngx_http_regex_exec中使用
+    ngx_str_t                     name;//ngx_regex_compile_t->pattern一样
 } ngx_http_regex_t;
 
 

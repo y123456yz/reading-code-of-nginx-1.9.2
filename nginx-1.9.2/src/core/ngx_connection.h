@@ -361,7 +361,7 @@ struct ngx_connection_s {  //cycle->read_events和cycle->write_events这两个数组存
     标志位，如果为1，则表示只有在连接套接字对应的发送缓冲区必须满足最低设置的大小阅值时，事件驱动模块才会分发该事件。这与上文
     介绍过的ngx_handle_write_event方法中的lowat参数是对应的
      */
-    unsigned            sndlowat:1;
+    unsigned            sndlowat:1; //ngx_send_lowat
 
     /*
     标志位，表示如何使用TCP的nodelay特性。它的取值范围是下面这个枚举类型ngx_connection_tcp_nodelay_e。

@@ -368,22 +368,21 @@ server{
 */
 static ngx_command_t  ngx_http_upstream_commands[] = {
 /*
-语法：upstream name {...}
+语法：upstream name { ... } 
+默认值：none 
+使用字段：http 
+这个字段设置一群服务器，可以将这个字段放在proxy_pass和fastcgi_pass指令中作为一个单独的实体，它们可以可以是监听不同端口的服务器，
+并且也可以是同时监听TCP和Unix socket的服务器。
+服务器可以指定不同的权重，默认为1。
+示例配置
 
-配置块：http
-
-upstream块定义了一个上游服务器的集群，便于反向代理中的proxy_pass使用。例如：
 upstream backend {
-  server backend1.example.com;
-  server backend2.example.com;
-    server backend3.example.com;
-}
-
-server {
-  location / {
-    proxy_pass  http://backend;
-  }
-}
+  server backend1.example.com weight=5;
+  server 127.0.0.1:8080       max_fails=3  fail_timeout=30s;
+  server unix:/tmp/backend3;
+}请求将按照轮询的方式分发到后端服务器，但同时也会考虑权重。
+在上面的例子中如果每次发生7个请求，5个请求将被发送到backend1.example.com，其他两台将分别得到一个请求，如果有一台服务器不可用，那么
+请求将被转发到下一台服务器，直到所有的服务器检查都通过。如果所有的服务器都无法通过检查，那么将返回给客户端最后一台工作的服务器产生的结果。
 */
     { ngx_string("upstream"),
       NGX_HTTP_MAIN_CONF|NGX_CONF_BLOCK|NGX_CONF_TAKE1,
@@ -407,6 +406,26 @@ server {
       server   127.0.0.1:8080          max_fails=3  fail_timeout=30s;
       server   unix:/tmp/backend3;
     }
+
+    
+    语法：server name [parameters] 
+    默认值：none 
+    使用字段：upstream 
+    指定后端服务器的名称和一些参数，可以使用域名，IP，端口，或者unix socket。如果指定为域名，则首先将其解析为IP。
+    ·weight = NUMBER - 设置服务器权重，默认为1。
+    ·max_fails = NUMBER - 在一定时间内（这个时间在fail_timeout参数中设置）检查这个服务器是否可用时产生的最多失败请求数，默认为1，将其设置为0可以关闭检查，这些错误在proxy_next_upstream或fastcgi_next_upstream（404错误不会使max_fails增加）中定义。
+    ·fail_timeout = TIME - 在这个时间内产生了max_fails所设置大小的失败尝试连接请求后这个服务器可能不可用，同样它指定了服务器不可用的时间（在下一次尝试连接请求发起之前），默认为10秒，fail_timeout与前端响应时间没有直接关系，不过可以使用proxy_connect_timeout和proxy_read_timeout来控制。
+    ·down - 标记服务器处于离线状态，通常和ip_hash一起使用。
+    ·backup - (0.6.7或更高)如果所有的非备份服务器都宕机或繁忙，则使用本服务器（无法和ip_hash指令搭配使用）。
+    示例配置
+    
+    upstream  backend  {
+      server   backend1.example.com    weight=5;
+      server   127.0.0.1:8080          max_fails=3  fail_timeout=30s;
+      server   unix:/tmp/backend3;
+    }注意：如果你只使用一台上游服务器，nginx将设置一个内置变量为1，即max_fails和fail_timeout参数不会被处理。
+    结果：如果nginx不能连接到上游，请求将丢失。
+    解决：使用多台上游服务器。
     */
     { ngx_string("server"),
       NGX_HTTP_UPS_CONF|NGX_CONF_1MORE,
@@ -433,11 +452,27 @@ static ngx_http_module_t  ngx_http_upstream_module_ctx = {
     NULL                                   /* merge location configuration */
 };
 
+/*
+Nginx不仅仅可以用做Web服务器。upstream机制其实是由ngx_http_upstream_module模块实现的，它是一个HTTP模块，使用upstream机制时客
+户端的请求必须基于HTTP。
 
-ngx_module_t  ngx_http_upstream_module = {
+既然upstream是用于访问“上游”服务器的，那么，Nginx需要访问什么类型的“上游”服务器呢？是Apache、Tomcat这样的Web服务器，还
+是memcached、cassandra这样的Key-Value存储系统，又或是mongoDB、MySQL这样的数据库？这就涉及upstream机制的范围了。基于事件驱动
+架构的upstream机制所要访问的就是所有支持TCP的上游服务器。因此，既有ngx_http_proxy_module模块基于upstream机制实现了HTTP的反向
+代理功能，也有类似ngx_http_memcached_module的模块基于upstream机制使得请求可以访问memcached服务器。
+
+当nginx接收到一个连接后，读取完客户端发送出来的Header，然后就会进行各个处理过程的调用。之后就是upstream发挥作用的时候了，
+upstream在客户端跟后端比如FCGI/PHP之间，接收客户端的HTTP body，发送给FCGI，然后接收FCGI的结果，发送给客户端。作为一个桥梁的作用。
+同时，upstream为了充分显示其灵活性，至于后端具体是什么协议，什么系统他都不care，我只实现主体的框架，具体到FCGI协议的发送，接收，
+解析，这些都交给后面的插件来处理，比如有fastcgi,memcached,proxy等插件
+
+http://chenzhenianqing.cn/articles/category/%e5%90%84%e7%a7%8dserver/nginx
+upstream和FastCGI memcached  uwsgi  scgi proxy的关系参考:http://chenzhenianqing.cn/articles/category/%e5%90%84%e7%a7%8dserver/nginx
+*/
+ngx_module_t  ngx_http_upstream_module = { //该模块是访问上游服务器相关模块的基础(例如 FastCGI memcached  uwsgi  scgi proxy都会用到upstream模块  ngx_http_proxy_module  ngx_http_memcached_module)
     NGX_MODULE_V1,
-    &ngx_http_upstream_module_ctx,         /* module context */
-    ngx_http_upstream_commands,            /* module directives */
+    &ngx_http_upstream_module_ctx,            /* module context */
+    ngx_http_upstream_commands,               /* module directives */
     NGX_HTTP_MODULE,                       /* module type */
     NULL,                                  /* init master */
     NULL,                                  /* init module */
@@ -454,15 +489,15 @@ static ngx_http_variable_t  ngx_http_upstream_vars[] = {
 
     { ngx_string("upstream_addr"), NULL,
       ngx_http_upstream_addr_variable, 0,
-      NGX_HTTP_VAR_NOCACHEABLE, 0 },
+      NGX_HTTP_VAR_NOCACHEABLE, 0 }, //前端服务器处理请求的服务器地址
 
     { ngx_string("upstream_status"), NULL,
       ngx_http_upstream_status_variable, 0,
-      NGX_HTTP_VAR_NOCACHEABLE, 0 },
+      NGX_HTTP_VAR_NOCACHEABLE, 0 }, //前端服务器的响应状态。
 
     { ngx_string("upstream_connect_time"), NULL,
       ngx_http_upstream_response_time_variable, 2,
-      NGX_HTTP_VAR_NOCACHEABLE, 0 },
+      NGX_HTTP_VAR_NOCACHEABLE, 0 }, 
 
     { ngx_string("upstream_header_time"), NULL,
       ngx_http_upstream_response_time_variable, 1,
@@ -470,7 +505,7 @@ static ngx_http_variable_t  ngx_http_upstream_vars[] = {
 
     { ngx_string("upstream_response_time"), NULL,
       ngx_http_upstream_response_time_variable, 0,
-      NGX_HTTP_VAR_NOCACHEABLE, 0 },
+      NGX_HTTP_VAR_NOCACHEABLE, 0 },//前端服务器的应答时间，精确到毫秒，不同的应答以逗号和冒号分开。
 
     { ngx_string("upstream_response_length"), NULL,
       ngx_http_upstream_response_length_variable, 0,
@@ -530,7 +565,7 @@ ngx_conf_bitmask_t  ngx_http_upstream_ignore_headers_masks[] = {
 
 
 ngx_int_t
-ngx_http_upstream_create(ngx_http_request_t *r)
+ngx_http_upstream_create(ngx_http_request_t *r)//创建一个ngx_http_upstream_t结构，放到r->upstream里面去。
 {
     ngx_http_upstream_t  *u;
 
@@ -571,11 +606,12 @@ ngx_http_upstream_create(ngx_http_request_t *r)
     6)用无阻塞的TCP套接字建立连接。
     7)无论连接是否建立成功，负责建立连接的connect方法都会立刻返回。
 */
-void ngx_http_upstream_init(ngx_http_request_t *r)
+//ngx_http_upstream_init方法将会根据ngx_http_upstream_conf_t中的成员初始化upstream，同时会开始连接上游服务器，以此展开整个upstream处理流程
+void ngx_http_upstream_init(ngx_http_request_t *r) //在读取完浏览器发送来的请求头部字段后，会通过proxy fastcgi等模块读取包体，读取完后执行该函数
 {
     ngx_connection_t     *c;
 
-    c = r->connection;
+    c = r->connection;//得到其连接结构。
 
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, c->log, 0,
                    "http init upstream, client timer: %d", c->read->timer_set);
@@ -587,13 +623,18 @@ void ngx_http_upstream_init(ngx_http_request_t *r)
     }
 #endif
 
+    /*
+        首先检查请求对应于客户端的连接，这个连接上的读事件如果在定时器中，也就是说，读事件的timer_ set标志位为1，那么调用ngx_del_timer
+    方法把这个读事件从定时器中移除。为什么要做这件事呢？因为一旦启动upstream机制，就不应该对客户端的读操作带有超时时间的处理(超时会关闭客户端连接)，
+    请求的主要触发事件将以与上游服务器的连接为主。
+     */
     if (c->read->timer_set) {
         ngx_del_timer(c->read, NGX_FUNC_LINE);
     }
 
-    if (ngx_event_flags & NGX_USE_CLEAR_EVENT) {
+    if (ngx_event_flags & NGX_USE_CLEAR_EVENT) { //如果epoll使用边缘触发
 
-        if (!c->write->active) {
+        if (!c->write->active) {//要增加可写事件通知，为啥?因为待会可能就能写了,可能会转发上游服务器的内容给浏览器等客户端
             if (ngx_add_event(c->write, NGX_WRITE_EVENT, NGX_CLEAR_EVENT)
                 == NGX_ERROR)
             {
@@ -607,6 +648,11 @@ void ngx_http_upstream_init(ngx_http_request_t *r)
 }
 
 
+//ngx_http_upstream_init调用这里，此时客户端发送的数据都已经接收完毕了。
+/*
+1. 调用create_request创建fcgi或者proxy的数据结构。
+2. 调用ngx_http_upstream_connect连接下游服务器。
+*/
 static void
 ngx_http_upstream_init_request(ngx_http_request_t *r)
 {
@@ -623,7 +669,7 @@ ngx_http_upstream_init_request(ngx_http_request_t *r)
         return;
     }
 
-    u = r->upstream;
+    u = r->upstream;//ngx_http_upstream_create里面设置的
 
 #if (NGX_HTTP_CACHE)
 
@@ -658,15 +704,27 @@ ngx_http_upstream_init_request(ngx_http_request_t *r)
 
     u->store = u->conf->store;
 
+    /*
+    设置Nginx与下游客户端之间TCP连接的检查方法
+    实际上，这两个方法都会通过ngx_http_upstream_check_broken_connection方法检查Nginx与下游的连接是否正常，如果出现错误，就会立即终止连接。
+     */
     if (!u->store && !r->post_action && !u->conf->ignore_client_abort) {
-        r->read_event_handler = ngx_http_upstream_rd_check_broken_connection;
+        r->read_event_handler = ngx_http_upstream_rd_check_broken_connection; //设置回调需要检测连接是否有问题。
         r->write_event_handler = ngx_http_upstream_wr_check_broken_connection;
     }
 
-    if (r->request_body) {
-        u->request_bufs = r->request_body->bufs;
+    if (r->request_body) {//客户端发送过来的POST数据存放在此,ngx_http_read_client_request_body放的
+        u->request_bufs = r->request_body->bufs; //记录客户端发送的数据，下面在create_request的时候拷贝到发送缓冲链接表里面的。
     }
 
+    /*
+     调用请求中ngx_http_upstream_t结构体里由某个HTTP模块实现的create_request方法，构造发往上游服务器的请求
+     （请求中的内容是设置到request_bufs缓冲区链表中的）。如果create_request方法没有返回NGX_OK，则upstream结束
+
+     如果是FCGI。下面组建好FCGI的各种头部，包括请求开始头，请求参数头，请求STDIN头。存放在u->request_bufs链接表里面。
+	如果是Proxy模块，ngx_http_proxy_create_request组件反向代理的头部啥的,放到u->request_bufs里面
+	FastCGI memcached  uwsgi  scgi proxy都会用到upstream模块
+     */
     if (u->create_request(r) != NGX_OK) {
         ngx_http_finalize_request(r, NGX_HTTP_INTERNAL_SERVER_ERROR);
         return;
@@ -682,8 +740,9 @@ ngx_http_upstream_init_request(ngx_http_request_t *r)
     u->output.bufs.size = clcf->client_body_buffer_size;
 
     if (u->output.output_filter == NULL) {
-        u->output.output_filter = ngx_chain_writer;
-        u->output.filter_ctx = &u->writer;
+        //设置过滤模块的开始过滤函数为writer。也就是output_filter。在ngx_output_chain被调用已进行数据的过滤
+        u->output.output_filter = ngx_chain_writer; 
+        u->output.filter_ctx = &u->writer; //参考ngx_chain_writer，里面会将输出buf一个个连接到这里。
     }
 
     u->writer.pool = r->pool;
@@ -715,11 +774,26 @@ ngx_http_upstream_init_request(ngx_http_request_t *r)
         return;
     }
 
-    cln->handler = ngx_http_upstream_cleanup;
+    cln->handler = ngx_http_upstream_cleanup; //当请求结束时，一定会调用ngx_http_upstream_cleanup方法
     cln->data = r;
     u->cleanup = &cln->handler;
 
-    if (u->resolved == NULL) {
+    /*
+    http://www.pagefault.info/?p=251
+    然后就是这个函数最核心的处理部分，那就是根据upstream的类型来进行不同的操作，这里的upstream就是我们通过XXX_pass传递进来的值，
+    这里的upstream有可能下面几种情况。 
+    Ngx_http_fastcgi_module.c (src\http\modules):    { ngx_string("fastcgi_pass"),
+    Ngx_http_memcached_module.c (src\http\modules):    { ngx_string("memcached_pass"),
+    Ngx_http_proxy_module.c (src\http\modules):    { ngx_string("proxy_pass"),
+    Ngx_http_scgi_module.c (src\http\modules):    { ngx_string("scgi_pass"),
+    Ngx_http_uwsgi_module.c (src\http\modules):    { ngx_string("uwsgi_pass"),
+    Ngx_stream_proxy_module.c (src\stream):    { ngx_string("proxy_pass"),
+    1 XXX_pass中不包含变量。
+    2 XXX_pass传递的值包含了一个变量($开始).这种情况也就是说upstream的url是动态变化的，因此需要每次都解析一遍.
+    而第二种情况又分为2种，一种是在进入upstream之前，也就是 upstream模块的handler之中已经被resolve的地址(请看ngx_http_XXX_eval函数)，
+    一种是没有被resolve，此时就需要upstream模块来进行resolve。接下来的代码就是处理这部分的东西。
+    */
+    if (u->resolved == NULL) {//上游的IP地址是否被解析过，ngx_http_fastcgi_handler调用ngx_http_fastcgi_eval会解析。
 
         uscf = u->conf->upstream;
 
@@ -728,8 +802,8 @@ ngx_http_upstream_init_request(ngx_http_request_t *r)
 #if (NGX_HTTP_SSL)
         u->ssl_name = u->resolved->host;
 #endif
-
-        if (u->resolved->sockaddr) {
+    //ngx_http_fastcgi_handler 会调用 ngx_http_fastcgi_eval函数，进行fastcgi_pass 后面的URL的简析，解析出unix域，或者socket.
+        if (u->resolved->sockaddr) {//如果地址已经被resolve过了，我IP地址，此时创建round robin peer就行
 
             if (ngx_http_upstream_create_round_robin_peer(r, u->resolved)
                 != NGX_OK)
@@ -739,7 +813,7 @@ ngx_http_upstream_init_request(ngx_http_request_t *r)
                 return;
             }
 
-            ngx_http_upstream_connect(r, u);
+            ngx_http_upstream_connect(r, u);//连接 
 
             return;
         }
@@ -833,7 +907,7 @@ found:
         u->peer.tries = u->conf->next_upstream_tries;
     }
 
-    ngx_http_upstream_connect(r, u);
+    ngx_http_upstream_connect(r, u);//调用ngx_http_upstream_connect方法向上游服务器发起连接
 }
 
 
@@ -1404,7 +1478,13 @@ ngx_http_upstream_check_broken_connection(ngx_http_request_t *r,
     }
 }
 
-
+/*
+upstream机制与上游服务器是通过TCP建立连接的，众所周知，建立TCP连接需要三次握手，而三次握手消耗的时间是不可控的。为了保证建立TCP
+连接这个操作不会阻塞进程，Nginx使用无阻塞的套接字来连接上游服务器。调用的ngx_http_upstream_connect方法就是用来连接上游服务器的，
+由于使用了非阻塞的套接字，当方法返回时与上游之间的TCP连接未必会成功建立，可能还需要等待上游服务器返回TCP的SYN/ACK包。因此，
+ngx_http_upstream_connect方法主要负责发起建立连接这个动作，如果这个方法没有立刻返回成功，那么需要在epoll中监控这个套接字，当
+它出现可写事件时，就说明连接已经建立成功了。
+*/
 static void
 ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
 {
@@ -1430,7 +1510,7 @@ ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
     u->state->connect_time = (ngx_msec_t) -1;
     u->state->header_time = (ngx_msec_t) -1;
 
-    rc = ngx_event_connect_peer(&u->peer);
+    rc = ngx_event_connect_peer(&u->peer); //建立一个TCP套接字，同时，这个套接字需要设置为非阻塞模式。
 
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                    "http upstream connect: %i", rc);
@@ -1463,7 +1543,9 @@ ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
     c->write->handler = ngx_http_upstream_handler;
     c->read->handler = ngx_http_upstream_handler;
 
+    //这一步骤实际上决定了向上游服务器发送请求的方法是ngx_http_upstream_send_request_handler.
     u->write_event_handler = ngx_http_upstream_send_request_handler;
+//设置upstream机制的read_event_handler方法为ngx_http_upstream_process_header，也就是由ngx_http_upstream_process_header方法接收上游服务器的响应。
     u->read_event_handler = ngx_http_upstream_process_header;
 
     c->sendfile &= r->connection->sendfile;
@@ -1528,8 +1610,13 @@ ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
     }
 
     u->request_sent = 0;
-
+    
     if (rc == NGX_AGAIN) {
+        /*
+          这一步处理非阻塞的连接尚未成功建立时的动作。实际上，在ngx_event_connect_peer中，套接字已经加入到epoll中监控了，因此，
+          这一步将调用ngx_add_timer方法把写事件添加到定时器中，超时时间为ngx_http_upstream_conf_t结构体中的connect_timeout
+          成员，这是在设置建立TCP连接的超时时间。
+          */
         ngx_add_timer(c->write, u->conf->connect_timeout, NGX_FUNC_LINE);
         return;
     }
@@ -1543,6 +1630,7 @@ ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
 #endif
 
+    //如呆已经成功建立连接，则调用ngx_http_upstream_send_request方法向上游服务器发送请求
     ngx_http_upstream_send_request(r, u, 1);
 }
 
@@ -1860,7 +1948,7 @@ ngx_http_upstream_reinit(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
 static void
 ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u,
-    ngx_uint_t do_write)
+    ngx_uint_t do_write) //向上游服务器发送请求
 {
     ngx_int_t          rc;
     ngx_connection_t  *c;
@@ -5355,10 +5443,22 @@ ngx_http_upstream_cache_etag(ngx_http_request_t *r,
 
 #endif
 
+/*
+upstream backend {
+    server backend1.example.com weight=5;
+    server backend2.example.com:8080;
+    server unix:/tmp/backend3;
+}
 
+server {
+    location / {
+        proxy_pass http://backend;
+    }
+}
+*/
 static char *
 ngx_http_upstream(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
-{
+{//当碰到upstream{}指令的时候调用这里。
     char                          *rv;
     void                          *mconf;
     ngx_str_t                     *value;
@@ -5372,10 +5472,11 @@ ngx_http_upstream(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
     ngx_memzero(&u, sizeof(ngx_url_t));
 
     value = cf->args->elts;
-    u.host = value[1];
+    u.host = value[1]; //upstream backend { }中的backend
     u.no_resolve = 1;
     u.no_port = 1;
 
+    //下面将u代表的数据设置到umcf->upstreams里面去。然后返回对应的upstream{}结构数据指针。
     uscf = ngx_http_upstream_add(cf, &u, NGX_HTTP_UPSTREAM_CREATE
                                          |NGX_HTTP_UPSTREAM_WEIGHT
                                          |NGX_HTTP_UPSTREAM_MAX_FAILS
@@ -5393,7 +5494,7 @@ ngx_http_upstream(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
     }
 
     http_ctx = cf->ctx;
-    ctx->main_conf = http_ctx->main_conf;
+    ctx->main_conf = http_ctx->main_conf; //获取该upstream xxx{}所处的http{}
 
     /* the upstream{}'s srv_conf */
 
@@ -5408,12 +5509,12 @@ ngx_http_upstream(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 
 
     /* the upstream{}'s loc_conf */
-
     ctx->loc_conf = ngx_pcalloc(cf->pool, sizeof(void *) * ngx_http_max_module);
     if (ctx->loc_conf == NULL) {
         return NGX_CONF_ERROR;
     }
 
+    //该upstream{}中可以配置所有的loc级别模块的配置信息，因此为每个模块创建对应的存储空间
     for (m = 0; ngx_modules[m]; m++) {
         if (ngx_modules[m]->type != NGX_HTTP_MODULE) {
             continue;
@@ -5449,13 +5550,13 @@ ngx_http_upstream(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 
     /* parse inside upstream{} */
 
-    pcf = *cf;
-    cf->ctx = ctx;
+    pcf = *cf;   //保存upstream{}所处的ctx
+    cf->ctx = ctx;//临时切换ctx，进入upstream{}块中进行解析。
     cf->cmd_type = NGX_HTTP_UPS_CONF;
 
     rv = ngx_conf_parse(cf, NULL);
 
-    *cf = pcf;
+    *cf = pcf; //upstream{}内部配置解析完毕后，恢复到之前的cf
 
     if (rv != NGX_CONF_OK) {
         return rv;
@@ -5470,7 +5571,7 @@ ngx_http_upstream(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
     return rv;
 }
 
-
+//server   127.0.0.1:8080          max_fails=3  fail_timeout=30s;
 static char *
 ngx_http_upstream_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -5635,6 +5736,7 @@ ngx_http_upstream_add(ngx_conf_t *cf, ngx_url_t *u, ngx_uint_t flags)
 
     uscfp = umcf->upstreams.elts;
 
+    //遍历当前的upstream，如果有重复的，则比较其相关的字段，并打印日志。如果找到相同的，则返回对应指针。没找到则在后面创建
     for (i = 0; i < umcf->upstreams.nelts; i++) {
 
         if (uscfp[i]->host.len != u->host.len
@@ -5683,7 +5785,7 @@ ngx_http_upstream_add(ngx_conf_t *cf, ngx_url_t *u, ngx_uint_t flags)
             uscfp[i]->flags = flags;
         }
 
-        return uscfp[i];
+        return uscfp[i];//找到相同的配置数据了，直接返回它的指针。
     }
 
     uscf = ngx_pcalloc(cf->pool, sizeof(ngx_http_upstream_srv_conf_t));
@@ -5693,12 +5795,13 @@ ngx_http_upstream_add(ngx_conf_t *cf, ngx_url_t *u, ngx_uint_t flags)
 
     uscf->flags = flags;
     uscf->host = u->host;
-    uscf->file_name = cf->conf_file->file.name.data;
+    uscf->file_name = cf->conf_file->file.name.data; //配置文件名称
     uscf->line = cf->conf_file->line;
     uscf->port = u->port;
     uscf->default_port = u->default_port;
     uscf->no_port = u->no_port;
 
+    //比如: server xx.xx.xx.xx:xx weight=2 max_fails=3;  刚开始，ngx_http_upstream会调用本函数。但是其naddres=0.
     if (u->naddrs == 1 && (u->port || u->family == AF_UNIX)) {
         uscf->servers = ngx_array_create(cf->pool, 1,
                                          sizeof(ngx_http_upstream_server_t));
@@ -5706,7 +5809,7 @@ ngx_http_upstream_add(ngx_conf_t *cf, ngx_url_t *u, ngx_uint_t flags)
             return NULL;
         }
 
-        us = ngx_array_push(uscf->servers);
+        us = ngx_array_push(uscf->servers);//记录本upstream{}块的所有server指令。
         if (us == NULL) {
             return NULL;
         }
@@ -5850,7 +5953,7 @@ ngx_http_upstream_get_local(ngx_http_request_t *r,
     }
 }
 
-
+//fastcgi_param  Params数据包，用于传递执行页面所需要的参数和环境变量。
 char *
 ngx_http_upstream_param_set_slot(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf)
@@ -5861,7 +5964,8 @@ ngx_http_upstream_param_set_slot(ngx_conf_t *cf, ngx_command_t *cmd,
     ngx_array_t                **a;
     ngx_http_upstream_param_t   *param;
 
-    a = (ngx_array_t **) (p + cmd->offset);
+    //fastcgi_param设置的传送到FastCGI服务器的相关参数都添加到该数组中，见ngx_http_upstream_param_set_slot
+    a = (ngx_array_t **) (p + cmd->offset);//ngx_http_fastcgi_loc_conf_t->params_source
 
     if (*a == NULL) {
         *a = ngx_array_create(cf->pool, 4, sizeof(ngx_http_upstream_param_t));
@@ -5888,7 +5992,7 @@ ngx_http_upstream_param_set_slot(ngx_conf_t *cf, ngx_command_t *cmd,
             return NGX_CONF_ERROR;
         }
 
-        param->skip_empty = 1;
+        param->skip_empty = 1; //和ngx_http_fastcgi_init_params配合阅读
     }
 
     return NGX_CONF_OK;

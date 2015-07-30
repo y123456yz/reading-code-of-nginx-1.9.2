@@ -812,6 +812,10 @@ typedef struct {
  意每个元素的大小为一个字节，所以其实也就是为ngx_httpscript_valuecodet类型变量val申请存储空间（很棒的技巧）
      */ //存放的是已经使用了的变量的ngx_http_script_XXX_code_t结构，这些结构的code函数，在ngx_http_rewrite_handler会得到执行
      //set  break  return等都会添加对应的xxx_code到该数组codes中
+
+    /*注意这里是对应的server{}块或者location{}块中的code，因此这里面对应的就是在server{]或者location{}中的code,因此不同server{}或
+     者location{}中的code对应的rlcf->codes不一样。先要NGX_HTTP_FIND_CONFIG_PHASE阶段找到对应的location后才能继续执行location{}中的rewrite
+     相关配置脚本处理*/
     ngx_array_t  *codes;        /* uintptr_t */ //set  $variable  value中的value置存入到codes中，见ngx_http_rewrite_value
 
     ngx_uint_t    stack_size; //默认10
@@ -886,7 +890,7 @@ static ngx_command_t  ngx_http_rewrite_commands[] = { //参考http://blog.csdn.net
       ngx_http_rewrite,
       NGX_HTTP_LOC_CONF_OFFSET,
       0,
-      NULL },
+      NULL }, 
 
     /*
      return
@@ -920,7 +924,7 @@ static ngx_command_t  ngx_http_rewrite_commands[] = { //参考http://blog.csdn.net
       limit_rate  10k;
       break;
     }
-     */
+     */ //break会跳过后面的脚本引擎，停止执行ngx_http_rewrite_handler中的rewrite相关的code函数，也就该命令后的所有rewrite配置相关的几个命令例如set break  return rewrite if都不会得到解析执行
     { ngx_string("break"),
       NGX_HTTP_SRV_CONF|NGX_HTTP_SIF_CONF|NGX_HTTP_LOC_CONF|NGX_HTTP_LIF_CONF
                        |NGX_CONF_NOARGS,
@@ -1097,6 +1101,7 @@ ngx_module_t  ngx_http_rewrite_module = {//参考http://blog.csdn.net/brainkick/ar
     NGX_MODULE_V1_PADDING
 };
 
+//checker函数中ngx_http_core_rewrite_phase执行
 static ngx_int_t
 ngx_http_rewrite_handler(ngx_http_request_t *r) 
 {
@@ -1116,6 +1121,9 @@ ngx_http_rewrite_handler(ngx_http_request_t *r)
         return NGX_DECLINED;
     }
 
+    //在NGX_HTTP_SERVER_REWRITE_PHASE阶段对应的是server{]块中的rewrite配置，因为r->loc_conf[]指向的是server{]上下文中的loc_conf，
+    //NGX_HTTP_REWRITE_PHASE对应的是location{}块中的rewrite配置，，因为r->loc_conf[]指向的是location{]上下文中的loc_conf，
+    //在NGX_HTTP_FIND_CONFIG_PHASE会找到uri对应的location{}配置，从而NGX_HTTP_REWRITE_PHASE能够执行这个location{}中的rewrite配置
     rlcf = ngx_http_get_module_loc_conf(r, ngx_http_rewrite_module);
     if (rlcf->codes == NULL) { //说明没有已使用的变量
         return NGX_DECLINED;
@@ -1137,6 +1145,7 @@ ngx_http_rewrite_handler(ngx_http_request_t *r)
     /* 包含了在配置解析过程中设置的一些处理结构体，下面的rlcf->codes是一个数组，注意的是，这些结构体的第一个成员就是一个处理handler，
     这里处理时，都会将该结构体类型强转，拿到其处理handler，然后按照顺序依次执行之   */
     e->ip = rlcf->codes->elts;  
+
     e->request = r; // 需要处理的请求  
     e->quote = 1; // 初始时认为uri需要特殊处理，如做escape，或者urldecode处理。 
     e->log = rlcf->log;
@@ -1155,9 +1164,12 @@ ngx_http_rewrite_handler(ngx_http_request_t *r)
     隐含默认所有的ngx_http_scriptxxx_codet结构体第一个字段必定为回调函数指针，如果我们添加自己的脚本引擎功能步骤，这点就需要注意。
      */
         code = *(ngx_http_script_code_pt *) e->ip;
-        code(e); //e是从ngx_http_rewrite_loc_conf_t->codes->elts遍历获取到的
+        code(e); //e->ip是从ngx_http_rewrite_loc_conf_t->codes->elts遍历获取到的
     }
 
+    ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                   "ngx_http_rewrite_handler e->status:%d, r->err_status:%ui", e->status, r->err_status);
+    //默认是返回NGX_DECLINED，触发在code()中修改了e->status。如果修改了status，则在执行该函数的ngx_http_core_rewrite_phase中结束请求
     if (e->status < NGX_HTTP_BAD_REQUEST) {
         return e->status;
     }
@@ -1279,23 +1291,31 @@ ngx_http_rewrite_init(ngx_conf_t *cf)
     return NGX_OK;
 }
 
-
+/*
+1. 解析正则表达式，提取子模式，命名子模式存入variables等；
+2.	解析第四个参数last,break等。
+3.调用ngx_http_script_compile将目标字符串解析为结构化的codes句柄数组，以便解析时进行计算；
+4.根据第三步的结果，生成lcf->codes 组，后续rewrite时，一组组的进行匹配即可。失败自动跳过本组，到达下一组rewrite
+*/ //ngx_http_rewrite_handler中会执行该函数中的相关code
 static char *
-ngx_http_rewrite(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+ngx_http_rewrite(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)   
 {//下面的解析以://比如rewrite  ^(/xyz/aa.*)$   http://$http_host/aa.mp4   break;为例
     ngx_http_rewrite_loc_conf_t  *lcf = conf;
 
     ngx_str_t                         *value;
     ngx_uint_t                         last;
-    ngx_regex_compile_t                rc;
+    ngx_regex_compile_t                rc; 
     ngx_http_script_code_pt           *code;
     ngx_http_script_compile_t          sc;
     ngx_http_script_regex_code_t      *regex;
     ngx_http_script_regex_end_code_t  *regex_end;
     u_char                             errstr[NGX_MAX_CONF_ERRSTR];
 
+    //该函数中的lcf->codes会把ngx_http_script_regex_start_code
+    /*regex从codes[]中获取空间,，注意这里的codes对应的是rewrite相关配置所在的server{}或者location中的上下文中，例如不同location{}
+    中的rewrite相关配置上下文处于不同location中 */
     regex = ngx_http_script_start_code(cf->pool, &lcf->codes,
-                                       sizeof(ngx_http_script_regex_code_t));
+                                       sizeof(ngx_http_script_regex_code_t)); 
     if (regex == NULL) {
         return NGX_CONF_ERROR;
     }
@@ -1304,6 +1324,7 @@ ngx_http_rewrite(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     value = cf->args->elts;
 
+    //ngx_http_rewrite中，rewrite aaa bbb break;配置中，aaa解析使用ngx_regex_compile_t，bbb解析使用ngx_http_script_compile_t
     ngx_memzero(&rc, sizeof(ngx_regex_compile_t));
 
     rc.pattern = value[1];//记录 ^(/xyz/aa.*)$
@@ -1317,17 +1338,19 @@ ngx_http_rewrite(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
+    //ngx_http_script_regex_start_code函数匹配正则表达式，计算目标字符串长度并分配空间。
+	//将其设置为第一个code函数，求出目标字符串大小。尾部还有ngx_http_script_regex_end_code
     regex->code = ngx_http_script_regex_start_code;
     regex->uri = 1;
     regex->name = value[1];
 
-    if (value[2].data[value[2].len - 1] == '?') {
+    if (value[2].data[value[2].len - 1] == '?') {//如果目标结果串后面用问好结尾，则nginx不会拷贝参数到后面的
 
         /* the last "?" drops the original arguments */
         value[2].len--;
 
     } else {
-        regex->add_args = 1;
+        regex->add_args = 1;//自动追加参数。
     }
 
     last = 0;
@@ -1335,22 +1358,41 @@ ngx_http_rewrite(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     if (ngx_strncmp(value[2].data, "http://", sizeof("http://") - 1) == 0
         || ngx_strncmp(value[2].data, "https://", sizeof("https://") - 1) == 0
         || ngx_strncmp(value[2].data, "$scheme", sizeof("$scheme") - 1) == 0)
-    {
-        regex->status = NGX_HTTP_MOVED_TEMPORARILY;
-        regex->redirect = 1;
+    {//nginx判断，如果是用http://等开头的rewrite，就代表是垮域重定向。会做302处理。
+        regex->status = NGX_HTTP_MOVED_TEMPORARILY; //服务器返回该302，浏览器收到后，会把从新请求浏览器发送回来的新的重定向地址
+        regex->redirect = 1; 
         last = 1;
     }
 
+    /*
+     ·last - 完成重写指令，之后搜索相应的URI或location。
+    ·break - 完成重写指令。
+    ·redirect - 返回302临时重定向，如果替换字段用http://开头则被使用。
+    ·permanent - 返回301永久重定向。
+
+      配置为:
+      location ~* /1mytest  {			
+            rewrite   ^.*$ www.11.com/ last;		
+       }  
+      uri为:http://10.135.10.167/1mytest ,则执行完ngx_http_script_regex_end_code后，uri会变为www.11.com/
+
+      last或者break配置，nginx会继续执行后面的其他phase流程，会去请求www.11.com/目录路径查找资源
+      redirect或者permanent配置，status值会变为301 或者 302，在ngx_http_core_rewrite_phase中执行完code后，会直接返回重定向地址www.11.com/给客户端
+        客户端浏览器会重新请求本服务器，其uri为www.11.com/(浏览器页面变为http://10.135.10.167/www.11.com)。但是如果把www.galaxywind.com/改为http://www.11.com/,则不会请求本服务器，而是直接跳转到http://www.11.com/
+     */
     if (cf->args->nelts == 4) {
-        if (ngx_strcmp(value[3].data, "last") == 0) {
+        if (ngx_strcmp(value[3].data, "last") == 0) {  // 例如rewrite   ^.*$ www.galaxywind.com last;就会多次执行rewrite
             last = 1;
 
         } else if (ngx_strcmp(value[3].data, "break") == 0) {
+            /*
+                在ngx_http_core_post_rewrite_phase中就不会执行里面的if语句，也就不会再次走到再次走rewrite和find config的过程了，而是继续处理后面的流程。
+               */
             regex->break_cycle = 1;
             last = 1;
 
         } else if (ngx_strcmp(value[3].data, "redirect") == 0) {
-            regex->status = NGX_HTTP_MOVED_TEMPORARILY;
+            regex->status = NGX_HTTP_MOVED_TEMPORARILY; //服务器返回该302，浏览器收到后，会把从新请求浏览器发送回来的新的重定向地址
             regex->redirect = 1;
             last = 1;
 
@@ -1366,27 +1408,29 @@ ngx_http_rewrite(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
     }
 
+    //ngx_http_rewrite中，rewrite aaa bbb break;配置中，aaa解析使用ngx_regex_compile_t，bbb解析使用ngx_http_script_compile_t
     ngx_memzero(&sc, sizeof(ngx_http_script_compile_t));
 
     sc.cf = cf;
-    sc.source = &value[2];
-    sc.lengths = &regex->lengths;
-    sc.values = &lcf->codes;
+    sc.source = &value[2];//字符串 http://$http_host/aa.mp4
+    sc.lengths = &regex->lengths; //输出参数，里面会包含一些如何求目标字符串长度的函数回调。如上会包含三个: 常量 变量 常量
+    sc.values = &lcf->codes;//将子模式存入这里。
     sc.variables = ngx_http_script_variables_count(&value[2]);
-    sc.main = regex;
-    sc.complete_lengths = 1;
+    sc.main = regex; //这是顶层的表达式，里面包含了lengths等。
+    sc.complete_lengths = 1;// complete_lengths置1，是为了给lengths数组结尾(以null指针填充)，因为在运行这个数组中的成员时，碰到NULL时，执行就结束了。 
     sc.compile_args = !regex->redirect;
 
+    //rewrite  ^(.*)$   http://$http_host.mp4   break;中的http://$http_host.mp4会通过ngx_http_script_compile函数把相关的code添加到lcf->codes[]中
     if (ngx_http_script_compile(&sc) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
 
-    regex = sc.main;
+    regex = sc.main;//这里这么做的原因是可能上面会改变内存地址。
 
     regex->size = sc.size;
     regex->args = sc.args;
 
-    if (sc.variables == 0 && !sc.dup_capture) {
+    if (sc.variables == 0 && !sc.dup_capture) {//如果没有变量，那就将lengths置空，这样就不用做多余的正则解析而直接进入字符串拷贝codes
         regex->lengths = NULL;
     }
 
@@ -1397,13 +1441,24 @@ ngx_http_rewrite(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
-    regex_end->code = ngx_http_script_regex_end_code;
+    /*经过上面的处理，后面的rewrite会解析出如下的函数结构: rewrite   ^(.*)$   http://$http_host.mp4   break;
+	ngx_http_script_regex_start_code 解析完了正则表达式。根据lengths求出总长度，申请空间。
+			ngx_http_script_copy_len_code		7
+			ngx_http_script_copy_var_len_code 	18
+			ngx_http_script_copy_len_code		4	=== 29 
+
+	ngx_http_script_copy_code		拷贝"http://" 到e->buf
+	ngx_http_script_copy_var_code	拷贝"115.28.34.175:8881"
+	ngx_http_script_copy_code 		拷贝".mp4"
+	ngx_http_script_regex_end_code
+	*/
+    regex_end->code = ngx_http_script_regex_end_code;//结束回调。对应前面的开始。
     regex_end->uri = regex->uri;
     regex_end->args = regex->args;
-    regex_end->add_args = regex->add_args;
+    regex_end->add_args = regex->add_args;//是否添加参数。
     regex_end->redirect = regex->redirect;
 
-    if (last) {
+    if (last) {//参考上面，如果rewrite 末尾有last,break,等，就不会再次解析后面的数据了，那么，就将code设置为空。
         code = ngx_http_script_add_code(lcf->codes, sizeof(uintptr_t), &regex);
         if (code == NULL) {
             return NGX_CONF_ERROR;
@@ -1412,6 +1467,7 @@ ngx_http_rewrite(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         *code = NULL;
     }
 
+    //下一个解析句柄组的地址。如果匹配失败，则会直接跳过该regex匹配相关的所有code
     regex->next = (u_char *) lcf->codes->elts + lcf->codes->nelts
                                               - (u_char *) regex;
 
@@ -1946,7 +2002,6 @@ ngx_http_rewrite_set(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         v->data = index;
     }
 
-
 /*
     脚本引擎是一系列的凹调函数以及相关数据（它们被组织成ngx_httpscript_ xxx_codet这样的结构体，代表各种不同功能的操
 作步骤），被保存在变量lcf->codes数组内，而ngx_httprewrite_loc_conf_t类型变量Icf是与当前location相关联的，所以这个脚本引擎只有
@@ -1959,17 +2014,6 @@ ngx_http_rewrite_set(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 			set $file t_a;
        }
 */
-
-    /*
-    如果set $variable value中的value是普通字符串，则下面的ngx_http_rewrite_value从ngx_http_rewrite_loc_conf_t->codes数组中获取ngx_http_script_value_code_t空间，紧接着在后面的
-ngx_http_script_start_code函数同样从ngx_http_rewrite_loc_conf_t->codes数组中获取ngx_http_script_var_code_t空间，因此在codes数组中
-存放变量值value的ngx_http_script_value_code_t空间与存放var变量名的ngx_http_script_var_code_t在空间上是靠着的，图形化见<深入剖析nginx 图8-4>
-
-     如果set $variable value中的value是变量名，则下面的ngx_http_rewrite_value从ngx_http_rewrite_loc_conf_t->codes数组中获取ngx_http_script_complex_value_code_t空间，紧接着在后面的
- ngx_http_script_start_code函数同样从ngx_http_rewrite_loc_conf_t->codes数组中获取ngx_http_script_complex_value_code_t空间，因此在codes数组中
- 存放变量值value的ngx_http_script_value_code_t空间与存放var变量名的ngx_http_script_var_code_t在空间上是靠着的，图形化见<深入剖析nginx 图8-4>
-     *///
-
     //ngx_http_rewrite_handler中会移除执行lcf->codes数组中的各个ngx_http_script_xxx_code_t->code函数，
 
     //set $variable value的value参数在这里处理 ,
@@ -1986,6 +2030,16 @@ ngx_http_script_start_code函数同样从ngx_http_rewrite_loc_conf_t->codes数组中获取
             }
     上面的例子追踪访问到的是index2.html
     */
+
+    /*
+    如果set $variable value中的value是普通字符串，则下面的ngx_http_rewrite_value从ngx_http_rewrite_loc_conf_t->codes数组中获取ngx_http_script_value_code_t空间，紧接着在后面的
+ngx_http_script_start_code函数同样从ngx_http_rewrite_loc_conf_t->codes数组中获取ngx_http_script_var_code_t空间，因此在codes数组中
+存放变量值value的ngx_http_script_value_code_t空间与存放var变量名的ngx_http_script_var_code_t在空间上是靠着的，图形化见<深入剖析nginx 图8-4>
+
+     如果set $variable value中的value是变量名，则下面的ngx_http_rewrite_value从ngx_http_rewrite_loc_conf_t->codes数组中获取ngx_http_script_complex_value_code_t空间，紧接着在后面的
+ ngx_http_script_start_code函数同样从ngx_http_rewrite_loc_conf_t->codes数组中获取ngx_http_script_complex_value_code_t空间，因此在codes数组中
+ 存放变量值value的ngx_http_script_value_code_t空间与存放var变量名的ngx_http_script_var_code_t在空间上是靠着的，图形化见<深入剖析nginx 图8-4>
+     *///
     if (ngx_http_rewrite_value(cf, lcf, &value[2]) != NGX_CONF_OK) {
         return NGX_CONF_ERROR;
     }
@@ -2017,6 +2071,7 @@ ngx_http_script_start_code函数同样从ngx_http_rewrite_loc_conf_t->codes数组中获取
 }
 
 //set $varialbe value中，ngx_http_rewrite_value来解析value
+//图形化参考http://blog.csdn.net/brainkick/article/details/7065244
 static char *
 ngx_http_rewrite_value(ngx_conf_t *cf, ngx_http_rewrite_loc_conf_t *lcf,
     ngx_str_t *value)
@@ -2049,9 +2104,11 @@ ngx_http_rewrite_value(ngx_conf_t *cf, ngx_http_rewrite_loc_conf_t *lcf,
         return NGX_CONF_OK;
     }
 
-    //带有$的变量，value也是变量
+    //带有$的变量，value也是变量，如set $aa $bb，这里的$bb就是变量，
     complex = ngx_http_script_start_code(cf->pool, &lcf->codes,
                                  sizeof(ngx_http_script_complex_value_code_t));
+    //实际上如果value也是变量，则会在这里的ngx_http_script_start_code和下面的ngx_http_script_compile用掉两个lcf->codes数组节点，
+    //在ngx_http_rewrite_handler中会依次执行这两个codes数组节点
     if (complex == NULL) {
         return NGX_CONF_ERROR;
     }
@@ -2062,10 +2119,11 @@ ngx_http_rewrite_value(ngx_conf_t *cf, ngx_http_rewrite_loc_conf_t *lcf,
     ngx_memzero(&sc, sizeof(ngx_http_script_compile_t));
 
     sc.cf = cf;
-    sc.source = value;
+    sc.source = value;  
     // lengths和values数组会在ngx_http_script_compile的执行过程中被填充   
     sc.lengths = &complex->lengths; //在后面的ngx_http_script_compile中把value解析到
-    sc.values = &lcf->codes;
+    sc.values = &lcf->codes; 
+    //实际上如果value也是变量，则会在上面的ngx_http_script_start_code和下面的ngx_http_script_compile用掉两个lcf->codes数组节点 在ngx_http_rewrite_handler中会依次执行这两个codes数组节点
     sc.variables = n;
     // complete_lengths置1，是为了给lengths数组结尾(以null指针填充)，因为在运行这个数组中的成员时，碰到NULL时，执行就结束了。 
     sc.complete_lengths = 1;

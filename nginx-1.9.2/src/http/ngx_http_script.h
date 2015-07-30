@@ -24,26 +24,26 @@ typedef struct {
 	/* 包含了在配置解析过程中设置的一些处理结构体，下面的rlcf->codes是一个数组，注意的是，这些结构体的第一个成员就是一个处理handler，
     这里处理时，都会将该结构体类型强转，拿到其处理handler，然后按照顺序依次执行之   */
     u_char                     *ip; //参考ngx_http_rewrite_handler  IP实际上是函数指针数组
-    u_char                     *pos; //pos之前的数据就是解析成功的，后面的数据将追加到pos后面。
+    u_char                     *pos; //pos之前的数据就是解析成功的，后面的数据将追加到pos后面。pos指向的是后面的buf数据末尾处
     //这里貌似是用sp来保存中间结果，比如保存当前这一步的进度，到下一步好用e->sp--来找到上一步的结果。
     /* sp是一个ngx_http_variable_value_t的数组，里面保存了从配置中分离出的一些变量   
     和一些中间结果，在当前处理中可以可以方便的拿到之前或者之后的变量(通过sp--或者sp++)  */
-    ngx_http_variable_value_t  *sp; //参考ngx_http_rewrite_handler分配空间
+    ngx_http_variable_value_t  *sp; //参考ngx_http_rewrite_handler分配空间, 是用来零食存放value值的，最终都会通过ngx_http_script_set_var_code拷贝到r->variables[code->index]中
 
-    ngx_str_t                   buf;//存放结果，也就是buffer，pos指向其中。  
+    ngx_str_t                   buf;//存放结果，也就是buffer，pos指向其中。  参考ngx_http_script_complex_value_code
     
     ngx_str_t                   line; //记录请求行URI  e->line = r->uri;
 
     /* the start of the rewritten arguments */
-    u_char                     *args;
+    u_char                     *args; //记录?后面的参数信息
 
     unsigned                    flushed:1;
     unsigned                    skip:1;
-    unsigned                    quote:1;
-    unsigned                    is_args:1;
+    unsigned                    quote:1; //和ngx_http_script_regex_code_t->redirect一样，见ngx_http_script_regex_start_code
+    unsigned                    is_args:1; //ngx_http_script_mark_args_code和ngx_http_script_start_args_code中置1，表示参数中是否带有?
     unsigned                    log:1;
 
-    ngx_int_t                   status;
+    ngx_int_t                   status; //在执行完ngx_http_rewrite_handler中的所有code时，会返回该status参数
     ngx_http_request_t         *request; //所属的请求   // 需要处理的请求  
     
 } ngx_http_script_engine_t;
@@ -79,15 +79,24 @@ Nginx 将取值过程分成两个脚本，一个负责计算变量的值长度，另一个负责取出对应的值。
 当配置解析代码碰到 access_log 指令后，会调用配置项回调函数 ngx_http_log_set_log 解析配置项参数。
 */
 //可以以access_log为例，参考ngx_http_log_set_log
-//参考:http://ialloc.org/posts/2013/10/20/ngx-notes-http-variables/
+//参考:http://ialloc.org/posts/2013/10/20/ngx-notes-http-variables/    http://blog.csdn.net/brainkick/article/details/7065244
+//ngx_http_rewrite中，rewrite aaa bbb break;配置中，aaa解析使用ngx_regex_compile_t，bbb解析使用ngx_http_script_compile_t
+//赋值见ngx_http_rewrite
 typedef struct {//脚本化辅助结构体 - 作为脚本化包含变量的参数时的统一输入。   ngx_http_script_init_arrays中分配相关内存
     
     ngx_conf_t                 *cf;
     ngx_str_t                  *source; /* 配置文件中的原始参数字符串  比如http://$http_host/aa.mp4*/
         
     //ngx_http_script_add_copy_code   ngx_http_script_add_var_code  ngx_http_script_add_args_code
-    ngx_array_t               **flushes;//从ngx_http_variable_t->variables中获取， 
-    ngx_array_t               **lengths; /* 存放用于获取变量对应的值长度的脚本 */ //  数组中的每个成员就1字节
+    ngx_array_t               **flushes;//从ngx_http_variable_t->variables中获取， 这里面存储的是变量的index序号，见ngx_http_script_add_var_code
+    /*
+    ngx_http_rewrite_value中赋值为ngx_http_script_complex_value_code_t->lengths，ngx_http_script_complex_value_code会执行该数组中的节点pt,
+     */  
+    ngx_array_t               **lengths; /* 存放用于获取变量对应的值长度的脚本 */ //  数组中的每个成员就1字节 
+    /*
+    ngx_http_rewrite_value中赋值为ngx_http_rewrite_loc_conf_t->codes,节点pt在在ngx_http_rewrite_handler会得到执行
+     */ //成员pt可以是ngx_http_script_copy_var_code，见ngx_http_script_add_var_code
+     //和ngx_http_script_compile_t->values一样，见ngx_http_rewrite_value  
     ngx_array_t               **values; /* 存放用于获取变量对应的值的脚本 */ // 数组中的每个成员就1字节  
     
     
@@ -99,18 +108,19 @@ typedef struct {//脚本化辅助结构体 - 作为脚本化包含变量的参数时的统一输入。   ng
        * 以位移的形式保存$1,$2...$9等变量，即响应位置上置1来表示，主要的作用是为dup_capture准备， 
        * 正是由于这个mask的存在，才比较容易得到是否有重复的$n出现。 
      */  
-    ngx_uint_t                  captures_mask; 
+    ngx_uint_t                  captures_mask; //赋值见ngx_http_script_compile
     ngx_uint_t                  size;// 待compile的字符串中，”常量字符串“的总长度  
 
     /*  
      对于main这个成员，有许多要挖掘的东西。main一般用来指向一个ngx_http_script_regex_code_t的结构 
-     */ 
+     */  //ngx_http_rewrite指向ngx_http_script_regex_code_t
     void                       *main; //正则表达式结构这是顶层的表达式，里面包含了lengths等。
 
     // 是否需要处理请求参数 
     unsigned                    compile_args:1; //标记?做普通字符还是做特殊字符，参考ngx_http_script_compile
-    
-    unsigned                    complete_lengths:1;// 是否设置lengths数组的终止符，即NULL   
+
+    //下面这些是收尾工作，见ngx_http_script_done
+    unsigned                    complete_lengths:1;// 是否设置lengths数组的终止符，即NULL     见ngx_http_script_done
     unsigned                    complete_values:1; // 是否设置values数组的终止符  
     unsigned                    zero:1; // values数组运行时，得到的字符串是否追加'\0'结尾   
     unsigned                    conf_prefix:1; // 是否在生成的文件名前，追加路径前缀   
@@ -194,39 +204,46 @@ typedef struct {
 
 #if (NGX_PCRE)
 
-typedef struct {
-    ngx_http_script_code_pt     code;
-    ngx_http_regex_t           *regex;
-    ngx_array_t                *lengths;
-    uintptr_t                   size;
-    uintptr_t                   status;
-    uintptr_t                   next;
+typedef struct { //创建空间赋值见ngx_http_rewrite
+    //当前的code，第一个函数，为ngx_http_script_regex_start_code
+    ngx_http_script_code_pt     code; //rewrite xxx bbb break；的时候为ngx_http_script_regex_start_code，if配置的时候为ngx_http_script_regex_start_code
+    ngx_http_regex_t           *regex;//解析后的正则表达式。
+    //以rewrite为例，如果后面部分是简单字符串比如 rewrite ^(.*)$ http://chenzhenianqing.cn break;则length为NULL
+    ngx_array_t                *lengths; //我这个正则表达式对应的lengths。依靠它来解析 第二部分 rewrite ^(.*)$ http://$http_host.mp4 break;
+    									//lengths里面包含一系列code,用来求目标url的大小的。
+    uintptr_t                   size; // 待compile的字符串中，”常量字符串“的总长度   来源见ngx_http_rewrite->ngx_http_script_compile
+    //rewrite aaa bbb op;中的bbb为"http://" "https://" "$scheme"或者op为redirect permanent则status会赋值，见ngx_http_rewrite
+    uintptr_t                   status; //例如NGX_HTTP_MOVED_TEMPORARILY  
+    uintptr_t                   next; //next的含义为;如果当前code匹配失败，那么下一个code的位移是在什么地方，这些东西全部放在一个数组里面的。
 
-    uintptr_t                   test:1;
+    uintptr_t                   test:1;//我是要看看是否正则匹配成功，你待会匹配的时候记得放个变量到堆栈里。 if{}配置的时候需要
     uintptr_t                   negative_test:1;
-    uintptr_t                   uri:1;
+    uintptr_t                   uri:1;//是否是URI匹配。  rewrite配置时会置1表示需要进行uri匹配
     uintptr_t                   args:1;
 
     /* add the r->args to the new arguments */
-    uintptr_t                   add_args:1;
+    uintptr_t                   add_args:1;//是否自动追加参数到rewrite后面。如果目标结果串后面用问好结尾，则nginx不会拷贝参数到后面的
 
-    uintptr_t                   redirect:1;
+    //rewrite aaa bbb op;中的bbb为"http://" "https://" "$scheme"或者op为redirect permanent则redirect置1，见ngx_http_rewrite
+    uintptr_t                   redirect:1;//nginx判断，如果是用http://等开头的rewrite，就代表是垮域重定向。会做302处理。
+    //rewrite最后的参数是break，将rewrite后的地址在当前location标签中执行。具体参考ngx_http_script_regex_start_code
     uintptr_t                   break_cycle:1;
 
-    ngx_str_t                   name;
+    //正则表达式语句，例如rewrite  ^(?<name1>/download/.*)/media/(?<name2>.*)/(abc)\..*$   xxx  break;中的 ^(?<name1>/download/.*)/media/(?<name2>.*)/(abc)\..*$ 
+    ngx_str_t                   name; 
 } ngx_http_script_regex_code_t;
 
 
-typedef struct {
+typedef struct { //ngx_http_rewrite中分配空间，赋值
     ngx_http_script_code_pt     code;
 
     uintptr_t                   uri:1;
     uintptr_t                   args:1;
 
     /* add the r->args to the new arguments */
-    uintptr_t                   add_args:1;
+    uintptr_t                   add_args:1; //和ngx_http_script_regex_code_t->add_args相等，见ngx_http_rewrite
 
-    uintptr_t                   redirect:1;
+    uintptr_t                   redirect:1;//和ngx_http_script_regex_code_t->redirect相等，见ngx_http_rewrite
 } ngx_http_script_regex_end_code_t;
 
 #endif
@@ -270,14 +287,15 @@ typedef struct {
 } ngx_http_script_if_code_t;
 
 /*解析set $variable value，如果value是普通字符串，存入ngx_http_script_value_code_t，如果value是一个$xx变量，则存入
-ngx_http_script_complex_value_code_t，见ngx_http_rewrite_value,最终都会加入ngx_http_rewrite_loc_conf_t->codes中 */
+ngx_http_script_complex_value_code_t，见ngx_http_rewrite_value,最终都会加入ngx_http_rewrite_loc_conf_t->codes中，参考ngx_http_rewrite_value */
 typedef struct {
     ngx_http_script_code_pt     code; //ngx_http_script_complex_value_code
-    ngx_array_t                *lengths;
+    //和ngx_http_script_compile_t->lengths一样，见ngx_http_rewrite_value  
+    ngx_array_t                *lengths; //ngx_http_script_complex_value_code会执行该数组中的节点pt,
 } ngx_http_script_complex_value_code_t;
 
 /*解析set $variable value，如果value是普通字符串，存入ngx_http_script_value_code_t，如果value是一个$xx变量，则存入
-ngx_http_script_complex_value_code_t，见ngx_http_rewrite_value */
+ngx_http_script_complex_value_code_t，参考ngx_http_rewrite_value */
 typedef struct { //见ngx_http_rewrite_value
     ngx_http_script_code_pt     code; 
     uintptr_t                   value; //如果是数字字符串，则该值为数字字符串转换为数字后的值

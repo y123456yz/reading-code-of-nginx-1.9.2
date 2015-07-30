@@ -37,7 +37,10 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
         return NGX_ERROR;
     }
 
-
+    /*
+     由于Nginx的事件框架要求每个连接都由一个ngx_connection-t结构体来承载，因此这一步将调用ngx_get_connection方法，由ngx_cycle_t
+ 核心结构体中free_connections指向的空闲连接池处获取到一个ngx_connection_t结构体，作为承载Nginx与上游服务器间的TCP连接
+     */
     c = ngx_get_connection(s, pc->log);
 
     if (c == NULL) {
@@ -59,7 +62,7 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
         }
     }
 
-    if (ngx_nonblocking(s) == -1) {
+    if (ngx_nonblocking(s) == -1) { //建立一个TCP套接字，同时，这个套接字需要设置为非阻塞模式。
         ngx_log_error(NGX_LOG_ALERT, pc->log, ngx_socket_errno,
                       ngx_nonblocking_n " failed");
 
@@ -104,7 +107,15 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
 
     c->number = ngx_atomic_fetch_add(ngx_connection_counter, 1);
 
+    /*
+     事件模块的ngx_event_actions接口，其中的add_conn方法可以将TCP套接字以期待可读、可写事件的方式添加到事件搜集器中。对于
+     epoll事件模块来说，add_conn方法就是把套接字以期待EPOLLIN EPOLLOUT事件的方式加入epoll中，这一步即调用add_conn方法把刚刚
+     建立的套接字添加到epoll中，表示如果这个套接字上出现了预期的网络事件，则希望epoll能够回调它的handler方法。
+     */
     if (ngx_add_conn) {
+        /*
+        将这个连接ngx_connection t上的读／写事件的handler回调方法都设置为ngx_http_upstream_handler。，见函数外层的ngx_http_upstream_connect
+         */
         if (ngx_add_conn(c) == NGX_ERROR) {
             goto failed;
         }
@@ -113,6 +124,10 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
     ngx_log_debug3(NGX_LOG_DEBUG_EVENT, pc->log, 0,
                    "connect to %V, fd:%d #%uA", pc->name, s, c->number);
 
+    /*
+     调用connect方法向上游服务器发起TCP连接，作为非阻塞套接字，connect方法可能立刻返回连接建立成功，也可能告诉用户继续等待上游服务器的响应
+     对connect连接是否建立成功的检查会在函数外面的u->read_event_handler = ngx_http_upstream_process_header;见函数外层的ngx_http_upstream_connect
+     */
     rc = connect(s, pc->sockaddr, pc->socklen);
 
     if (rc == -1) {
@@ -168,7 +183,7 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
 
         wev->ready = 1;
 
-        return NGX_OK; //如果是连接成功，直接从这里返回
+        return NGX_OK;  
     }
 
     if (ngx_event_flags & NGX_USE_IOCP_EVENT) {

@@ -86,14 +86,14 @@ ngx_http_get_module ctx接受两个参数，其中第1个参数是ngx_http_request_t指针，
 就是某个HTTP模块的上下文结构体指针，如果这个HTTP模块没有设置过上下文，那么将
 会返回NULL空指针。因此，在任何一个HTTP模块中，都可以使用ngx_http_get_module_
 ctx获取所有HTTP模块为该请求创建的上下文结构体。
-*/
-#define ngx_http_get_module_ctx(r, module)  (r)->ctx[module.ctx_index]  //获取http upstream上下文
+*/ //注意ngx_http_get_module_main_conf ngx_http_get_module_loc_conf和ngx_http_get_module_ctx的区别
+#define ngx_http_get_module_ctx(r, module)  (r)->ctx[module.ctx_index]  //主要是http upstream上下文
 
 /*
  ngx_http_set ctx接受3个参数，其中第1个参数是ngx_http_request_t指针，第2个参
 数是准备设置的上下文结构体的指针，第3个参数则是HTTP模块对象。
 */
-#define ngx_http_set_ctx(r, c, module)      r->ctx[module.ctx_index] = c; //设置http upstream上下文
+#define ngx_http_set_ctx(r, c, module)      r->ctx[module.ctx_index] = c; //主要是http upstream上下文
 
 
 ngx_int_t ngx_http_add_location(ngx_conf_t *cf, ngx_queue_t **locations,

@@ -328,7 +328,9 @@ ngx_vslprintf(u_char *buf, u_char *last, const char *fmt, va_list args)
 
             case 'V': //输出ngx_str_t类型数据
                 v = va_arg(args, ngx_str_t *);
-
+                if(v == NULL)
+                    continue;
+                    
                 len = ngx_min(((size_t) (last - buf)), v->len);
                 buf = ngx_cpymem(buf, v->data, len);
                 fmt++;
@@ -1212,7 +1214,10 @@ ngx_hex_dump(u_char *dst, u_char *src, size_t len)
     return dst;
 }
 
-
+/*
+这两个函数用于对str进行base64编码与解码，调用前，需要保证dst中有足够的空间来存放结果，如果不知道具体大小，可先调用
+ngx_base64_encoded_length与ngx_base64_decoded_length来预估最大占用空间。
+*/
 void
 ngx_encode_base64(ngx_str_t *dst, ngx_str_t *src)
 {
@@ -1518,7 +1523,7 @@ ngx_utf8_cpystrn(u_char *dst, u_char *src, size_t n, size_t len)
 
 uintptr_t
 ngx_escape_uri(u_char *dst, u_char *src, size_t size, ngx_uint_t type)
-{
+{//如果dst为空，则返回需要转义的字符有多少个。否则将字符串转义了，存放在dst里面。
     ngx_uint_t      n;
     uint32_t       *escape;
     static u_char   hex[] = "0123456789ABCDEF";
@@ -1684,7 +1689,17 @@ ngx_escape_uri(u_char *dst, u_char *src, size_t size, ngx_uint_t type)
     return (uintptr_t) dst;
 }
 
+/*
+地址栏中的问号有什么作用
+比如这样的链接：
+http://www.xxx.com/Show.asp?id=77&nameid=2905210001&page=1
+在这样的链接中，问号的含义不是上面文章中所提到的版本号问题，而是传递参数的作用。这个问号将show.asp文件和后面的id、nameid、page等连接起来。
 
+
+对src进行反编码，type可以是0、NGX_UNESCAPE_URI、NGX_UNESCAPE_REDIRECT这三个值。如果是0，则表示src中的所有字符都要进行转码。如果
+是NGX_UNESCAPE_URI与NGX_UNESCAPE_REDIRECT，则遇到’?’后就结束了，后面的字符就不管了。而NGX_UNESCAPE_URI与NGX_UNESCAPE_REDIRECT之间
+的区别是NGX_UNESCAPE_URI对于遇到的需要转码的字符，都会转码，而NGX_UNESCAPE_REDIRECT则只会对非可见字符进行转码。
+*/
 void
 ngx_unescape_uri(u_char **dst, u_char **src, size_t size, ngx_uint_t type)
 {

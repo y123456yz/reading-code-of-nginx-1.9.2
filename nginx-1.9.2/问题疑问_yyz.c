@@ -425,5 +425,24 @@ ExplicitCapture(显式捕获) 仅捕获已被显式命名的组。
 (?(name)yes) 同上，只是使用空表达式作为no 
 
 
+coredump文件产生:
+配置worker_rlimit_core与working_directory这两个指令，这样，就不需要修改操作系统的参数就可以正常core出来了。
+注意:需要保证目录一直存在，并且有读写权限777
+
+用gdb加载 coredump 文件
+gdb --core=core.xxx
+gdb> where
+
+
+修改目录下所有文件时间，不包括子目录:
+touch -d "10/13/2013" *.sh
+
+修改当前目录及其子目录的时间为date1中的时间
+date1="2015-10-14 19:22:22"
+storepath=/var/yyz/nginx/nginx-1.9.2
+find $storepath1   -execdir touch  -d "$date1" {} \;
+
+#define NGX_CONFIGURE " --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads"
+
 */
 

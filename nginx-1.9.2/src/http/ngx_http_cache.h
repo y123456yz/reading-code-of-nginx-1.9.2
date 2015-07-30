@@ -63,7 +63,7 @@ typedef struct {
 
 struct ngx_http_cache_s {
     ngx_file_t                       file;
-    ngx_array_t                      keys;
+    ngx_array_t                      keys; //这里面存储的值是从ngx_http_xxx_create_key来的(例如ngx_http_fastcgi_create_key)
     uint32_t                         crc32;
     u_char                           key[NGX_HTTP_CACHE_KEY_LEN];
     u_char                           main[NGX_HTTP_CACHE_KEY_LEN];

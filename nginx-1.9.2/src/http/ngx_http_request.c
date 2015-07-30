@@ -988,7 +988,7 @@ ngx_http_process_request_line(ngx_event_t *rev) //gx_http_process_request_line方
     
         rc = ngx_http_parse_request_line(r, r->header_in);
 
-        if (rc == NGX_OK) { //请求后解析成功
+        if (rc == NGX_OK) { //请求行解析成功
 
             /* the request line has been parsed successfully */
             //请求行内容及长度    //GET /sample.jsp HTTP/1.1整行
@@ -1216,6 +1216,7 @@ ngx_http_process_request_uri(ngx_http_request_t *r)
     }
 #endif
 
+    //http://10.135.10.167/aaaaaaaa?bbbb  http uri: "/aaaaaaaa"  http args: "bbbb"  同时"GET /aaaaaaaa?bbbb.txt HTTP/1.1"中的/aaaaaaa?bbbb.txt和uri中的一样
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                    "http uri: \"%V\"", &r->uri);
 
@@ -1713,7 +1714,7 @@ ngx_http_headers_in中成员的对应offset(如请求行带有host，则offset=offsetof(ngx_ht
 */
 static ngx_int_t
 ngx_http_process_host(ngx_http_request_t *r, ngx_table_elt_t *h,
-    ngx_uint_t offset)
+    ngx_uint_t offset) //根据请求中的host来进行server查找和定位
 {
     ngx_int_t  rc;
     ngx_str_t  host;
@@ -2149,9 +2150,10 @@ ngx_http_validate_host(ngx_str_t *host, ngx_pool_t *pool, ngx_uint_t alloc)
         listen 1.1.1.1:80;
         server_name bbb
     }
-    这个配置在ngx_http_init_connection中把ngx_http_connection_t->conf_ctx指向ngx_http_addr_conf_s->default_server,也就是指向#1,然后
-    ngx_http_create_request中把main_conf srv_conf  loc_conf 指向#1,
-    但如果请求行的头部的host:bbb，那么需要重新获取对应的server{} #2,见ngx_http_set_virtual_server
+    这两个server{}占用同一个ngx_http_conf_addr_t，但他们拥有两个不同的ngx_http_core_srv_conf_t(存在于ngx_http_conf_addr_t->servers),
+    这个配置在ngx_http_init_connection中获取这个ngx_http_port_t(1个ngx_http_port_t对应一个ngx_http_conf_addr_t)把ngx_http_connection_t->conf_ctx
+    指向ngx_http_addr_conf_s->default_server,也就是指向#1,然后ngx_http_create_request中把main_conf srv_conf  loc_conf 指向#1,
+    但如果请求行的头部的host:bbb，那么需要重新获取对应的server{} #2,见ngx_http_set_virtual_server->ngx_http_find_virtual_server
  */
 
 //在解析到http头部的host字段后，会通过//ngx_http_process_request_headers->ngx_http_process_host->ngx_http_set_virtual_server
@@ -2263,7 +2265,25 @@ ngx_http_set_virtual_server(ngx_http_request_t *r, ngx_str_t *host)
 }
 
 //从virtual_names->names  hash表中查找host所处字符串作为key，其在hash中对应节点的value值,也就是查找host字符串sever_name配置相同的server{}上下文。
-static ngx_int_t
+/*
+当客户端建立连接后，并发送请求数据过来后，在ngx_http_create_request中从ngx_http_connection_t->conf_ctx获取这三个值，也就是根据客户端连接
+本端所处IP:port所对应的默认server{}块上下文，如果是以下情况:ip:port相同，单在不同的server{}块中，那么有可能客户端请求过来的时候携带的host
+头部项的server_name不在默认的server{}中，而在另外的server{}中，所以需要通过ngx_http_set_virtual_server重新获取server{}和location{}上下文配置
+例如:
+    server {  #1
+        listen 1.1.1.1:80;
+        server_name aaa
+    }
+
+    server {   #2
+        listen 1.1.1.1:80;
+        server_name bbb
+    }
+    这两个server{}占用同一个ngx_http_conf_addr_t，但他们拥有两个不同的ngx_http_core_srv_conf_t(存在于ngx_http_conf_addr_t->servers),
+    这个配置在ngx_http_init_connection中获取这个ngx_http_port_t(1个ngx_http_port_t对应一个ngx_http_conf_addr_t)把ngx_http_connection_t->conf_ctx
+    指向ngx_http_addr_conf_s->default_server,也就是指向#1,然后ngx_http_create_request中把main_conf srv_conf  loc_conf 指向#1,
+    但如果请求行的头部的host:bbb，那么需要重新获取对应的server{} #2,见ngx_http_set_virtual_server->ngx_http_find_virtual_server
+ */static ngx_int_t
 ngx_http_find_virtual_server(ngx_connection_t *c,
     ngx_http_virtual_names_t *virtual_names, ngx_str_t *host,
     ngx_http_request_t *r, ngx_http_core_srv_conf_t **cscfp) //获取host字符串对应的server_name所对处的server{}配置块信息
@@ -2274,6 +2294,7 @@ ngx_http_find_virtual_server(ngx_connection_t *c,
         return NGX_DECLINED;
     }
 
+    //virtual_names->names hash中的key为字符串server_name xxx中的xxx,value为该server_name xxx所在的server{}块
     cscf = ngx_hash_find_combined(&virtual_names->names,
                                   ngx_hash_key(host->data, host->len),
                                   host->data, host->len);
@@ -2382,7 +2403,7 @@ ngx_http_request_ handler是HTTP请求上读／写事件的回调方法。在ngx_event_t结构体表
  法的，因此，一旦有可写事件时，就会继续按照流程执行ngx_http_core_run_phases方法，并继续按阶段调用各个HTTP模块实现的方法处理请求。
 
 如果一个事件的读写标志同时为1时，仅write_event_handler方法会被调用，即可写事件的处理优先于可读事件（这正是Nginx高性能设计的体现，
-优先处理可写事件可以尽快释放内有，尽量保持各HTTP模块少使用内存以提高并发能力）。因为服务器发送给客户端的报文长度一般比请求报文大很多
+优先处理可写事件可以尽快释放内存，尽量保持各HTTP模块少使用内存以提高并发能力）。因为服务器发送给客户端的报文长度一般比请求报文大很多
  */
     //printf("yang test .....................write:%u\n", ev->write);
     if (ev->write) { //默认一直未1，下面的read好像一直执行不了 ???????????????????????

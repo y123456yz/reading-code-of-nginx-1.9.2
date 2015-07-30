@@ -1128,7 +1128,12 @@ ngx_send_lowat(ngx_connection_t *c, size_t lowat)
     }
 
     sndlowat = (int) lowat;
-
+    /*
+     SO_RCVLOWAT SO_SNDLOWAT 
+     每个套接口都有一个接收低潮限度和一个发送低潮限度。
+     接收低潮限度：对于TCP套接口而言，接收缓冲区中的数据必须达到规定数量，内核才通知进程“可读”。比如触发select或者epoll，返回“套接口可读”。
+     发送低潮限度：对于TCP套接口而言，和接收低潮限度一个道理。
+     */
     if (setsockopt(c->fd, SOL_SOCKET, SO_SNDLOWAT,
                    (const void *) &sndlowat, sizeof(int))
         == -1)

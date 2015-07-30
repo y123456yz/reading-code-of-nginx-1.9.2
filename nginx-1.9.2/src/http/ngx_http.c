@@ -84,7 +84,9 @@ ngx_uint_t   ngx_http_max_module; //二级模块类型http模块个数，见ngx_http_block  
 
 //ngx_http_header_filter_module是最后一个header filter模块(ngx_http_top_header_filter = ngx_http_header_filter;他是最后发送头部的地方)，
 //ngx_http_write_filter_module是最后一个包体writer模块(ngx_http_top_body_filter = ngx_http_write_filter;),他是最后放包体的地方
+//调用ngx_http_output_filter方法即可向客户端发送HTTP响应包体，ngx_http_send_header发送响应行和响应头部
 ngx_http_output_header_filter_pt  ngx_http_top_header_filter;//所有的HTTP头部过滤模块都添加到该指针上 ngx_http_send_header中调用链表中所有处理方法
+//该函数中的所有filter通过ngx_http_output_filter执行
 ngx_http_output_body_filter_pt    ngx_http_top_body_filter;//所有的HTTP包体部分都是添加到该指针中,在ngx_http_output_filter中一次调用链表中的各个函数
 
 ngx_http_request_body_filter_pt   ngx_http_top_request_body_filter; //赋值未ngx_http_request_body_save_filter
@@ -615,7 +617,13 @@ ngx_http_init_phase_handlers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
         h = cmcf->phases[i].handlers.elts;
 
         switch (i) { //所有阶段的checker在ngx_http_core_run_phases中调用
-
+        /*
+        NGX__HTTP_SERVERREWRITEPHASE阶段，和第3阶段NGXHTTPREWRITE_PHASE都属于地址重写，也都是针对rewrite模块而设定的阶段，前
+        者用于server上下文里的地址重写，而后者用于location上下文里的地址重写。为什么要设置两个地址重写阶段，原因在于rewrite模块
+        的相关指令（比如rewrite、if、set等）既可用于server上下文．又可用于location上下文。在客户端请求被Nginx接收后，首先做server
+        查找与定位，在定位到server（如果没查找到就是默认server）后执行NGXHTTP_SERVER_REWRITEPHASE阶段上的回调函数，然后再进入到下
+        一个阶段：NGX_HTTP_FIND_CONFIG_PHASE阶段。
+          */
         case NGX_HTTP_SERVER_REWRITE_PHASE:
             if (cmcf->phase_engine.server_rewrite_index == (ngx_uint_t) -1) {
                 cmcf->phase_engine.server_rewrite_index = n;
@@ -627,6 +635,9 @@ ngx_http_init_phase_handlers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
 /*
 NGX_HTTP_FIND_CONFIG_PHASE、NGX_HTTP_POSTREWRITE_PHASE、NGX_HTTP_POST_ACCESS_PHASE、NGX_HTTP_TRY_FILES_PHASE这4个阶段则
 不允许HTTP模块加入自己的ngx_http_handler_pt方法处理用户请求,但是他们的会占用cmcf->phase_engine.handlers[]数组中的一个成员
+
+ NGX_HTTP_FIND_CONFIG_PHASE阶段上不能挂载任何回调函数，因为它们永远也不 会被执行，该阶段完成的是Nginx的特定任务，即进行
+ Location定位。只有把当前请求的对应location找到了，才能以该location上下文中取出更多精确的用户配置值，做后续的进一步请求处理。
  */
         case NGX_HTTP_FIND_CONFIG_PHASE: //该阶段则不允许HTTP模块加入自己的ngx_http_handler_pt方法处理用户请求方法，直接把http框架方法加入到cmcf->phase_engine.handlers数组中
             find_config_index = n;
@@ -650,7 +661,7 @@ NGX_HTTP_FIND_CONFIG_PHASE、NGX_HTTP_POSTREWRITE_PHASE、NGX_HTTP_POST_ACCESS_PHA
         case NGX_HTTP_POST_REWRITE_PHASE://该阶段则不允许HTTP模块加入自己的ngx_http_handler_pt方法处理用户请求方法，直接把http框架方法加入到cmcf->phase_engine.handlers数组中
             if (use_rewrite) {
                 ph->checker = ngx_http_core_post_rewrite_phase;
-                ph->next = find_config_index;
+                ph->next = find_config_index;//注意:NGX_HTTP_POST_REWRITE_PHASE的下一阶段是NGX_HTTP_FIND_CONFIG_PHASE
                 ph->phase = i;
                 n++;
                 ph++;
@@ -663,9 +674,9 @@ NGX_HTTP_FIND_CONFIG_PHASE、NGX_HTTP_POSTREWRITE_PHASE、NGX_HTTP_POST_ACCESS_PHA
             break;
 
         case NGX_HTTP_POST_ACCESS_PHASE://该阶段则不允许HTTP模块加入自己的ngx_http_handler_pt方法处理用户请求方法，直接把http框架方法加入到cmcf->phase_engine.handlers数组中
-            if (use_access) {
+            if (use_access) {//只有配置了try_files aaa bbb后才会在 cmcf->phase_engine.handlers添加节点pt，见ngx_http_init_phase_handlers，如果没有配置，则直接跳过try_files阶段
                 ph->checker = ngx_http_core_post_access_phase;
-                ph->next = n;
+                ph->next = n; 
                 ph->phase = i;
                 ph++;
             }
@@ -693,6 +704,7 @@ NGX_HTTP_FIND_CONFIG_PHASE、NGX_HTTP_POSTREWRITE_PHASE、NGX_HTTP_POST_ACCESS_PHA
 //计算i阶段的ngx_http_handler_pt处理方法在所有阶段处理方法中的位置，也就是计算i阶段的处理方法应该存放在cmcf->phase_engine.handlers数组中的具体位置
         n += cmcf->phases[i].handlers.nelts; 
 
+        //注意:每一个阶段中最后加入到handlers[]中的会首先添加到cmcf->phase_engine.handlers
         for (j = cmcf->phases[i].handlers.nelts - 1; j >=0; j--) {
             ph->checker = checker; //每个阶段对应的checker，例如:NGX_HTTP_SERVER_REWRITE_PHASE阶段为ngx_http_core_rewrite_phase
             //i阶段的所有ngx_http_handler_pt处理方法通过ph连接起来，也就是全部添加到cmcf->phase_engine.handlers数组中，各个成员通过ph->next连接在一起
