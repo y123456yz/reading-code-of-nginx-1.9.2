@@ -364,7 +364,7 @@ eintr:
 
     ngx_log_debug2(NGX_LOG_DEBUG_EVENT, c->log, 0,
                    "sendfile: @%O %uz", file->file_pos, size);
-
+    //它减少了内核态与用户态之间的两次内存复制，这样就会从磁盘中读取文件后直接在内核态发送到网卡设备，
     n = sendfile(c->fd, file->file->fd, &offset, size);
 
     if (n == -1) {

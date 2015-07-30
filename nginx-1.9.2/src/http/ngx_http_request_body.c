@@ -172,7 +172,6 @@ content-length头部指定的长度，如果大干或等于则说明已经接收到完整的包体 */
 
             rb->buf = b;
 
-            printf("yang test ............111111111.............. discared requ body\n");
             r->read_event_handler = ngx_http_read_client_request_body_handler;
             r->write_event_handler = ngx_http_request_empty_handler;
 
@@ -337,7 +336,6 @@ static void
 ngx_http_read_client_request_body_handler(ngx_http_request_t *r)
 {
     ngx_int_t  rc;
-    printf("yang test ............7777777777777777.............. discared requ body\n");
 
     /* 
     首先检查连接上读事件的timeout标志位，如果为l，则表示接收HTTP包体超时，这时把连接ngx_connection_t结构体上的timeout标志位也置为1，
@@ -423,10 +421,10 @@ ngx_http_do_read_client_request_body(ngx_http_request_t *r)//返回值大于NGX_HTTP_
                 if (rb->busy != NULL) { //如果头部行中的content-length:LEN中的len长度表示后面的包体大小，如果后面的包体数据长度实际比头部中的LEN大，则会走这里，
                     if (r->request_body_no_buffering) {
                         if (c->read->timer_set) {
-                            ngx_del_timer(c->read);
+                            ngx_del_timer(c->read, NGX_FUNC_LINE);
                         }
 
-                        if (ngx_handle_read_event(c->read, 0) != NGX_OK) {
+                        if (ngx_handle_read_event(c->read, 0, NGX_FUNC_LINE) != NGX_OK) {
                             return NGX_HTTP_INTERNAL_SERVER_ERROR;
                         }
 
@@ -538,12 +536,12 @@ ngx_http_do_read_client_request_body(ngx_http_request_t *r)//返回值大于NGX_HTTP_
 
             clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
             //当读取到完整的包体后，会删除该定时器，见后面的ngx_del_timer(c->read);
-            ngx_add_timer(c->read, clcf->client_body_timeout);//handle应该是ngx_http_request_handler
+            ngx_add_timer(c->read, clcf->client_body_timeout, NGX_FUNC_LINE);//handle应该是ngx_http_request_handler
 
             /*
              这个请求连接上的读事件触发时的回调方法ngx_http_request_handler,从而会调用read_event_handler方法(ngx_http_read_client_request_body_handler)
                */
-            if (ngx_handle_read_event(c->read, 0) != NGX_OK) { //handle应该是ngx_http_request_handler，通过这里触发再次读取包体
+            if (ngx_handle_read_event(c->read, 0, NGX_FUNC_LINE) != NGX_OK) { //handle应该是ngx_http_request_handler，通过这里触发再次读取包体
                 return NGX_HTTP_INTERNAL_SERVER_ERROR;
             }
 
@@ -559,7 +557,7 @@ ngx_http_do_read_client_request_body(ngx_http_request_t *r)//返回值大于NGX_HTTP_
     步会检查读事件的timer set标志位，如果为1，则调用ngx_del_timer方法把读事件从定时器中移除。
      */
     if (c->read->timer_set) {
-        ngx_del_timer(c->read);
+        ngx_del_timer(c->read, NGX_FUNC_LINE);
     }
 
     //如果缓冲区中还有未写入文件的内容，调用ngx_http_write_request_body方法把最后的包体内容也写入文件。
@@ -741,7 +739,7 @@ ngx_http_discard_request_body(ngx_http_request_t *r)
     NGX一OK，表示成功丢弃了全部包体。
      */
     if (rev->timer_set) {
-        ngx_del_timer(rev);
+        ngx_del_timer(rev, NGX_FUNC_LINE);
     }
     if (r->headers_in.content_length_n <= 0 && !r->headers_in.chunked) {
         return NGX_OK;
@@ -786,7 +784,7 @@ ngx_http_discard_request_body(ngx_http_request_t *r)
     
     r->read_event_handler = ngx_http_discarded_request_body_handler; //下次读事件到来时通过ngx_http_request_handler来调用
 
-    if (ngx_handle_read_event(rev, 0) != NGX_OK) { //调用ngx_handle_read_event方法把读事件添加到epoll中  handle为ngx_http_request_handler
+    if (ngx_handle_read_event(rev, 0, NGX_FUNC_LINE) != NGX_OK) { //调用ngx_handle_read_event方法把读事件添加到epoll中  handle为ngx_http_request_handler
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
@@ -858,7 +856,7 @@ ngx_http_discarded_request_body_handler(ngx_http_request_t *r)
 
     /* rc == NGX_AGAIN */
 
-    if (ngx_handle_read_event(rev, 0) != NGX_OK) {
+    if (ngx_handle_read_event(rev, 0, NGX_FUNC_LINE) != NGX_OK) {
         c->error = 1;
         ngx_http_finalize_request(r, NGX_ERROR);
         return;
@@ -874,7 +872,7 @@ ngx_http_discarded_request_body_handler(ngx_http_request_t *r)
             timer = clcf->lingering_timeout;
         }
 
-        ngx_add_timer(rev, timer);
+        ngx_add_timer(rev, timer, NGX_FUNC_LINE);
     }
 }
 

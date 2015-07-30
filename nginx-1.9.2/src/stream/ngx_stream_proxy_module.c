@@ -465,7 +465,7 @@ ngx_stream_proxy_connect(ngx_stream_session_t *s)
     pc->read->handler = ngx_stream_proxy_connect_handler;
     pc->write->handler = ngx_stream_proxy_connect_handler;
 
-    ngx_add_timer(pc->write, pscf->connect_timeout);
+    ngx_add_timer(pc->write, pscf->connect_timeout, NGX_FUNC_LINE);
 }
 
 
@@ -573,14 +573,14 @@ ngx_stream_proxy_send_proxy_protocol(ngx_stream_session_t *s)
     n = pc->send(pc, buf, size);
 
     if (n == NGX_AGAIN) {
-        if (ngx_handle_write_event(pc->write, 0) != NGX_OK) {
+        if (ngx_handle_write_event(pc->write, 0, NGX_FUNC_LINE) != NGX_OK) {
             ngx_stream_proxy_finalize(s, NGX_ERROR);
             return NGX_ERROR;
         }
 
         pscf = ngx_stream_get_module_srv_conf(s, ngx_stream_proxy_module);
 
-        ngx_add_timer(pc->write, pscf->timeout);
+        ngx_add_timer(pc->write, pscf->timeout, NGX_FUNC_LINE);
 
         pc->write->handler = ngx_stream_proxy_connect_handler;
 
@@ -681,7 +681,7 @@ ngx_stream_proxy_ssl_init_connection(ngx_stream_session_t *s)
     if (rc == NGX_AGAIN) {
 
         if (!pc->write->timer_set) {
-            ngx_add_timer(pc->write, pscf->connect_timeout);
+            ngx_add_timer(pc->write, pscf->connect_timeout, NGX_FUNC_LINE);
         }
 
         pc->ssl->handler = ngx_stream_proxy_ssl_handshake;
@@ -902,7 +902,7 @@ ngx_stream_proxy_connect_handler(ngx_event_t *ev)
         return;
     }
 
-    ngx_del_timer(c->write);
+    ngx_del_timer(c->write, NGX_FUNC_LINE);
 
     ngx_log_debug0(NGX_LOG_DEBUG_STREAM, c->log, 0,
                    "stream proxy connect upstream");
@@ -1067,18 +1067,18 @@ ngx_stream_proxy_process(ngx_stream_session_t *s, ngx_uint_t from_upstream,
 
     flags = src->read->eof ? NGX_CLOSE_EVENT : 0;
 
-    if (ngx_handle_read_event(src->read, flags) != NGX_OK) {
+    if (ngx_handle_read_event(src->read, flags, NGX_FUNC_LINE) != NGX_OK) {
         ngx_stream_proxy_finalize(s, NGX_ERROR);
         return NGX_ERROR;
     }
 
     if (dst) {
-        if (ngx_handle_write_event(dst->write, 0) != NGX_OK) {
+        if (ngx_handle_write_event(dst->write, 0, NGX_FUNC_LINE) != NGX_OK) {
             ngx_stream_proxy_finalize(s, NGX_ERROR);
             return NGX_ERROR;
         }
 
-        ngx_add_timer(c->read, pscf->timeout);
+        ngx_add_timer(c->read, pscf->timeout, NGX_FUNC_LINE);
     }
 
     return NGX_OK;

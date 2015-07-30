@@ -1064,7 +1064,7 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
             }
         }
 
-        ngx_log_debug0(NGX_LOG_DEBUG_EVENT, cycle->log, 0, "worker cycle");
+        ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0, "worker(%P) cycle again", ngx_pid);
 
         ngx_process_events_and_timers(cycle);
 
@@ -1497,7 +1497,7 @@ ngx_cache_manager_process_cycle(ngx_cycle_t *cycle, void *data)
 
     ngx_setproctitle(ctx->name);
 
-    ngx_add_timer(&ev, ctx->delay);
+    ngx_add_timer(&ev, ctx->delay, NGX_FUNC_LINE);
 
     for ( ;; ) {
 
@@ -1542,7 +1542,7 @@ ngx_cache_manager_process_handler(ngx_event_t *ev)
         next = 1;
     }
 
-    ngx_add_timer(ev, next * 1000);
+    ngx_add_timer(ev, next * 1000, NGX_FUNC_LINE);
 }
 
 

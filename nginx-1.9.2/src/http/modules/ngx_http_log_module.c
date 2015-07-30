@@ -55,6 +55,13 @@ typedef struct {
 } ngx_http_log_buf_t;
 
 
+/*
+基本每个包含有变量参数的配置指令项的处理模式都大同小异：
+1.对于能够接收变量参数的指令，先定义和配置指令相关的用于存储处理后的变量处理脚本的结构体 (ngx_http_log_script_t)。每个变量参数对应一个此类型对象。
+2.解析时判断参数是否含有变量 (ngx_http_script_variables_count)
+3.如果参数含有变量，将此参数和变量处理脚本存储结构体通过脚本编译器的输入结构 ngx_http_script_compile_t 交由 ngx_http_script_compile 进行处理。
+ngx_http_script_compile 函数对参数项进行整理，存入 ngx_http_log_script_t 变量中：
+*/
 typedef struct {
     ngx_array_t                *lengths;
     ngx_array_t                *values;
@@ -331,7 +338,7 @@ ngx_http_log_handler(ngx_http_request_t *r) //ngx_http_log_request中执行
                 p = buffer->pos;
 
                 if (buffer->event && p == buffer->start) {
-                    ngx_add_timer(buffer->event, buffer->flush);
+                    ngx_add_timer(buffer->event, buffer->flush, NGX_FUNC_LINE);
                 }
 
                 for (i = 0; i < log[l].format->ops->nelts; i++) {
@@ -346,7 +353,7 @@ ngx_http_log_handler(ngx_http_request_t *r) //ngx_http_log_request中执行
             }
 
             if (buffer->event && buffer->event->timer_set) {
-                ngx_del_timer(buffer->event);
+                ngx_del_timer(buffer->event, NGX_FUNC_LINE);
             }
         }
 
@@ -742,7 +749,7 @@ ngx_http_log_flush(ngx_open_file_t *file, ngx_log_t *log)
     buffer->pos = buffer->start;
 
     if (buffer->event && buffer->event->timer_set) {
-        ngx_del_timer(buffer->event);
+        ngx_del_timer(buffer->event, NGX_FUNC_LINE);
     }
 }
 
@@ -1210,7 +1217,7 @@ ngx_http_log_set_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         goto process_formats;
     }
 
-    n = ngx_http_script_variables_count(&value[1]);
+    n = ngx_http_script_variables_count(&value[1]); //查看参数中是否带有$变量
 
     if (n == 0) {
         log->file = ngx_conf_open_file(cf->cycle, &value[1]);
@@ -1219,6 +1226,10 @@ ngx_http_log_set_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
 
     } else {
+        /*
+        ngx_conf_full_name 在 "$host/access.log" 前添加 Nginx 的 prefix 路径。函数成功返回后，value[1] 的值将变成 
+        "/usr/local/nginx/conf/$host/access.log" (假设我们使用默认选项，将 Nginx 安装到了 /usr/local/nginx 下)。
+         */
         if (ngx_conf_full_name(cf->cycle, &value[1], 0) != NGX_OK) {
             return NGX_CONF_ERROR;
         }
@@ -1234,7 +1245,7 @@ ngx_http_log_set_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         sc.source = &value[1];
         sc.lengths = &log->script->lengths;
         sc.values = &log->script->values;
-        sc.variables = n;
+        sc.variables = n; //$变量个数
         sc.complete_lengths = 1;
         sc.complete_values = 1;
 

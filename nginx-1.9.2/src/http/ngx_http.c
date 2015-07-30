@@ -573,6 +573,7 @@ ngx_http_init_headers_in_hash(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
 
     return NGX_OK;
 }
+
 /*
 ÔÚ¸÷¸öHTTPÄ£¿éÄÜ¹»½éÈëµÄ7¸ö½×¶ÎÖĞ£¬Êµ¼ÊÉÏ¹²ÏíÁË4¸öchecker·½·¨£ºngx_http_core_generic_phase¡¢ngx_http_core_rewrite_phase¡¢
 ngx_http_core_access_phase¡¢ngx_http_core_content_phase¡£Õâ4¸öchecker·½·¨µÄÖ÷ÒªÈÎÎñÔÚÓÚ£¬¸ù¾İphase_handlerÖ´ĞĞÄ³¸öHTTPÄ£¿éÊµÏÖµÄ
@@ -623,10 +624,15 @@ ngx_http_init_phase_handlers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
 
             break;
 
+/*
+NGX_HTTP_FIND_CONFIG_PHASE¡¢NGX_HTTP_POSTREWRITE_PHASE¡¢NGX_HTTP_POST_ACCESS_PHASE¡¢NGX_HTTP_TRY_FILES_PHASEÕâ4¸ö½×¶ÎÔò
+²»ÔÊĞíHTTPÄ£¿é¼ÓÈë×Ô¼ºµÄngx_http_handler_pt·½·¨´¦ÀíÓÃ»§ÇëÇó,µ«ÊÇËûÃÇµÄ»áÕ¼ÓÃcmcf->phase_engine.handlers[]Êı×éÖĞµÄÒ»¸ö³ÉÔ±
+ */
         case NGX_HTTP_FIND_CONFIG_PHASE: //¸Ã½×¶ÎÔò²»ÔÊĞíHTTPÄ£¿é¼ÓÈë×Ô¼ºµÄngx_http_handler_pt·½·¨´¦ÀíÓÃ»§ÇëÇó·½·¨£¬Ö±½Ó°Ñhttp¿ò¼Ü·½·¨¼ÓÈëµ½cmcf->phase_engine.handlersÊı×éÖĞ
             find_config_index = n;
 
-            ph->checker = ngx_http_core_find_config_phase;
+            ph->checker = ngx_http_core_find_config_phase; //
+            ph->phase = i;
             n++; //ËùÓĞ´¦Àí·½·¨ÊıÔö¼ÓÒ»´Î
             ph++; //Ö¸Ïòcmcf->phase_engine.handlersÊı×éÖĞÏÂÒ»¸öÎ´ÓÃµÄngx_http_phase_handler_t½ÚµãÎ»ÖÃ
 
@@ -645,10 +651,10 @@ ngx_http_init_phase_handlers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
             if (use_rewrite) {
                 ph->checker = ngx_http_core_post_rewrite_phase;
                 ph->next = find_config_index;
+                ph->phase = i;
                 n++;
                 ph++;
             }
-
             continue;
 
         case NGX_HTTP_ACCESS_PHASE:
@@ -660,6 +666,7 @@ ngx_http_init_phase_handlers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
             if (use_access) {
                 ph->checker = ngx_http_core_post_access_phase;
                 ph->next = n;
+                ph->phase = i;
                 ph++;
             }
 
@@ -668,6 +675,7 @@ ngx_http_init_phase_handlers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
         case NGX_HTTP_TRY_FILES_PHASE://¸Ã½×¶ÎÔò²»ÔÊĞíHTTPÄ£¿é¼ÓÈë×Ô¼ºµÄngx_http_handler_pt·½·¨´¦ÀíÓÃ»§ÇëÇó·½·¨£¬Ö±½Ó°Ñhttp¿ò¼Ü·½·¨¼ÓÈëµ½cmcf->phase_engine.handlersÊı×éÖĞ
             if (cmcf->try_files) {
                 ph->checker = ngx_http_core_try_files_phase;
+                ph->phase = i;
                 n++;
                 ph++;
             }
@@ -689,6 +697,7 @@ ngx_http_init_phase_handlers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
             ph->checker = checker; //Ã¿¸ö½×¶Î¶ÔÓ¦µÄchecker£¬ÀıÈç:NGX_HTTP_SERVER_REWRITE_PHASE½×¶ÎÎªngx_http_core_rewrite_phase
             //i½×¶ÎµÄËùÓĞngx_http_handler_pt´¦Àí·½·¨Í¨¹ıphÁ¬½ÓÆğÀ´£¬Ò²¾ÍÊÇÈ«²¿Ìí¼Óµ½cmcf->phase_engine.handlersÊı×éÖĞ£¬¸÷¸ö³ÉÔ±Í¨¹ıph->nextÁ¬½ÓÔÚÒ»Æğ
             ph->handler = h[j];
+            ph->phase = i;
             ph->next = n;//ÏÂÒ»½×¶ÎµÄµÚÒ»¸öngx_http_handler_pt´¦Àí·½·¨ÔÚÊı×éÖĞµÄÎ»ÖÃ
             ph++; //Ö¸Ïòcmcf->phase_engine.handlersÊı×éÖĞÏÂÒ»¸öÎ´ÓÃµÄngx_http_phase_handler_t½ÚµãÎ»ÖÃ
         }
@@ -1012,7 +1021,16 @@ ngx_http_init_locations(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
         }
 
 #endif
-
+     /*
+        location / {
+          try_files index.html index.htm @fallback;
+        }
+        
+        location @fallback {
+          root /var/www/error;
+          index index.html;
+        }
+    */
         if (clcf->named) { 
             n++; //locationºóÎª@nameµÄlocation¸öÊı
 
@@ -1034,8 +1052,9 @@ ngx_http_init_locations(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     */
     if (q != ngx_queue_sentinel(locations)) { //Èç¹û¶ÓÁĞÀïÃæÓĞnoname£¬ÔòÒÔ¸ÃnonameÍ·²ğ·ÖÎªlocationsºÍtailÁ½¸ö¶ÓÁĞÁ´±í
         ngx_queue_split(locations, q, &tail);//Î´ÃüÃûµÄ²ğ·Ö³öÀ´  noname named regex¶¼Á¬½Óµ½tailÁ´±íÖĞ
-    }
-
+    } 
+    //Êµ¼ÊÉÏÕâÀï²ğ·Ö³öµÄnoname·ÅÈëtailºó£¬Èç¹ûlocationsÖĞ°üº¬named location,ÔònonameºÍname·ÅÒ»Æğ(cscf->named_locations)£¬Èç¹ûÃ»ÓĞnamedµ«ÊÇÓĞregex£¬
+    //ÔòºÍregex·ÅÒ»Æğ(pclcf->regex_locations)£¬Èç¹ûnameºÍregexºÍ¶¼Ã»ÓĞ£¬ÔòºÍÆÕÍ¨locations·ÅÒ»Æğ(pclcf->locations)
     if (named) { 
         clcfp = ngx_palloc(cf->pool,
                            (n + 1) * sizeof(ngx_http_core_loc_conf_t *));
@@ -1484,7 +1503,7 @@ ngx_http_join_exact_locations(ngx_conf_t *cf, ngx_queue_t *locations)
 
          /abc      /bcd       /cde
 */ //µİ¹élocations¶ÓÁĞÖĞµÄÃ¿¸ö½Úµã£¬µÃµ½ÒÔµ±Ç°½ÚµãµÄÃû×ÖÎªÇ°×ºµÄlocation£¬²¢±£´æÔÚµ±Ç°½ÚµãµÄlist×Ö¶Î ÏÂ
-static void
+static void //Í¼ĞÎ»¯²Î¿¼http://blog.chinaunix.net/uid-27767798-id-3759557.html£¬Õâ¸ö²©¿ÍºÜºÃÀí½â
 ngx_http_create_locations_list(ngx_queue_t *locations, ngx_queue_t *q) //Í¼ĞÎ»¯Àí½â²Î¿¼http://blog.csdn.net/fengmo_q/article/details/6683377
 {
     u_char                     *name;
@@ -1492,6 +1511,7 @@ ngx_http_create_locations_list(ngx_queue_t *locations, ngx_queue_t *q) //Í¼ĞÎ»¯À
     ngx_queue_t                *x, tail;
     ngx_http_location_queue_t  *lq, *lx;
 
+    //Èç¹ûlocationÎª¿Õ¾ÍÃ»ÓĞ±ØÒª¼ÌĞø×ßÏÂÃæµÄÁ÷³ÌÁË£¬ÓÈÆäÊÇµİ¹éµ½Ç¶Ì×location
     if (q == ngx_queue_last(locations)) {
         return;
     }
@@ -1499,6 +1519,7 @@ ngx_http_create_locations_list(ngx_queue_t *locations, ngx_queue_t *q) //Í¼ĞÎ»¯À
     lq = (ngx_http_location_queue_t *) q;
 
     if (lq->inclusive == NULL) {
+        //Èç¹ûÕâ¸ö½ÚµãÊÇ¾«×¼Æ¥ÅäÄÇÃ´Õâ¸ö½Úµã£¬¾Í²»»á×÷ÎªÄ³Ğ©½ÚµãµÄÇ°×º£¬²»ÓÃÓµÓĞtree½Úµã
         ngx_http_create_locations_list(locations, ngx_queue_next(q));
         return;
     }
@@ -1510,6 +1531,11 @@ ngx_http_create_locations_list(ngx_queue_t *locations, ngx_queue_t *q) //Í¼ĞÎ»¯À
          x != ngx_queue_sentinel(locations);
          x = ngx_queue_next(x))
     {
+        /* 
+            ÓÉÓÚËùÓĞlocationÒÑ¾­°´ÕÕË³ĞòÅÅÁĞºÃ£¬µİ¹éq½ÚµãµÄºó¼Ì½Úµã£¬Èç¹ûºó¼Ì½ÚµãµÄ³¤¶ÈĞ¡ÓÚºó×º½ÚµãµÄ³¤¶È£¬ÄÇÃ´¿ÉÒÔ¶Ï¶¨£¬Õâ¸öºó
+            ¼Ì½Úµã¿Ï¶¨ºÍºó×º½Úµã²»Ò»Ñù£¬²¢ÇÒ²»¿ÉÄÜÓĞ¹²Í¬µÄºó×º£»Èç¹ûºó¼Ì½ÚµãºÍq½ÚµãµÄ½»¼¯×ö±È½Ï£¬Èç¹û²»Í¬£¬¾Í±íÊ¾²»ÊÇÍ¬Ò»¸öÇ°×º£¬ËùÒÔ
+            ¿ÉÒÔ¿´³ö£¬´Óq½ÚµãµÄlocation listÓ¦¸ÃÊÇ´Óq.nextµ½x.prev½Úµã
+          */
         lx = (ngx_http_location_queue_t *) x;
 
         if (len > lx->name->len
@@ -1521,25 +1547,30 @@ ngx_http_create_locations_list(ngx_queue_t *locations, ngx_queue_t *q) //Í¼ĞÎ»¯À
 
     q = ngx_queue_next(q);
 
-    if (q == x) {
+    if (q == x) {//Èç¹ûqºÍx½ÚµãÖ±½ÓÃ»ÓĞ½Úµã£¬ÄÇÃ´¾ÍÃ»ÓĞ±ØÒªµİ¹éºóÃæÁË²úÉúq½ÚµãµÄlocation list£¬Ö±½Óµİ¹éqµÄºó¼Ì½Úµãx£¬²úÉúx½Úµãlocation list 
         ngx_http_create_locations_list(locations, x);
         return;
     }
 
-    ngx_queue_split(locations, q, &tail);
-    ngx_queue_add(&lq->list, &tail);
+    ngx_queue_split(locations, q, &tail);//location´Óq½Úµã¿ªÊ¼·Ö¸î£¬ÄÇÃ´ÏÖÔÚlocation¾ÍÊÇq½ÚµãÖ®Ç°µÄÒ»¶Îlist
+    ngx_queue_add(&lq->list, &tail);//q½ÚµãµÄlist³õÊ¼Îª´Óq½Úµã¿ªÊ¼µ½×îºóµÄÒ»¶Îlist
 
+    
+    /*
+        Ô­ÔòÉÏÒòÎªĞèÒªµİ¹éÁ½¶Îlist£¬Ò»¸öÎªpµÄlocation list£¨´Óp.nextµ½x.prev£©£¬ÁíÒ»¶ÎÎªx.nextµ½locationµÄ×îºóÒ»¸öÔªËØ£¬ÕâÀïÈç¹ûx
+        ÒÑ¾­ÊÇlocationµÄ×îºóÒ»¸öÁË£¬ÄÇÃ´¾ÍÃ»ÓĞ±ØÒªµİ¹éx.nextµ½locationµÄÕâÒ»¶ÎÁË£¬ÒòÎªÕâÒ»¶Î¶¼ÊÇ¿ÕµÄ¡£
+    */
     if (x == ngx_queue_sentinel(locations)) {
         ngx_http_create_locations_list(&lq->list, ngx_queue_head(&lq->list));
         return;
     }
+    
+    //µ½ÁËÕâÀï¿ÉÒÔÖªµÀĞèÒªµİ¹éÁ½¶Îlocation listÁË
+    ngx_queue_split(&lq->list, x, &tail);//ÔÙ´Î·Ö¸î£¬lq->listÊ£ÏÂp.nextµ½x.prevµÄÒ»¶ÎÁË
+    ngx_queue_add(locations, &tail);// ·Åµ½location ÖĞÈ¥
+    ngx_http_create_locations_list(&lq->list, ngx_queue_head(&lq->list));//µİ¹ép.nextµ½x.prev
 
-    ngx_queue_split(&lq->list, x, &tail);
-    ngx_queue_add(locations, &tail);
-
-    ngx_http_create_locations_list(&lq->list, ngx_queue_head(&lq->list));
-
-    ngx_http_create_locations_list(locations, x);
+    ngx_http_create_locations_list(locations, x);//µİ¹éx.nextµ½location ×îºóÁË
 }
 
 
@@ -1558,7 +1589,7 @@ ngx_http_create_locations_list(ngx_queue_t *locations, ngx_queue_t *q) //Í¼ĞÎ»¯À
 static ngx_http_location_tree_node_t *
 ngx_http_create_locations_tree(ngx_conf_t *cf, ngx_queue_t *locations,
     size_t prefix) //Í¼ĞÎ»¯Àí½â²Î¿¼http://blog.csdn.net/fengmo_q/article/details/6683377
-{
+{//Í¼ĞÎ»¯Àí½âlocationÈı²æÊ÷ĞÎ³É¹ı³Ì£¬²Î¿¼http://blog.chinaunix.net/uid-27767798-id-3759557.html
     size_t                          len;
     ngx_queue_t                    *q, tail;
     ngx_http_location_queue_t      *lq;
@@ -1585,10 +1616,9 @@ ngx_http_create_locations_tree(ngx_conf_t *cf, ngx_queue_t *locations,
                            || (lq->inclusive && lq->inclusive->auto_redirect));
 
     node->len = (u_char) len;
-    ngx_memcpy(node->name, &lq->name->data[prefix], len);
-
-    ngx_queue_split(locations, q, &tail);
-
+    ngx_memcpy(node->name, &lq->name->data[prefix], len);//¿ÉÒÔ¿´µ½Êµ¼ÊnodeµÄnameÊÇ¸¸½ÚµãµÄÔöÁ¿£¨²»´æ´¢¹«¹²Ç°×º£¬Ò²ĞíÕâÊÇÎªÁË½ÚÊ¡¿Õ¼ä£©
+    ngx_queue_split(locations, q, &tail);//location¶ÓÁĞÊÇ´ÓÍ·½Úµã¿ªÊ¼µ½q½ÚµãÖ®Ç°µÄ½Úµã£¬tailÊÇq½Úµãµ½location×óÓÒ½ÚµãµÄ¶ÓÁĞ
+    
     if (ngx_queue_empty(locations)) {
         /*
          * ngx_queue_split() insures that if left part is empty,
@@ -1597,7 +1627,8 @@ ngx_http_create_locations_tree(ngx_conf_t *cf, ngx_queue_t *locations,
         goto inclusive;
     }
 
-    node->left = ngx_http_create_locations_tree(cf, locations, prefix);
+    node->left = ngx_http_create_locations_tree(cf, locations, prefix); //µİ¹é¹¹½¨nodeµÄ×ó½Úµã
+    
     if (node->left == NULL) {
         return NULL;
     }
@@ -1608,7 +1639,7 @@ ngx_http_create_locations_tree(ngx_conf_t *cf, ngx_queue_t *locations,
         goto inclusive;
     }
 
-    node->right = ngx_http_create_locations_tree(cf, &tail, prefix);
+    node->right = ngx_http_create_locations_tree(cf, &tail, prefix);//µİ¹é¹¹½¨nodeµÄÓÒ½Úµã
     if (node->right == NULL) {
         return NULL;
     }
@@ -1619,7 +1650,7 @@ inclusive:
         return node;
     }
 
-    node->tree = ngx_http_create_locations_tree(cf, &lq->list, prefix + len);
+    node->tree = ngx_http_create_locations_tree(cf, &lq->list, prefix + len); //¸ù¾İlistÖ¸Õë¹¹ÔìnodeµÄtreeÖ¸Õë
     if (node->tree == NULL) {
         return NULL;
     }
@@ -1761,6 +1792,8 @@ ngx_http_add_addresses(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
 
     addr = port->addrs.elts;
 
+    /* ×¢Òâ£¬Èç¹ûÊÇÓĞ¶à¸öip:portÏàÍ¬£¬µ«ÊÇÔÚ²»Í¬µÄserver{}ÖĞ£¬Ôò½âÎöµ½Õâ¸öip:portÖĞµÄµÚÒ»¸öµÄÊ±ºò£¬²»»á×ßµ½¸ÃÑ­»·ÖĞ£¬¶øÊÇÖ´ĞĞÑ­»·ÍâµÄ
+                ngx_http_add_address£¬ÕâÀïÃæ»á°Ñaddr[i].default_server¸³ÖµÎª¸Ãip:portËùÔÚserver{} */
     for (i = 0; i < port->addrs.nelts; i++) {
         //±È½ÏĞÂÀ´µÄlsoptÖĞµÄµØÖ·ºÍports->addrsµØÖ·³ØÖĞÊÇ·ñÓĞÖØ¸´£¬Èç¹ûaddr[]ÖĞÃ»ÓĞ¸Ãip:port´æÔÚ£¬ÔòÖ±½ÓÖ¸ÏòforÍâÃæµÄngx_http_add_address
         if (ngx_memcmp(p, addr[i].opt.u.sockaddr_data + off, len) != 0) {
@@ -1800,20 +1833,23 @@ ngx_http_add_addresses(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
         }
 
         /* check the duplicate "default" server for this address:port */
-
+    
         if (lsopt->default_server) {
 
-            if (default_server) {
+            if (default_server) { //Èç¹ûÇ°ÃæÏàÍ¬µÄip:portËù´¦server{}ÖĞÒÑ¾­ÅäÖÃ¹ıdefault_server£¬Ôò±¨´í
                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                         "a duplicate default server for %s", addr[i].opt.addr);
                 return NGX_ERROR;
             }
             //ÏàÍ¬listen ip:port³öÏÖÔÚ²»Í¬µÄserverÖĞ£¬ÄÇÃ´optÖ¸Ïò×îºó½âÎöµÄlistenÅäÖÃÖĞ´øÓĞdefault_serverÑ¡ÏîËù¶ÔÓ¦µÄserver{}ÉÏÏÂÎÄctx£¬¼ûngx_http_add_addresses
             default_server = 1;
+
+            /* ×¢Òâ£¬Èç¹ûÊÇÓĞ¶à¸öip:portÏàÍ¬£¬µ«ÊÇÔÚ²»Í¬µÄserver{}ÖĞ£¬Ôò½âÎöµ½Õâ¸öip:portÖĞµÄµÚÒ»¸öµÄÊ±ºò£¬²»»á×ßµ½¸ÃÑ­»·ÖĞ£¬¶øÊÇÖ´ĞĞÑ­»·ÍâµÄ
+                ngx_http_add_address£¬ÕâÀïÃæ»á°Ñaddr[i].default_server¸³ÖµÎª¸Ãip:portËùÔÚserver{} */
             addr[i].default_server = cscf; //ºóÃæ½âÎö
         }
 
-        addr[i].opt.default_server = default_server;
+        addr[i].opt.default_server = default_server; //Ö»ÒªÏàÍ¬ip:portËù´¦µÄ¶à¸öserver{]ÓĞÒ»¸öÓĞÉèÖÃdefault£¬ÔòÈÏÎªÓĞÄ¬ÈÏserver
         addr[i].opt.proxy_protocol = proxy_protocol;
 #if (NGX_HTTP_SSL)
         addr[i].opt.ssl = ssl;
@@ -1826,7 +1862,7 @@ ngx_http_add_addresses(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     }
 
     /* add the address to the addresses list that bound to this port */
-
+    //IPºÍ¶Ë¿Ú¶¼ÏàÍ¬²¢ÇÒÔÚ²»Í¬µÄserver{}ÖĞ,ÔòËûÃÇÔÚ²»Í¬µÄngx_http_conf_port_t->addrsÖĞ
     return ngx_http_add_address(cf, cscf, port, lsopt);
 }
 
@@ -1836,7 +1872,7 @@ ngx_http_add_addresses(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
  * configurations to the port list
  */
 //portÎªngx_http_core_main_conf_tÖĞµÄports£¬ËüÓÃÀ´´æ´¢listenÅäÖÃÏîµÄÏà¹ØĞÅÏ¢
-//Èç¹ûlistenµÄÊÇÏàÍ¬portµ«ip²»Í¬£¬Ôò»ñÈ¡Ò»¸öĞÂµÄngx_http_conf_addr_tÀ´´æ´¢
+//Èç¹ûlistenµÄÊÇÏàÍ¬portµ«ip²»Í¬£¬»òÕßÊÇIPºÍ¶Ë¿Ú¶¼ÏàÍ¬²¢ÇÒÔÚ²»Í¬µÄserver{}ÖĞ£¬Ôò»ñÈ¡Ò»¸öĞÂµÄngx_http_conf_addr_tÀ´´æ´¢
 static ngx_int_t
 ngx_http_add_address(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     ngx_http_conf_port_t *port, ngx_http_listen_opt_t *lsopt)
@@ -2179,7 +2215,6 @@ ngx_http_cmp_dns_wildcards(const void *one, const void *two)
     return ngx_dns_strcmp(first->key.data, second->key.data);
 }
 
-
 static ngx_int_t
 ngx_http_init_listening(ngx_conf_t *cf, ngx_http_conf_port_t *port)
 {
@@ -2358,7 +2393,7 @@ ngx_http_add_addrsº¯ÊıÓÃÓÚ³õÊ¼»¯ls->servers£¬Õâ¸öÊôĞÔÖ÷ÒªÊÇ´æ·Å¸Ã¼àÌısocket¶ÔÓ¦µ
 */ //¸Ãº¯ÊıÖ÷Òª°Ñlisten¶ÔÓ¦µÄserver_nameÅäÖÃĞÅÏ¢´æ·ÅÔÚhport->addrs[]ÖĞ
 static ngx_int_t
 ngx_http_add_addrs(ngx_conf_t *cf, ngx_http_port_t *hport,
-    ngx_http_conf_addr_t *addr)
+    ngx_http_conf_addr_t *addr) 
 {
     ngx_uint_t                 i;
     ngx_http_in_addr_t        *addrs;
@@ -2379,7 +2414,7 @@ ngx_http_add_addrs(ngx_conf_t *cf, ngx_http_port_t *hport,
 
         sin = &addr[i].opt.u.sockaddr_in;
         addrs[i].addr = sin->sin_addr.s_addr;
-        addrs[i].conf.default_server = addr[i].default_server;
+        addrs[i].conf.default_server = addr[i].default_server; //serverÅäÖÃĞÅÏ¢
 #if (NGX_HTTP_SSL)
         addrs[i].conf.ssl = addr[i].opt.ssl;
 #endif
@@ -2409,6 +2444,7 @@ ngx_http_add_addrs(ngx_conf_t *cf, ngx_http_port_t *hport,
 
         addrs[i].conf.virtual_names = vn;
 
+        //ÕâÀïÃæ´æ´¢µÄserver_nameÊÇÏàÍ¬ip:portËù´¦µÄ¶à¸ö²»Í¬server{]ÅäÖÃÖĞµÄËùÓĞserver_nameÅäÖÃ
         vn->names.hash = addr[i].hash; //ÍêÈ«Æ¥Åä
         vn->names.wc_head = addr[i].wc_head; //Ç°ÖÃÆ¥Åä
         vn->names.wc_tail = addr[i].wc_tail; //ºóÖÃÆ¥Åä

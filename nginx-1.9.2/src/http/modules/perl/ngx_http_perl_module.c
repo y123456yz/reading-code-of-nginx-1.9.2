@@ -283,7 +283,7 @@ ngx_http_perl_sleep_handler(ngx_http_request_t *r)
         return;
     }
 
-    if (ngx_handle_write_event(wev, 0) != NGX_OK) {
+    if (ngx_handle_write_event(wev, 0, NGX_FUNC_LINE) != NGX_OK) {
         ngx_http_finalize_request(r, NGX_HTTP_INTERNAL_SERVER_ERROR);
     }
 }

@@ -347,8 +347,10 @@ HTTPÍ·²¿ÊÇ·ñÔÊÐíÏÂ»­Ïß
             location / {
                 # /¿ÉÒÔÆ¥ÅäËùÓÐÇëÇó¡£
             }
-    */
-    { ngx_string("location"),
+
+         ÍêÈ«Æ¥Åä > Ç°×ºÆ¥Åä > ÕýÔò±í´ïÊ½ > /
+    */ //location {}ÅäÖÃ²éÕÒ¿ÉÒÔ²Î¿¼ngx_http_core_find_config_phase->ngx_http_core_find_location
+    { ngx_string("location"), 
       NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_BLOCK|NGX_CONF_TAKE12,
       ngx_http_core_location,
       NGX_HTTP_SRV_CONF_OFFSET,
@@ -377,6 +379,8 @@ HTTPÍ·²¿ÊÇ·ñÔÊÐíÏÂ»­Ïß
 
     Èç¹ûserver_nameºóÃæ¸ú×Å¿Õ×Ö·û´®£¬Èçserver_name ""±íÊ¾Æ¥ÅäÃ»ÓÐhostÕâ¸öHTTPÍ·²¿µÄÇëÇó
     ¸Ã²ÎÊýÄ¬ÈÏÎªserver_name ""
+    server_name_in_redirect on | off ¸ÃÅäÖÃÐèÒªÅäºÏserver_nameÊ¹ÓÃ¡£ÔÚÊ¹ÓÃon´ò¿ªºó,±íÊ¾ÔÚÖØ¶¨ÏòÇëÇóÊ±»áÊ¹ÓÃ
+    server_nameÀïµÄµÚÒ»¸öÖ÷»úÃû´úÌæÔ­ÏÈÇëÇóÖÐµÄHostÍ·²¿£¬¶øÊ¹ÓÃoff¹Ø±ÕÊ±£¬±íÊ¾ÔÚÖØ¶¨ÏòÇëÇóÊ±Ê¹ÓÃÇëÇó±¾ÉíµÄHOSTÍ·²¿
     */ //¹Ù·½ÏêÏ¸ÎÄµµ²Î¿¼http://nginx.org/en/docs/http/server_names.html
     { ngx_string("server_name"),
       NGX_HTTP_SRV_CONF|NGX_CONF_1MORE,
@@ -447,7 +451,43 @@ types_hash_bucket_size
       offsetof(ngx_http_core_loc_conf_t, default_type),
       NULL },
 
-    /* ¶¨Òå×ÊÔ´ÎÄ¼þÂ·¾¶¡£Ä¬ÈÏroot html.ÅäÖÃ¿é:http  server location  if£¬ Èç:
+    /* 
+       nginxÖ¸¶¨ÎÄ¼þÂ·¾¶ÓÐÁ½ÖÖ·½Ê½rootºÍalias£¬ÕâÁ½ÕßµÄÓÃ·¨Çø±ð£¬Ê¹ÓÃ·½·¨×Ü½áÁËÏÂ£¬·½±ã´ó¼ÒÔÚÓ¦ÓÃ¹ý³ÌÖÐ£¬¿ìËÙÏìÓ¦¡£rootÓëaliasÖ÷ÒªÇø±ðÔÚÓÚnginxÈçºÎ½âÊÍlocationºóÃæµÄuri£¬Õâ»áÊ¹Á½Õß·Ö±ðÒÔ²»Í¬µÄ·½Ê½½«ÇëÇóÓ³Éäµ½·þÎñÆ÷ÎÄ¼þÉÏ¡£
+       [root]
+       Óï·¨£ºroot path
+       Ä¬ÈÏÖµ£ºroot html
+       ÅäÖÃ¶Î£ºhttp¡¢server¡¢location¡¢if
+       [alias]
+       Óï·¨£ºalias path
+       ÅäÖÃ¶Î£ºlocation
+       ÊµÀý£º
+       
+       location ~ ^/weblogs/ {
+        root /data/weblogs/www.ttlsa.com;
+        autoindex on;
+        auth_basic            "Restricted";
+        auth_basic_user_file  passwd/weblogs;
+       }
+       Èç¹ûÒ»¸öÇëÇóµÄURIÊÇ/weblogs/httplogs/www.ttlsa.com-access.logÊ±£¬web·þÎñÆ÷½«»á·µ»Ø·þÎñÆ÷ÉÏµÄ/data/weblogs/www.ttlsa.com/weblogs/httplogs/www.ttlsa.com-access.logµÄÎÄ¼þ¡£
+       [info]root»á¸ù¾ÝÍêÕûµÄURIÇëÇóÀ´Ó³Éä£¬Ò²¾ÍÊÇ/path/uri¡£[/info]
+       Òò´Ë£¬Ç°ÃæµÄÇëÇóÓ³ÉäÎªpath/weblogs/httplogs/www.ttlsa.com-access.log¡£
+       
+       
+       location ^~ /binapp/ {  
+        limit_conn limit 4;
+        limit_rate 200k;
+        internal;  
+        alias /data/statics/bin/apps/;
+       }
+       alias»á°ÑlocationºóÃæÅäÖÃµÄÂ·¾¶¶ªÆúµô£¬°Ñµ±Ç°Æ¥Åäµ½µÄÄ¿Â¼Ö¸Ïòµ½Ö¸¶¨µÄÄ¿Â¼¡£Èç¹ûÒ»¸öÇëÇóµÄURIÊÇ/binapp/a.ttlsa.com/faviconÊ±£¬web·þÎñÆ÷½«»á·µ»Ø·þÎñÆ÷ÉÏµÄ/data/statics/bin/apps/a.ttlsa.com/favicon.jgpµÄÎÄ¼þ¡£
+       [warning]1. Ê¹ÓÃaliasÊ±£¬Ä¿Â¼ÃûºóÃæÒ»¶¨Òª¼Ó"/"¡£
+       2. alias¿ÉÒÔÖ¸¶¨ÈÎºÎÃû³Æ¡£
+       3. aliasÔÚÊ¹ÓÃÕýÔòÆ¥ÅäÊ±£¬±ØÐë²¶×½ÒªÆ¥ÅäµÄÄÚÈÝ²¢ÔÚÖ¸¶¨µÄÄÚÈÝ´¦Ê¹ÓÃ¡£
+       4. aliasÖ»ÄÜÎ»ÓÚlocation¿éÖÐ¡£[/warning]
+       ÈçÐè×ªÔØÇë×¢Ã÷³ö´¦£º  http://www.ttlsa.com/html/2907.html
+
+
+       ¶¨Òå×ÊÔ´ÎÄ¼þÂ·¾¶¡£Ä¬ÈÏroot html.ÅäÖÃ¿é:http  server location  if£¬ Èç:
         location /download/ {
             root /opt/web/html/;
         } 
@@ -487,6 +527,40 @@ types_hash_bucket_size
     }
     
     ÕâÑù£¬ÇëÇóÔÚ·ÃÎÊ/test/nginx.confÊ±£¬Nginx»á·µ»Ø/usr/local/nginx/conf/nginx.confÎÄ¼þÖÐµÄÄÚÈÝ¡£
+
+    nginxÖ¸¶¨ÎÄ¼þÂ·¾¶ÓÐÁ½ÖÖ·½Ê½rootºÍalias£¬ÕâÁ½ÕßµÄÓÃ·¨Çø±ð£¬Ê¹ÓÃ·½·¨×Ü½áÁËÏÂ£¬·½±ã´ó¼ÒÔÚÓ¦ÓÃ¹ý³ÌÖÐ£¬¿ìËÙÏìÓ¦¡£rootÓëaliasÖ÷ÒªÇø±ðÔÚÓÚnginxÈçºÎ½âÊÍlocationºóÃæµÄuri£¬Õâ»áÊ¹Á½Õß·Ö±ðÒÔ²»Í¬µÄ·½Ê½½«ÇëÇóÓ³Éäµ½·þÎñÆ÷ÎÄ¼þÉÏ¡£
+[root]
+Óï·¨£ºroot path
+Ä¬ÈÏÖµ£ºroot html
+ÅäÖÃ¶Î£ºhttp¡¢server¡¢location¡¢if
+[alias]
+Óï·¨£ºalias path
+ÅäÖÃ¶Î£ºlocation
+ÊµÀý£º
+
+location ~ ^/weblogs/ {
+ root /data/weblogs/www.ttlsa.com;
+ autoindex on;
+ auth_basic            "Restricted";
+ auth_basic_user_file  passwd/weblogs;
+}
+Èç¹ûÒ»¸öÇëÇóµÄURIÊÇ/weblogs/httplogs/www.ttlsa.com-access.logÊ±£¬web·þÎñÆ÷½«»á·µ»Ø·þÎñÆ÷ÉÏµÄ/data/weblogs/www.ttlsa.com/weblogs/httplogs/www.ttlsa.com-access.logµÄÎÄ¼þ¡£
+[info]root»á¸ù¾ÝÍêÕûµÄURIÇëÇóÀ´Ó³Éä£¬Ò²¾ÍÊÇ/path/uri¡£[/info]
+Òò´Ë£¬Ç°ÃæµÄÇëÇóÓ³ÉäÎªpath/weblogs/httplogs/www.ttlsa.com-access.log¡£
+
+
+location ^~ /binapp/ {  
+ limit_conn limit 4;
+ limit_rate 200k;
+ internal;  
+ alias /data/statics/bin/apps/;
+}
+alias»á°ÑlocationºóÃæÅäÖÃµÄÂ·¾¶¶ªÆúµô£¬°Ñµ±Ç°Æ¥Åäµ½µÄÄ¿Â¼Ö¸Ïòµ½Ö¸¶¨µÄÄ¿Â¼¡£Èç¹ûÒ»¸öÇëÇóµÄURIÊÇ/binapp/a.ttlsa.com/faviconÊ±£¬web·þÎñÆ÷½«»á·µ»Ø·þÎñÆ÷ÉÏµÄ/data/statics/bin/apps/a.ttlsa.com/favicon.jgpµÄÎÄ¼þ¡£
+[warning]1. Ê¹ÓÃaliasÊ±£¬Ä¿Â¼ÃûºóÃæÒ»¶¨Òª¼Ó"/"¡£
+2. alias¿ÉÒÔÖ¸¶¨ÈÎºÎÃû³Æ¡£
+3. aliasÔÚÊ¹ÓÃÕýÔòÆ¥ÅäÊ±£¬±ØÐë²¶×½ÒªÆ¥ÅäµÄÄÚÈÝ²¢ÔÚÖ¸¶¨µÄÄÚÈÝ´¦Ê¹ÓÃ¡£
+4. aliasÖ»ÄÜÎ»ÓÚlocation¿éÖÐ¡£[/warning]
+ÈçÐè×ªÔØÇë×¢Ã÷³ö´¦£º  http://www.ttlsa.com/html/2907.html
     */
     { ngx_string("alias"),
       NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
@@ -1540,7 +1614,7 @@ ngx_http_core_run_phases(ngx_http_request_t *r)
     cmcf = ngx_http_get_module_main_conf(r, ngx_http_core_module);
 
     ph = cmcf->phase_engine.handlers;
-    
+
     while (ph[r->phase_handler].checker) { //´¦ÓÚÍ¬Ò»ngx_http_phases½×¶ÎµÄËùÓÐngx_http_phase_handler_tµÄcheckerÖ¸ÏòÏàÍ¬µÄº¯Êý£¬¼ûngx_http_init_phase_handlers
 /*
 handler·½·¨ÆäÊµ½öÄÜÔÚchecker·½·¨ÖÐ±»µ÷ÓÃ£¬¶øÇÒchecker·½·¨ÓÉHTTP¿ò¼ÜÊµÏÖ£¬ËùÒÔ¿ÉÒÔ¿ØÖÆ¸÷HTTPÄ£¿éÊµÏÖµÄ´¦Àí·½·¨ÔÚ²»Í¬µÄ½×¶ÎÖÐ²ÉÓÃ²»Í¬µÄµ÷ÓÃÐÐÎª
@@ -1552,6 +1626,7 @@ ngx_http_request_t½á¹¹ÌåÖÐµÄphase_handler³ÉÔ±½«¾ö¶¨Ö´ÐÐµ½ÄÄÒ»½×¶Î£¬ÒÔ¼°ÏÂÒ»½×¶ÎÓ
 ¸øNginxµÄÊÂ¼þÄ£¿é£¬ÓÉËü¸ù¾ÝÊÂ¼þ£¨ÍøÂçÊÂ¼þ¡¢¶¨Ê±Æ÷ÊÂ¼þ¡¢Òì²½I/OÊÂ¼þµÈ£©ÔÙ´Îµ÷¶ÈÇëÇó¡£È»¶ø£¬Ò»¸öÇëÇó¶à°ëÐèÒªNginxÊÂ¼þÄ£¿é¶à´ÎµØµ÷¶ÈHTTPÄ£
 ¿é´¦Àí£¬Ò²¾ÍÊÇÔÚ¸Ãº¯ÊýÍâÉèÖÃµÄ¶Á/Ð´ÊÂ¼þµÄ»Øµ÷·½·¨ngx_http_request_handler
 */
+        
         rc = ph[r->phase_handler].checker(r, &ph[r->phase_handler]);
 
  /* Ö±½Ó·µ»ØNGX OK»áÊ¹´ýHTTP¿ò¼ÜÁ¢¿Ì°Ñ¿ØÖÆÈ¨½»»¹¸øepollÊÂ¼þ¿ò¼Ü£¬²»ÔÙ´¦Àíµ±Ç°ÇëÇó£¬Î¨ÓÐÕâ¸öÇëÇóÉÏµÄÊÂ¼þÔÙ´Î±»´¥·¢²Å»á¼ÌÐøÖ´ÐÐ¡£*/
@@ -1560,6 +1635,52 @@ ngx_http_request_t½á¹¹ÌåÖÐµÄphase_handler³ÉÔ±½«¾ö¶¨Ö´ÐÐµ½ÄÄÒ»½×¶Î£¬ÒÔ¼°ÏÂÒ»½×¶ÎÓ
         }
     }
 }
+
+const char* ngx_http_phase_2str(ngx_uint_t phase)  
+{
+    static char buf[56];
+    
+    switch(phase)
+    {
+        case NGX_HTTP_POST_READ_PHASE:
+            return "NGX_HTTP_POST_READ_PHASE";
+
+        case NGX_HTTP_SERVER_REWRITE_PHASE:
+            return "NGX_HTTP_SERVER_REWRITE_PHASE"; 
+
+        case NGX_HTTP_FIND_CONFIG_PHASE:
+            return "NGX_HTTP_FIND_CONFIG_PHASE";
+
+        case NGX_HTTP_REWRITE_PHASE:
+            return "NGX_HTTP_REWRITE_PHASE";
+
+        case NGX_HTTP_POST_REWRITE_PHASE:
+            return "NGX_HTTP_POST_REWRITE_PHASE";
+
+        case NGX_HTTP_PREACCESS_PHASE:
+            return "NGX_HTTP_PREACCESS_PHASE"; 
+
+        case NGX_HTTP_ACCESS_PHASE:
+            return "NGX_HTTP_ACCESS_PHASE";
+
+        case NGX_HTTP_POST_ACCESS_PHASE:
+            return "NGX_HTTP_POST_ACCESS_PHASE";
+
+        case NGX_HTTP_TRY_FILES_PHASE:
+            return "NGX_HTTP_TRY_FILES_PHASE";
+
+        case NGX_HTTP_CONTENT_PHASE:
+            return "NGX_HTTP_CONTENT_PHASE"; 
+
+        case NGX_HTTP_LOG_PHASE:
+            return "NGX_HTTP_LOG_PHASE";
+    }
+
+    memset(buf, 0, sizeof(buf));
+    snprintf(buf, sizeof(buf), "error phase:%u", phase);
+    return buf;
+}
+
 
 /*
 //NGX_HTTP_POST_READ_PHASE   NGX_HTTP_PREACCESS_PHASE  NGX_HTTP_LOG_PHASEÄ¬ÈÏ¶¼ÊÇ¸Ãº¯ÊýÅÎ¶ÎÏÂHTTPÄ£¿éµÄngx_http_handler_pt·½·¨·µ»ØÖµÒâÒå
@@ -1602,8 +1723,8 @@ ngx_http_core_generic_phase(ngx_http_request_t *r, ngx_http_phase_handler_t *ph)
      * used by the post read and pre-access phases
      */
 
-    ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                   "generic phase: %ui", r->phase_handler);
+    ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                   "generic phase: %ui (%s)", r->phase_handler, ngx_http_phase_2str(ph->phase));
 
     rc = ph->handler(r); //µ÷ÓÃÕâÒ»½×¶ÎÖÐ¸÷HTTPÄ£¿éÌí¼ÓµÄhandler´¦Àí·½·¨
 
@@ -1636,8 +1757,8 @@ ngx_http_core_generic_phase(ngx_http_request_t *r, ngx_http_phase_handler_t *ph)
 }
 
 /*
-NGX_HTTP_REWRITE_PHASE  NGX_HTTP_POST_REWRITE_PHASE½×¶ÎµÄchecker·½·¨ÊÇngx_http_core_rewrite_phase¡£±í10-2×Ü½áÁË¸Ã½×¶ÎÏÂngx_http_handler_pt´¦Àí·½·¨µÄ·µ»ØÖµÊÇÈçºÎÓ°ÏìHTTP¿ò
-¼ÜÖ´ÐÐµÄ£¬×¢Òâ£¬Õâ¸ö½×¶ÎÖÐ²»´æÔÚ·µ»ØÖµ¿ÉÒÔÊ¹ÇëÇóÖ±½ÓÌøµ½ÏÂÒ»¸ö½×¶ÎÖ´ÐÐ¡£
+NGX_HTTP_SERVER_REWRITE_PHASE  NGX_HTTP_REWRITE_PHASE½×¶ÎµÄchecker·½·¨ÊÇngx_http_core_rewrite_phase¡£±í10-2×Ü½áÁË¸Ã½×¶Î
+ÏÂngx_http_handler_pt´¦Àí·½·¨µÄ·µ»ØÖµÊÇÈçºÎÓ°ÏìHTTP¿ò¼ÜÖ´ÐÐµÄ£¬×¢Òâ£¬Õâ¸ö½×¶ÎÖÐ²»´æÔÚ·µ»ØÖµ¿ÉÒÔÊ¹ÇëÇóÖ±½ÓÌøµ½ÏÂÒ»¸ö½×¶ÎÖ´ÐÐ¡£
 NGX_HTTP_REWRITE_PHASE  NGX_HTTP_POST_REWRITE_PHASE½×¶ÎHTTPÄ£¿éµÄngx_http_handler_pt·½·¨·µ»ØÖµÒâÒå
 ©³©¥©¥©¥©¥©¥©¥©¥©×©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©·
 ©§    ·µ»ØÖµ    ©§    ÒâÒå                                                                            ©§
@@ -1662,14 +1783,14 @@ NGX_HTTP_REWRITE_PHASE  NGX_HTTP_POST_REWRITE_PHASE½×¶ÎHTTPÄ£¿éµÄngx_http_handle
 
 */ //ËùÓÐ½×¶ÎµÄcheckerÔÚngx_http_core_run_phasesÖÐµ÷ÓÃ
 ngx_int_t
-ngx_http_core_rewrite_phase(ngx_http_request_t *r, ngx_http_phase_handler_t *ph)
+ngx_http_core_rewrite_phase(ngx_http_request_t *r, ngx_http_phase_handler_t *ph) 
 {
     ngx_int_t  rc;
 
-    ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                   "rewrite phase: %ui", r->phase_handler);
+    ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                   "rewrite phase: %ui (%s)", r->phase_handler, ngx_http_phase_2str(ph->phase));
 
-    rc = ph->handler(r);
+    rc = ph->handler(r);//ngx_http_rewrite_handler
 
 /* ½«phase_handler¼Ó1±íÊ¾½«ÒªÖ´ÐÐÏÂÒ»¸ö»Øµ÷·½·¨¡£×¢Òâ£¬´ËÊ±·µ»ØµÄÊÇNGX AGAIN£¬HTTP¿ò¼Ü²»»á°Ñ½ø³Ì¿ØÖÆÈ¨½»»¹¸øepollÊÂ¼þ¿ò¼Ü£¬¶ø
 ÊÇ¼ÌÐøÁ¢¿ÌÖ´ÐÐÇëÇóµÄÏÂÒ»¸ö»Øµ÷·½·¨¡£ */
@@ -1703,6 +1824,10 @@ NGX_HTTP_POST_REWRITE_PHASE½×¶ÎÍ¬Ê±´¦ÀíÖØÐ´URLÕâÑùµÄÒµÎñ£¬HTTP¿ò¼ÜÈÏÎªÕâÁ½¸öÅÎ¶Î
     return NGX_OK;
 }
 
+
+/*
+NGXHTTP¡ªFIND¡ªCONFIG¡ªPHASE½×¶ÎÉÏ²»ÄÜ¹ÒÔØÈÎºÎ»Øµ÷º¯Êý£¬ÒòÎªËüÃÇÓÀÔ¶Ò²²»»á±»Ö´ÐÐ£¬¸Ã½×¶ÎÍê³ÉµÄÊÇNginxµÄÌØ¶¨ÈÎÎñ£¬¼´½øÐÐLocation¶¨Î»
+*/
 //ËùÓÐ½×¶ÎµÄcheckerÔÚngx_http_core_run_phasesÖÐµ÷ÓÃ
 ngx_int_t
 ngx_http_core_find_config_phase(ngx_http_request_t *r,
@@ -1715,6 +1840,9 @@ ngx_http_core_find_config_phase(ngx_http_request_t *r,
 
     r->content_handler = NULL;
     r->uri_changed = 0;
+    
+    ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                       "find config phase: %ui (%s)", r->phase_handler, ngx_http_phase_2str(ph->phase));
 
     rc = ngx_http_core_find_location(r);
 
@@ -1805,8 +1933,8 @@ ngx_http_core_post_rewrite_phase(ngx_http_request_t *r,
 {
     ngx_http_core_srv_conf_t  *cscf;
 
-    ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                   "post rewrite phase: %ui", r->phase_handler);
+    ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                   "post rewrite phase: %ui (%s)", r->phase_handler, ngx_http_phase_2str(ph->phase));
 
     if (!r->uri_changed) {
         r->phase_handler++;
@@ -1900,8 +2028,8 @@ ngx_http_core_access_phase(ngx_http_request_t *r, ngx_http_phase_handler_t *ph)
         return NGX_AGAIN;
     }
 
-    ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                   "access phase: %ui", r->phase_handler);
+    ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                   "access phase: %ui (%s)", r->phase_handler, ngx_http_phase_2str(ph->phase));
 
     rc = ph->handler(r);
 
@@ -2002,8 +2130,8 @@ ngx_http_core_post_access_phase(ngx_http_request_t *r,
 {
     ngx_int_t  access_code;
 
-    ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                   "post access phase: %ui", r->phase_handler);
+    ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                   "post access phase: %ui (%s)", r->phase_handler, ngx_http_phase_2str(ph->phase));
 
     access_code = r->access_code;
 
@@ -2043,8 +2171,8 @@ ngx_http_core_try_files_phase(ngx_http_request_t *r,
     ngx_http_core_loc_conf_t     *clcf;
     ngx_http_script_len_code_pt   lcode;
 
-    ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                   "try files phase: %ui", r->phase_handler);
+    ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                   "try files phase: %ui (%s)", r->phase_handler, ngx_http_phase_2str(ph->phase));
 
     clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
 
@@ -2286,14 +2414,17 @@ ngx_http_core_content_phase(ngx_http_request_t *r,
     µÄlocationÄÚ£¬ÊÇ·ñÓÐHTTPÄ£¿é°Ñ´¦Àí·½·¨ÉèÖÃµ½ÁËngx_http_core_loc_conf_t½á¹¹ÌåµÄhandler³ÉÔ±ÖÐ
      */
     if (r->content_handler) { //Èç¹ûÔÚclcf->handlerÖÐÉèÖÃÁË·½·¨£¬ÔòÖ±½Ó´ÓÕâÀï½øÈ¥Ö´ÐÐ¸Ã·½·¨£¬È»ºó·µ»Ø£¬¾Í²»»áÖ´ÐÐcontent½×¶ÎµÄÆäËûÈÎºÎ·½·¨ÁË£¬²Î¿¼Àý×Óngx_http_mytest_handler
+        
+        ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                           "content phase(content_handler): %ui (%s)", r->phase_handler, ngx_http_phase_2str(ph->phase));
         r->write_event_handler = ngx_http_request_empty_handler;
         //ÉÏÃæµÄr->content_handler»áÖ¸Ïòngx_http_mytest_handler´¦Àí·½·¨¡£Ò²¾ÍÊÇËµ£¬ÊÂÊµÉÏngx_http_finalize_request¾ö¶¨ÁËngx_http_mytest_handlerÈçºÎÆð×÷ÓÃ¡£
         ngx_http_finalize_request(r, r->content_handler(r));
         return NGX_OK;
     }
 
-    ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                   "content phase: %ui", r->phase_handler);
+    ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                   "content phase: %ui (%s)", r->phase_handler, ngx_http_phase_2str(ph->phase));
 
     rc = ph->handler(r);
 
@@ -2344,6 +2475,7 @@ ngx_http_core_content_phase(ngx_http_request_t *r,
 }
 
 
+//Ö÷ÒªÊÇ°ÑÅäÖÃÖÐµÄÒ»Ð©²ÎÊý¿½±´µ½rÖÐ£¬Í¬Ê±°Ñr->content_handler = clcf->handler;
 void
 ngx_http_update_location_config(ngx_http_request_t *r)
 {
@@ -2436,7 +2568,7 @@ ngx_http_update_location_config(ngx_http_request_t *r)
  */
 
 static ngx_int_t
-ngx_http_core_find_location(ngx_http_request_t *r)
+ngx_http_core_find_location(ngx_http_request_t *r)//Í¼½â²Î¿¼http://blog.chinaunix.net/uid-27767798-id-3759557.html
 {
     ngx_int_t                  rc;
     ngx_http_core_loc_conf_t  *pclcf;
@@ -2465,12 +2597,28 @@ ngx_http_core_find_location(ngx_http_request_t *r)
         rc = ngx_http_core_find_location(r);
     }
 
-    if (rc == NGX_OK || rc == NGX_DONE) {
+    //Èç¹ûÊÇÍêÈ«Æ¥Åä£¬»òÕßÊÇÖØ¶¨ÏòÆ¥Åä£¬ÔòÖ±½Ó·µ»Ø£¬²»ÔÚÆ¥ÅäÕýÔò±í´ïÊ½
+    if (rc == NGX_OK || rc == NGX_DONE) { //·µ»ØÕâÁ½¸öÖµ±íÊ¾ÕÒµ½¶ÔÓ¦µÄlocation{},²»ÐèÒªÔÙ½øÐÐ²éÕÒÕýÔò±í´ïÊ½
         return rc;
     }
 
     /* rc == NGX_DECLINED or rc == NGX_AGAIN in nested location */
+    //Ç°×ºÆ¥ÅäÓÐÆ¥Åäµ½location»òÕßÃ»ÓÐÆ¥Åäµ½location¶¼Òª½øÐÐÕýÔò±í´ïÊ½Æ¥Åä
 
+    /*
+        ÀýÈçÓÐÈçÏÂÅäÖÃ:
+        location /mytest {		 #1	 Ç°×ºÆ¥Åä
+            mytest;		
+         } 		
+
+         location ~* /mytest {		 #2	 ÕýÔò±í´ïÊ½Æ¥Åä
+            mytest;		
+         }  
+
+         Èç¹ûÇëÇóÊÇhttp://10.135.10.167/mytestÔòÆ¥Åä#1,
+         Èç¹û°Ñ#1¸ÄÎªlocation /mytes£¬ÔòÆ¥Åä#2
+         Èç¹û°Ñ#1¸ÄÎªlocation /£¬ÔòÆ¥Åä#2
+   */
 #if (NGX_PCRE)
 
     if (noregex == 0 && pclcf->regex_locations) {
@@ -2478,7 +2626,7 @@ ngx_http_core_find_location(ngx_http_request_t *r)
         for (clcfp = pclcf->regex_locations; *clcfp; clcfp++) {
 
             ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                           "test location: ~ \"%V\"", &(*clcfp)->name);
+                           "ngx pcre test location: ~ \"%V\"", &(*clcfp)->name);
 
             n = ngx_http_regex_exec(r, (*clcfp)->regex, &r->uri);
 
@@ -2511,19 +2659,21 @@ ngx_http_core_find_location(ngx_http_request_t *r)
  * NGX_AGAIN    - inclusive match
  * NGX_DECLINED - no match
  */
-
+//ÔÚnodeÊ÷ÖÐ²éÕÒr->uri½Úµã
 static ngx_int_t
 ngx_http_core_find_static_location(ngx_http_request_t *r,
-    ngx_http_location_tree_node_t *node)
+    ngx_http_location_tree_node_t *node)//Í¼½â²Î¿¼http://blog.chinaunix.net/uid-27767798-id-3759557.html
 {
     u_char     *uri;
     size_t      len, n;
     ngx_int_t   rc, rv;
 
+    
+    //requestµÄÇëÇóÂ·¾¶³¤¶ÈºÍµØÖ·
     len = r->uri.len;
     uri = r->uri.data;
 
-    rv = NGX_DECLINED;
+    rv = NGX_DECLINED; //Ä¬ÈÏ¾«×¼Æ¥ÅäºÍÇ°×ºÆ¥Åä Æ¥Åä²»µ½£¬ÐèÒªÆ¥ÅäºóÃæµÄÕýÔò
 
     for ( ;; ) {
 
@@ -2531,47 +2681,70 @@ ngx_http_core_find_static_location(ngx_http_request_t *r,
             return rv;
         }
 
-        ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                       "test location: \"%*s\"", node->len, node->name);
-
+        ngx_log_debug3(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                       "static_locations test location: \"%*s\", client uri:%s", node->len, node->name, uri);
+        //nÊÇuriµÄ³¤¶ÈºÍnode name³¤¶ÈµÄ×îÐ¡Öµ£¬ºÃ±È½ÏËûÃÇµÄ½»¼¯
         n = (len <= (size_t) node->len) ? len : node->len;
-
+        
         rc = ngx_filename_cmp(uri, node->name, n);
 
+        //²»µÃ0±íÊ¾uriºÍnodeµÄname²»ÏàµÈ£¬ÕâÊ±ºòÈý²æÊ÷¾ÍÄÜ¼ÓËÙ²éÕÒµÄÐ§ÂÊ£¬Ñ¡ÔñnodeµÄ×ó½Úµã»òÕßÓÒ½Úµã
         if (rc != 0) {
             node = (rc < 0) ? node->left : node->right;
 
             continue;
         }
-
+        
+        //×ßµ½ÕâÀï±íÊ¾uriºÍnode->nameÖÐËûÃÇÇ°ÃæµÄ½»¼¯×Ö·ûÍêÈ«ÏàÍ¬£¬Ôò±È½ÏÈý²æÊ÷ÖÐµÄtreeÊ÷
+        
+        //Èç¹û½»¼¯ÏàµÈ£¬Èç¹ûuriµÄ³¤¶È±ÈnodeµÄ³¤¶È»¹Òª³¤
         if (len > (size_t) node->len) {
-
+        
+            //Èç¹ûÕâ¸ö½ÚµãÊÇÇ°×ºÆ¥ÅäµÄÄÇÖÖÐèÒªµÝ¹étree½Úµã£¬ÒòÎªtree½ÚµãºóÃæµÄ×Ó½ÚµãÓµÓÐÏàÍ¬µÄÇ°×º¡£
             if (node->inclusive) {
-
+             /*
+                ÒòÎªÇ°×ºÒÑ¾­Æ¥Åäµ½ÁË£¬ËùÒÔÕâÀïÏÈÔÝÇÒ°Ñloc_conf×÷Îªtarget£¬µ«ÊÇ²»±£Ö¤ºóÃæµÄtree½ÚµãµÄ×Ó½ÚµãÊÇ·ñÓÐºÍuriÍêÈ«Æ¥Åä
+                »òÕß¸ü¶àÇ°×ºÆ¥ÅäµÄ¡£ÀýÈçÈç¹ûuriÊÇ/abc,µ±Ç°node½ÚµãÊÇ/a,ËäÈ»Æ¥Åäµ½ÁËlocation /a,ÏÈ°Ñ/aµÄlocation
+                ÅäÖÃ×÷Îªtarget£¬µ«ÊÇÓÐ¿ÉÄÜÔÚ/aµÄtree½ÚµãÓÐ/abcµÄlocation£¬ËùÒÔÐèÒªµÝ¹étree½Úµã¿´Ò»ÏÂ¡£ 
+                */
                 r->loc_conf = node->inclusive->loc_conf;
+                
+            /*
+            ÖÃ³Éagain±íÊ¾ÐèÒªµÝ¹éÇ¶Ì×location£¬ÎªÊ²Ã´ÒªÇ¶Ì×µÝ¹éÄØ£¬ÒòÎªlocationµÄÇ¶Ì×ÅäÖÃËäÈ»¹Ù·½²»ÍÆ¼ö£¬µ«ÊÇÅäÖÃµÄ»°£¬¸¸×Ó
+            locationÐèÒªÓÐÏàÍ¬µÄÇ°×º¡£ËùÒÔÐèÒªµÝ¹éÇ¶Ì×location 
+               */
                 rv = NGX_AGAIN;
 
-                node = node->tree;
+                node = node->tree;//nodeÖØÐÂ±äÎªtree½Úµã
+                
                 uri += n;
                 len -= n;
 
+                printf("len > node-len, rv=NGX_AGAIN\n");
                 continue;
             }
 
+          /*
+                ¶ÔÓÚ¾«È·Æ¥ÅäµÄlocation²»»á·ÅÔÚ¹«¹²Ç°×º½ÚµãµÄtree½ÚµãÖÐ£¬»áµ¥À­³öÀ´Ò»¸önodeºÍÇ°×º½ÚµãÆ½ÐÐ¡£Ò²¾ÍÊÇËµ¶ÔÓÚ¾«È·Æ¥
+                Åä £½/abcd ºÍÇ°×ºÆ¥ÅäµÄ/abcÁ½¸ölocationÅäÖÃ£¬=/abcd²»»áÊÇ/abc½ÚµãµÄtree½Úµã¡£=/abcd Ö»ÄÜÊÇ£¯abcµÄright½Úµã 
+            */
+            
             /* exact only */
-
             node = node->right;
 
             continue;
         }
 
-        if (len == (size_t) node->len) {
+        if (len == (size_t) node->len) { //Èç¹ûÊÇuriºÍnodeµÄnameÊÇÍêÈ«ÏàµÈµÄ
 
-            if (node->exact) {
+            if (node->exact) { //Èç¹ûÊÇ¾«È·Æ¥Åä£¬ÄÇÃ´¾ÍÊÇÖ±½Ó·µ»ØokÁË
+                
                 r->loc_conf = node->exact->loc_conf;
+                printf("len = node-len, rv=NGX_OK\n");
                 return NGX_OK;
 
-            } else {
+            } else { //Èç¹û»¹ÊÇÇ°×ºÄ£Ê½µÄlocation£¬ÄÇÃ´ÐèÒªµÝ¹éÇ¶Ì×locationÁË£¬ÐèÒªÌáÇ°ÉèÖÃloc_conf£¬Èç¹ûÇ¶Ì×ÓÐÆ¥ÅäµÄÔÙ¸²¸Ç
+                printf("len = node-len, rv=NGX_AGAIN\n"); 
                 r->loc_conf = node->inclusive->loc_conf;
                 return NGX_AGAIN;
             }
@@ -2583,9 +2756,15 @@ ngx_http_core_find_static_location(ngx_http_request_t *r,
 
             r->loc_conf = (node->exact) ? node->exact->loc_conf:
                                           node->inclusive->loc_conf;
+            printf("len + 1 = < node-len, auto_redirect = 1, rv=NGX_DONE\n");
             rv = NGX_DONE;
         }
-
+        
+        /*
+        Èç¹ûÇ°×ºÏàµÈ£¬uriµÄ³¤¶È±ÈnodeµÄ³¤¶È»¹ÒªÐ¡£¬±ÈÈçnodeµÄnameÊÇ/abc £¬uriÊÇ/ab,ÕâÖÖÇé¿öÊÇ/abc Ò»¶¨ÊÇ¾«È·Æ¥Åä£¬ÒòÎªÈç¹ûÊÇ
+        Ç°×ºÆ¥ÅäÄÇÃ´£¯abc ¿Ï¶¨»áÔÙ£¯abµÄtree Ö¸ÕëÀïÃæ¡£ 
+          */
+        printf("len < node-len, continue\n");
         node = node->left;
     }
 }
@@ -3522,6 +3701,16 @@ ngx_http_subrequest(ngx_http_request_t *r,
         c->data = sr;
     }
 
+    /*
+     ¶ÔÓÚ×ÓÇëÇó£¬ËäÈ»ÓÐ¶ÀÁ¢µÄngx_http_request_t¶ÔÏór£¬µ«ÊÇÈ´Ã»ÓÐ¶îµÄÍâ´´½¨r->variables£¬ºÍ¸¸ÇëÇó£¨»òÕßËµÖ÷ÇëÇó£©ÊÇ¹²ÏíµÄ
+
+     Õë¶Ô×ÓÇëÇó£¬ËäÈ»ÖØÐÂ´´½¨ÁËngx_http_requestt±äÁ¿sr£¬µ«×ÓÇëÇóµÄNginx±äÁ¿ÖµÊý×ésr->variablesÈ´ÊÇÖ±½ÓÖ¸Ïò¸¸ÇëÇóµÄr->variables¡£
+ ÆäÊµÕâ²¢²»ÄÑÀí½â£¬ÒòÎª¸¸×ÓÇëÇóµÄ´ó²¿·Ö±äÁ¿Öµ¶¼ÊÇÒ»ÑùµÄ£¬µ±È»Ã»±ØÒªÉêÇëÁíÍâµÄÕ­¼ä£¬¶ø¶ÔÓÚÄÇÐ©¸¸×ÓÇëÇóÖ®¼ä¿ÉÄÜ»áÓÐ²»Í¬±äÁ¿ÖµµÄ
+±äÁ¿£¬ÓÖÓÐNGXHTTP_VARNOCACHEABLE±ê¼ÇµÄ´æÔÚ£¬ËùÒÔÒ²²»»áÓÐÊ²Ã´ÎÊÌâ¡£±ÈÈç±äÁ¿$args£¬ÔÚ¸¸ÇëÇóÀïÈ¥·ÃÎÊ¸Ã±äÁ¿ÖµÊ±£¬·¢ÏÖ¸Ã±äÁ¿ÊÇ²»¿É»º
+´æµÄ£¬ÓÚÊÇ¾Íµ÷ÓÃget_handler0º¯Êý´Ómain_req¶ÔÏóµÄargs×Ö¶Î£¨¼´r->args£©ÀïÈ¥È¡£¬´ËÊ±µÃµ½µÄÖµ¿ÉÄÜÊÇpage=9999¡£¶øÔÚ×ÓÇëÇóÀïÈ¥·ÃÎÊ¸Ã±ä
+Á¿ÖµÊ±£¬·¢ÏÖ¸Ã±äÁ¿ÊÇ²»¿É»º´æµÄ£¬ÓÚÊÇÒ²µ÷ÓÃget_handler0º¯Êý´Ósub__req¶ÔÏóµÄargs×Ö¶Î£¨¼´sr->args£®×¢Òâ¶ÔÏósrÓërÖ®¼äÊÇ·Ö¸ô¿ªµÄ£©Àï
+È¥È¡£¬´ËÊ±µÃµ½µÄÖµ¾Í¿ÉÄÜÊÇid=12¡£Òò¶ø£¬ÔÚ»ñÈ¡¸¸×ÓÇëÇóÖ®¼ä¿É±ä±äÁ¿µÄÖµÊ±£¬²¢²»»áÏà»¥¸ÉÈÅ
+     */
     sr->variables = r->variables;
 
     sr->log_handler = r->log_handler;
@@ -3651,8 +3840,8 @@ ngx_http_named_location(ngx_http_request_t *r, ngx_str_t *name)
 
         for (clcfp = cscf->named_locations; *clcfp; clcfp++) {
 
-            ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                           "test location: \"%V\"", &(*clcfp)->name);
+            ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                           "name location, test location: \"%V\", uri:%s", &(*clcfp)->name, r->uri);
 
             if (name->len != (*clcfp)->name.len
                 || ngx_strncmp(name->data, (*clcfp)->name.data, name->len) != 0)
@@ -4694,8 +4883,9 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
                 }
             }
 
-        } else {
-        //location / {}È«²¿¶¼Æ¥Åä£¬   //location @mytest {}  //location !~ mytest {}  //location !~* mytest {}
+        } else { 
+        //ngx_http_add_locationÖÐ°Ñ¾«È·Æ¥Åä ÕýÔò±í´ïÊ½ name  nonameÅäÖÃÒÔÍâµÄÆäËûÅäÖÃ¶¼Ëã×öÇ°×ºÆ¥Åä  ÀýÈç//location ^~  xxx{}      location /XXX {}
+        //location /xx {}È«²¿¶¼Æ¥Åä£¬   //location @mytest {}  //location !~ mytest {}  //location !~* mytest {}
 //ÒÔ¡¯@¡¯¿ªÍ·µÄ£¬Èçlocation @test {}
 // @  ±íÊ¾ÎªÒ»¸ölocation½øÐÐÃüÃû£¬¼´×Ô¶¨ÒåÒ»¸ölocation£¬Õâ¸ölocation²»ÄÜ±»Íâ½çËù·ÃÎÊ£¬Ö»ÄÜÓÃÓÚNginx²úÉúµÄ×ÓÇëÇó£¬Ö÷ÒªÎªerror_pageºÍtry_files¡£      
             clcf->name = *name;
@@ -6217,7 +6407,7 @@ ngx_http_core_limit_except(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     pclcf->limit_except_loc_conf = ctx->loc_conf;
     clcf->loc_conf = ctx->loc_conf;
     clcf->name = pclcf->name;
-    clcf->noname = 1;
+    clcf->noname = 1; //limit_exceptÅäÖÃ±»×÷ÎªlocationµÄnonameÐÎÊ½
     clcf->lmt_excpt = 1;
 
     if (ngx_http_add_location(cf, &pclcf->locations, clcf) != NGX_OK) {

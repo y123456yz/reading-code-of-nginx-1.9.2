@@ -223,7 +223,7 @@ ngx_stream_ssl_init_connection(ngx_ssl_t *ssl, ngx_connection_t *c)
 
         sslcf = ngx_stream_get_module_srv_conf(s, ngx_stream_ssl_module);
 
-        ngx_add_timer(c->read, sslcf->handshake_timeout);
+        ngx_add_timer(c->read, sslcf->handshake_timeout, NGX_FUNC_LINE);
 
         c->ssl->handler = ngx_stream_ssl_handshake_handler;
 
@@ -243,7 +243,7 @@ ngx_stream_ssl_handshake_handler(ngx_connection_t *c)
     }
 
     if (c->read->timer_set) {
-        ngx_del_timer(c->read);
+        ngx_del_timer(c->read, NGX_FUNC_LINE);
     }
 
     ngx_stream_init_session(c);

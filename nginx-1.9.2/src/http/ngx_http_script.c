@@ -313,7 +313,21 @@ ngx_http_set_predicate_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_OK;
 }
 
+/*
+ngx_http_script_compile_t:/脚本化辅助结构体 - 作为脚本化包含变量的参数时的统一输入。
+ngx_http_script_copy_code_t - 负责将配置参数项中的固定字符串原封不动的拷贝到最终字符串。
+ngx_http_script_var_code_t - 负责将配置参数项中的变量取值后添加到最终字符串。
 
+脚本引擎相关函数
+ngx_http_script_variables_count - 根据 $ 出现在的次数统计出一个配置项参数中出现了多少个变量。
+ngx_http_script_compile - 将包含变量的参数脚本化，以便需要对参数具体化时调用脚本进行求值。
+ngx_http_script_done - 添加结束标志之类的收尾工作。
+ngx_http_script_add_copy_code - 处理参数中的固定字符串。这些字符串要和变量的值拼接出最终参数值。
+ngx_http_script_run - 
+ngx_http_script_add_var_code - 为变量创建取值需要的脚本。在实际变量取值过程中，为了确定包含变量的参数在参数取值后需要的内存块大小，
+Nginx 将取值过程分成两个脚本，一个负责计算变量的值长度，另一个负责取出对应的值。
+*/
+//一般用来获取配置项参数列表中有几个$变量 根据 $ 出现在的次数统计出一个配置项参数中出现了多少个变量。
 ngx_uint_t
 ngx_http_script_variables_count(ngx_str_t *value)
 {
@@ -328,9 +342,24 @@ ngx_http_script_variables_count(ngx_str_t *value)
     return n;
 }
 
+/*
+ngx_http_script_compile_t:/脚本化辅助结构体 - 作为脚本化包含变量的参数时的统一输入。
+ngx_http_script_copy_code_t - 负责将配置参数项中的固定字符串原封不动的拷贝到最终字符串。
+ngx_http_script_var_code_t - 负责将配置参数项中的变量取值后添加到最终字符串。
 
+脚本引擎相关函数
+ngx_http_script_variables_count - 根据 $ 出现在的次数统计出一个配置项参数中出现了多少个变量。
+ngx_http_script_compile - 将包含变量的参数脚本化，以便需要对参数具体化时调用脚本进行求值。
+ngx_http_script_done - 添加结束标志之类的收尾工作。
+ngx_http_script_add_copy_code - 处理参数中的固定字符串。这些字符串要和变量的值拼接出最终参数值。
+ngx_http_script_run - 
+ngx_http_script_add_var_code - 为变量创建取值需要的脚本。在实际变量取值过程中，为了确定包含变量的参数在参数取值后需要的内存块大小，
+Nginx 将取值过程分成两个脚本，一个负责计算变量的值长度，另一个负责取出对应的值。
+*/
+//将包含变量的参数脚本化，以便需要对参数具体化时调用脚本进行求值。
 ngx_int_t
 ngx_http_script_compile(ngx_http_script_compile_t *sc)
+//ngx_http_script_compile 函数对参数项进行整理，存入 ngx_http_log_script_t 变量中：可以参考access_log，ngx_http_log_set_log
 {
     u_char       ch;
     ngx_str_t    name;
@@ -345,15 +374,18 @@ ngx_http_script_compile(ngx_http_script_compile_t *sc)
         name.len = 0;
 
         if (sc->source->data[i] == '$') {
-
-            if (++i == sc->source->len) {
+             // 以'$'结尾，是有错误的，因为这里处理的都是变量，而不是正则(正则里面末尾带$是有意思的) 
+            if (++i == sc->source->len) { //$后面没有名称字符了，
                 goto invalid_variable;
             }
 
 #if (NGX_PCRE)
             {
             ngx_uint_t  n;
-
+           /* 
+              注意，在这里所谓的变量有两种，一种是$后面跟字符串的，一种是跟数字的。 
+              这里判断是否是数字形式的变量。 
+             */ 
             if (sc->source->data[i] >= '1' && sc->source->data[i] <= '9') {
 
                 n = sc->source->data[i] - '0';
@@ -362,8 +394,13 @@ ngx_http_script_compile(ngx_http_script_compile_t *sc)
                     sc->dup_capture = 1;
                 }
 
+                    
+                 /* 
+                    在sc->captures_mask中将数字对应的位置1，那么captures_mask的作用是什么？ 
+                    在后面对sc结构体分析时会提到。 
+                    */  
                 sc->captures_mask |= 1 << n;
-
+            
                 if (ngx_http_script_add_capture_code(sc, n) != NGX_OK) {
                     return NGX_ERROR;
                 }
@@ -375,6 +412,14 @@ ngx_http_script_compile(ngx_http_script_compile_t *sc)
             }
 #endif
 
+          /* 
+             * 这里是个有意思的地方，举个例子，假设有个这样一个配置proxy_pass $host$uritest， 
+             * 我们这里其实是想用nginx的两个内置变量，host和uri，但是对于$uritest来说，如果我们 
+             * 不加处理，那么在函数里很明显会将uritest这个整体作为一个变量，这显然不是我们想要的。 
+             * 那怎么办呢？nginx里面使用"{}"来把一些变量包裹起来，避免跟其他的字符串混在一起，在此处 
+             * 我们可以这样用${uri}test，当然变量之后是数字，字母或者下划线之类的字符才有必要这样处理 
+             * 代码中体现的很明显。 
+             */
             if (sc->source->data[i] == '{') {
                 bracket = 1;
 
@@ -382,7 +427,8 @@ ngx_http_script_compile(ngx_http_script_compile_t *sc)
                     goto invalid_variable;
                 }
 
-                name.data = &sc->source->data[i];
+                //name用来保存一个分离出的变量   
+                name.data = &sc->source->data[i]; 
 
             } else {
                 bracket = 0;
@@ -391,13 +437,18 @@ ngx_http_script_compile(ngx_http_script_compile_t *sc)
 
             for ( /* void */ ; i < sc->source->len; i++, name.len++) {
                 ch = sc->source->data[i];
-
+                
+                // 在"{}"中的字符串会被分离出来(即break语句)，避免跟后面的字符串混在一起   
                 if (ch == '}' && bracket) {
                     i++;
                     bracket = 0;
                     break;
                 }
 
+                 /* 
+                     变量中允许出现的字符，其他字符都不是变量的字符，所以空格是可以区分变量的。 
+                     这个我们在配置里经常可以感觉到，而它的原理就是这里所显示的了 
+                    */ 
                 if ((ch >= 'A' && ch <= 'Z')
                     || (ch >= 'a' && ch <= 'z')
                     || (ch >= '0' && ch <= '9')
@@ -409,7 +460,7 @@ ngx_http_script_compile(ngx_http_script_compile_t *sc)
                 break;
             }
 
-            if (bracket) {
+            if (bracket) { //如果带有{就必须以}结尾
                 ngx_conf_log_error(NGX_LOG_EMERG, sc->cf, 0,
                                    "the closing bracket in \"%V\" "
                                    "variable is missing", &name);
@@ -420,15 +471,21 @@ ngx_http_script_compile(ngx_http_script_compile_t *sc)
                 goto invalid_variable;
             }
 
-            sc->variables++;
+            sc->variables++;// 变量计数   
 
-            if (ngx_http_script_add_var_code(sc, &name) != NGX_OK) {
+            // 得到一个变量，做处理   
+            if (ngx_http_script_add_var_code(sc, &name) != NGX_OK) { 
                 return NGX_ERROR;
             }
 
             continue;
         }
 
+       /*  
+          程序到这里意味着一个变量分离出来(是普通字符串)，或者还没有碰到变量，一些非变量的字符串，这里不妨称为”常量字符串“ 
+          这里涉及到请求参数部分的处理，比较简单。这个地方一般是在一次分离变量或者常量结束后，后面紧跟'?'的情况 
+          相关的处理子在ngx_http_script_add_args_code会设置。 
+         */ 
         if (sc->source->data[i] == '?' && sc->compile_args) {
             sc->args = 1;
             sc->compile_args = 0;
@@ -441,15 +498,22 @@ ngx_http_script_compile(ngx_http_script_compile_t *sc)
 
             continue;
         }
-
+        
+        // 这里name保存一段所谓的”常量字符串“   
         name.data = &sc->source->data[i];
-
+        // 分离该常量字符串   
         while (i < sc->source->len) {
 
-            if (sc->source->data[i] == '$') {
+            if (sc->source->data[i] == '$') {// 碰到'$'意味着碰到了下一个变量 
                 break;
             }
 
+            
+            /* 
+                 此处意味着我们在一个常量字符串分离过程中遇到了'?'，如果我们不需要对请求参数做特殊处理的话， 
+                 即sc->compile_args = 0，那么我们就将其作为常量字符串的一部分来处理。否则，当前的常量字符串会 
+                 从'?'处，截断，分成两部分。
+               */  
             if (sc->source->data[i] == '?') {
 
                 sc->args = 1;
@@ -462,9 +526,10 @@ ngx_http_script_compile(ngx_http_script_compile_t *sc)
             i++;
             name.len++;
         }
-
+        
+        // 一个常量字符串分离完毕，sc->size统计整个字符串(即sc->source)中，常量字符串的总长度   
         sc->size += name.len;
-
+        // 常量字符串的处理子由这个函数来设置
         if (ngx_http_script_add_copy_code(sc, &name, (i == sc->source->len))
             != NGX_OK)
         {
@@ -472,6 +537,7 @@ ngx_http_script_compile(ngx_http_script_compile_t *sc)
         }
     }
 
+    // 本次compile结束，做一些收尾善后工作。  
     return ngx_http_script_done(sc);
 
 invalid_variable:
@@ -481,7 +547,19 @@ invalid_variable:
     return NGX_ERROR;
 }
 
+/*
+ngx_http_script_compile_t:/脚本化辅助结构体 - 作为脚本化包含变量的参数时的统一输入。
+ngx_http_script_copy_code_t - 负责将配置参数项中的固定字符串原封不动的拷贝到最终字符串。
+ngx_http_script_var_code_t - 负责将配置参数项中的变量取值后添加到最终字符串。
 
+脚本引擎相关函数
+ngx_http_script_variables_count - 根据 $ 出现在的次数统计出一个配置项参数中出现了多少个变量。
+ngx_http_script_compile - 将包含变量的参数脚本化，以便需要对参数具体化时调用脚本进行求值。
+ngx_http_script_done - 添加结束标志之类的收尾工作。
+ngx_http_script_run - 
+ngx_http_script_add_var_code - 为变量创建取值需要的脚本。在实际变量取值过程中，为了确定包含变量的参数在参数取值后需要的内存块大小，
+Nginx 将取值过程分成两个脚本，一个负责计算变量的值长度，另一个负责取出对应的值。
+*/
 u_char *
 ngx_http_script_run(ngx_http_request_t *r, ngx_str_t *value,
     void *code_lengths, size_t len, void *code_values)
@@ -567,6 +645,7 @@ ngx_http_script_init_arrays(ngx_http_script_compile_t *sc)
                              + sizeof(ngx_http_script_var_code_t))
             + sizeof(uintptr_t);
 
+        //开辟n个1字节空间的数组，每个数组成员就1个字节
         *sc->lengths = ngx_array_create(sc->cf->pool, n, 1);
         if (*sc->lengths == NULL) {
             return NGX_ERROR;
@@ -592,9 +671,21 @@ ngx_http_script_init_arrays(ngx_http_script_compile_t *sc)
     return NGX_OK;
 }
 
+/*
+ngx_http_script_compile_t:/脚本化辅助结构体 - 作为脚本化包含变量的参数时的统一输入。
+ngx_http_script_copy_code_t - 负责将配置参数项中的固定字符串原封不动的拷贝到最终字符串。
+ngx_http_script_var_code_t - 负责将配置参数项中的变量取值后添加到最终字符串。
 
+脚本引擎相关函数
+ngx_http_script_variables_count - 根据 $ 出现在的次数统计出一个配置项参数中出现了多少个变量。
+ngx_http_script_compile - 将包含变量的参数脚本化，以便需要对参数具体化时调用脚本进行求值。
+ngx_http_script_done - 添加结束标志之类的收尾工作。
+ngx_http_script_run - 
+ngx_http_script_add_var_code - 为变量创建取值需要的脚本。在实际变量取值过程中，为了确定包含变量的参数在参数取值后需要的内存块大小，
+Nginx 将取值过程分成两个脚本，一个负责计算变量的值长度，另一个负责取出对应的值。
+*/
 static ngx_int_t
-ngx_http_script_done(ngx_http_script_compile_t *sc)
+ngx_http_script_done(ngx_http_script_compile_t *sc)//添加结束标志之类的收尾工作。
 {
     ngx_str_t    zero;
     uintptr_t   *code;
@@ -651,7 +742,8 @@ ngx_http_script_start_code(ngx_pool_t *pool, ngx_array_t **codes, size_t size)
     return ngx_array_push_n(*codes, size);
 }
 
-
+/* 从 codes内存块中开辟 size 字节 的空间存放用于获取变量对应的值长度的脚本
+ */
 void *
 ngx_http_script_add_code(ngx_array_t *codes, size_t size, void *code)
 {
@@ -675,10 +767,11 @@ ngx_http_script_add_code(ngx_array_t *codes, size_t size, void *code)
     return new;
 }
 
-
+//配置中的$name这种变量字符串调用ngx_http_script_add_var_code，普通的字符串调用ngx_http_script_add_copy_code
+//ngx_http_script_add_copy_code - 处理参数中的固定字符串。这些字符串要和变量的值拼接出最终参数值。
 static ngx_int_t
 ngx_http_script_add_copy_code(ngx_http_script_compile_t *sc, ngx_str_t *value,
-    ngx_uint_t last)
+    ngx_uint_t last) //last标记是否是参数列表中的的最后一个参数
 {
     u_char                       *p;
     size_t                        size, len, zero;
@@ -687,28 +780,39 @@ ngx_http_script_add_copy_code(ngx_http_script_compile_t *sc, ngx_str_t *value,
     zero = (sc->zero && last);
     len = value->len + zero;
 
+    //最终lengths数组中只是存的变量长度和code，values数组中存有变量长度，变量值和对应的code
+
+    
+    /* 从 lengths 内存块中开辟 sizeof(ngx_http_script_copy_code_t) 字节的空间用于存放固定字符串的长度 */
     code = ngx_http_script_add_code(*sc->lengths,
                                     sizeof(ngx_http_script_copy_code_t), NULL);
     if (code == NULL) {
         return NGX_ERROR;
     }
 
+    
+    /* 被调用时返回 len */ //给lengths中的code赋值
     code->code = (ngx_http_script_code_pt) ngx_http_script_copy_len_code;
     code->len = len;
 
+    
+    /* 固定字符串和用于获取此固定字符串的脚本需要的存储空间 ，这里比ngx_http_script_copy_code_t结构多分配了size - ngx_http_script_copy_code_t空间来存放value数据*/
     size = (sizeof(ngx_http_script_copy_code_t) + len + sizeof(uintptr_t) - 1)
             & ~(sizeof(uintptr_t) - 1);
-
+    
+    /* 从 values 内存块中开辟 size 字节的空间用于存储固定字符串和操作脚本 */
     code = ngx_http_script_add_code(*sc->values, size, &sc->main);
     if (code == NULL) {
         return NGX_ERROR;
     }
-
+    /* 被调用时将其后的固定字符串返回 */
     code->code = ngx_http_script_copy_code;
     code->len = len;
 
+    
+    /* 将固定字符串暂存入 values 中 */
     p = ngx_cpymem((u_char *) code + sizeof(ngx_http_script_copy_code_t),
-                   value->data, value->len);
+                   value->data, value->len); //把value数据拷贝到ngx_http_script_copy_code_t屁股后面，
 
     if (zero) {
         *p = '\0';
@@ -754,13 +858,28 @@ ngx_http_script_copy_code(ngx_http_script_engine_t *e)
                    "http script copy: \"%*s\"", e->pos - p, p);
 }
 
+/*
+ngx_http_script_compile_t:/脚本化辅助结构体 - 作为脚本化包含变量的参数时的统一输入。
+ngx_http_script_copy_code_t - 负责将配置参数项中的固定字符串原封不动的拷贝到最终字符串。
+ngx_http_script_var_code_t - 负责将配置参数项中的变量取值后添加到最终字符串。
 
+脚本引擎相关函数
+ngx_http_script_variables_count - 根据 $ 出现在的次数统计出一个配置项参数中出现了多少个变量。
+ngx_http_script_compile - 将包含变量的参数脚本化，以便需要对参数具体化时调用脚本进行求值。
+ngx_http_script_done - 添加结束标志之类的收尾工作。
+ngx_http_script_run - 
+ngx_http_script_add_copy_code - 处理参数中的固定字符串。这些字符串要和变量的值拼接出最终参数值。
+ngx_http_script_add_var_code - 为变量创建取值需要的脚本。在实际变量取值过程中，为了确定包含变量的参数在参数取值后需要的内存块大小，
+Nginx 将取值过程分成两个脚本，一个负责计算变量的值长度，另一个负责取出对应的值。
+*/ //通过name查找到variables中的小标，然后从数组中获取ngx_http_script_var_code_t节点，把index和code赋值给他
+//配置中的$name这种变量字符串调用ngx_http_script_add_var_code，普通的字符串调用ngx_http_script_add_copy_code
 static ngx_int_t
-ngx_http_script_add_var_code(ngx_http_script_compile_t *sc, ngx_str_t *name)
+ngx_http_script_add_var_code(ngx_http_script_compile_t *sc, ngx_str_t *name)//name添加到flushes  lengths  values中
 {
     ngx_int_t                    index, *p;
     ngx_http_script_var_code_t  *code;
 
+    //根据变量名字，获取其在&cmcf->variables里面的下标。如果没有，就新建它。
     index = ngx_http_get_variable_index(sc->cf, name);
 
     if (index == NGX_ERROR) {
@@ -776,6 +895,10 @@ ngx_http_script_add_var_code(ngx_http_script_compile_t *sc, ngx_str_t *name)
         *p = index;
     }
 
+    
+    /* 从 lengths 内存块中开辟 sizeof(ngx_http_script_var_code_t) 字节
+          的空间存放用于获取变量对应的值长度的脚本
+        */ //lengths数组中的每个成员就一字节
     code = ngx_http_script_add_code(*sc->lengths,
                                     sizeof(ngx_http_script_var_code_t), NULL);
     if (code == NULL) {
@@ -785,15 +908,18 @@ ngx_http_script_add_var_code(ngx_http_script_compile_t *sc, ngx_str_t *name)
     code->code = (ngx_http_script_code_pt) ngx_http_script_copy_var_len_code;
     code->index = (uintptr_t) index;
 
+
+
     code = ngx_http_script_add_code(*sc->values,
                                     sizeof(ngx_http_script_var_code_t),
                                     &sc->main);
     if (code == NULL) {
         return NGX_ERROR;
     }
-
+    
+    /* ngx_http_script_copy_var_code 用于获取 index 对应的变量取值 */
     code->code = ngx_http_script_copy_var_code;
-    code->index = (uintptr_t) index;
+    code->index = (uintptr_t) index; //ngx_http_variable_t->index
 
     return NGX_OK;
 }
@@ -823,7 +949,7 @@ ngx_http_script_copy_var_len_code(ngx_http_script_engine_t *e)
     return 0;
 }
 
-
+// /* ngx_http_script_copy_var_code 用于获取 index 对应的变量取值 */
 void
 ngx_http_script_copy_var_code(ngx_http_script_engine_t *e)
 {
@@ -1351,7 +1477,8 @@ ngx_http_script_full_name_code(ngx_http_script_engine_t *e)
     e->ip += sizeof(ngx_http_script_full_name_code_t);
 }
 
-
+//根据return code；配置发送响应。
+//和ngx_http_rewrite_handler(ngx_http_request_t *r) 配合阅读，e->ip = rlcf->codes->elts; 
 void
 ngx_http_script_return_code(ngx_http_script_engine_t *e)
 {
@@ -1610,7 +1737,7 @@ ngx_http_script_complex_value_code(ngx_http_script_engine_t *e)
     ngx_http_script_len_code_pt            lcode;
     ngx_http_script_complex_value_code_t  *code;
 
-    code = (ngx_http_script_complex_value_code_t *) e->ip;
+    code = (ngx_http_script_complex_value_code_t *) e->ip;// e->ip就是之前在解析时设置的各种结构体  
 
     e->ip += sizeof(ngx_http_script_complex_value_code_t);
 
@@ -1643,9 +1770,10 @@ ngx_http_script_complex_value_code(ngx_http_script_engine_t *e)
     e->sp++;
 }
 
-
+//ngx_http_rewrite_handler中执行   
 void
-ngx_http_script_value_code(ngx_http_script_engine_t *e)
+ngx_http_script_value_code(ngx_http_script_engine_t *e) //e是从ngx_http_rewrite_loc_conf_t->codes->elts遍历获取到的
+//获取value值存放到e->sp中，sp向下移动一位指向下一个需要处理的ngx_http_script_xxx_code_t,一般value_code_t的下一个为set_var_code
 {
     ngx_http_script_value_code_t  *code;
 
@@ -1662,21 +1790,30 @@ ngx_http_script_value_code(ngx_http_script_engine_t *e)
     e->sp++;
 }
 
-
-void
-ngx_http_script_set_var_code(ngx_http_script_engine_t *e)
+//ngx_http_rewrite_handler中执行
+void //先执行ngx_http_script_value_code后，获取到value值存入e中，这样就可以通过set_val_code把e中的value赋值给对应的请求ngx_http_request_t
+ngx_http_script_set_var_code(ngx_http_script_engine_t *e) //e是从ngx_http_rewrite_loc_conf_t->codes->elts遍历获取到的
 {
     ngx_http_request_t          *r;
     ngx_http_script_var_code_t  *code;
 
-    code = (ngx_http_script_var_code_t *) e->ip;
+    code = (ngx_http_script_var_code_t *) e->ip;// e->ip就是之前在解析时设置的各种结构体   
 
     e->ip += sizeof(ngx_http_script_var_code_t);
 
     r = e->request;
 
-    e->sp--;
+    // e->sp是通过解析得到的变量处理结果的一个数组，变量的放置顺序跟ip中的顺序一致，而且随着处理而递增，所以为了保持中处理的一致性(这样   
+    // 就可以保证许多地方使用一致的处理方式)。这里sp—就可以得到之前的处理值，得到我们想要的结果了。 
+    e->sp--; 
+    //一般_value_code和set_var是一对，所以这里要回到前面的sp，要不set_var就暂用一个sp节点了，而sp是不会获取值的，所以不应该占用一个节点，可以确保只在value_code中增加
 
+
+    /*
+     变量code->index表示Nginx变量$file在cmcf->variables数组内的下标，对应每个请求的变量值存储空间就为r->variables[code->index]，
+     这里从e->sp栈中取出数据并进行C语言变量普通意义上的赋值
+     */
+    //把从前面的_value_code中获取到的值赋值给对应的r->variables[code->index]
     r->variables[code->index].len = e->sp->len;
     r->variables[code->index].valid = 1;
     r->variables[code->index].no_cacheable = 0;

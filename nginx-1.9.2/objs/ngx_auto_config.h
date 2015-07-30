@@ -1,4 +1,4 @@
-#define NGX_CONFIGURE " --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test"
+#define NGX_CONFIGURE " --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads"
 
 #ifndef NGX_DEBUG
 #define NGX_DEBUG  1
@@ -280,6 +280,11 @@
 
 #ifndef NGX_HAVE_GETADDRINFO
 #define NGX_HAVE_GETADDRINFO  1
+#endif
+
+
+#ifndef NGX_THREADS
+#define NGX_THREADS  1
 #endif
 
 

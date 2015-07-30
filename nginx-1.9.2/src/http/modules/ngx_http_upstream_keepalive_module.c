@@ -301,7 +301,7 @@ ngx_http_upstream_free_keepalive_peer(ngx_peer_connection_t *pc, void *data,
         goto invalid;
     }
 
-    if (ngx_handle_read_event(c->read, 0) != NGX_OK) {
+    if (ngx_handle_read_event(c->read, 0, NGX_FUNC_LINE) != NGX_OK) {
         goto invalid;
     }
 
@@ -331,10 +331,10 @@ ngx_http_upstream_free_keepalive_peer(ngx_peer_connection_t *pc, void *data,
     pc->connection = NULL;
 
     if (c->read->timer_set) {
-        ngx_del_timer(c->read);
+        ngx_del_timer(c->read, NGX_FUNC_LINE);
     }
     if (c->write->timer_set) {
-        ngx_del_timer(c->write);
+        ngx_del_timer(c->write, NGX_FUNC_LINE);
     }
 
     c->write->handler = ngx_http_upstream_keepalive_dummy_handler;
@@ -392,7 +392,7 @@ ngx_http_upstream_keepalive_close_handler(ngx_event_t *ev)
     if (n == -1 && ngx_socket_errno == NGX_EAGAIN) {
         ev->ready = 0;
 
-        if (ngx_handle_read_event(c->read, 0) != NGX_OK) {
+        if (ngx_handle_read_event(c->read, 0, NGX_FUNC_LINE) != NGX_OK) {
             goto close;
         }
 

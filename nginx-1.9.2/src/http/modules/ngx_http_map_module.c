@@ -88,7 +88,7 @@ static ngx_http_module_t  ngx_http_map_module_ctx = {
 };
 
 
-ngx_module_t  ngx_http_map_module = {
+ngx_module_t  ngx_http_map_module = {//²Î¿¼:http://blog.sina.com.cn/s/blog_7303a1dc0100ycd1.html
     NGX_MODULE_V1,
     &ngx_http_map_module_ctx,              /* module context */
     ngx_http_map_commands,                 /* module directives */

@@ -142,7 +142,7 @@ ngx_mail_proxy_init(ngx_mail_session_t *s, ngx_addr_t *peer)
         return;
     }
 
-    ngx_add_timer(p->upstream.connection->read, cscf->timeout);
+    ngx_add_timer(p->upstream.connection->read, cscf->timeout, NGX_FUNC_LINE);
 
     p->upstream.connection->data = s;
     p->upstream.connection->pool = s->connection->pool;
@@ -189,7 +189,7 @@ ngx_mail_proxy_block_read(ngx_event_t *rev)
 
     ngx_log_debug0(NGX_LOG_DEBUG_MAIL, rev->log, 0, "mail proxy block read");
 
-    if (ngx_handle_read_event(rev, 0) != NGX_OK) {
+    if (ngx_handle_read_event(rev, 0, NGX_FUNC_LINE) != NGX_OK) {
         c = rev->data;
         s = c->data;
 
@@ -280,8 +280,8 @@ ngx_mail_proxy_pop3_handler(ngx_event_t *rev)
         c->write->handler = ngx_mail_proxy_handler;
 
         pcf = ngx_mail_get_module_srv_conf(s, ngx_mail_proxy_module);
-        ngx_add_timer(s->connection->read, pcf->timeout);
-        ngx_del_timer(c->read);
+        ngx_add_timer(s->connection->read, pcf->timeout, NGX_FUNC_LINE);
+        ngx_del_timer(c->read, NGX_FUNC_LINE);
 
         c->log->action = NULL;
         ngx_log_error(NGX_LOG_INFO, c->log, 0, "client logged in");
@@ -414,8 +414,8 @@ ngx_mail_proxy_imap_handler(ngx_event_t *rev)
         c->write->handler = ngx_mail_proxy_handler;
 
         pcf = ngx_mail_get_module_srv_conf(s, ngx_mail_proxy_module);
-        ngx_add_timer(s->connection->read, pcf->timeout);
-        ngx_del_timer(c->read);
+        ngx_add_timer(s->connection->read, pcf->timeout, NGX_FUNC_LINE);
+        ngx_del_timer(c->read, NGX_FUNC_LINE);
 
         c->log->action = NULL;
         ngx_log_error(NGX_LOG_INFO, c->log, 0, "client logged in");
@@ -661,8 +661,8 @@ ngx_mail_proxy_smtp_handler(ngx_event_t *rev)
         c->write->handler = ngx_mail_proxy_handler;
 
         pcf = ngx_mail_get_module_srv_conf(s, ngx_mail_proxy_module);
-        ngx_add_timer(s->connection->read, pcf->timeout);
-        ngx_del_timer(c->read);
+        ngx_add_timer(s->connection->read, pcf->timeout, NGX_FUNC_LINE);
+        ngx_del_timer(c->read, NGX_FUNC_LINE);
 
         c->log->action = NULL;
         ngx_log_error(NGX_LOG_INFO, c->log, 0, "client logged in");
@@ -705,7 +705,7 @@ ngx_mail_proxy_dummy_handler(ngx_event_t *wev)
 
     ngx_log_debug0(NGX_LOG_DEBUG_MAIL, wev->log, 0, "mail proxy dummy handler");
 
-    if (ngx_handle_write_event(wev, 0) != NGX_OK) {
+    if (ngx_handle_write_event(wev, 0) != NGX_OK, NGX_FUNC_LINE) {
         c = wev->data;
         s = c->data;
 
@@ -1008,29 +1008,29 @@ ngx_mail_proxy_handler(ngx_event_t *ev)
         return;
     }
 
-    if (ngx_handle_write_event(dst->write, 0) != NGX_OK) {
+    if (ngx_handle_write_event(dst->write, 0, NGX_FUNC_LINE) != NGX_OK) {
         ngx_mail_proxy_close_session(s);
         return;
     }
 
-    if (ngx_handle_read_event(dst->read, 0) != NGX_OK) {
+    if (ngx_handle_read_event(dst->read, 0, NGX_FUNC_LINE) != NGX_OK) {
         ngx_mail_proxy_close_session(s);
         return;
     }
 
-    if (ngx_handle_write_event(src->write, 0) != NGX_OK) {
+    if (ngx_handle_write_event(src->write, 0, NGX_FUNC_LINE) != NGX_OK) {
         ngx_mail_proxy_close_session(s);
         return;
     }
 
-    if (ngx_handle_read_event(src->read, 0) != NGX_OK) {
+    if (ngx_handle_read_event(src->read, 0, NGX_FUNC_LINE) != NGX_OK) {
         ngx_mail_proxy_close_session(s);
         return;
     }
 
     if (c == s->connection) {
         pcf = ngx_mail_get_module_srv_conf(s, ngx_mail_proxy_module);
-        ngx_add_timer(c->read, pcf->timeout);
+        ngx_add_timer(c->read, pcf->timeout, NGX_FUNC_LINE);
     }
 }
 

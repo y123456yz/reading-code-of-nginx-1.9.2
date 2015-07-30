@@ -415,7 +415,7 @@ NGX_HTTP_LMT_CONF: 配置项可以出现在limit_except{}块内,该limit_except块必须属于ht
 #define NGX_HTTP_LOC_CONF         0x08000000
 #define NGX_HTTP_UPS_CONF         0x10000000
 #define NGX_HTTP_SIF_CONF         0x20000000
-#define NGX_HTTP_LIF_CONF         0x40000000
+#define NGX_HTTP_LIF_CONF         0x40000000 
 #define NGX_HTTP_LMT_CONF         0x80000000
 
 

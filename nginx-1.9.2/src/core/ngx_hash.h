@@ -26,7 +26,7 @@ typedef struct {
 } ngx_hash_elt_t; //hash元素结构   //ngx_hash_init中names数组存入hash桶前，其结构是ngx_hash_key_t形式，在往hash桶里面存数据的时候，会把ngx_hash_key_t里面的成员拷贝到ngx_hash_elt_t中相应成员  
 
 //在创建hash桶的时候赋值，见ngx_hash_init
-typedef struct {
+typedef struct { //hash桶遍历可以参考ngx_hash_find
     ngx_hash_elt_t  **buckets; //hash桶(有size个桶)   
     ngx_uint_t        size;//hash桶个数   
 } ngx_hash_t;
@@ -83,7 +83,7 @@ Nginx对于server- name主机名通配符的支持规则。
     再次，选择通配符在后面的server name，如www.testweb.*。
 
 ngx_hash_combined_t是由3个哈希表组成，一个普通hash表hash，一个包含前向通配符的hash表wc_head和一个包含后向通配符的hash表 wc_tail。
-*/
+*/ //ngx_http_virtual_names_t中包含该结构
 typedef struct { //这里面的hash信息是ngx_http_server_names中存储到hash表中的server_name及其所在server{}上下文ctx,server_name为key，上下文ctx为value
     ngx_hash_t            hash; //普通hash，完全匹配
     ngx_hash_wildcard_t  *wc_head; //前置通配符hash
@@ -165,6 +165,7 @@ typedef struct {
     ngx_pool_t       *pool;//内存池，用于分配永久性的内存
     ngx_pool_t       *temp_pool; //临时内存池，下面的临时动态数组都是由临时内存池分配
 
+    //下面这几个实际上是hash通的各个桶的头部指针，每个hash有ha->hsize个桶头部指针，在ngx_hash_add_key的时候头部指针指向每个桶中具体的成员列表
     //下面的这些可以参考ngx_hash_add_key
      /*
     keys_hash这是个二维数组，第一个维度代表的是bucket的编号，那么keys_hash[i]中存放的是所有的key算出来的hash值对hsize取模以后的值为i的key。

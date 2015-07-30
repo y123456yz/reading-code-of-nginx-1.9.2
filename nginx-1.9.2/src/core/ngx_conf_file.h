@@ -1095,7 +1095,7 @@ struct ngx_conf_s {
 
     ngx_cycle_t          *cycle; //指向对应的cycle，见ngx_init_cycle中的两行conf.ctx = cycle->conf_ctx; conf.cycle = cycle;
     ngx_pool_t           *pool;
-    ngx_pool_t           *temp_pool;
+    ngx_pool_t           *temp_pool; //用该poll的空间都是临时空间，最终在ngx_init_cycle->ngx_destroy_pool(conf.temp_pool);中释放
     ngx_conf_file_t      *conf_file; //nginx.conf
     ngx_log_t            *log;
 

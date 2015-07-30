@@ -48,15 +48,28 @@ typedef struct {
 } ngx_keyval_t;
 
 
+/*
+    ngx_http_core_main_conf_t->variabels数组成员的结构式ngx_http_variable_s， ngx_http_request_s->variabels数组成员结构是
+ngx_variable_value_t这两个结构的关系很密切，一个所谓变量，一个所谓变量值
+
+    r->variables这个变量和cmcf->variables是一一对应的，形成var_ name与var_value对，所以两个数组里的同一个下标位置元素刚好就是
+相互对应的变量名和变量值，而我们在使用某个变量时总会先通过函数ngx_http_get_variable_index获得它在变量名数组里的index下标，也就是变
+量名里的index字段值，然后利用这个index下标进而去变量值数组里取对应的值
+*/ //参考<输入剖析nginx-变量>
 typedef struct {
-    unsigned    len:28;
+    unsigned    len:28;  /* 变量值的长度 */  
 
-    unsigned    valid:1;
-    unsigned    no_cacheable:1;
-    unsigned    not_found:1;
-    unsigned    escape:1;
+    unsigned    valid:1;   /* 变量是否有效 */  
+    /* 
+      变量是否是可缓存的，一般来说，某些变量在第一次得到变量值后，后面再次用到时，可以直接使用上  
+      而对于一些所谓的no_cacheable的变量，则需要在每次使用的时候，都要通过get_handler之类操作，再次获取  
+    */
+    unsigned    no_cacheable:1;  
+            
+    unsigned    not_found:1; /* 变量没有找到，一般是指某个变量没用能够通过get获取到其变量值 */  
+    unsigned    escape:1;  /* 变量值是否需要作转义处理*/  
 
-    u_char     *data;
+    u_char     *data;  /* 变量值 */  
 } ngx_variable_value_t;
 
 

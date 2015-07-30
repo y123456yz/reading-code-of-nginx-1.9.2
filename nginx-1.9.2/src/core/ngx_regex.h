@@ -27,7 +27,7 @@ typedef struct {
 
 
 typedef struct {
-    ngx_str_t     pattern;
+    ngx_str_t     pattern; //rewrite  xxx abc break;ÖÐµÄxxx
     ngx_pool_t   *pool;
     ngx_int_t     options;
 

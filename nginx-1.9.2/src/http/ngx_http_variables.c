@@ -266,8 +266,10 @@ $server_port 表示服务器端口
 $server_protocol 表示服务器向客户端发送响应的协议，如HTTP/1.1或HTTP/1.0
 */ //相关代码分析可以参考:http://blog.csdn.net/fangru/article/details/9163553
 //Nginx在很多模块中都有内置的变量，常用的内置变量在HTT(www.111cn.net)P核心模块中，这些变量都可以使用正则表达式进行匹配。
-
-static ngx_http_variable_t  ngx_http_core_variables[] = {
+/*
+核心模块ngx_http_core_module提供的变量使用ngx_http_core_variables 描述，由preconfiguration回调函数 ngx_http_variables_add_core_vars进行定义：
+*/ //http://ialloc.org/posts/2013/10/20/ngx-notes-http-variables/
+static ngx_http_variable_t  ngx_http_core_variables[] = { //参考<输入剖析nginx-变量>
 
     { ngx_string("http_host"), NULL, ngx_http_variable_header,
       offsetof(ngx_http_request_t, headers_in.host), 0, 0 },
@@ -472,7 +474,34 @@ ngx_http_variable_value_t  ngx_http_variable_true_value =
     ngx_http_variable("1");
 
 
-ngx_http_variable_t *
+/*
+其中name是变量的名称
+flags是变量的标志：
+NGX_HTTP_VAR_CHANGEABLE：允许重复定义；
+NGX_HTTP_VAR_NOCACHEABLE：变量值不可以被缓存，每次使用必须计算；
+NGX_HTTP_VAR_INDEXED：指示变量值存储在数组中，当使用ngx_http_get_variable函数获取变量时不会每次都为变量分配值空间；
+NGX_HTTP_VAR_NOHASH：配置解析完以后，变量名不进hash索引，处理请求时不可以用变量名访问变量。
+
+创建了变量以后，需要设置变量的get_handler和set_handler，以及data。比如map是这样设置的：
+    var->get_handler = ngx_http_map_variable;
+    var->data = (uintptr_t) map;
+ 
+变量的get_handler和set_handler体现了两种使用策略，
+get_handler体现的是lazy_handle的策略，只有使用到变量，才会计算变量值；
+set_handler体现的是active_handle的策略，每执行一个请求，都会计算变量值。
+同时设置get_handler和set_handler回调函数是没有意义的，必须根据变量的使用特点，确定使用其中某一种回调函数。一般来说，get_handler更通用一些。
+而这里设置的data将会作为将来调用get_handler或者set_handler的参数。
+*/ 
+
+/*
+模块内自己的变量在preconfiguration的时候一般会调用ngx_http_add_variable加入到variables_keys， 例如变量ngx_http_fastcgi_vars ngx_http_browsers 
+配置文件中set配置的变量也会通过ngx_http_add_variable创建
+//注意:ngx_http_core_module模块一定要在其他涉及到变量模块前定义，因为variables_keys空间是在ngx_http_core_module模块的ngx_http_variables_add_core_vars中创建
+*/
+
+//遍历variables_keys hash表，如果表中已经存在name，则直接返回hash中对应的ngx_http_variable_t信息，否则创建ngx_http_variable_t hash节点
+//注意:ngx_http_core_module模块一定要在其他涉及到变量模块前定义，因为variables_keys空间是在ngx_http_core_module模块的ngx_http_variables_add_core_vars中创建
+ ngx_http_variable_t * 
 ngx_http_add_variable(ngx_conf_t *cf, ngx_str_t *name, ngx_uint_t flags)
 {
     ngx_int_t                   rc;
@@ -492,12 +521,12 @@ ngx_http_add_variable(ngx_conf_t *cf, ngx_str_t *name, ngx_uint_t flags)
     key = cmcf->variables_keys->keys.elts;
     for (i = 0; i < cmcf->variables_keys->keys.nelts; i++) {
         if (name->len != key[i].key.len
-            || ngx_strncasecmp(name->data, key[i].key.data, name->len) != 0)
+            || ngx_strncasecmp(name->data, key[i].key.data, name->len) != 0) //没有匹配到name字符串
         {
             continue;
         }
 
-        v = key[i].value;
+        v = key[i].value; //ngx_http_core_variables中的每一个ngx_http_variable_t成员
 
         if (!(v->flags & NGX_HTTP_VAR_CHANGEABLE)) {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
@@ -505,7 +534,7 @@ ngx_http_add_variable(ngx_conf_t *cf, ngx_str_t *name, ngx_uint_t flags)
             return NULL;
         }
 
-        return v;
+        return v; //如果已经存在该name字符串变量，直接返回ngx_http_core_variables中对应的ngx_http_variable_t成员
     }
 
     v = ngx_palloc(cf->pool, sizeof(ngx_http_variable_t));
@@ -542,12 +571,22 @@ ngx_http_add_variable(ngx_conf_t *cf, ngx_str_t *name, ngx_uint_t flags)
     return v;
 }
 
+/*
+那可能有读者可能会有疑问了。如果某个变量设置了NGX_HTTP_VAR_NOHASH的标志，不能使用变量名访问，那应该怎么访问呢？
 
-ngx_int_t
+
+ngx_http_get_variable_index会把变量加入一个array并返回变量在array中的下标，这样模块保存变量的下标，并通过
+ngx_http_get_indexed_variable直接得到变量值
+*/ 
+
+/*在解析配置文件中的时候，遇到set配置变量的时候，会把对应的变量添加到variables数组，但是在解析配置文件过程中或者解析配置文件前，并没有把模块
+中自带的变量加入variables数组，而variables_keys中则存储了模块中自定义的以及set等在配置文件中解析到的变量
+*/
+ngx_int_t //在cmcf->variables中查找是否有对应的name，并获取在variables数组中的下标
 ngx_http_get_variable_index(ngx_conf_t *cf, ngx_str_t *name)
 {
     ngx_uint_t                  i;
-    ngx_http_variable_t        *v;
+    ngx_http_variable_t        *v;         
     ngx_http_core_main_conf_t  *cmcf;
 
     if (name->len == 0) {
@@ -576,7 +615,7 @@ ngx_http_get_variable_index(ngx_conf_t *cf, ngx_str_t *name)
                 continue;
             }
 
-            return i;
+            return i; //返回数组中的下标
         }
     }
 
@@ -597,12 +636,15 @@ ngx_http_get_variable_index(ngx_conf_t *cf, ngx_str_t *name)
     v->get_handler = NULL;
     v->data = 0;
     v->flags = 0;
-    v->index = cmcf->variables.nelts - 1;
+    v->index = cmcf->variables.nelts - 1; //标记在cmcf->variables数组中的位置
 
-    return v->index;
+    return v->index; //返回数组中的下标  ngx_http_variable_t->index
 }
 
-
+/*
+ngx_http_get_variable_index会把变量加入一个array并返回变量在array中的下标，这样模块保存变量的下标，并通过
+ngx_http_get_indexed_variable直接得到变量值
+*/
 ngx_http_variable_value_t *
 ngx_http_get_indexed_variable(ngx_http_request_t *r, ngx_uint_t index)
 {
@@ -659,7 +701,9 @@ ngx_http_get_flushed_variable(ngx_http_request_t *r, ngx_uint_t index)
     return ngx_http_get_indexed_variable(r, index);
 }
 
-
+/*
+NGX HTTP_VAR_INDEXED、NGXHTTP_VARNOHASH、变量cmcf->variables_hash以及取值函数ngx_http_get_variable等，它们都是为SSI模块实现而设计的
+*/
 ngx_http_variable_value_t *
 ngx_http_get_variable(ngx_http_request_t *r, ngx_str_t *name, ngx_uint_t key)
 {
@@ -2414,7 +2458,10 @@ ngx_http_variable_not_found(ngx_http_request_t *r, ngx_http_variable_value_t *v,
     return NGX_OK;
 }
 
-//调用pcre库解析正则表达式
+/*
+1. 调用ngx_regex_compile编译正则表达式，并且得到相关的数据，比如子模式数目，命名子模式数目，列表等。
+2.	将正则表达式信息存储到ngx_http_regex_t里面，包括正则句柄，子模式数目
+3. 	将命名子模式 加入到cmcf->variables_keys和cmcf->variables中。以备后续通过名字查找变量值。*/
 ngx_http_regex_t *
 ngx_http_regex_compile(ngx_conf_t *cf, ngx_regex_compile_t *rc)
 {
@@ -2429,7 +2476,7 @@ ngx_http_regex_compile(ngx_conf_t *cf, ngx_regex_compile_t *rc)
 
     rc->pool = cf->pool;
 
-    if (ngx_regex_compile(rc) != NGX_OK) {
+    if (ngx_regex_compile(rc) != NGX_OK) { //调用pcre_compile编译正则表达。返回结果存在rc->regex = re;
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0, "%V", &rc->err);
         return NULL;
     }
@@ -2440,45 +2487,49 @@ ngx_http_regex_compile(ngx_conf_t *cf, ngx_regex_compile_t *rc)
     }
 
     re->regex = rc->regex;
-    re->ncaptures = rc->captures;
+    re->ncaptures = rc->captures;//得到$2,$3有多少个。pcre_fullinfo(re, NULL, PCRE_INFO_CAPTURECOUNT, &rc->captures);
     re->name = rc->pattern;
 
     cmcf = ngx_http_conf_get_module_main_conf(cf, ngx_http_core_module);
-    cmcf->ncaptures = ngx_max(cmcf->ncaptures, re->ncaptures);
+    cmcf->ncaptures = ngx_max(cmcf->ncaptures, re->ncaptures); 
 
-    n = (ngx_uint_t) rc->named_captures;
+    n = (ngx_uint_t) rc->named_captures;//命名的子模式: pcre_fullinfo(re, NULL, PCRE_INFO_NAMECOUNT, &rc->named_captures);
 
     if (n == 0) {
         return re;
     }
 
     rv = ngx_palloc(rc->pool, n * sizeof(ngx_http_regex_variable_t));
-    if (rv == NULL) {
+    if (rv == NULL) {//为每一个命名变量申请空间单独存储。
         return NULL;
     }
 
-    re->variables = rv;
+    re->variables = rv;//记录这种命名的子模式
     re->nvariables = n;
 
-    size = rc->name_size;
-    p = rc->names;
+    size = rc->name_size; 
+    p = rc->names; //正则的命名子模式的二维表，里面记录了子模式的名称，以及在所有模式中的下标.
+    //names是这么得到的: pcre_fullinfo(re, NULL, PCRE_INFO_NAMETABLE, &rc->names);
+    //一个命名子模式的二维表存储在p的位置。每一行是一个命名模式，每行的字节数为name_size
 
-    for (i = 0; i < n; i++) {
-        rv[i].capture = 2 * ((p[0] << 8) + p[1]);
+    for (i = 0; i < n; i++) { //遍历每一个named_captures，
+        rv[i].capture = 2 * ((p[0] << 8) + p[1]); //第一个自己左移8位+第二个字节等于这个命名子模式在所有模式中的下标。
 
-        name.data = &p[2];
-        name.len = ngx_strlen(name.data);
-
+        name.data = &p[2]; //第三个字节开始就是命名的名字。
+        name.len = ngx_strlen(name.data); //名字长度
+        ///将这个命名子模式加入到cmcf->variables_keys中
         v = ngx_http_add_variable(cf, &name, NGX_HTTP_VAR_CHANGEABLE);
         if (v == NULL) {
             return NULL;
         }
 
+        //然后从cmcf->variables中查找这个变量对应的下标是多少，如果没有，当然就增加到里面去。
         rv[i].index = ngx_http_get_variable_index(cf, &name);
         if (rv[i].index == NGX_ERROR) {
             return NULL;
         }
 
+        //初始化为空函数
         v->get_handler = ngx_http_variable_not_found;
 
         p += size;
@@ -2558,7 +2609,7 @@ ngx_http_regex_exec(ngx_http_request_t *r, ngx_http_regex_t *re, ngx_str_t *s)
 
 #endif
 
-
+//ngx_http_variables_add_core_vars把ngx_http_core_variables中的各种变量信息存放到cmcf->variables_keys中
 ngx_int_t
 ngx_http_variables_add_core_vars(ngx_conf_t *cf)
 {
@@ -2609,7 +2660,22 @@ ngx_http_variables_add_core_vars(ngx_conf_t *cf)
     return NGX_OK;
 }
 
-
+/*
+这个合法性检测逻辑很简单，实现在函数ngx_http_variables_init_vars内，其遍历cmcf->variables内收集的所有已使用变量，逐个去已定义变量
+cmcf->variableskeys集合罩查找。如果找到则表示用户使用无误，如果没找到，则需要注意，这还只能说明它可能是一个非法变量。
+    有一部分变量虽然没有包含在cmcf->variables_key内，但是它们却合法。这部分变量是以”http_”、”sent_http_”、”upstream http”、”cookie_”、
+”arg”开头的五类变量。这些变量庞大并且不可预知，不可能提前定义并收集到cmcf->variables_keys内，比如以”arg”开头代表的参数类变量会根
+据客户端请求URI时附带的参数不I司而不同，一个类似于“http:// 192.168. 164.2/?pageid=2”这样的请求会自动生成变量$argpageid。因此还需判断
+用户在配置文件里使用的变量是否在这五类变量里，具体来说就是检测用户使用的变量名前面几个字符是否与它们一致（这也间接说明，用户自定义变量时
+最好不要以这些字符开头）。当然，如果用户在配置文件里使用了变量$argpageid，而客户端请求时却并没有带上pageid参数，此时变量$arg_pageid值为空，
+但它总还算是合法的，但如果提示类似如下这样的错误，请需检查配置文件内变量名是否书写正确。(unknown "XXX" variable)
+    函数ngx_http_variables_init_vars()在对已使用变量进行合法性检测的同时，对于合法的使用变量会将其对应的三个主要字段设置好，
+即get_handler0回调、data数据、flags旗标。从前面给出的结构体ngx_http_variables定义来看，name存储的是变量名字符串，index存储的
+是该变量在cmcf->variables内的下标（通过函数ngx_http_get_variable_index获得），这两个都是不变的，而set_handlerr()回调目前只在
+使用set配置指令构造脚本引擎时才会用到，而那里直接使用cmcf->variables_keys里对应变量的该字段，并且一旦配置文件解析完毕，
+set_handlerr()回调也就用不上了，所以只有剩下的三个字段才需要做赋值操作，即从cmcf->variables_keys里对应变量的对应字段拷贝过来，
+或是另外五类变量就根据不同类别进行固定的赋值。
+*/
 ngx_int_t
 ngx_http_variables_init_vars(ngx_conf_t *cf)
 {
@@ -2635,7 +2701,7 @@ ngx_http_variables_init_vars(ngx_conf_t *cf)
             if (v[i].name.len == key[n].key.len
                 && ngx_strncmp(v[i].name.data, key[n].key.data, v[i].name.len)
                    == 0)
-            {
+            { //对于合法的使用变量会将其对应的三个主要字段设置好，即get_handler0回调、data数据、flags旗标
                 v[i].get_handler = av->get_handler;
                 v[i].data = av->data;
 
@@ -2652,6 +2718,21 @@ ngx_http_variables_init_vars(ngx_conf_t *cf)
             }
         }
 
+        /*
+          ngx_http_variables_init_vars会检测variables中的变量是否在variables_keys中，如果不在，说明这个使用到的变量有可能是没有定义过的，
+          这样是不能使用的。为什么是有可能？看for循环下面的那几个if条件判断，如果不在variables_keys中的变量在下面的if判断中就说明这个
+          变量是合法的，否则不合法
+
+            有一部分变量虽然没有包含在cmcf->variables_key内，但是它们却合法。这部分变量是以”http_”、”sent_http_”、”upstream http”、”cookie_”、
+        ”arg”开头的五类变量。这些变量庞大并且不可预知，不可能提前定义并收集到cmcf->variables_keys内，比如以”arg”开头代表的参数类变量会根
+        据客户端请求URI时附带的参数不同而不同，一个类似于“http:// 192.168. 164.2/?pageid=2”这样的请求会自动生成变量$argpageid。因此还需判断
+        用户在配置文件里使用的变量是否在这五类变量里，具体来说就是检测用户使用的变量名前面几个字符是否与它们一致（这也间接说明，用户自定义变量时
+        最好不要以这些字符开头）。当然，如果用户在配置文件里使用了变量$argpageid，而客户端请求时却并没有带上pageid参数，此时变量$arg_pageid值为空，
+        但它总还算是合法的，但如果提示类似如下这样的错误，请需检查配置文件内变量名是否书写正确。(unknown "XXX" variable)
+          */ //在variables中，但是不在variables_keys中的变量如果不是以下面的字符串开头，则是非法的
+
+        //如果set 设置的变量名不是以以下字符串开头，则在ngx_http_rewrite_set的时候其实已经设置好了get_hendler和data
+        
         if (ngx_strncmp(v[i].name.data, "http_", 5) == 0) {
             v[i].get_handler = ngx_http_variable_unknown_header_in;
             v[i].data = (uintptr_t) &v[i].name;
@@ -2715,7 +2796,6 @@ ngx_http_variables_init_vars(ngx_conf_t *cf)
         }
     }
 
-
     hash.hash = &cmcf->variables_hash;
     hash.key = ngx_hash_key;
     hash.max_size = cmcf->variables_hash_max_size;
@@ -2735,3 +2815,4 @@ ngx_http_variables_init_vars(ngx_conf_t *cf)
 
     return NGX_OK;
 }
+

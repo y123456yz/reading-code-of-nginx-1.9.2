@@ -1,0 +1,1616 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>GMimeCipherContext</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.75.2">
+<link rel="home" href="index.html" title="GMime 2.4 Reference Manual">
+<link rel="up" href="CipherContexts.html" title="Cipher Contexts">
+<link rel="prev" href="CipherContexts.html" title="Cipher Contexts">
+<link rel="next" href="gmime-gmime-gpg-context.html" title="GMimeGpgContext">
+<meta name="generator" content="GTK-Doc V1.11 (XML mode)">
+<link rel="stylesheet" href="style.css" type="text/css">
+<link rel="part" href="gmime.html" title="Part I. GMime Overview">
+<link rel="part" href="fundamentals.html" title="Part II. GMime Fundamentals">
+<link rel="part" href="core.html" title="Part III. GMime Core Reference">
+<link rel="part" href="classes.html" title="Part IV. GMime Classes">
+<link rel="chapter" href="ch01.html" title="Class hierarchy">
+<link rel="chapter" href="Streams.html" title="Streams">
+<link rel="chapter" href="Filters.html" title="Stream Filters">
+<link rel="chapter" href="DataWrappers.html" title="Data Wrappers">
+<link rel="chapter" href="Headers.html" title="Message and MIME Headers">
+<link rel="chapter" href="InternetAddresses.html" title="Internet Addresses">
+<link rel="chapter" href="MimeParts.html" title="MIME Messages and Parts">
+<link rel="chapter" href="Parsers.html" title="Parsing Messages and MIME Parts">
+<link rel="chapter" href="CipherContexts.html" title="Cipher Contexts">
+<link rel="chapter" href="Sessions.html" title="Sessions">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2">
+<tr valign="middle">
+<td><a accesskey="p" href="CipherContexts.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td>
+<td><a accesskey="u" href="CipherContexts.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td>
+<td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td>
+<th width="100%" align="center">GMime 2.4 Reference Manual</th>
+<td><a accesskey="n" href="gmime-gmime-gpg-context.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td>
+</tr>
+<tr><td colspan="5" class="shortcuts">
+<a href="#gmime-gmime-cipher-context.synopsis" class="shortcut">Top</a>
+                 | 
+                <a href="#gmime-gmime-cipher-context.description" class="shortcut">Description</a>
+                 | 
+                <a href="#gmime-gmime-cipher-context.object-hierarchy" class="shortcut">Object Hierarchy</a>
+</td></tr>
+</table>
+<div class="refentry" title="GMimeCipherContext">
+<a name="gmime-gmime-cipher-context"></a><div class="titlepage"></div>
+<div class="refnamediv"><table width="100%"><tr>
+<td valign="top">
+<h2><span class="refentrytitle"><a name="gmime-gmime-cipher-context.top_of_page"></a>GMimeCipherContext</span></h2>
+<p>GMimeCipherContext — Encryption/signing contexts</p>
+</td>
+<td valign="top" align="right"></td>
+</tr></table></div>
+<div class="refsynopsisdiv" title="Synopsis">
+<a name="gmime-gmime-cipher-context.synopsis"></a><h2>Synopsis</h2>
+<a name="GMimeCipherContext"></a><pre class="synopsis">
+enum                <a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherHash" title="enum GMimeCipherHash">GMimeCipherHash</a>;
+                    <a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherContext-struct" title="GMimeCipherContext">GMimeCipherContext</a>;
+                    <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureValidity" title="GMimeSignatureValidity">GMimeSignatureValidity</a>;
+enum                <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureStatus" title="enum GMimeSignatureStatus">GMimeSignatureStatus</a>;
+enum                <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignerStatus" title="enum GMimeSignerStatus">GMimeSignerStatus</a>;
+enum                <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignerTrust" title="enum GMimeSignerTrust">GMimeSignerTrust</a>;
+enum                <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignerError" title="enum GMimeSignerError">GMimeSignerError</a>;
+                    <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a>;
+<a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherHash" title="enum GMimeCipherHash">GMimeCipherHash</a>     <a class="link" href="gmime-gmime-cipher-context.html#g-mime-cipher-context-hash-id" title="g_mime_cipher_context_hash_id ()">g_mime_cipher_context_hash_id</a>       (<a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherContext">GMimeCipherContext</a> *ctx,
+                                                         const char *hash);
+const char *        <a class="link" href="gmime-gmime-cipher-context.html#g-mime-cipher-context-hash-name" title="g_mime_cipher_context_hash_name ()">g_mime_cipher_context_hash_name</a>     (<a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherContext">GMimeCipherContext</a> *ctx,
+                                                         <a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherHash" title="enum GMimeCipherHash">GMimeCipherHash</a> hash);
+int                 <a class="link" href="gmime-gmime-cipher-context.html#g-mime-cipher-context-sign" title="g_mime_cipher_context_sign ()">g_mime_cipher_context_sign</a>          (<a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherContext">GMimeCipherContext</a> *ctx,
+                                                         const char *userid,
+                                                         <a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherHash" title="enum GMimeCipherHash">GMimeCipherHash</a> hash,
+                                                         <a class="link" href="gmime-gmime-stream.html#GMimeStream">GMimeStream</a> *istream,
+                                                         <a class="link" href="gmime-gmime-stream.html#GMimeStream">GMimeStream</a> *ostream,
+                                                         <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Error-Reporting.html#GError"
+>GError</a> **err);
+<a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureValidity" title="GMimeSignatureValidity">GMimeSignatureValidity</a> * <a class="link" href="gmime-gmime-cipher-context.html#g-mime-cipher-context-verify" title="g_mime_cipher_context_verify ()">g_mime_cipher_context_verify</a>   (<a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherContext">GMimeCipherContext</a> *ctx,
+                                                         <a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherHash" title="enum GMimeCipherHash">GMimeCipherHash</a> hash,
+                                                         <a class="link" href="gmime-gmime-stream.html#GMimeStream">GMimeStream</a> *istream,
+                                                         <a class="link" href="gmime-gmime-stream.html#GMimeStream">GMimeStream</a> *sigstream,
+                                                         <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Error-Reporting.html#GError"
+>GError</a> **err);
+int                 <a class="link" href="gmime-gmime-cipher-context.html#g-mime-cipher-context-encrypt" title="g_mime_cipher_context_encrypt ()">g_mime_cipher_context_encrypt</a>       (<a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherContext">GMimeCipherContext</a> *ctx,
+                                                         <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"
+>gboolean</a> sign,
+                                                         const char *userid,
+                                                         <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Pointer-Arrays.html#GPtrArray"
+>GPtrArray</a> *recipients,
+                                                         <a class="link" href="gmime-gmime-stream.html#GMimeStream">GMimeStream</a> *istream,
+                                                         <a class="link" href="gmime-gmime-stream.html#GMimeStream">GMimeStream</a> *ostream,
+                                                         <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Error-Reporting.html#GError"
+>GError</a> **err);
+<a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureValidity" title="GMimeSignatureValidity">GMimeSignatureValidity</a> * <a class="link" href="gmime-gmime-cipher-context.html#g-mime-cipher-context-decrypt" title="g_mime_cipher_context_decrypt ()">g_mime_cipher_context_decrypt</a>  (<a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherContext">GMimeCipherContext</a> *ctx,
+                                                         <a class="link" href="gmime-gmime-stream.html#GMimeStream">GMimeStream</a> *istream,
+                                                         <a class="link" href="gmime-gmime-stream.html#GMimeStream">GMimeStream</a> *ostream,
+                                                         <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Error-Reporting.html#GError"
+>GError</a> **err);
+int                 <a class="link" href="gmime-gmime-cipher-context.html#g-mime-cipher-context-import-keys" title="g_mime_cipher_context_import_keys ()">g_mime_cipher_context_import_keys</a>   (<a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherContext">GMimeCipherContext</a> *ctx,
+                                                         <a class="link" href="gmime-gmime-stream.html#GMimeStream">GMimeStream</a> *istream,
+                                                         <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Error-Reporting.html#GError"
+>GError</a> **err);
+int                 <a class="link" href="gmime-gmime-cipher-context.html#g-mime-cipher-context-export-keys" title="g_mime_cipher_context_export_keys ()">g_mime_cipher_context_export_keys</a>   (<a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherContext">GMimeCipherContext</a> *ctx,
+                                                         <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Pointer-Arrays.html#GPtrArray"
+>GPtrArray</a> *keys,
+                                                         <a class="link" href="gmime-gmime-stream.html#GMimeStream">GMimeStream</a> *ostream,
+                                                         <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Error-Reporting.html#GError"
+>GError</a> **err);
+
+<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *       <a class="link" href="gmime-gmime-cipher-context.html#g-mime-signer-new" title="g_mime_signer_new ()">g_mime_signer_new</a>                   (void);
+void                <a class="link" href="gmime-gmime-cipher-context.html#g-mime-signer-free" title="g_mime_signer_free ()">g_mime_signer_free</a>                  (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer);
+<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *       <a class="link" href="gmime-gmime-cipher-context.html#g-mime-signer-next" title="g_mime_signer_next ()">g_mime_signer_next</a>                  (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer);
+<a class="link" href="gmime-gmime-cipher-context.html#GMimeSignerStatus" title="enum GMimeSignerStatus">GMimeSignerStatus</a>   <a class="link" href="gmime-gmime-cipher-context.html#g-mime-signer-get-status" title="g_mime_signer_get_status ()">g_mime_signer_get_status</a>            (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer);
+void                <a class="link" href="gmime-gmime-cipher-context.html#g-mime-signer-set-status" title="g_mime_signer_set_status ()">g_mime_signer_set_status</a>            (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer,
+                                                         <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignerStatus" title="enum GMimeSignerStatus">GMimeSignerStatus</a> status);
+<a class="link" href="gmime-gmime-cipher-context.html#GMimeSignerError" title="enum GMimeSignerError">GMimeSignerError</a>    <a class="link" href="gmime-gmime-cipher-context.html#g-mime-signer-get-errors" title="g_mime_signer_get_errors ()">g_mime_signer_get_errors</a>            (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer);
+void                <a class="link" href="gmime-gmime-cipher-context.html#g-mime-signer-set-errors" title="g_mime_signer_set_errors ()">g_mime_signer_set_errors</a>            (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer,
+                                                         <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignerError" title="enum GMimeSignerError">GMimeSignerError</a> error);
+<a class="link" href="gmime-gmime-cipher-context.html#GMimeSignerTrust" title="enum GMimeSignerTrust">GMimeSignerTrust</a>    <a class="link" href="gmime-gmime-cipher-context.html#g-mime-signer-get-trust" title="g_mime_signer_get_trust ()">g_mime_signer_get_trust</a>             (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer);
+void                <a class="link" href="gmime-gmime-cipher-context.html#g-mime-signer-set-trust" title="g_mime_signer_set_trust ()">g_mime_signer_set_trust</a>             (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer,
+                                                         <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignerTrust" title="enum GMimeSignerTrust">GMimeSignerTrust</a> trust);
+const char *        <a class="link" href="gmime-gmime-cipher-context.html#g-mime-signer-get-fingerprint" title="g_mime_signer_get_fingerprint ()">g_mime_signer_get_fingerprint</a>       (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer);
+void                <a class="link" href="gmime-gmime-cipher-context.html#g-mime-signer-set-fingerprint" title="g_mime_signer_set_fingerprint ()">g_mime_signer_set_fingerprint</a>       (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer,
+                                                         const char *fingerprint);
+const char *        <a class="link" href="gmime-gmime-cipher-context.html#g-mime-signer-get-key-id" title="g_mime_signer_get_key_id ()">g_mime_signer_get_key_id</a>            (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer);
+void                <a class="link" href="gmime-gmime-cipher-context.html#g-mime-signer-set-key-id" title="g_mime_signer_set_key_id ()">g_mime_signer_set_key_id</a>            (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer,
+                                                         const char *key_id);
+const char *        <a class="link" href="gmime-gmime-cipher-context.html#g-mime-signer-get-name" title="g_mime_signer_get_name ()">g_mime_signer_get_name</a>              (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer);
+void                <a class="link" href="gmime-gmime-cipher-context.html#g-mime-signer-set-name" title="g_mime_signer_set_name ()">g_mime_signer_set_name</a>              (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer,
+                                                         const char *name);
+time_t              <a class="link" href="gmime-gmime-cipher-context.html#g-mime-signer-get-created" title="g_mime_signer_get_created ()">g_mime_signer_get_created</a>           (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer);
+void                <a class="link" href="gmime-gmime-cipher-context.html#g-mime-signer-set-created" title="g_mime_signer_set_created ()">g_mime_signer_set_created</a>           (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer,
+                                                         time_t created);
+time_t              <a class="link" href="gmime-gmime-cipher-context.html#g-mime-signer-get-expires" title="g_mime_signer_get_expires ()">g_mime_signer_get_expires</a>           (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer);
+void                <a class="link" href="gmime-gmime-cipher-context.html#g-mime-signer-set-expires" title="g_mime_signer_set_expires ()">g_mime_signer_set_expires</a>           (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer,
+                                                         time_t expires);
+<a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureValidity" title="GMimeSignatureValidity">GMimeSignatureValidity</a> * <a class="link" href="gmime-gmime-cipher-context.html#g-mime-signature-validity-new" title="g_mime_signature_validity_new ()">g_mime_signature_validity_new</a>  (void);
+void                <a class="link" href="gmime-gmime-cipher-context.html#g-mime-signature-validity-free" title="g_mime_signature_validity_free ()">g_mime_signature_validity_free</a>      (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureValidity" title="GMimeSignatureValidity">GMimeSignatureValidity</a> *validity);
+void                <a class="link" href="gmime-gmime-cipher-context.html#g-mime-signature-validity-set-status" title="g_mime_signature_validity_set_status ()">g_mime_signature_validity_set_status</a>
+                                                        (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureValidity" title="GMimeSignatureValidity">GMimeSignatureValidity</a> *validity,
+                                                         <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureStatus" title="enum GMimeSignatureStatus">GMimeSignatureStatus</a> status);
+<a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureStatus" title="enum GMimeSignatureStatus">GMimeSignatureStatus</a>  <a class="link" href="gmime-gmime-cipher-context.html#g-mime-signature-validity-get-status" title="g_mime_signature_validity_get_status ()">g_mime_signature_validity_get_status</a>
+                                                        (const <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureValidity" title="GMimeSignatureValidity">GMimeSignatureValidity</a> *validity);
+void                <a class="link" href="gmime-gmime-cipher-context.html#g-mime-signature-validity-set-details" title="g_mime_signature_validity_set_details ()">g_mime_signature_validity_set_details</a>
+                                                        (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureValidity" title="GMimeSignatureValidity">GMimeSignatureValidity</a> *validity,
+                                                         const char *details);
+const char *        <a class="link" href="gmime-gmime-cipher-context.html#g-mime-signature-validity-get-details" title="g_mime_signature_validity_get_details ()">g_mime_signature_validity_get_details</a>
+                                                        (const <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureValidity" title="GMimeSignatureValidity">GMimeSignatureValidity</a> *validity);
+void                <a class="link" href="gmime-gmime-cipher-context.html#g-mime-signature-validity-add-signer" title="g_mime_signature_validity_add_signer ()">g_mime_signature_validity_add_signer</a>
+                                                        (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureValidity" title="GMimeSignatureValidity">GMimeSignatureValidity</a> *validity,
+                                                         <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer);
+const <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> * <a class="link" href="gmime-gmime-cipher-context.html#g-mime-signature-validity-get-signers" title="g_mime_signature_validity_get_signers ()">g_mime_signature_validity_get_signers</a>
+                                                        (const <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureValidity" title="GMimeSignatureValidity">GMimeSignatureValidity</a> *validity);
+</pre>
+</div>
+<div class="refsect1" title="Object Hierarchy">
+<a name="gmime-gmime-cipher-context.object-hierarchy"></a><h2>Object Hierarchy</h2>
+<pre class="synopsis">
+  <a
+href="http://library.gnome.org/devel/gobject/unstable/gobject-The-Base-Object-Type.html#GObject"
+>GObject</a>
+   +----GMimeCipherContext
+         +----<a class="link" href="gmime-gmime-gpg-context.html#GMimeGpgContext">GMimeGpgContext</a>
+</pre>
+</div>
+<div class="refsect1" title="Description">
+<a name="gmime-gmime-cipher-context.description"></a><h2>Description</h2>
+<p>
+A <a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherContext"><span class="type">GMimeCipherContext</span></a> is used for encrypting, decrypting, signing
+and verifying cryptographic signatures.</p>
+<p>
+</p>
+</div>
+<div class="refsect1" title="Details">
+<a name="gmime-gmime-cipher-context.details"></a><h2>Details</h2>
+<div class="refsect2" title="enum GMimeCipherHash">
+<a name="GMimeCipherHash"></a><h3>enum GMimeCipherHash</h3>
+<pre class="programlisting">typedef enum {
+	GMIME_CIPHER_HASH_DEFAULT,
+	GMIME_CIPHER_HASH_MD2,
+	GMIME_CIPHER_HASH_MD5,
+	GMIME_CIPHER_HASH_SHA1,
+	GMIME_CIPHER_HASH_SHA224,
+	GMIME_CIPHER_HASH_SHA256,
+	GMIME_CIPHER_HASH_SHA384,
+	GMIME_CIPHER_HASH_SHA512,
+	GMIME_CIPHER_HASH_RIPEMD160,
+	GMIME_CIPHER_HASH_TIGER192,
+	GMIME_CIPHER_HASH_HAVAL5160
+} GMimeCipherHash;
+</pre>
+<p>
+A hash algorithm.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><a name="GMIME-CIPHER-HASH-DEFAULT--CAPS"></a><span class="term"><code class="literal">GMIME_CIPHER_HASH_DEFAULT</code></span></p></td>
+<td> The default hash algorithm.
+</td>
+</tr>
+<tr>
+<td><p><a name="GMIME-CIPHER-HASH-MD2--CAPS"></a><span class="term"><code class="literal">GMIME_CIPHER_HASH_MD2</code></span></p></td>
+<td> The MD2 hash algorithm.
+</td>
+</tr>
+<tr>
+<td><p><a name="GMIME-CIPHER-HASH-MD5--CAPS"></a><span class="term"><code class="literal">GMIME_CIPHER_HASH_MD5</code></span></p></td>
+<td> The MD5 hash algorithm.
+</td>
+</tr>
+<tr>
+<td><p><a name="GMIME-CIPHER-HASH-SHA1--CAPS"></a><span class="term"><code class="literal">GMIME_CIPHER_HASH_SHA1</code></span></p></td>
+<td> The SHA-1 hash algorithm.
+</td>
+</tr>
+<tr>
+<td><p><a name="GMIME-CIPHER-HASH-SHA224--CAPS"></a><span class="term"><code class="literal">GMIME_CIPHER_HASH_SHA224</code></span></p></td>
+<td> The SHA-224 hash algorithm.
+</td>
+</tr>
+<tr>
+<td><p><a name="GMIME-CIPHER-HASH-SHA256--CAPS"></a><span class="term"><code class="literal">GMIME_CIPHER_HASH_SHA256</code></span></p></td>
+<td> The SHA-256 hash algorithm.
+</td>
+</tr>
+<tr>
+<td><p><a name="GMIME-CIPHER-HASH-SHA384--CAPS"></a><span class="term"><code class="literal">GMIME_CIPHER_HASH_SHA384</code></span></p></td>
+<td> The SHA-384 hash algorithm.
+</td>
+</tr>
+<tr>
+<td><p><a name="GMIME-CIPHER-HASH-SHA512--CAPS"></a><span class="term"><code class="literal">GMIME_CIPHER_HASH_SHA512</code></span></p></td>
+<td> The SHA-512 hash algorithm.
+</td>
+</tr>
+<tr>
+<td><p><a name="GMIME-CIPHER-HASH-RIPEMD160--CAPS"></a><span class="term"><code class="literal">GMIME_CIPHER_HASH_RIPEMD160</code></span></p></td>
+<td> The RIPEMD-160 hash algorithm.
+</td>
+</tr>
+<tr>
+<td><p><a name="GMIME-CIPHER-HASH-TIGER192--CAPS"></a><span class="term"><code class="literal">GMIME_CIPHER_HASH_TIGER192</code></span></p></td>
+<td> The TIGER-192 hash algorithm.
+</td>
+</tr>
+<tr>
+<td><p><a name="GMIME-CIPHER-HASH-HAVAL5160--CAPS"></a><span class="term"><code class="literal">GMIME_CIPHER_HASH_HAVAL5160</code></span></p></td>
+<td> The HAVAL5-160 hash algorithm.
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="GMimeCipherContext">
+<a name="GMimeCipherContext-struct"></a><h3>GMimeCipherContext</h3>
+<pre class="programlisting">typedef struct _GMimeCipherContext GMimeCipherContext;</pre>
+<p>
+A crypto context for use with MIME.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="GMimeSignatureValidity">
+<a name="GMimeSignatureValidity"></a><h3>GMimeSignatureValidity</h3>
+<pre class="programlisting">typedef struct {
+	GMimeSignatureStatus status;
+	GMimeSigner *signers;
+	char *details;
+} GMimeSignatureValidity;
+</pre>
+<p>
+A structure containing information about the signature validity of
+a signed stream.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureStatus" title="enum GMimeSignatureStatus">GMimeSignatureStatus</a> <em class="structfield"><code>status</code></em>;</span></p></td>
+<td> The overall signature status.
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *<em class="structfield"><code>signers</code></em>;</span></p></td>
+<td> A list of <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner"><span class="type">GMimeSigner</span></a> structures.
+</td>
+</tr>
+<tr>
+<td><p><span class="term">char *<em class="structfield"><code>details</code></em>;</span></p></td>
+<td> A string containing more user-readable details.
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="enum GMimeSignatureStatus">
+<a name="GMimeSignatureStatus"></a><h3>enum GMimeSignatureStatus</h3>
+<pre class="programlisting">typedef enum {
+	GMIME_SIGNATURE_STATUS_NONE,
+	GMIME_SIGNATURE_STATUS_GOOD,
+	GMIME_SIGNATURE_STATUS_BAD,
+	GMIME_SIGNATURE_STATUS_UNKNOWN
+} GMimeSignatureStatus;
+</pre>
+<p>
+The status of a message signature.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><a name="GMIME-SIGNATURE-STATUS-NONE--CAPS"></a><span class="term"><code class="literal">GMIME_SIGNATURE_STATUS_NONE</code></span></p></td>
+<td> No status.
+</td>
+</tr>
+<tr>
+<td><p><a name="GMIME-SIGNATURE-STATUS-GOOD--CAPS"></a><span class="term"><code class="literal">GMIME_SIGNATURE_STATUS_GOOD</code></span></p></td>
+<td> Good signature.
+</td>
+</tr>
+<tr>
+<td><p><a name="GMIME-SIGNATURE-STATUS-BAD--CAPS"></a><span class="term"><code class="literal">GMIME_SIGNATURE_STATUS_BAD</code></span></p></td>
+<td> Bad signature.
+</td>
+</tr>
+<tr>
+<td><p><a name="GMIME-SIGNATURE-STATUS-UNKNOWN--CAPS"></a><span class="term"><code class="literal">GMIME_SIGNATURE_STATUS_UNKNOWN</code></span></p></td>
+<td> Unknown signature status.
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="enum GMimeSignerStatus">
+<a name="GMimeSignerStatus"></a><h3>enum GMimeSignerStatus</h3>
+<pre class="programlisting">typedef enum {
+	GMIME_SIGNER_STATUS_NONE,
+	GMIME_SIGNER_STATUS_GOOD,
+	GMIME_SIGNER_STATUS_BAD,
+	GMIME_SIGNER_STATUS_ERROR
+} GMimeSignerStatus;
+</pre>
+<p>
+A value representing the signature status for a particular
+<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner"><span class="type">GMimeSigner</span></a>.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><a name="GMIME-SIGNER-STATUS-NONE--CAPS"></a><span class="term"><code class="literal">GMIME_SIGNER_STATUS_NONE</code></span></p></td>
+<td> No status.
+</td>
+</tr>
+<tr>
+<td><p><a name="GMIME-SIGNER-STATUS-GOOD--CAPS"></a><span class="term"><code class="literal">GMIME_SIGNER_STATUS_GOOD</code></span></p></td>
+<td> Good signature.
+</td>
+</tr>
+<tr>
+<td><p><a name="GMIME-SIGNER-STATUS-BAD--CAPS"></a><span class="term"><code class="literal">GMIME_SIGNER_STATUS_BAD</code></span></p></td>
+<td> Bad signature.
+</td>
+</tr>
+<tr>
+<td><p><a name="GMIME-SIGNER-STATUS-ERROR--CAPS"></a><span class="term"><code class="literal">GMIME_SIGNER_STATUS_ERROR</code></span></p></td>
+<td> An error occurred.
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="enum GMimeSignerTrust">
+<a name="GMimeSignerTrust"></a><h3>enum GMimeSignerTrust</h3>
+<pre class="programlisting">typedef enum {
+	GMIME_SIGNER_TRUST_NONE,
+	GMIME_SIGNER_TRUST_NEVER,
+	GMIME_SIGNER_TRUST_UNDEFINED,
+	GMIME_SIGNER_TRUST_MARGINAL,
+	GMIME_SIGNER_TRUST_FULLY,
+	GMIME_SIGNER_TRUST_ULTIMATE
+} GMimeSignerTrust;
+</pre>
+<p>
+The trust value of a signer.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><a name="GMIME-SIGNER-TRUST-NONE--CAPS"></a><span class="term"><code class="literal">GMIME_SIGNER_TRUST_NONE</code></span></p></td>
+<td> No trust assigned.
+</td>
+</tr>
+<tr>
+<td><p><a name="GMIME-SIGNER-TRUST-NEVER--CAPS"></a><span class="term"><code class="literal">GMIME_SIGNER_TRUST_NEVER</code></span></p></td>
+<td> Never trust this signer.
+</td>
+</tr>
+<tr>
+<td><p><a name="GMIME-SIGNER-TRUST-UNDEFINED--CAPS"></a><span class="term"><code class="literal">GMIME_SIGNER_TRUST_UNDEFINED</code></span></p></td>
+<td> Undefined trust for this signer.
+</td>
+</tr>
+<tr>
+<td><p><a name="GMIME-SIGNER-TRUST-MARGINAL--CAPS"></a><span class="term"><code class="literal">GMIME_SIGNER_TRUST_MARGINAL</code></span></p></td>
+<td> Trust this signer maginally.
+</td>
+</tr>
+<tr>
+<td><p><a name="GMIME-SIGNER-TRUST-FULLY--CAPS"></a><span class="term"><code class="literal">GMIME_SIGNER_TRUST_FULLY</code></span></p></td>
+<td> Trust this signer fully.
+</td>
+</tr>
+<tr>
+<td><p><a name="GMIME-SIGNER-TRUST-ULTIMATE--CAPS"></a><span class="term"><code class="literal">GMIME_SIGNER_TRUST_ULTIMATE</code></span></p></td>
+<td> Trust this signer ultimately.
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="enum GMimeSignerError">
+<a name="GMimeSignerError"></a><h3>enum GMimeSignerError</h3>
+<pre class="programlisting">typedef enum {
+	GMIME_SIGNER_ERROR_NONE,
+	GMIME_SIGNER_ERROR_EXPSIG     = (1 &lt;&lt; 0),  /* expire signature */
+	GMIME_SIGNER_ERROR_NO_PUBKEY  = (1 &lt;&lt; 1),  /* no public key */
+	GMIME_SIGNER_ERROR_EXPKEYSIG  = (1 &lt;&lt; 2),  /* expired key */
+	GMIME_SIGNER_ERROR_REVKEYSIG  = (1 &lt;&lt; 3)   /* revoked key */
+} GMimeSignerError;
+</pre>
+<p>
+Possible errors that a <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner"><span class="type">GMimeSigner</span></a> could have.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><a name="GMIME-SIGNER-ERROR-NONE--CAPS"></a><span class="term"><code class="literal">GMIME_SIGNER_ERROR_NONE</code></span></p></td>
+<td> No error.
+</td>
+</tr>
+<tr>
+<td><p><a name="GMIME-SIGNER-ERROR-EXPSIG--CAPS"></a><span class="term"><code class="literal">GMIME_SIGNER_ERROR_EXPSIG</code></span></p></td>
+<td> Expired signature.
+</td>
+</tr>
+<tr>
+<td><p><a name="GMIME-SIGNER-ERROR-NO-PUBKEY--CAPS"></a><span class="term"><code class="literal">GMIME_SIGNER_ERROR_NO_PUBKEY</code></span></p></td>
+<td> No public key found.
+</td>
+</tr>
+<tr>
+<td><p><a name="GMIME-SIGNER-ERROR-EXPKEYSIG--CAPS"></a><span class="term"><code class="literal">GMIME_SIGNER_ERROR_EXPKEYSIG</code></span></p></td>
+<td> Expired signature key.
+</td>
+</tr>
+<tr>
+<td><p><a name="GMIME-SIGNER-ERROR-REVKEYSIG--CAPS"></a><span class="term"><code class="literal">GMIME_SIGNER_ERROR_REVKEYSIG</code></span></p></td>
+<td> Revoked signature key.
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="GMimeSigner">
+<a name="GMimeSigner"></a><h3>GMimeSigner</h3>
+<pre class="programlisting">typedef struct {
+	GMimeSigner *next;
+	unsigned int status:2;    /* GMimeSignerStatus */
+	unsigned int errors:4;    /* bitfield of GMimeSignerError's */
+	unsigned int trust:3;     /* GMimeSignerTrust */
+	unsigned int unused:23;   /* unused expansion bits */
+	char *fingerprint;
+	time_t created;
+	time_t expires;
+	char *keyid;
+	char *name;
+} GMimeSigner;
+</pre>
+<p>
+A structure containing useful information about a signer.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *<em class="structfield"><code>next</code></em>;</span></p></td>
+<td> Pointer to the next <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner"><span class="type">GMimeSigner</span></a>.
+</td>
+</tr>
+<tr>
+<td><p><span class="term">unsigned int <em class="structfield"><code>status</code></em> :2;</span></p></td>
+<td> A <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignerStatus" title="enum GMimeSignerStatus"><span class="type">GMimeSignerStatus</span></a>.
+</td>
+</tr>
+<tr>
+<td><p><span class="term">unsigned int <em class="structfield"><code>errors</code></em> :4;</span></p></td>
+<td> A bitfield of <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignerError" title="enum GMimeSignerError"><span class="type">GMimeSignerError</span></a> values.
+</td>
+</tr>
+<tr>
+<td><p><span class="term">unsigned int <em class="structfield"><code>trust</code></em> :3;</span></p></td>
+<td> A <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignerTrust" title="enum GMimeSignerTrust"><span class="type">GMimeSignerTrust</span></a>.
+</td>
+</tr>
+<tr>
+<td><p><span class="term">unsigned int <em class="structfield"><code>unused</code></em> :23;</span></p></td>
+<td> Unused expansion bits for future use; ignore this.
+</td>
+</tr>
+<tr>
+<td><p><span class="term">char *<em class="structfield"><code>fingerprint</code></em>;</span></p></td>
+<td> A hex string representing the signer's fingerprint.
+</td>
+</tr>
+<tr>
+<td><p><span class="term">time_t <em class="structfield"><code>created</code></em>;</span></p></td>
+<td> The creation date of the signature.
+</td>
+</tr>
+<tr>
+<td><p><span class="term">time_t <em class="structfield"><code>expires</code></em>;</span></p></td>
+<td> The expiration date of the signature.
+</td>
+</tr>
+<tr>
+<td><p><span class="term">char *<em class="structfield"><code>keyid</code></em>;</span></p></td>
+<td> The signer's key id.
+</td>
+</tr>
+<tr>
+<td><p><span class="term">char *<em class="structfield"><code>name</code></em>;</span></p></td>
+<td> The name of the person or entity.
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_cipher_context_hash_id ()">
+<a name="g-mime-cipher-context-hash-id"></a><h3>g_mime_cipher_context_hash_id ()</h3>
+<pre class="programlisting"><a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherHash" title="enum GMimeCipherHash">GMimeCipherHash</a>     g_mime_cipher_context_hash_id       (<a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherContext">GMimeCipherContext</a> *ctx,
+                                                         const char *hash);</pre>
+<p>
+Gets the hash id based on the hash name <em class="parameter"><code>hash</code></em>.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>ctx</code></em> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherContext"><span class="type">GMimeCipherContext</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>hash</code></em> :</span></p></td>
+<td> hash name
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td> the equivalent hash id or <a class="link" href="gmime-gmime-cipher-context.html#GMIME-CIPHER-HASH-DEFAULT--CAPS"><span class="type">GMIME_CIPHER_HASH_DEFAULT</span></a> on fail.
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_cipher_context_hash_name ()">
+<a name="g-mime-cipher-context-hash-name"></a><h3>g_mime_cipher_context_hash_name ()</h3>
+<pre class="programlisting">const char *        g_mime_cipher_context_hash_name     (<a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherContext">GMimeCipherContext</a> *ctx,
+                                                         <a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherHash" title="enum GMimeCipherHash">GMimeCipherHash</a> hash);</pre>
+<p>
+Gets the hash name based on the hash id <em class="parameter"><code>hash</code></em>.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>ctx</code></em> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherContext"><span class="type">GMimeCipherContext</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>hash</code></em> :</span></p></td>
+<td> hash id
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td> the equivalent hash name or <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Standard-Macros.html#NULL--CAPS"
+><code class="literal">NULL</code></a> on fail.
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_cipher_context_sign ()">
+<a name="g-mime-cipher-context-sign"></a><h3>g_mime_cipher_context_sign ()</h3>
+<pre class="programlisting">int                 g_mime_cipher_context_sign          (<a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherContext">GMimeCipherContext</a> *ctx,
+                                                         const char *userid,
+                                                         <a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherHash" title="enum GMimeCipherHash">GMimeCipherHash</a> hash,
+                                                         <a class="link" href="gmime-gmime-stream.html#GMimeStream">GMimeStream</a> *istream,
+                                                         <a class="link" href="gmime-gmime-stream.html#GMimeStream">GMimeStream</a> *ostream,
+                                                         <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Error-Reporting.html#GError"
+>GError</a> **err);</pre>
+<p>
+Signs the input stream and writes the resulting signature to the output stream.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>ctx</code></em> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherContext"><span class="type">GMimeCipherContext</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>userid</code></em> :</span></p></td>
+<td> private key to use to sign the stream
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>hash</code></em> :</span></p></td>
+<td> preferred Message-Integrity-Check hash algorithm
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>istream</code></em> :</span></p></td>
+<td> input stream
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>ostream</code></em> :</span></p></td>
+<td> output stream
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>err</code></em> :</span></p></td>
+<td> a <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Error-Reporting.html#GError"
+><span class="type">GError</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td> the <a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherHash" title="enum GMimeCipherHash"><span class="type">GMimeCipherHash</span></a> used on success (useful if <em class="parameter"><code>hash</code></em> is
+specified as <a class="link" href="gmime-gmime-cipher-context.html#GMIME-CIPHER-HASH-DEFAULT--CAPS"><span class="type">GMIME_CIPHER_HASH_DEFAULT</span></a>) or <code class="literal">-1</code> on fail.
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_cipher_context_verify ()">
+<a name="g-mime-cipher-context-verify"></a><h3>g_mime_cipher_context_verify ()</h3>
+<pre class="programlisting"><a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureValidity" title="GMimeSignatureValidity">GMimeSignatureValidity</a> * g_mime_cipher_context_verify   (<a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherContext">GMimeCipherContext</a> *ctx,
+                                                         <a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherHash" title="enum GMimeCipherHash">GMimeCipherHash</a> hash,
+                                                         <a class="link" href="gmime-gmime-stream.html#GMimeStream">GMimeStream</a> *istream,
+                                                         <a class="link" href="gmime-gmime-stream.html#GMimeStream">GMimeStream</a> *sigstream,
+                                                         <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Error-Reporting.html#GError"
+>GError</a> **err);</pre>
+<p>
+Verifies the signature. If <em class="parameter"><code>istream</code></em> is a clearsigned stream,
+you should pass <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Standard-Macros.html#NULL--CAPS"
+><code class="literal">NULL</code></a> as the sigstream parameter. Otherwise
+<em class="parameter"><code>sigstream</code></em> is assumed to be the signature stream and is used to
+verify the integirity of the <em class="parameter"><code>istream</code></em>.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>ctx</code></em> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherContext"><span class="type">GMimeCipherContext</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>hash</code></em> :</span></p></td>
+<td> secure hash used
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>istream</code></em> :</span></p></td>
+<td> input stream
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>sigstream</code></em> :</span></p></td>
+<td> optional detached-signature stream
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>err</code></em> :</span></p></td>
+<td> a <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Error-Reporting.html#GError"
+><span class="type">GError</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureValidity" title="GMimeSignatureValidity"><span class="type">GMimeSignatureValidity</span></a> structure containing information
+about the integrity of the input stream or <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Standard-Macros.html#NULL--CAPS"
+><code class="literal">NULL</code></a> on failure to
+execute at all.
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_cipher_context_encrypt ()">
+<a name="g-mime-cipher-context-encrypt"></a><h3>g_mime_cipher_context_encrypt ()</h3>
+<pre class="programlisting">int                 g_mime_cipher_context_encrypt       (<a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherContext">GMimeCipherContext</a> *ctx,
+                                                         <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"
+>gboolean</a> sign,
+                                                         const char *userid,
+                                                         <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Pointer-Arrays.html#GPtrArray"
+>GPtrArray</a> *recipients,
+                                                         <a class="link" href="gmime-gmime-stream.html#GMimeStream">GMimeStream</a> *istream,
+                                                         <a class="link" href="gmime-gmime-stream.html#GMimeStream">GMimeStream</a> *ostream,
+                                                         <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Error-Reporting.html#GError"
+>GError</a> **err);</pre>
+<p>
+Encrypts (and optionally signs) the cleartext input stream and
+writes the resulting ciphertext to the output stream.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>ctx</code></em> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherContext"><span class="type">GMimeCipherContext</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>sign</code></em> :</span></p></td>
+<td> sign as well as encrypt
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>userid</code></em> :</span></p></td>
+<td> key id (or email address) to use when signing (assuming <em class="parameter"><code>sign</code></em> is <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Standard-Macros.html#TRUE--CAPS"
+><code class="literal">TRUE</code></a>)
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>recipients</code></em> :</span></p></td>
+<td> an array of recipient key ids and/or email addresses
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>istream</code></em> :</span></p></td>
+<td> cleartext input stream
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>ostream</code></em> :</span></p></td>
+<td> ciphertext output stream
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>err</code></em> :</span></p></td>
+<td> a <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Error-Reporting.html#GError"
+><span class="type">GError</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td> <code class="literal">0</code> on success or <code class="literal">-1</code> on fail.
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_cipher_context_decrypt ()">
+<a name="g-mime-cipher-context-decrypt"></a><h3>g_mime_cipher_context_decrypt ()</h3>
+<pre class="programlisting"><a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureValidity" title="GMimeSignatureValidity">GMimeSignatureValidity</a> * g_mime_cipher_context_decrypt  (<a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherContext">GMimeCipherContext</a> *ctx,
+                                                         <a class="link" href="gmime-gmime-stream.html#GMimeStream">GMimeStream</a> *istream,
+                                                         <a class="link" href="gmime-gmime-stream.html#GMimeStream">GMimeStream</a> *ostream,
+                                                         <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Error-Reporting.html#GError"
+>GError</a> **err);</pre>
+<p>
+Decrypts the ciphertext input stream and writes the resulting
+cleartext to the output stream.
+</p>
+<p>
+If the encrypted input stream was also signed, the returned
+<a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureValidity" title="GMimeSignatureValidity"><span class="type">GMimeSignatureValidity</span></a> will have signer information included and
+the signature status will be one of <a class="link" href="gmime-gmime-cipher-context.html#GMIME-SIGNATURE-STATUS-GOOD--CAPS"><span class="type">GMIME_SIGNATURE_STATUS_GOOD</span></a>,
+<a class="link" href="gmime-gmime-cipher-context.html#GMIME-SIGNATURE-STATUS-BAD--CAPS"><span class="type">GMIME_SIGNATURE_STATUS_BAD</span></a>, or <a class="link" href="gmime-gmime-cipher-context.html#GMIME-SIGNATURE-STATUS-UNKNOWN--CAPS"><span class="type">GMIME_SIGNATURE_STATUS_UNKNOWN</span></a>.
+</p>
+<p>
+If the encrypted input text was not signed, then the signature
+status of the returned <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureValidity" title="GMimeSignatureValidity"><span class="type">GMimeSignatureValidity</span></a> will be
+<a class="link" href="gmime-gmime-cipher-context.html#GMIME-SIGNATURE-STATUS-NONE--CAPS"><span class="type">GMIME_SIGNATURE_STATUS_NONE</span></a>.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>ctx</code></em> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherContext"><span class="type">GMimeCipherContext</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>istream</code></em> :</span></p></td>
+<td> input/ciphertext stream
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>ostream</code></em> :</span></p></td>
+<td> output/cleartext stream
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>err</code></em> :</span></p></td>
+<td> a <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Error-Reporting.html#GError"
+><span class="type">GError</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureValidity" title="GMimeSignatureValidity"><span class="type">GMimeSignatureValidity</span></a> on success or <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Standard-Macros.html#NULL--CAPS"
+><code class="literal">NULL</code></a> on error.
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_cipher_context_import_keys ()">
+<a name="g-mime-cipher-context-import-keys"></a><h3>g_mime_cipher_context_import_keys ()</h3>
+<pre class="programlisting">int                 g_mime_cipher_context_import_keys   (<a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherContext">GMimeCipherContext</a> *ctx,
+                                                         <a class="link" href="gmime-gmime-stream.html#GMimeStream">GMimeStream</a> *istream,
+                                                         <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Error-Reporting.html#GError"
+>GError</a> **err);</pre>
+<p>
+Imports a stream of keys/certificates contained within <em class="parameter"><code>istream</code></em>
+into the key/certificate database controlled by <em class="parameter"><code>ctx</code></em>.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>ctx</code></em> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherContext"><span class="type">GMimeCipherContext</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>istream</code></em> :</span></p></td>
+<td> input stream (containing keys)
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>err</code></em> :</span></p></td>
+<td> a <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Error-Reporting.html#GError"
+><span class="type">GError</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td> <code class="literal">0</code> on success or <code class="literal">-1</code> on fail.
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_cipher_context_export_keys ()">
+<a name="g-mime-cipher-context-export-keys"></a><h3>g_mime_cipher_context_export_keys ()</h3>
+<pre class="programlisting">int                 g_mime_cipher_context_export_keys   (<a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherContext">GMimeCipherContext</a> *ctx,
+                                                         <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Pointer-Arrays.html#GPtrArray"
+>GPtrArray</a> *keys,
+                                                         <a class="link" href="gmime-gmime-stream.html#GMimeStream">GMimeStream</a> *ostream,
+                                                         <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Error-Reporting.html#GError"
+>GError</a> **err);</pre>
+<p>
+Exports the keys/certificates in <em class="parameter"><code>keys</code></em> to the stream <em class="parameter"><code>ostream</code></em> from
+the key/certificate database controlled by <em class="parameter"><code>ctx</code></em>.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>ctx</code></em> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeCipherContext"><span class="type">GMimeCipherContext</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>keys</code></em> :</span></p></td>
+<td> an array of key ids
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>ostream</code></em> :</span></p></td>
+<td> output stream
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>err</code></em> :</span></p></td>
+<td> a <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Error-Reporting.html#GError"
+><span class="type">GError</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td> <code class="literal">0</code> on success or <code class="literal">-1</code> on fail.
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_signer_new ()">
+<a name="g-mime-signer-new"></a><h3>g_mime_signer_new ()</h3>
+<pre class="programlisting"><a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *       g_mime_signer_new                   (void);</pre>
+<p>
+Allocates an new <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner"><span class="type">GMimeSigner</span></a>.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td> a new <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner"><span class="type">GMimeSigner</span></a>.
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_signer_free ()">
+<a name="g-mime-signer-free"></a><h3>g_mime_signer_free ()</h3>
+<pre class="programlisting">void                g_mime_signer_free                  (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer);</pre>
+<p>
+Free's the singleton signer.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>signer</code></em> :</span></p></td>
+<td> signer
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_signer_next ()">
+<a name="g-mime-signer-next"></a><h3>g_mime_signer_next ()</h3>
+<pre class="programlisting"><a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *       g_mime_signer_next                  (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer);</pre>
+<p>
+Advance to the next signer.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>signer</code></em> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner"><span class="type">GMimeSigner</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td> the next <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner"><span class="type">GMimeSigner</span></a> or <a
+href="http://library.gnome.org/devel/glib/unstable/glib-Standard-Macros.html#NULL--CAPS"
+><code class="literal">NULL</code></a> when complete.
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_signer_get_status ()">
+<a name="g-mime-signer-get-status"></a><h3>g_mime_signer_get_status ()</h3>
+<pre class="programlisting"><a class="link" href="gmime-gmime-cipher-context.html#GMimeSignerStatus" title="enum GMimeSignerStatus">GMimeSignerStatus</a>   g_mime_signer_get_status            (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer);</pre>
+<p>
+Get the signer status.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>signer</code></em> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner"><span class="type">GMimeSigner</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td> the signer status.
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_signer_set_status ()">
+<a name="g-mime-signer-set-status"></a><h3>g_mime_signer_set_status ()</h3>
+<pre class="programlisting">void                g_mime_signer_set_status            (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer,
+                                                         <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignerStatus" title="enum GMimeSignerStatus">GMimeSignerStatus</a> status);</pre>
+<p>
+Set the status on the signer.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>signer</code></em> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner"><span class="type">GMimeSigner</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>status</code></em> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignerStatus" title="enum GMimeSignerStatus"><span class="type">GMimeSignerStatus</span></a>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_signer_get_errors ()">
+<a name="g-mime-signer-get-errors"></a><h3>g_mime_signer_get_errors ()</h3>
+<pre class="programlisting"><a class="link" href="gmime-gmime-cipher-context.html#GMimeSignerError" title="enum GMimeSignerError">GMimeSignerError</a>    g_mime_signer_get_errors            (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer);</pre>
+<p>
+Get the signer errors.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>signer</code></em> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner"><span class="type">GMimeSigner</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td> the signer errors.
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_signer_set_errors ()">
+<a name="g-mime-signer-set-errors"></a><h3>g_mime_signer_set_errors ()</h3>
+<pre class="programlisting">void                g_mime_signer_set_errors            (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer,
+                                                         <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignerError" title="enum GMimeSignerError">GMimeSignerError</a> error);</pre>
+<p>
+Set the errors on the signer.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>signer</code></em> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner"><span class="type">GMimeSigner</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>error</code></em> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignerError" title="enum GMimeSignerError"><span class="type">GMimeSignerError</span></a>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_signer_get_trust ()">
+<a name="g-mime-signer-get-trust"></a><h3>g_mime_signer_get_trust ()</h3>
+<pre class="programlisting"><a class="link" href="gmime-gmime-cipher-context.html#GMimeSignerTrust" title="enum GMimeSignerTrust">GMimeSignerTrust</a>    g_mime_signer_get_trust             (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer);</pre>
+<p>
+Get the signer trust.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>signer</code></em> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner"><span class="type">GMimeSigner</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td> the signer trust.
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_signer_set_trust ()">
+<a name="g-mime-signer-set-trust"></a><h3>g_mime_signer_set_trust ()</h3>
+<pre class="programlisting">void                g_mime_signer_set_trust             (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer,
+                                                         <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignerTrust" title="enum GMimeSignerTrust">GMimeSignerTrust</a> trust);</pre>
+<p>
+Set the signer trust.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>signer</code></em> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner"><span class="type">GMimeSigner</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>trust</code></em> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignerTrust" title="enum GMimeSignerTrust"><span class="type">GMimeSignerTrust</span></a>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_signer_get_fingerprint ()">
+<a name="g-mime-signer-get-fingerprint"></a><h3>g_mime_signer_get_fingerprint ()</h3>
+<pre class="programlisting">const char *        g_mime_signer_get_fingerprint       (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer);</pre>
+<p>
+Get the signer's key fingerprint.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>signer</code></em> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner"><span class="type">GMimeSigner</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td> the signer's key fingerprint.
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_signer_set_fingerprint ()">
+<a name="g-mime-signer-set-fingerprint"></a><h3>g_mime_signer_set_fingerprint ()</h3>
+<pre class="programlisting">void                g_mime_signer_set_fingerprint       (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer,
+                                                         const char *fingerprint);</pre>
+<p>
+Set the signer's key fingerprint.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>signer</code></em> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner"><span class="type">GMimeSigner</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>fingerprint</code></em> :</span></p></td>
+<td> fingerprint string
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_signer_get_key_id ()">
+<a name="g-mime-signer-get-key-id"></a><h3>g_mime_signer_get_key_id ()</h3>
+<pre class="programlisting">const char *        g_mime_signer_get_key_id            (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer);</pre>
+<p>
+Get the signer's key id.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>signer</code></em> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner"><span class="type">GMimeSigner</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td> the signer's key id.
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_signer_set_key_id ()">
+<a name="g-mime-signer-set-key-id"></a><h3>g_mime_signer_set_key_id ()</h3>
+<pre class="programlisting">void                g_mime_signer_set_key_id            (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer,
+                                                         const char *key_id);</pre>
+<p>
+Set the signer's key id.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>signer</code></em> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner"><span class="type">GMimeSigner</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>key_id</code></em> :</span></p></td>
+<td> key id
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_signer_get_name ()">
+<a name="g-mime-signer-get-name"></a><h3>g_mime_signer_get_name ()</h3>
+<pre class="programlisting">const char *        g_mime_signer_get_name              (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer);</pre>
+<p>
+Get the signer's name.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>signer</code></em> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner"><span class="type">GMimeSigner</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td> the signer's name.
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_signer_set_name ()">
+<a name="g-mime-signer-set-name"></a><h3>g_mime_signer_set_name ()</h3>
+<pre class="programlisting">void                g_mime_signer_set_name              (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer,
+                                                         const char *name);</pre>
+<p>
+Set the signer's name.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>signer</code></em> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner"><span class="type">GMimeSigner</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>name</code></em> :</span></p></td>
+<td> signer's name
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_signer_get_created ()">
+<a name="g-mime-signer-get-created"></a><h3>g_mime_signer_get_created ()</h3>
+<pre class="programlisting">time_t              g_mime_signer_get_created           (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer);</pre>
+<p>
+Get the creation date of the signer's key.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>signer</code></em> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner"><span class="type">GMimeSigner</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td> the creation date of the signer's key.
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_signer_set_created ()">
+<a name="g-mime-signer-set-created"></a><h3>g_mime_signer_set_created ()</h3>
+<pre class="programlisting">void                g_mime_signer_set_created           (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer,
+                                                         time_t created);</pre>
+<p>
+Set the signer's key creation date.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>signer</code></em> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner"><span class="type">GMimeSigner</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>created</code></em> :</span></p></td>
+<td> creation date
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_signer_get_expires ()">
+<a name="g-mime-signer-get-expires"></a><h3>g_mime_signer_get_expires ()</h3>
+<pre class="programlisting">time_t              g_mime_signer_get_expires           (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer);</pre>
+<p>
+Get the expiration date of the signer's key.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>signer</code></em> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner"><span class="type">GMimeSigner</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td> the expiration date of the signer's key.
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_signer_set_expires ()">
+<a name="g-mime-signer-set-expires"></a><h3>g_mime_signer_set_expires ()</h3>
+<pre class="programlisting">void                g_mime_signer_set_expires           (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer,
+                                                         time_t expires);</pre>
+<p>
+Set the signer's key expiration date.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>signer</code></em> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner"><span class="type">GMimeSigner</span></a>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>expires</code></em> :</span></p></td>
+<td> expiration date
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_signature_validity_new ()">
+<a name="g-mime-signature-validity-new"></a><h3>g_mime_signature_validity_new ()</h3>
+<pre class="programlisting"><a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureValidity" title="GMimeSignatureValidity">GMimeSignatureValidity</a> * g_mime_signature_validity_new  (void);</pre>
+<p>
+Creates a new <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureValidity" title="GMimeSignatureValidity"><span class="type">GMimeSignatureValidity</span></a>.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td> a new <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureValidity" title="GMimeSignatureValidity"><span class="type">GMimeSignatureValidity</span></a>.
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_signature_validity_free ()">
+<a name="g-mime-signature-validity-free"></a><h3>g_mime_signature_validity_free ()</h3>
+<pre class="programlisting">void                g_mime_signature_validity_free      (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureValidity" title="GMimeSignatureValidity">GMimeSignatureValidity</a> *validity);</pre>
+<p>
+Frees the memory used by <em class="parameter"><code>validity</code></em> back to the system.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>validity</code></em> :</span></p></td>
+<td> signature validity
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_signature_validity_set_status ()">
+<a name="g-mime-signature-validity-set-status"></a><h3>g_mime_signature_validity_set_status ()</h3>
+<pre class="programlisting">void                g_mime_signature_validity_set_status
+                                                        (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureValidity" title="GMimeSignatureValidity">GMimeSignatureValidity</a> *validity,
+                                                         <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureStatus" title="enum GMimeSignatureStatus">GMimeSignatureStatus</a> status);</pre>
+<p>
+Sets the status of the signature on <em class="parameter"><code>validity</code></em>.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>validity</code></em> :</span></p></td>
+<td> signature validity
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>status</code></em> :</span></p></td>
+<td> GOOD, BAD or UNKNOWN
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_signature_validity_get_status ()">
+<a name="g-mime-signature-validity-get-status"></a><h3>g_mime_signature_validity_get_status ()</h3>
+<pre class="programlisting"><a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureStatus" title="enum GMimeSignatureStatus">GMimeSignatureStatus</a>  g_mime_signature_validity_get_status
+                                                        (const <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureValidity" title="GMimeSignatureValidity">GMimeSignatureValidity</a> *validity);</pre>
+<p>
+Gets the signature status (GOOD, BAD, UNKNOWN).</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>validity</code></em> :</span></p></td>
+<td> signature validity
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureStatus" title="enum GMimeSignatureStatus"><span class="type">GMimeSignatureStatus</span></a> value.
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_signature_validity_set_details ()">
+<a name="g-mime-signature-validity-set-details"></a><h3>g_mime_signature_validity_set_details ()</h3>
+<pre class="programlisting">void                g_mime_signature_validity_set_details
+                                                        (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureValidity" title="GMimeSignatureValidity">GMimeSignatureValidity</a> *validity,
+                                                         const char *details);</pre>
+<p>
+Sets <em class="parameter"><code>details</code></em> as the status details string on <em class="parameter"><code>validity</code></em>.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>validity</code></em> :</span></p></td>
+<td> signature validity
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>details</code></em> :</span></p></td>
+<td> details string
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_signature_validity_get_details ()">
+<a name="g-mime-signature-validity-get-details"></a><h3>g_mime_signature_validity_get_details ()</h3>
+<pre class="programlisting">const char *        g_mime_signature_validity_get_details
+                                                        (const <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureValidity" title="GMimeSignatureValidity">GMimeSignatureValidity</a> *validity);</pre>
+<p>
+Gets any user-readable status details.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>validity</code></em> :</span></p></td>
+<td> signature validity
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td> a user-readable string containing any status information.
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_signature_validity_add_signer ()">
+<a name="g-mime-signature-validity-add-signer"></a><h3>g_mime_signature_validity_add_signer ()</h3>
+<pre class="programlisting">void                g_mime_signature_validity_add_signer
+                                                        (<a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureValidity" title="GMimeSignatureValidity">GMimeSignatureValidity</a> *validity,
+                                                         <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> *signer);</pre>
+<p>
+Adds <em class="parameter"><code>signer</code></em> to the list of signers on <em class="parameter"><code>validity</code></em>.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>validity</code></em> :</span></p></td>
+<td> signature validity
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>signer</code></em> :</span></p></td>
+<td> signer
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" title="g_mime_signature_validity_get_signers ()">
+<a name="g-mime-signature-validity-get-signers"></a><h3>g_mime_signature_validity_get_signers ()</h3>
+<pre class="programlisting">const <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner">GMimeSigner</a> * g_mime_signature_validity_get_signers
+                                                        (const <a class="link" href="gmime-gmime-cipher-context.html#GMimeSignatureValidity" title="GMimeSignatureValidity">GMimeSignatureValidity</a> *validity);</pre>
+<p>
+Gets the list of signers.</p>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>validity</code></em> :</span></p></td>
+<td> signature validity
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></p></td>
+<td> a <a class="link" href="gmime-gmime-cipher-context.html#GMimeSigner" title="GMimeSigner"><span class="type">GMimeSigner</span></a> list which contain further information such
+as trust and cipher keys.
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+</div>
+</div>
+<div class="footer">
+<hr>
+          Generated by GTK-Doc V1.11</div>
+</body>
+</html>

@@ -1083,11 +1083,11 @@ ngx_close_connection(ngx_connection_t *c)
     用ngx_del_timer方法把事件从定时器中移除。
      */
     if (c->read->timer_set) {
-        ngx_del_timer(c->read);
+        ngx_del_timer(c->read, NGX_FUNC_LINE);
     }
 
     if (c->write->timer_set) {
-        ngx_del_timer(c->write);
+        ngx_del_timer(c->write, NGX_FUNC_LINE);
     }
 
     /*

@@ -44,6 +44,7 @@ ngx_array_destroy(ngx_array_t *a)
 }
 
 //¼ì²éarrayÊı×éµÄeltsÔªËØÊÍ·ÅÒÑ¾­ÓÃÍê£¬Èç¹ûÒÑ¾­ÓÃÍê£¬ÔòÔÙÖØĞÂ¿ª±Ùarray¿Õ¼äÀ´´æ´¢
+//ngx_array_push´ÓÊı×éÖĞ»ñÈ¡Ò»¸öÊı×é³ÉÔ±,ngx_array_push_nÎªÒ»´ÎĞÔ»ñÈ¡n¸ö
 void *
 ngx_array_push(ngx_array_t *a)
 {
@@ -96,7 +97,7 @@ ngx_array_push_nÀ´Ëµ£¬Çé¿ö¸ü¸´ÔÓÒ»Ğ©£¬Èç¹û²ÎÊınĞ¡ÓÚÔ­ÏÈ¶¯Ì¬Êı×éµÄÈİÁ¿£¬½«»áÀ©ÈİÒ
     return elt;
 }
 
-
+//ngx_array_push´ÓÊı×éÖĞ»ñÈ¡Ò»¸öÊı×é³ÉÔ±,ngx_array_push_nÎªÒ»´ÎĞÔ»ñÈ¡n¸ö
 void *
 ngx_array_push_n(ngx_array_t *a, ngx_uint_t n)
 {
@@ -147,7 +148,8 @@ ngx_array_push_n(ngx_array_t *a, ngx_uint_t n)
     }
 
     elt = (u_char *) a->elts + a->size * a->nelts;
-    a->nelts += n;
+    a->nelts += n; 
 
     return elt;
 }
+

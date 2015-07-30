@@ -588,7 +588,7 @@ void ngx_http_upstream_init(ngx_http_request_t *r)
 #endif
 
     if (c->read->timer_set) {
-        ngx_del_timer(c->read);
+        ngx_del_timer(c->read, NGX_FUNC_LINE);
     }
 
     if (ngx_event_flags & NGX_USE_CLEAR_EVENT) {
@@ -1530,7 +1530,7 @@ ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
     u->request_sent = 0;
 
     if (rc == NGX_AGAIN) {
-        ngx_add_timer(c->write, u->conf->connect_timeout);
+        ngx_add_timer(c->write, u->conf->connect_timeout, NGX_FUNC_LINE);
         return;
     }
 
@@ -1619,7 +1619,7 @@ ngx_http_upstream_ssl_init_connection(ngx_http_request_t *r,
     if (rc == NGX_AGAIN) {
 
         if (!c->write->timer_set) {
-            ngx_add_timer(c->write, u->conf->connect_timeout);
+            ngx_add_timer(c->write, u->conf->connect_timeout, NGX_FUNC_LINE);
         }
 
         c->ssl->handler = ngx_http_upstream_ssl_handshake;
@@ -1895,13 +1895,13 @@ ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u,
 
     if (rc == NGX_AGAIN) {
         if (!c->write->ready) {
-            ngx_add_timer(c->write, u->conf->send_timeout);
+            ngx_add_timer(c->write, u->conf->send_timeout, NGX_FUNC_LINE);
 
         } else if (c->write->timer_set) {
-            ngx_del_timer(c->write);
+            ngx_del_timer(c->write, NGX_FUNC_LINE);
         }
 
-        if (ngx_handle_write_event(c->write, u->conf->send_lowat) != NGX_OK) {
+        if (ngx_handle_write_event(c->write, u->conf->send_lowat, NGX_FUNC_LINE) != NGX_OK) {
             ngx_http_upstream_finalize_request(r, u,
                                                NGX_HTTP_INTERNAL_SERVER_ERROR);
             return;
@@ -1913,7 +1913,7 @@ ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u,
     /* rc == NGX_OK */
 
     if (c->write->timer_set) {
-        ngx_del_timer(c->write);
+        ngx_del_timer(c->write, NGX_FUNC_LINE);
     }
 
     if (c->tcp_nopush == NGX_TCP_NOPUSH_SET) {
@@ -1930,13 +1930,13 @@ ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u,
 
     u->write_event_handler = ngx_http_upstream_dummy_handler;
 
-    if (ngx_handle_write_event(c->write, 0) != NGX_OK) {
+    if (ngx_handle_write_event(c->write, 0, NGX_FUNC_LINE) != NGX_OK) {
         ngx_http_upstream_finalize_request(r, u,
                                            NGX_HTTP_INTERNAL_SERVER_ERROR);
         return;
     }
 
-    ngx_add_timer(c->read, u->conf->read_timeout);
+    ngx_add_timer(c->read, u->conf->read_timeout, NGX_FUNC_LINE);
 
     if (c->read->ready) {
         ngx_http_upstream_process_header(r, u);
@@ -2090,7 +2090,7 @@ ngx_http_upstream_send_request_handler(ngx_http_request_t *r,
     if (u->header_sent) {
         u->write_event_handler = ngx_http_upstream_dummy_handler;
 
-        (void) ngx_handle_write_event(c->write, 0);
+        (void) ngx_handle_write_event(c->write, 0, NGX_FUNC_LINE);
 
         return;
     }
@@ -2187,7 +2187,7 @@ ngx_http_upstream_process_header(ngx_http_request_t *r, ngx_http_upstream_t *u)
             ngx_add_timer(rev, u->read_timeout);
 #endif
 
-            if (ngx_handle_read_event(c->read, 0) != NGX_OK) {
+            if (ngx_handle_read_event(c->read, 0, NGX_FUNC_LINE) != NGX_OK) {
                 ngx_http_upstream_finalize_request(r, u,
                                                NGX_HTTP_INTERNAL_SERVER_ERROR);
                 return;
@@ -2728,16 +2728,16 @@ ngx_http_upstream_process_body_in_memory(ngx_http_request_t *r,
         return;
     }
 
-    if (ngx_handle_read_event(rev, 0) != NGX_OK) {
+    if (ngx_handle_read_event(rev, 0, NGX_FUNC_LINE) != NGX_OK) {
         ngx_http_upstream_finalize_request(r, u, NGX_ERROR);
         return;
     }
 
     if (rev->active) {
-        ngx_add_timer(rev, u->conf->read_timeout);
+        ngx_add_timer(rev, u->conf->read_timeout, NGX_FUNC_LINE);
 
     } else if (rev->timer_set) {
-        ngx_del_timer(rev);
+        ngx_del_timer(rev, NGX_FUNC_LINE);
     }
 }
 
@@ -3295,7 +3295,7 @@ ngx_http_upstream_process_upgraded(ngx_http_request_t *r,
 
     clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
 
-    if (ngx_handle_write_event(upstream->write, u->conf->send_lowat)
+    if (ngx_handle_write_event(upstream->write, u->conf->send_lowat, NGX_FUNC_LINE)
         != NGX_OK)
     {
         ngx_http_upstream_finalize_request(r, u, NGX_ERROR);
@@ -3303,41 +3303,41 @@ ngx_http_upstream_process_upgraded(ngx_http_request_t *r,
     }
 
     if (upstream->write->active && !upstream->write->ready) {
-        ngx_add_timer(upstream->write, u->conf->send_timeout);
+        ngx_add_timer(upstream->write, u->conf->send_timeout, NGX_FUNC_LINE);
 
     } else if (upstream->write->timer_set) {
-        ngx_del_timer(upstream->write);
+        ngx_del_timer(upstream->write, NGX_FUNC_LINE);
     }
 
-    if (ngx_handle_read_event(upstream->read, 0) != NGX_OK) {
+    if (ngx_handle_read_event(upstream->read, 0, NGX_FUNC_LINE) != NGX_OK) {
         ngx_http_upstream_finalize_request(r, u, NGX_ERROR);
         return;
     }
 
     if (upstream->read->active && !upstream->read->ready) {
-        ngx_add_timer(upstream->read, u->conf->read_timeout);
+        ngx_add_timer(upstream->read, u->conf->read_timeout, NGX_FUNC_LINE);
 
     } else if (upstream->read->timer_set) {
-        ngx_del_timer(upstream->read);
+        ngx_del_timer(upstream->read, NGX_FUNC_LINE);
     }
 
-    if (ngx_handle_write_event(downstream->write, clcf->send_lowat)
+    if (ngx_handle_write_event(downstream->write, clcf->send_lowat, NGX_FUNC_LINE)
         != NGX_OK)
     {
         ngx_http_upstream_finalize_request(r, u, NGX_ERROR);
         return;
     }
 
-    if (ngx_handle_read_event(downstream->read, 0) != NGX_OK) {
+    if (ngx_handle_read_event(downstream->read, 0, NGX_FUNC_LINE) != NGX_OK) {
         ngx_http_upstream_finalize_request(r, u, NGX_ERROR);
         return;
     }
 
     if (downstream->write->active && !downstream->write->ready) {
-        ngx_add_timer(downstream->write, clcf->send_timeout);
+        ngx_add_timer(downstream->write, clcf->send_timeout, NGX_FUNC_LINE);
 
     } else if (downstream->write->timer_set) {
-        ngx_del_timer(downstream->write);
+        ngx_del_timer(downstream->write, NGX_FUNC_LINE);
     }
 }
 
@@ -3487,7 +3487,7 @@ ngx_http_upstream_process_non_buffered_request(ngx_http_request_t *r,
     clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
 
     if (downstream->data == r) {
-        if (ngx_handle_write_event(downstream->write, clcf->send_lowat)
+        if (ngx_handle_write_event(downstream->write, clcf->send_lowat, NGX_FUNC_LINE)
             != NGX_OK)
         {
             ngx_http_upstream_finalize_request(r, u, NGX_ERROR);
@@ -3496,22 +3496,22 @@ ngx_http_upstream_process_non_buffered_request(ngx_http_request_t *r,
     }
 
     if (downstream->write->active && !downstream->write->ready) {
-        ngx_add_timer(downstream->write, clcf->send_timeout);
+        ngx_add_timer(downstream->write, clcf->send_timeout, NGX_FUNC_LINE);
 
     } else if (downstream->write->timer_set) {
-        ngx_del_timer(downstream->write);
+        ngx_del_timer(downstream->write, NGX_FUNC_LINE);
     }
 
-    if (ngx_handle_read_event(upstream->read, 0) != NGX_OK) {
+    if (ngx_handle_read_event(upstream->read, 0, NGX_FUNC_LINE) != NGX_OK) {
         ngx_http_upstream_finalize_request(r, u, NGX_ERROR);
         return;
     }
 
     if (upstream->read->active && !upstream->read->ready) {
-        ngx_add_timer(upstream->read, u->conf->read_timeout);
+        ngx_add_timer(upstream->read, u->conf->read_timeout, NGX_FUNC_LINE);
 
     } else if (upstream->read->timer_set) {
-        ngx_del_timer(upstream->read);
+        ngx_del_timer(upstream->read, NGX_FUNC_LINE);
     }
 }
 
@@ -3591,9 +3591,9 @@ ngx_http_upstream_process_downstream(ngx_http_request_t *r)
             wev->delayed = 0;
 
             if (!wev->ready) {
-                ngx_add_timer(wev, p->send_timeout);
+                ngx_add_timer(wev, p->send_timeout, NGX_FUNC_LINE);
 
-                if (ngx_handle_write_event(wev, p->send_lowat) != NGX_OK) {
+                if (ngx_handle_write_event(wev, p->send_lowat, NGX_FUNC_LINE) != NGX_OK) {
                     ngx_http_upstream_finalize_request(r, u, NGX_ERROR);
                 }
 
@@ -3618,7 +3618,7 @@ ngx_http_upstream_process_downstream(ngx_http_request_t *r)
             ngx_log_debug0(NGX_LOG_DEBUG_HTTP, c->log, 0,
                            "http downstream delayed");
 
-            if (ngx_handle_write_event(wev, p->send_lowat) != NGX_OK) {
+            if (ngx_handle_write_event(wev, p->send_lowat, NGX_FUNC_LINE) != NGX_OK) {
                 ngx_http_upstream_finalize_request(r, u, NGX_ERROR);
             }
 
@@ -3660,9 +3660,9 @@ ngx_http_upstream_process_upstream(ngx_http_request_t *r,
             rev->delayed = 0;
 
             if (!rev->ready) {
-                ngx_add_timer(rev, p->read_timeout);
+                ngx_add_timer(rev, p->read_timeout, NGX_FUNC_LINE);
 
-                if (ngx_handle_read_event(rev, 0) != NGX_OK) {
+                if (ngx_handle_read_event(rev, 0, NGX_FUNC_LINE) != NGX_OK) {
                     ngx_http_upstream_finalize_request(r, u, NGX_ERROR);
                 }
 
@@ -3686,7 +3686,7 @@ ngx_http_upstream_process_upstream(ngx_http_request_t *r,
             ngx_log_debug0(NGX_LOG_DEBUG_HTTP, c->log, 0,
                            "http upstream delayed");
 
-            if (ngx_handle_read_event(rev, 0) != NGX_OK) {
+            if (ngx_handle_read_event(rev, 0, NGX_FUNC_LINE) != NGX_OK) {
                 ngx_http_upstream_finalize_request(r, u, NGX_ERROR);
             }
 
@@ -6087,3 +6087,4 @@ ngx_http_upstream_init_main_conf(ngx_conf_t *cf, void *conf)
 
     return NGX_CONF_OK;
 }
+

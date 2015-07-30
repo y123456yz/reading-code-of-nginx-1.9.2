@@ -73,6 +73,7 @@ CORE_DEPS = src/core/nginx.h \
 	src/os/unix/ngx_process_cycle.h \
 	src/os/unix/ngx_linux_config.h \
 	src/os/unix/ngx_linux.h \
+	src/core/ngx_thread_pool.h \
 	src/core/ngx_regex.h \
 	objs/ngx_auto_config.h
 
@@ -165,6 +166,10 @@ objs/nginx:	objs/src/core/nginx.o \
 	objs/src/event/modules/ngx_epoll_module.o \
 	objs/src/os/unix/ngx_linux_sendfile_chain.o \
 	objs/src/os/unix/ngx_linux_aio_read.o \
+	objs/src/core/ngx_thread_pool.o \
+	objs/src/os/unix/ngx_thread_cond.o \
+	objs/src/os/unix/ngx_thread_mutex.o \
+	objs/src/os/unix/ngx_thread_id.o \
 	objs/src/core/ngx_regex.o \
 	objs/src/http/ngx_http.o \
 	objs/src/http/ngx_http_core_module.o \
@@ -285,6 +290,10 @@ objs/nginx:	objs/src/core/nginx.o \
 	objs/src/event/modules/ngx_epoll_module.o \
 	objs/src/os/unix/ngx_linux_sendfile_chain.o \
 	objs/src/os/unix/ngx_linux_aio_read.o \
+	objs/src/core/ngx_thread_pool.o \
+	objs/src/os/unix/ngx_thread_cond.o \
+	objs/src/os/unix/ngx_thread_mutex.o \
+	objs/src/os/unix/ngx_thread_id.o \
 	objs/src/core/ngx_regex.o \
 	objs/src/http/ngx_http.o \
 	objs/src/http/ngx_http_core_module.o \
@@ -341,7 +350,7 @@ objs/nginx:	objs/src/core/nginx.o \
 	objs/addon/ngx_http_myfilter_module/ngx_http_myfilter_module.o \
 	objs/addon/sendfile_test/sendfile_test.o \
 	objs/ngx_modules.o \
-	-lpthread -lcrypt -lpcre -lcrypto -lcrypto -lz
+	-lpthread -lpthread -lcrypt -lpcre -lcrypto -lcrypto -lz
 	
 
 
@@ -784,6 +793,34 @@ objs/src/os/unix/ngx_linux_aio_read.o:	$(CORE_DEPS) \
 	$(CC) -c $(CFLAGS) $(CORE_INCS) \
 		-o objs/src/os/unix/ngx_linux_aio_read.o \
 		src/os/unix/ngx_linux_aio_read.c
+
+
+objs/src/core/ngx_thread_pool.o:	$(CORE_DEPS) \
+	src/core/ngx_thread_pool.c
+	$(CC) -c $(CFLAGS) $(CORE_INCS) \
+		-o objs/src/core/ngx_thread_pool.o \
+		src/core/ngx_thread_pool.c
+
+
+objs/src/os/unix/ngx_thread_cond.o:	$(CORE_DEPS) \
+	src/os/unix/ngx_thread_cond.c
+	$(CC) -c $(CFLAGS) $(CORE_INCS) \
+		-o objs/src/os/unix/ngx_thread_cond.o \
+		src/os/unix/ngx_thread_cond.c
+
+
+objs/src/os/unix/ngx_thread_mutex.o:	$(CORE_DEPS) \
+	src/os/unix/ngx_thread_mutex.c
+	$(CC) -c $(CFLAGS) $(CORE_INCS) \
+		-o objs/src/os/unix/ngx_thread_mutex.o \
+		src/os/unix/ngx_thread_mutex.c
+
+
+objs/src/os/unix/ngx_thread_id.o:	$(CORE_DEPS) \
+	src/os/unix/ngx_thread_id.c
+	$(CC) -c $(CFLAGS) $(CORE_INCS) \
+		-o objs/src/os/unix/ngx_thread_id.o \
+		src/os/unix/ngx_thread_id.c
 
 
 objs/src/core/ngx_regex.o:	$(CORE_DEPS) \

@@ -495,6 +495,8 @@ extern ngx_event_actions_t   ngx_event_actions;
 #define NGX_CLEAR_EVENT    0    /* dummy declaration */
 #endif
 
+#define NGX_FUNC_LINE __FUNCTION__, __LINE__
+
 /*
 ngx_event_actions = ngx_epoll_module_ctx.actions; ngx_event_actions为具体的模块action，如ngx_event_actions = ngx_poll_module_ctx.actions;
 ngx_event_actions = ngx_select_module_ctx.actions;
@@ -641,8 +643,10 @@ u_char *ngx_accept_log_error(ngx_log_t *log, u_char *buf, size_t len);
 
 
 void ngx_process_events_and_timers(ngx_cycle_t *cycle);
-ngx_int_t ngx_handle_read_event(ngx_event_t *rev, ngx_uint_t flags);
-ngx_int_t ngx_handle_write_event(ngx_event_t *wev, size_t lowat);
+//ngx_int_t ngx_handle_read_event(ngx_event_t *rev, ngx_uint_t flags);
+ngx_int_t ngx_handle_read_event(ngx_event_t *rev, ngx_uint_t flags, const char* func, int line);
+
+ngx_int_t ngx_handle_write_event(ngx_event_t *wev, size_t lowat, const char* func, int line);
 
 
 #if (NGX_WIN32)

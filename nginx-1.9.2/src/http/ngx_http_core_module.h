@@ -203,22 +203,58 @@ ngx_http_finalize_request·½·¨¸ù¾Ý·µ»ØÖµµÄ²»Í¬Î´±Ø»áÖ±½Ó½áÊøÇëÇó£¬ÕâÔÚµÚ11ÕÂÖÐ»áÏ
 */
 
 /*
+©³©¥©¥©¥©¥©×©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©×©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©·
+©§ÐòºÅ    ©§    ½×¶ÎºêÃû                  ©§    ½×¶Î¼òµ¥ÃèÊö            ©§
+©Ç©¥©¥©¥©¥©ï©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©ï©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©Ï
+©§    O   ©§NGX HTTP POST READ PHASE      ©§ÇëÇóÍ·¶ÁÈ¡Íê³ÉÖ®ºóµÄ½×¶Î    ©§
+©Ç©¥©¥©¥©¥©ï©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©ï©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©Ï
+©§    1   ©§NGX_HTTP_SERVER_REWRITEPHASE  ©§ ServerÄÚÇëÇóµØÖ·ÖØÐ´½×¶Î   ©§
+©Ç©¥©¥©¥©¥©ï©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©ï©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©Ï
+©§    2   ©§NGX_HTTP_FIND_CONFIG_PHASE    ©§ÅäÖÃ²éÕÒ½×¶Î                ©§
+©Ç©¥©¥©¥©¥©ï©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©ï©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©Ï
+©§    3   ©§NGX_HTTP_REWRITE_PHASE        ©§ LocationÄÚÇëÇóµØÖ·ÖØÐ´½×¶Î ©§
+©Ç©¥©¥©¥©¥©ï©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©ï©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©Ï
+©§    4   ©§NGX HTTP POST REWRITE PHASE   ©§ÇëÇóµØÖ·ÖØÐ´Íê³ÉÖ®ºóµÄ½×¶Î  ©§
+©Ç©¥©¥©¥©¥©ï©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©ï©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©Ï
+©§    5   ©§NGXHTTPPREACCESS_PHASE        ©§·ÃÎÊÈ¨ÏÞ¼ì²é×¼±¸½×¶Î        ©§
+©Ç©¥©¥©¥©¥©ï©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©ï©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©Ï
+©§    6   ©§NGX HTTP ACCESS PHASE         ©§·ÃÎÊÈ¨ÏÞ¼ì²é½×¶Î            ©§
+©Ç©¥©¥©¥©¥©ï©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©ï©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©Ï
+©§    7   ©§NGX HTTP POST ACCESS PHASE    ©§·ÃÎÊÈ¨Úñ¼ì²éÍê³ÉÖ®ºóµÄ½×¶Î  ©§
+©Ç©¥©¥©¥©¥©ï©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©ï©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©Ï
+©§    8   ©§NGX_HTTP TRY FILES PHASE      ©§ÅäÖÃÏîtry_fles´¦Àí½×¶Î      ©§
+©Ç©¥©¥©¥©¥©ï©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©ï©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©Ï
+©§    9   ©§NGX HTTP CONTENT PHASE        ©§ÄÚÈÝ²úÉú½×¶Î                ©§
+©Ç©¥©¥©¥©¥©ï©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©ï©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©Ï
+©§    10  ©§NGX HTTP LOG PHASE            ©§ÈÕÖ¾Ä£¿é´¦Àí½×¶Î            ©§
+©»©¥©¥©¥©¥©ß©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©ß©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¿
+
+NGX_HTTP_SERVER_REWRITEPHASE½×¶Î£¬ºÍµÚ3½×¶ÎNGX_HTTP_REWRITE_PHASE¶¼ÊôÓÚµØÖ·ÖØÐ´£¬Ò²¶¼ÊÇÕë¶ÔrewriteÄ£¿é¶øÉè¶¨µÄ½×¶Î£¬Ç°ÕßÓÃÓÚserverÉÏÏÂÎÄÀïµÄ
+µØÖ·ÖØÐ´£¬¶øºóÕßÓÃÓÚlocationÉÏÏÂÎÄÀïµÄµØÖ·ÖØÐ´¡£ÎªÊ²Ã´ÒªÉèÖÃÁ½¸öµØÖ·ÖØÐ´½×¶Î£¬Ô­ÒòÔÚÓÚrewriteÄ£¿éµÄÏà¹ØÖ¸Áî£¨±ÈÈçrewrite¡¢if¡¢setµÈ£©¼È
+¿ÉÓÃÓÚserverÉÏÏÂÎÄ£®ÓÖ¿ÉÓÃÓÚlocationÉÏÏÂÎÄ¡£ÔÚ¿Í»§¶ËÇëÇó±»Nginx½ÓÊÕºó£¬Ê×ÏÈ×öserver²éÕÒÓë¶¨Î»£¬ÔÚ¶¨Î»µ½server£¨Èç¹ûÃ»
+²éÕÒµ½¾ÍÊÇÄ¬ÈÏserver£¬¼ûngx_http_init_connection  ngx_http_set_virtual_server£©ºóÖ´ÐÐNGX_HTTP_SERVER_REWRITEPHASE½×¶ÎÉÏµÄ»Øµ÷º¯Êý
+*/
+
+/*
     ×¢Òângx_http_phases¶¨ÒåµÄ11¸ö½×¶ÎÊÇÓÐË³ÐòµÄ£¬±ØÐë°´ÕÕÆä¶¨ÒåµÄË³ÐòÖ´ÐÐ¡£Í¬Ê±Ò²ÒªÒâÊ¶µ½£¬²¢²»ÊÇËµÒ»¸öÓÃ»§ÇëÇó×î¶àÖ»ÄÜ¾­¹ý11¸ö
 HTTPÄ£¿éÌá¹©µÄngx_http_handler_pt·½·¨À´´¦Àí£¬NGX_HTTP_POST_READ_PHASE¡¢NGX_HTTP_SERVER_REWRITE_PHASE¡¢NGX_HTTP_REWRITE_PHASE¡¢
 NGX_HTTP_PREACCESS_PHASE¡¢NGX_HTTP_ACCESS_PHASE¡¢NGX HTTP_CONTENT_PHASE¡¢NGX_HTTP_LOG_PHASEÕâ7¸ö½×¶Î¿ÉÒÔ°üÀ¨ÈÎÒâ¶à¸ö´¦Àí·½·¨£¬
 ËüÃÇÊÇ¿ÉÒÔÍ¬Ê±×÷ÓÃÓÚÍ¬Ò»¸öÓÃ»§ÇëÇóµÄ¡£¶øNGX_HTTP_FIND_CONFIG_PHASE¡¢NGX_HTTP_POSTREWRITE_PHASE¡¢NGX_HTTP_POST_ACCESS_PHASE¡¢
 NGX_HTTP_TRY_FILES_PHASEÕâ4¸ö½×¶ÎÔò²»ÔÊÐíHTTPÄ£¿é¼ÓÈë×Ô¼ºµÄngx_http_handler_pt·½·¨´¦ÀíÓÃ»§ÇëÇó£¬ËüÃÇ½öÓÉHTTP¿ò¼ÜÊµÏÖ¡£
+
+NGX_HTTP_FIND_CONFIG_PHASE¡¢NGX_HTTP_POSTREWRITE_PHASE¡¢NGX_HTTP_POST_ACCESS_PHASE¡¢NGX_HTTP_TRY_FILES_PHASEÕâ4¸ö½×¶ÎÔò²»ÔÊÐíHTTPÄ£¿é
+¼ÓÈë×Ô¼ºµÄngx_http_handler_pt·½·¨´¦ÀíÓÃ»§ÇëÇó,µ«ÊÇËûÃÇµÄ»áÕ¼ÓÃcmcf->phase_engine.handlers[]Êý×éÖÐµÄÒ»¸ö³ÉÔ±£¬¼ûngx_http_init_phase_handlers
 */
-typedef enum { //¸÷¸ö½×¶ÎµÄhttp¿ò¼Ücheckº¯Êý¼ûngx_http_init_phase_handlers
+typedef enum { //¸÷¸ö½×¶ÎµÄhttp¿ò¼Ücheckº¯Êý¼ûngx_http_init_phase_handlers           //ËùÓÐ½×¶ÎµÄcheckerÔÚngx_http_core_run_phasesÖÐµ÷ÓÃ
     //ÔÚ½ÓÊÕµ½ÍêÕûµÄHTTPÍ·²¿ºó´¦ÀíµÄHTTP½×¶Î 
-    NGX_HTTP_POST_READ_PHASE = 0, //¸Ã½×¶Î·½·¨ÓÐ:ngx_http_realip_handler
-    /*ÔÚ»¹Ã»ÓÐ²éÑ¯µ½URIÆ¥ÅäµÄlocationÇ°£¬ÕâÊ±rewriteÖØÐ´URLÒ²×÷ÎªÒ»¸ö¶ÀÁ¢µÄHTTP½×¶Î*/
-    NGX_HTTP_SERVER_REWRITE_PHASE, //¸Ã½×¶Îhandler·½·¨ÓÐ:ngx_http_rewrite_handler
+    NGX_HTTP_POST_READ_PHASE = 0, //¸Ã½×¶Î·½·¨ÓÐ:ngx_http_realip_handler  POSTÓÐ"ÔÚ....ºó"µÄÒâË¼£¬POST_READÓ¦¸Ã¾ÍÊÇÔÚ½âÎöÍêÇëÇóÐÐºÍÍ·²¿ÐÐºó
+    /*ÔÚ»¹Ã»ÓÐ²éÑ¯µ½URIÆ¥ÅäµÄlocationÇ°£¬ÕâÊ±rewriteÖØÐ´URLÒ²×÷ÎªÒ»¸ö¶ÀÁ¢µÄHTTP½×¶Î   ServerÄÚÇëÇóµØÖ·ÖØÐ´½×¶Î */
+    NGX_HTTP_SERVER_REWRITE_PHASE, //¸Ã½×¶Îhandler·½·¨ÓÐ:ngx_http_rewrite_handler 
 
     /*¸ù¾ÝURIÑ°ÕÒÆ¥ÅäµÄlocation£¬Õâ¸ö½×¶ÎÍ¨³£ÓÉngx_http_core_moduleÄ£¿éÊµÏÖ£¬²»½¨ÒéÆäËûHTTPÄ£¿éÖØÐÂ¶¨ÒåÕâÒ»½×¶ÎµÄÐÐÎª*/
     NGX_HTTP_FIND_CONFIG_PHASE,//¸Ã½×¶Îhandler·½·¨ÓÐ:ÎÞ£¬²»ÔÊÐíÓÃ»§Ìí¼Óhander·½·¨ÔÚ¸Ã½×¶Î
 
-    //ÔÚNGX_HTTP_FIND_CONFIG_PHASE½×¶ÎÑ°ÕÒµ½Æ¥ÅäµÄlocationÖ®ºóÔÙÐÞ¸ÄÇëÇóµÄURI
+    //ÔÚNGX_HTTP_FIND_CONFIG_PHASE½×¶ÎÑ°ÕÒµ½Æ¥ÅäµÄlocationÖ®ºóÔÙÐÞ¸ÄÇëÇóµÄURI  LocationÄÚÇëÇóµØÖ·ÖØÐ´½×¶Î
     /*ÔÚNGX_HTTP_FIND_CONFIG_PHASE½×¶ÎÖ®ºóÖØÐ´URLµÄÒâÒåÓëNGX_HTTP_SERVER_REWRITE_PHASE½×¶ÎÏÔÈ»ÊÇ²»Í¬µÄ£¬ÒòÎªÕâÁ½Õß»áµ¼ÖÂ²éÕÒµ½²»Í¬µÄlocation¿é£¨locationÊÇÓëURI½øÐÐÆ¥ÅäµÄ£©*/
     NGX_HTTP_REWRITE_PHASE,//¸Ã½×¶Îhandler·½·¨ÓÐ:ngx_http_rewrite_handler
     /*ÕâÒ»½×¶ÎÊÇÓÃÓÚÔÚrewriteÖØÐ´URLºóÖØÐÂÌøµ½NGX_HTTP_FIND_CONFIG_PHASE½×¶Î£¬ÕÒµ½ÓëÐÂµÄURIÆ¥ÅäµÄlocation¡£ËùÒÔ£¬ÕâÒ»½×¶ÎÊÇÎÞ·¨ÓÉµÚÈý·½HTTPÄ£¿é´¦ÀíµÄ£¬¶ø½öÓÉngx_http_core_moduleÄ£¿éÊ¹ÓÃ*/
@@ -317,6 +353,7 @@ nextµÄÉè¼ÆÊ¹µÃ´¦Àí½×¶Î²»±Ø°´Ë³ÐòÒÀ´ÎÖ´ÐÐ£¬¼È¿ÉÒÔÏòºóÌøÔ¾Êý¸ö½×¶Î¼ÌÐøÖ´ÐÐ£¬Ò²¿ÉÒÔ
 next±íÊ¾ÏÂÒ»¸ö´¦Àí½×¶ÎÖÐµÄµÚ1¸öngx_http_phase_handler_s´¦Àí·½·¨
 */
     ngx_uint_t                 next;//ÏÂÒ»½×¶ÎµÄµÚÒ»¸öngx_http_handler_pt´¦Àí·½·¨ÔÚÊý×éÖÐµÄÎ»ÖÃ
+    ngx_uint_t  phase;      //yang add±ê¼Ç´¦ÓÚ11¸öphaseÖÐµÄÄÇ¸öphase
 };
 
 
@@ -381,9 +418,39 @@ ngx_http_core_srv_conf_t½á¹¹ÌåÖÐÓÐ1¸öctxÖ¸Õë£¬ËüÖ¸Ïò½âÎöserver¿éÊ±ÐÂÉú³ÉµÄngx_ht
     //ngx_http_headers_inÖÐµÄÈ«²¿³ÉÔ±¶¼ÔÚ¸Ãhash±íÖÐ£¬¼ûngx_http_init_headers_in_hash
     ngx_hash_t                 headers_in_hash;//¼ûngx_http_headers_in  ngx_http_init_headers_in_hash
 
-    ngx_hash_t                 variables_hash;
+    //core http±äÁ¿Ïà¹ØµÄÈý¸ö½á¹¹Ìåvariables_hash   variables   variables_keys
+    //×îÖÕÄ£¿éÄÚ²¿ÒÔ¼°Í¨¹ýsetµÈÔÚÅäÖÃÎÄ¼þÖÐÉèÖÃµÄ±äÁ¿(variables_keysÖÐµÄ)×îÖÕ´æ·Åµ½variables_hashÖÐ£¬setÅäÖÃµÄ±äÁ¿´æ·Åµ½variablesÖÐ£¬variables_keys×îÖÕÖÃ¿Õ
+    //´Óngx_http_variables_init_varsÖÐ¿ÉÒÔ¿´³ö²¢²»ÊÇËùÓÐµÄ±äÁ¿¶¼»á·ÅÈëvariables_hash£¬Ö»ÓÐvariables_keysÖÐµÄ±äÁ¿²Å»áÈ«²¿·ÅÈëvariables_hash
+    //variablesÖÐµÄ±äÁ¿¿ÉÄÜÔÚvariables_keysÖÐ£¬Ò²¿ÉÄÜ²»ÔÚvariables_keysÖÐ
+/*
+NGX HTTP_VAR_INDEXED¡¢NGXHTTP_VARNOHASH¡¢±äÁ¿cmcf->variables_hashÒÔ¼°È¡Öµº¯Êýngx_http_get_variableµÈ£¬ËüÃÇ¶¼ÊÇÎªSSIÄ£¿éÊµÏÖ¶øÉè¼ÆµÄ
+*/
+    ngx_hash_t                 variables_hash;//¸³Öµ¼ûngx_http_variables_init_vars  //keyÎªngx_http_variable_t->name£¬ valueÎªngx_http_variable_t  
 
-    ngx_array_t                variables;       /* ngx_http_variable_t */ 
+    /*
+    ÔÚ½âÎöÅäÖÃÎÄ¼þÖÐµÄÊ±ºò£¬Óöµ½setµÈÅäÖÃ±äÁ¿µÄÊ±ºò£¬»á°Ñ¶ÔÓ¦µÄ±äÁ¿(Ä£¿é×ÔÓÐ±äÁ¿ÍâµÄ)Ìí¼Óµ½variablesÊý×é£¬µ«ÊÇÔÚ½âÎöÅäÖÃÎÄ¼þ¹ý³Ì
+    ÖÐ»òÕß½âÎöÅäÖÃÎÄ¼þÇ°£¬²¢Ã»ÓÐ°ÑÄ£¿éÖÐ×Ô´øµÄ±äÁ¿¼ÓÈëvariablesÊý×é£¬¶øvariables_keysÖÐÔò´æ´¢ÁËÄ£¿éÖÐ×Ô¶¨ÒåµÄÒÔ¼°setµÈÔÚÅäÖÃÎÄ¼þÖÐ½âÎöµ½µÄ±äÁ¿
+    */ //variablesÔÚngx_http_variables_init_varsÖÐ»á»ñÈ¡µ½¶ÔÓ¦µÄngx_http_variable_t³ÉÔ±Öµ
+
+/*
+NginxÔÚÅäÖÃÎÄ¼þµÄ½âÎö¹ý³ÌÖÐ»áÓöµ½ÓÃ»§Ê¹ÓÃ±äÁ¿µÄÇé¿ö£¬ËùÓÐÕâÐ©±»ÓÃ»§ÔÚÅäÖÃÎÄ¼þÀïÊ¹ÓÃµÄ±äÁ¿¶¼»áÏÈÍ¨¹ý
+ngx_http_get_variable_index0¶øÌí¼Óµ½cmcf->variablesÄÚ¡£Èç¹ûÅäÖÃÎÄ¼þÖÐ³öÏÖ£ºset $file ta;£¬ÔÚÕâÀïÕâ¸ö$file±äÁ¿¼ÈÊÇ¶¨Òå£¬ÓÖÊÇÊ¹ÓÃ£¬
+ÏÈ¶¨ÒåËü£¬È»ºó°Ñ×Ö·û´®¡±ta¡±¸³Öµ¸øËü£¬ÕâÒ²ÊÇÒ»ÖÖÊ¹ÓÃ£¬ËùÒÔËü»á±»¼ÓÈëµ½cmcf->variablesÄÚ£¬¿ÉÒÔ¼òµ¥µØÈÏÎªNginxÔÚ½âÎöÅäÖÃÎÄ¼þµÄ¹ý³Ì
+ÖÐÓöµ½µÄËùÓÐ±äÁ¿¶¼»á±»¼ÓÈëµ½cmcf->variablesÄÚ¡£ÓÐÐ©±äÁ¿ËäÈ»Ã»ÓÐ³öÏÖÔÚÅäÖÃÎÄ¼þÄÚ£¬µ«ÊÇÒÔNginxÄ¬ÈÏÉèÖÃµÄÐÎÊ½³öÏÖÔÚÔ´´úÂëÀï£¬±ÈÈç
+ngx_http_log_moduleÄ£¿éÄÚµÄngx_http_combined_fmtÈ«¾Ö¾²Ì¬±äÁ¿Àï¾Í³öÏÖÁËÒ»Ð©Nginx±äÁ¿¡£
+    ËäÈ»NginxÄ¬ÈÏÌá¹©µÄ±äÁ¿ÓÐºÜ¶à£¬µ«Ö»Ðè°ÑÎÒÃÇÔÚÅäÖÃÎÄ¼þÀïÕæÕýÓÃµ½ÁËµÄ±äÁ¿¸øÌô³öÀ´£¬µ±ÅäÖÃÎÄ¼þ½âÎöÍêºó£¬ËùÓÐÓÃµ½µÄ±äÁ¿Ò²±»¼¯ÖÐÆðÀ´ÁË
+*/
+/*
+ngx_http_core_main_conf_t->variabelsÊý×é³ÉÔ±µÄ½á¹¹Ê½ngx_http_variable_s£¬ ngx_http_request_s->variabelsÊý×é³ÉÔ±½á¹¹ÊÇ
+ngx_variable_value_tÕâÁ½¸ö½á¹¹µÄ¹ØÏµºÜÃÜÇÐ£¬Ò»¸öËùÎ½±äÁ¿£¬Ò»¸öËùÎ½±äÁ¿Öµ
+
+r->variablesÕâ¸ö±äÁ¿ºÍcmcf->variablesÊÇÒ»Ò»¶ÔÓ¦µÄ£¬ÐÎ³Évar_ nameÓëvar_value¶Ô£¬ËùÒÔÁ½¸öÊý×éÀïµÄÍ¬Ò»¸öÏÂ±êÎ»ÖÃÔªËØ¸ÕºÃ¾ÍÊÇ
+Ïà»¥¶ÔÓ¦µÄ±äÁ¿ÃûºÍ±äÁ¿Öµ£¬¶øÎÒÃÇÔÚÊ¹ÓÃÄ³¸ö±äÁ¿Ê±×Ü»áÏÈÍ¨¹ýº¯Êýngx_http_get_variable_index»ñµÃËüÔÚ±äÁ¿ÃûÊý×éÀïµÄindexÏÂ±ê£¬Ò²¾ÍÊÇ±ä
+Á¿ÃûÀïµÄindex×Ö¶ÎÖµ£¬È»ºóÀûÓÃÕâ¸öindexÏÂ±ê½ø¶øÈ¥±äÁ¿ÖµÊý×éÀïÈ¡¶ÔÓ¦µÄÖµ
+
+*/ //ÓÃ»§ÐèÒªÊ¹ÓÃµÄ±äÁ¿²Å¼ÓÈëµ½variables£¬variables_keysÖÐµÄ±äÁ¿Ê±°üº¬Ê¹ÓÃµÄºÍ²»Ê¹ÓÃµÄ¶¼ÔÚÀïÃæ¡£
+    ngx_array_t                variables;       /* ngx_http_variable_t */  //ngx_http_get_variable_indexÖÐ·ÖÅä¿Õ¼ä ×¢ÒâºÍ ngx_http_request_s->variablesµÄÇø±ð
+    
     ngx_uint_t                 ncaptures;
 
     ngx_uint_t                 server_names_hash_max_size;
@@ -392,7 +459,20 @@ ngx_http_core_srv_conf_t½á¹¹ÌåÖÐÓÐ1¸öctxÖ¸Õë£¬ËüÖ¸Ïò½âÎöserver¿éÊ±ÐÂÉú³ÉµÄngx_ht
     ngx_uint_t                 variables_hash_max_size; //Ä¬ÈÏÖµ¼ûngx_http_core_init_main_conf
     ngx_uint_t                 variables_hash_bucket_size; //Ä¬ÈÏÖµ¼ûngx_http_core_init_main_conf
 
-    ngx_hash_keys_arrays_t    *variables_keys;
+    //core http±äÁ¿Ïà¹ØµÄÈý¸ö½á¹¹Ìåvariables_hash   variables   variables_keys
+    //½âÎöÍêÅäÖÃ²ÎÊýºó£¬variables_keysÖÐ´æ·ÅµÄÊÇÄ£¿éÖÐ×Ô´øµÄ±äÁ¿»òÕßsetÔÚÅäÖÃÎÄ¼þÖÐÉèÖÃµÄ±äÁ¿£¬¼ûngx_http_add_variable
+    //ngx_http_variables_add_core_vars°Ñngx_http_core_variablesÖÐµÄ¸÷ÖÖ±äÁ¿ÐÅÏ¢´æ·Åµ½cmcf->variables_keysÖÐ
+    //×¢Òâ:ngx_http_core_moduleÄ£¿éÒ»¶¨ÒªÔÚÆäËûÉæ¼°µ½±äÁ¿Ä£¿éÇ°¶¨Òå£¬ÒòÎªvariables_keys¿Õ¼äÊÇÔÚngx_http_core_moduleÄ£¿éµÄngx_http_variables_add_core_varsÖÐ´´½¨
+    //variablesÊý×éÖÐÖ»°üº¬´ÓÅäÖÃÎÄ¼þÖÐÍ¨¹ýsetÅäÖÃµÄÄ£¿éÖÐ×Ô¶¨Òå±äÁ¿ÍâµÄ±äÁ¿£¬variables_keys°üÀ¨Ä£¿é×Ô¶¨ÒåµÄºÍsetµÈÅäÖÃÏîÅäÖÃµÄ±äÁ¿£¬
+    //variablesÖÐµÄ±äÁ¿¿ÉÄÜÔÚvariables_keysÖÐ£¬Ò²¿ÉÄÜ²»ÔÚvariables_keysÖÐ£¬¼ûngx_http_variables_init_vars
+    //×îÖÕ¸Ãvariables_keys±íÖÐµÄ³ÉÔ±»á¼ÓÈëµ½variables_hashÖÐ£¬¼ûngx_http_variables_init_vars£¬ËùÒÔvariables_keysËãÊÇÒ»¸öÁÙÊ±±äÁ¿
+    /*
+    ³ýÁËhttpºËÐÄÄ£¿éngx_http_core_moduleÒÔÍâ£¬ÆäËûÄ£¿é¶¼»áÕâÃ´Ö±½Ó»ò¼ä½ÓµØ°Ñ×ÔÉíÖ§³ÖµÄÄÚ²¿±äÁ¿¼Óµ½cmcf->variables_keysÄÚ£¬ÔÙ±ÈÈç
+    ngx_http_proxy_moduleÄ£¿é£¬ÆäÏà¹ØÖ´ÐÐ¹ý³ÌÈçÏÂ¡£ngx_http_proxy_add_variables()  Ò»>ngx_http_add_variable()  Ò»>ngx_hash_add_key()   
+        ×ÜÖ®£¬µ±Nginx½âÎöÅäÖÃÕý³£½áÊøÊ±£¬ËùÓÐµÄ±äÁ¿¶¼±»¼¯ÖÐÔÚcmcf->variables_keysÄÚ
+        ËùÓÐÕâÐ©±äÁ¿ÐèÒª¼ì²éÆäÊÇ·ñºÏ·¨£¬ÒòÎªNginx²»ÄÜÈÃÓÃ»§ÔÚÅäÖÃÎÄ¼þÀïÊ¹ÓÃÒ»¸ö·Ç·¨µÄ±äÁ¿£¬Õâ¾ÍÐèÒªcmcf->variables_keysµÄ°ïÃ¦¡£¼ûngx_http_variables_init_vars
+     */
+    ngx_hash_keys_arrays_t    *variables_keys; //keyÎªngx_http_variable_t->name£¬ valueÎªngx_http_variable_t  
 
     //ÕâÀïÊÇ¸öÊý×éµÄÔ­ÒòÊÇ:Èç¹ûÅäÖÃÖÐÓÐlisten 1.1.1.1:50  2.2.2.2:50,Ôò¶Ë¿Ú¶¼ÊÇ50£¬µ«¼àÌýIP²»Ò»Ñù£¬ËûÃÇ´æ´¢ÔÚ¸ÃÊý×éÖÐ£¬Èç¹û¶Ë¿ÚÒ»Ñù¡£Èç¹û¶Ë¿ÚºÍIPµØÖ·Ò»Ñù£¬Ôò»áÒÔµÚÒ»ÌõÎª×¼£¬ËãÒ»Ìõ
     //Ôò·ÅÈëµ½Í¬Ò»¸öngx_http_conf_port_t½ÚµãÖÐ£¬Èç¹ûÓÐÆäËû¶Ë¿ÚµØÖ·£¬Ôò·Åµ½ÏÂÒ»¸öngx_http_conf_port_t½ÚµãÖÐ£¬²»Í¬¶Ë¿Ú´æ´¢ÔÚ¸Ã½á¹¹ÌåµÄ²»Í¬½Úµã
@@ -534,7 +614,22 @@ typedef struct {
 #if (NGX_PCRE)
     unsigned                    captures:1;
 #endif
+    /*
+            location / {
+              try_files index.html index.htm @fallback;
+            }
+            
+            location @fallback {
+              root /var/www/error;
+              index index.html;
+            }
+        */
 
+    /*
+   ngx_http_init_locationsÖÐ°Ñname location¼ÓÈëµ½named_locations£¬ÕýÔò±í´ïÊ½location¼ÓÈëµ½regex_locations  ÍêÈ«Æ¥ÅäºÍÇ°×ºÆ¥Åälocation´æÈëlocations
+     static_locations°ÑlocationsÖÐµÄ½Úµã´ÓÐÂ×é³ÉÐÂµÄstatic_locationsÈý²æÊ÷
+     */ 
+    //ngx_http_init_locationsÖÐ°Ñname location¼ÓÈëµ½named_locations£¬ÕýÔò±í´ïÊ½location¼ÓÈëµ½regex_locations  ÍêÈ«Æ¥ÅäºÍÇ°×ºÆ¥Åälocation´æÈëlocations
     ngx_http_core_loc_conf_t  **named_locations; //Ö¸Ïòserver{}ÖÐËùÓÐlocationÖÐËùÓÐµÄÃû³Æname  location @name,¼ûngx_http_init_locations
 } ngx_http_core_srv_conf_t;
 
@@ -553,7 +648,7 @@ typedef struct {
 
 //½á¹¹ngx_http_virtual_names_tÖÐµÄ³ÉÔ±
 typedef struct { //´´½¨¿Õ¼äºÍ¸³Öµ¼ûngx_http_add_addrs
-     ngx_hash_combined_t       names;
+     ngx_hash_combined_t       names; //ÕâÀïÃæµÄhashÐÅÏ¢ÊÇngx_http_server_namesÖÐ´æ´¢µ½hash±íÖÐµÄserver_name¼°ÆäËùÔÚserver{}ÉÏÏÂÎÄctx,server_nameÎªkey£¬ÉÏÏÂÎÄctxÎªvalue
 
      ngx_uint_t                nregex;
      ngx_http_server_name_t   *regex;
@@ -563,10 +658,18 @@ typedef struct { //´´½¨¿Õ¼äºÍ¸³Öµ¼ûngx_http_add_addrs
 //¶ÔÓ¦µÄngx_http_conf_addr_tÖÐµÄÏà¹Ø³ÉÔ±£¬¼ûngx_http_add_addrs
 //ngx_http_port_t->ngx_http_in_addr_t->ngx_http_addr_conf_s
 //ÕâÀïÃæ´æ´¢ÓÐserver_nameÅäÖÃÐÅÏ¢ÒÔ¼°¸Ãip:port¶ÔÓ¦µÄÉÏÏÂÎÄÐÅÏ¢
-struct ngx_http_addr_conf_s {//´´½¨¿Õ¼ä¸³ÖµÔÚngx_http_add_addrs¡£ ¸Ã½á¹¹ÌåÊÇngx_http_in_addr_tÖÐµÄconf³ÉÔ±
+struct ngx_http_addr_conf_s {//´´½¨¿Õ¼ä¸³ÖµÔÚngx_http_add_addrs¡£ ¸Ã½á¹¹ÌåÊÇngx_http_in_addr_tÖÐµÄconf³ÉÔ±  
+//´ËÍâ£¬ngx_http_connection_t->addr_confÒ²Ö¸Ïò¸Ã½á¹¹
     /* the default server configuration for this address:port */
-    ngx_http_core_srv_conf_t  *default_server;
+    /*    ÏàÍ¬listen ip:port³öÏÖÔÚ²»Í¬µÄserverÖÐ£¬ÄÇÃ´optÖ¸Ïò×îºó½âÎöµÄlistenÅäÖÃÖÐ´øÓÐdefault_serverÑ¡ÏîËù¶ÔÓ¦µÄserver{}ÉÏÏÂÎÄctx£¬Èç¹û¼¸¸ölisten
+       ¶¼Ã»ÓÐ¼Ódefault²ÎÊý£¬Ôò¸ÃÖµÎª½âÎöµ½µÄµÚÒ»¸öip:portËùÔÚserver{}¼ûngx_http_add_addresses
+           Èç¹ûip:portÖ»´¦ÓÚÒ»¸öserver{}ÖÐ£¬ÔòÄ¬ÈÏ³õÊ¼»¯µÄÊ±ºòÖ±½ÓÖ¸Ïòlisten ip:portËùÔÚserver{}£¬¼ûngx_http_add_address*/
+    ngx_http_core_srv_conf_t  *default_server; //Í¨¹ýngx_http_core_srv_conf_t
 
+    /*
+      À´Ô´¼ûngx_http_server_names£¬ËûÃÇÊÇ½øÐÐserver_name×Ö·û´®ÅÅÐò²¢hashºóµÄ´æ´¢µØÖ·£¬ËûÃÇµÄÀ´Ô´ÊÇÏàÍ¬IP:port¶ÔÓ¦µÄ
+      ËùÓÐserver{}¿éµÄserver_nameÅäÖÃ£¬¼ûngx_http_server_names
+    */
     ngx_http_virtual_names_t  *virtual_names; //´´½¨¿Õ¼ä¸³ÖµÔÚngx_http_add_addrs
 
 #if (NGX_HTTP_SSL)
@@ -585,7 +688,7 @@ typedef struct {//¸Ã½á¹¹´æ·ÅÔÚngx_http_port_t
     //Èç¹ûhttp{}ÖÐÓÐÎ´¾«È·ÅäÖÃµÄlisten(bind = 0)ÇÐ´æÔÚÍ¨Åä·ûlisten(listen *:0)ÔòÕâÐ©Î´¾«È·ÅäÖÃÏîµÄngx_http_addr_conf_s³ÉÔ±È¡Öµ¾ÍÊÇÍ¨Åä·ûÅäÖÃÏî
 //¶ÔÓ¦µÄngx_http_conf_addr_tÖÐµÄÏà¹Ø³ÉÔ±£¬¼ûngx_http_add_addrs
     ngx_http_addr_conf_t       conf;//ÕâÀïÃæ´æ´¢ÓÐserver_nameÅäÖÃÐÅÏ¢ÒÔ¼°¸Ãip:port¶ÔÓ¦µÄÉÏÏÂÎÄÐÅÏ¢
-} ngx_http_in_addr_t;//´´½¨¿Õ¼ä¸³ÖµÔÚngx_http_add_addrs
+} ngx_http_in_addr_t;//´´½¨¿Õ¼ä¸³ÖµÔÚngx_http_add_addrs,ÊÇ´Óngx_http_conf_addr_t»ñÈ¡µ½µÄ
 
 
 #if (NGX_HAVE_INET6)
@@ -604,18 +707,18 @@ typedef struct {//¸Ã½á¹¹×îÖÕÓÉngx_conf_t->cycle->listening->servers´æ´¢¸Ã¿Õ¼ä£¬¼
     /* ngx_http_in_addr_t or ngx_http_in6_addr_t */
     void                      *addrs; //´´½¨¿Õ¼äÔÚngx_http_add_addrs
     ngx_uint_t                 naddrs; //Õâ¸ö¼ÇÂ¼µÄÊÇÅäÖÃÖÐÏàÍ¬portÖÐº¬ÓÐÍ¨Åä·ûÒÔ¼°´æÔÚ·ÇbindµÃÅäÖÃµÄ¸öÊý£¬¸³Öµ¼ûngx_http_init_listening£¬ 
-} ngx_http_port_t; //ÕâÀïÃæµÄÖµ¶¼ÊÇ´Óngx_http_conf_addr_tÀïÃæ»ñÈ¡µ½µÄ
+} ngx_http_port_t; //ÕâÀïÃæµÄÖµ¶¼ÊÇ´Óngx_http_conf_port_tÀïÃæ»ñÈ¡µ½µÄ£¬ ngx_http_add_addrs -> ngx_http_add_addrs,ÊÇ´Óngx_http_conf_port_t->ngx_http_conf_addr_t[]»ñÈ¡µ½µÄ
 
 /*
 ngx_http_core_main_conf_t
 
     |---> prots£º ¼àÌýµÄ¶Ë¿ÚºÅµÄÊý×é
 
-                |---> ngx_http_conf_port_t£º¶Ë¿ÚºÅµÄÅäÖÃÐÅÏ¢
+                |---> ngx_http_conf_port_t£º¶Ë¿ÚºÅµÄÅäÖÃÐÅÏ¢ (ngx_http_port_tÄÚÈÝÒ²ÊÇ´Ó¸Ã½á¹¹ÖÐ»ñÈ¡->ngx_http_in_addr_t)
 
                                |---> addrs£ºÔÚ¸Ã¶Ë¿ÚºÅÉÏ£¬¼àÌýµÄËùÓÐµØÖ·µÄÊý×é ¸ÃaddrsÏÂµÄËùÓÐ¶Ë¿ÚÏàÍ¬
 
-                                            |---> ngx_http_conf_addr_t£ºµØÖ·ÅäÖÃÐÅÏ¢£¬°üº¬ÔÚ¸Ãaddr:portÉÏµÄ¶à¸öÐéÄâÖ÷»ú
+                                            |---> ngx_http_conf_addr_t£ºµØÖ·ÅäÖÃÐÅÏ¢£¬°üº¬ÔÚ¸Ãaddr:portÉÏµÄ¶à¸öÐéÄâÖ÷»ú  (ngx_http_port_t->ngx_http_in_addr_tÄÚÈÝÒ²ÊÇ´Ó¸Ã½á¹¹ÖÐ»ñÈ¡)
 
                                                            |---> servers£ºÔÚaddr:portÉÏµÄËµ¸öserver¿éµÄÅäÖÃÐÅÏ¢ngx_http_core_srv_conf_t(//ÀýÈç²»Í¬server{}ÖÐÓÐÏàÍ¬µÄlisten ip:port£¬ËûÃÇ¶¼ÔÚÍ¬Ò»¸öngx_http_conf_addr_tÖÐ£¬µ«serversÖ¸Ïò²»Í¬)
 
@@ -635,13 +738,14 @@ ngx_http_core_main_conf_t
 //ËùÓÐhttpÖÐµÄlisten£¬°üÀ¨ÔÚ²»Í¬server{]ÖÖµÄlisten,ËûÃÇµÄlistenÍ·Ìí¼Óµ½ngx_http_core_main_conf_t->ports,¼ûngx_http_add_listen
 //¸Ã½á¹¹´æ´¢ÔÚngx_http_core_main_conf_tÖÐµÄports£¬ËüÓÃÀ´´æ´¢listenÅäÖÃÏîµÄÏà¹ØÐÅÏ¢
 //ËùÓÐlistenµÄ¶Ë¿ÚÏàÍ¬£¬IP²»Í¬µÄlistenÐÅÏ¢È«²¿´æ´¢ÔÚ¸Ã½á¹¹ÖÐ£¬²»Í¬µÄipµØÖ··ÅÈëaddrsÊý×éÖÐ¡£¼àÌý¶Ë¿ÚÅäÖÃÐÅÏ¢£¬addrsÊÇÔÚ¸Ã¶Ë¿ÚÉÏËùÓÐ¼àÌýµØÖ·µÄÊý×é¡£
-typedef struct { //¼ûngx_http_add_listen
+typedef struct { //¼ûngx_http_add_listen     (ngx_http_port_t->ngx_http_in_addr_tÄÚÈÝÒ²ÊÇ´Ó¸Ã½á¹¹ÖÐ»ñÈ¡)
     ngx_int_t                  family; //Ð­Òé×å
     in_port_t                  port; //listenÃüÁîÅäÖÃ¼àÌýµÄ¶Ë¿Ú
 //¶ÔÓÚÃ¿Ò»¸ö¶Ë¿ÚÐÅÏ¢£¨ngx_http_conf_port_t£©,ÀïÃæÓÐÒ»¸ö×Ö¶ÎÎªaddrs£¬Õâ¸ö×Ö¶ÎÊÇÒ»¸öÊý×é£¬Õâ¸öÊý×éÄÚ´æ·ÅµÄÈ«ÊÇµØÖ·ÐÅÏ¢£¨ngx_http_conf_addr_t£©£¬Ò»¸öµØÖ·ÐÅÏ¢
-//£¨ngx_http_conf_addr_t£©¶ÔÓ¦×Å¶à¸öserver{}ÅäÖÃ¿é£¨ngx_http_core_srv_conf_t£©
-    //ÏàÍ¬port²»Í¬IP£¬ÄÇÃ´¾ÍÓÃÕâ¸öÇø·Ö£¬ËûÃÇÓÐ²»Í¬µÄngx_http_conf_addr_tÐÅÏ¢¡£Èç¹ûÁ½¸öserver{}ÓÐÏàÍ¬µÄlisten ip:port,ÔòµÚ¶þ¸ö½âÎöµ½µÄlisten»á±»¶ªÆú
-    ngx_array_t                addrs;     /* array of ngx_http_conf_addr_t */  //¼ûngx_http_add_address·ÖÅä¿Õ¼ä     ÏàÍ¬IPºÍ¶Ë¿ÚµÄÖ»ÄÜËã×÷Ò»Ìõ£¬ÒÔµÚÒ»¸öÎª×¼
+//£¨ngx_http_conf_addr_t£©¶ÔÓ¦×ÅÒ»¸öip:port
+    //ÏàÍ¬port²»Í¬IP£¬ÄÇÃ´¾ÍÓÃÕâ¸öÇø·Ö£¬ËûÃÇÓÐ²»Í¬µÄngx_http_conf_addr_tÐÅÏ¢¡£Èç¹ûÁ½¸öserver{}ÓÐÏàÍ¬µÄlisten ip:port,Ôò»á´´½¨Á½¸öngx_http_conf_addr_t£¬¼ûngx_http_add_addresses
+    //Á½¸öÔÚ²»Í¬server{]ÖÐµÄÏàÍ¬IP:port£¬ÆäÔÚaddrsÖÐÒ²ÊÇ´æÔÚµÄÁ½¸öngx_http_conf_addr_t£¬¸÷×ÔÓÐ¸÷×ÔµÄ
+    ngx_array_t                addrs;     /* array of ngx_http_conf_addr_t */  //¼ûngx_http_add_address·ÖÅä¿Õ¼ä     
 } ngx_http_conf_port_t; //
 
 /*
@@ -649,11 +753,10 @@ ngx_http_core_main_conf_t
 
     |---> prots£º ¼àÌýµÄ¶Ë¿ÚºÅµÄÊý×é
 
-                |---> ngx_http_conf_port_t£º¶Ë¿ÚºÅµÄÅäÖÃÐÅÏ¢
-
+                |---> ngx_http_conf_port_t£º¶Ë¿ÚºÅµÄÅäÖÃÐÅÏ¢ (ngx_http_port_t->ngx_http_in_addr_tÄÚÈÝÒ²ÊÇ´Ó¸Ã½á¹¹ÖÐ»ñÈ¡->ngx_http_in_addr_t)
                                |---> addrs£ºÔÚ¸Ã¶Ë¿ÚºÅÉÏ£¬¼àÌýµÄËùÓÐµØÖ·µÄÊý×é£¬¸ÃaddrsÏÂµÄËùÓÐ¶Ë¿ÚÏàÍ¬  ¸ÃaddrsÏÂµÄËùÓÐ¶Ë¿ÚÏàÍ¬
 
-                                            |---> ngx_http_conf_addr_t£ºµØÖ·ÅäÖÃÐÅÏ¢£¬°üº¬ÔÚ¸Ãaddr:portÉÏµÄ¶à¸öÐéÄâÖ÷»ú
+                                            |---> ngx_http_conf_addr_t£ºµØÖ·ÅäÖÃÐÅÏ¢£¬°üº¬ÔÚ¸Ãaddr:portÉÏµÄ¶à¸öÐéÄâÖ÷»ú(ngx_http_port_t->ngx_http_in_addr_tÄÚÈÝÒ²ÊÇ´Ó¸Ã½á¹¹ÖÐ»ñÈ¡->ngx_http_in_addr_t)
 
                                                            |---> servers£ºÔÚaddr:portÉÏµÄËµ¸öserver¿éµÄÅäÖÃÐÅÏ¢ngx_http_core_srv_conf_t(//ÀýÈç²»Í¬server{}ÖÐÓÐÏàÍ¬µÄlisten ip:port£¬ËûÃÇ¶¼ÔÚÍ¬Ò»¸öngx_http_conf_addr_tÖÐ£¬µ«serversÖ¸Ïò²»Í¬)
 
@@ -673,12 +776,16 @@ ngx_http_core_main_conf_t
 ¼àÌýµØÖ·ÅäÖÃÐÅÏ¢£¬°üº¬ÁËËùÓÐÔÚ¸Ãaddr:port¼àÌýµÄËùÓÐserver¿éµÄngx_http_core_srv_conf_t½á¹¹£¬ÒÔ¼°hash¡¢wc_headºÍwc_tailÕâÐ©hash½á¹¹£¬
 ±£´æÁËÒÔserver nameÎªkey£¬ngx_http_core_srv_conf_tÎªvalueµÄ¹þÏ£±í£¬ÓÃÓÚ¿ìËÙ²éÕÒ¶ÔÓ¦ÐéÄâÖ÷»úµÄÅäÖÃÐÅÏ¢¡£
 */
-typedef struct { //¸³Öµ¼ûngx_http_add_address
+typedef struct { //¸³Öµ¼ûngx_http_add_address    (ngx_http_port_t->ngx_http_in_addr_tÄÚÈÝÒ²ÊÇ´Ó¸Ã½á¹¹ÖÐ»ñÈ¡)
     //Ö¸Ïò"listen"½âÎö³öµÄÅäÖÃÐÅÏ¢£¬Èç¹ûÏàÍ¬listen ip:port³öÏÖÔÚ²»Í¬µÄserverÖÐ£¬ÄÇÃ´optÖ¸Ïò×îºó½âÎöµÄlisten½á¹¹ngx_http_listen_opt_t£¬¼ûngx_http_add_addresses
     ngx_http_listen_opt_t      opt; 
 
-    //ÏÂÃæÕâÈý¸ö¸³Öµ¼ûngx_http_server_names£¬ËûÃÇÊÇ½øÐÐserver_name×Ö·û´®ÅÅÐò²¢hashºóµÄ´æ´¢µØÖ·
+    /*
+      ÏÂÃæÕâÈý¸ö¸³Öµ¼ûngx_http_server_names£¬ËûÃÇÊÇ½øÐÐserver_name×Ö·û´®ÅÅÐò²¢hashºóµÄ´æ´¢µØÖ·£¬ËûÃÇµÄÀ´Ô´ÊÇÏàÍ¬IP:port¶ÔÓ¦µÄ
+      ËùÓÐserver{}¿éµÄserver_nameÅäÖÃ£¬¼ûngx_http_server_names
+    */
     //ÕâÈý¸ö³ÉÔ±¼ÇÂ¼µÄÊÇlisten ip:PORTÕâÌõÅäÖÃËùÔÚµÄserver{}ÖÐµÄserver_nameÅäÖÃÐÅÏ¢
+    //°ÑÒ»¸öngx_http_conf_addr_t³ÉÔ±¶ÔÓ¦µÄserver{}ÖÐµÄserver_nameÅäÖÃÐÅÏ¢Ìí¼Óµ½ÕâÈý¸öhash±íÖÐ
     ngx_hash_t                 hash; //ÒÔserver_nameÎªkey£¬ngx_http_core_srv_conf_tÎªvalueµÄhash±í£¬²¢ÇÒserver_name²»º¬Í¨Åä·û¡£
     ngx_hash_wildcard_t       *wc_head; //Í¬hash£¬server_nameº¬Ç°×ºÍ¨Åä·û¡£
     ngx_hash_wildcard_t       *wc_tail; //Í¬hash£¬server_nameº¬ºó×ºÍ¨Åä·û¡£
@@ -689,19 +796,20 @@ typedef struct { //¸³Öµ¼ûngx_http_add_address
 #endif
 
     /* the default server configuration for this address:port */
-    //ÏàÍ¬listen ip:port³öÏÖÔÚ²»Í¬µÄserverÖÐ£¬ÄÇÃ´optÖ¸Ïò×îºó½âÎöµÄlistenÅäÖÃÖÐ´øÓÐdefault_serverÑ¡ÏîËù¶ÔÓ¦µÄserver{}ÉÏÏÂÎÄctx£¬¼ûngx_http_add_addresses
-    //Ä¬ÈÏ³õÊ¼»¯µÄÊ±ºòÖ±½ÓÖ¸Ïòlisten ip:portËùÔÚserver{}
-
-    /* Èç¹ûlisten ip:portÊÇÎ¨Ò»µÄip:port£¬ÔòÖ¸Ïò×Ô¼ºµÄserver{}ÉÏÏÂÎÄ£¬Èç¹ûÊÇ´æÔÚÏàÍ¬µÄlisten ip:portµ«ÊÇ
-    ÔÚ²»Í¬µÄserver{}ÖÐ£¬Ôòdefault_serverÖ¸Ïòlisten ip:portÅäÖÃÖÐ´øÓÐdefault_server²ÎÊýËù´¦server{}ÉÏÏÂÎÄngx_http_core_srv_conf_t */
+    /*    ÏàÍ¬listen ip:port³öÏÖÔÚ²»Í¬µÄserverÖÐ£¬ÄÇÃ´optÖ¸Ïò×îºó½âÎöµÄlistenÅäÖÃÖÐ´øÓÐdefault_serverÑ¡ÏîËù¶ÔÓ¦µÄserver{}ÉÏÏÂÎÄctx£¬Èç¹û¼¸¸ölisten
+       ¶¼Ã»ÓÐ¼Ódefault²ÎÊý£¬Ôò¸ÃÖµÎª½âÎöµ½µÄµÚÒ»¸öip:portËùÔÚserver{}¼ûngx_http_add_addresses
+           Èç¹ûip:portÖ»´¦ÓÚÒ»¸öserver{}ÖÐ£¬ÔòÄ¬ÈÏ³õÊ¼»¯µÄÊ±ºòÖ±½ÓÖ¸Ïòlisten ip:portËùÔÚserver{}£¬¼ûngx_http_add_address*/
     ngx_http_core_srv_conf_t  *default_server;  
     //´æ´¢µÄÊÇ¸ÃlistenÃüÁîÅäÖÃËùÔÚserver{}¶ÔÓ¦µÄngx_http_core_srv_conf_t£¬¸³Öµ¼ûngx_http_add_server
     //ÀýÈç²»Í¬server{}ÖÐÓÐÏàÍ¬µÄlisten ip:port£¬ËûÃÇ¶¼ÔÚÍ¬Ò»¸öngx_http_conf_addr_tÖÐ£¬µ«serversÖ¸Ïò¸÷×Ô²»Í¬µÄngx_http_core_srv_conf_t´æ´¢ÔÚ¸ÃserversÊý×éÖÐ
 
-    /* Èç¹ûlisten ip:portÊÇÎ¨Ò»µÄip:port£¬ÔòÖ¸Ïò×Ô¼ºµÄserver{}ÉÏÏÂÎÄ£¬Èç¹ûÊÇ´æÔÚÏàÍ¬µÄlisten ip:portµ«ÊÇ
-    ÔÚ²»Í¬µÄserver{}ÖÐ£¬ÔòÃ¿¸öip:port¶ÔÓ¦µÄserver{}ÉÏÏÂÎÄ´æ´¢ÔÚ¸ÃserversÊý×éÖÐ£¬¼ûngx_http_add_addresses */
+    /* Èç¹ûlisten ip:portÊÇÎ¨Ò»µÄip:port£¬ÔòÖ¸Ïò×Ô¼ºµÄserver{}ÉÏÏÂÎÄ£¬Èç¹ûÊÇ´æÔÚÍ¨Åä·ûlisten£¬²¢ÇÒÓÐÎ´¼ÓbindµÄÆälisten£¬Ôò
+    ÔÚ²»Í¬µÄserver{}ÖÐ£¬Ã¿¸öip:port¶ÔÓ¦µÄserver{}ÉÏÏÂÎÄ´æ´¢ÔÚ¸ÃserversÊý×éÖÐ£¬¼ûngx_http_add_addresses->ngx_http_add_server */
     ngx_array_t                servers;  /* array of ngx_http_core_srv_conf_t */  
-} ngx_http_conf_addr_t;
+} ngx_http_conf_addr_t; //Èç¹ûÓÐÁ½¸ölisten ip:port bindÖÐµÄip:portÏàÍ¬£¬µ«ÊÇÔÚ²»Í¬µÄserver{}ÖÐ£¬ÔòÖ»»á´´½¨Ò»¸öngx_http_conf_addr_t,µ«ËûÃÇµÄserver{}ÅäÖÃ²»Í¬£¬¼ûngx_http_add_addresses
+//(ngx_http_port_t->ngx_http_in_addr_tÄÚÈÝÒ²ÊÇ´Ó¸Ã½á¹¹ÖÐ»ñÈ¡)
+
+
 
 typedef struct {
     ngx_int_t                  status;
@@ -712,7 +820,7 @@ typedef struct {
 
 
 typedef struct {
-    ngx_array_t               *lengths;
+    ngx_array_t               *lengths; //ÕâÀïÃæµÄcodeÔÚngx_http_core_try_files_phaseÖÐÖ´ÐÐ
     ngx_array_t               *values;
     ngx_str_t                  name;
 
@@ -792,15 +900,48 @@ proxy_pass http://fetch;
 //²ð·Ö¹ý³Ì¼ûngx_http_init_locations
 //²Î¿¼ngx_http_core_location
 struct ngx_http_core_loc_conf_s {
-    ngx_str_t     name;          /* location name */ //locationºóÃæ¸úµÄµÄuri×Ö·û´®
+    //ngx_http_add_locationÖÐ°Ñ¾«È·Æ¥Åä ÕýÔò±í´ïÊ½ name  nonameÅäÖÃÒÔÍâµÄÆäËûÅäÖÃ¶¼Ëã×öÇ°×ºÆ¥Åä  ÀýÈç//location ^~  xxx{}      location /XXX {}
+    ngx_str_t     name;          /* location name */ //locationºóÃæ¸úµÄµÄuri×Ö·û´®  ²»°üÀ¨^~  = µÈ, ÀýÈçlocation ^~  xxx{}£¬ÔònameÎªxxx
 
+//ngx_http_add_locationÖÐ°Ñ¾«È·Æ¥Åä ÕýÔò±í´ïÊ½ name  nonameÅäÖÃÒÔÍâµÄÆäËûÅäÖÃ¶¼Ëã×öÇ°×ºÆ¥Åä  ÀýÈç//location ^~  xxx{}      location /XXX {}
 #if (NGX_PCRE)
     ngx_http_regex_t  *regex; //·ÇNULL£¬±íÊ¾ÎªÕýÔòÆ¥Åä
 #endif
-    //"if"ÅäÖÃ »òÕß limit_exceptÅäÖÃÖÃÎ»
+    /*
+        °´HTTP·½·¨ÃûÏÞÖÆÓÃ»§ÇëÇó
+        Óï·¨£ºlimit_except method ... {...}
+        ÅäÖÃ¿é£ºlocation
+        NginxÍ¨¹ýlimit_exceptºóÃæÖ¸¶¨µÄ·½·¨ÃûÀ´ÏÞÖÆÓÃ»§ÇëÇó¡£·½·¨Ãû¿ÉÈ¡Öµ°üÀ¨£ºGET¡¢HEAD¡¢POST¡¢PUT¡¢DELETE¡¢MKCOL¡¢COPY¡¢MOVE¡¢OPTIONS¡¢PROPFIND¡¢PROPPATCH¡¢LOCK¡¢UNLOCK»òÕßPATCH¡£ÀýÈç£º
+        limit_except GET {
+            allow 192.168.1.0/32;
+            deny  all;
+        }
+        ×¢Òâ£¬ÔÊÐíGET·½·¨¾ÍÒâÎ¶×ÅÒ²ÔÊÐíHEAD·½·¨¡£Òò´Ë£¬ÉÏÃæÕâ¶Î´úÂë±íÊ¾µÄÊÇ½ûÖ¹GET·½·¨ºÍHEAD·½·¨£¬µ«ÆäËûHTTP·½·¨ÊÇÔÊÐíµÄ¡£
+
+
+        if ($http_user_agent ~ MSIE) {
+              rewrite  ^(.*)$  /msie/$1  break;
+            }
+        
+        */
+
+    //ngx_http_init_locationsÕâÀï²ð·Ö³öµÄnoname·ÅÈëtailºó£¬Èç¹ûlocationsÖÐ°üº¬named location,ÔònonameºÍname·ÅÒ»Æð(cscf->named_locations)£¬Èç¹ûÃ»ÓÐnamedµ«ÊÇÓÐregex£¬
+    //ÔòºÍregex·ÅÒ»Æð(pclcf->regex_locations)£¬Èç¹ûnameºÍregexºÍ¶¼Ã»ÓÐ£¬ÔòºÍÆÕÍ¨locations·ÅÒ»Æð(pclcf->locations)
+    //"if"ÅäÖÃ »òÕß limit_exceptÅäÖÃÖÃÎ»,  ifºÍlimit_except¶¼ÊÇµ±×önonameµÄlocation½âÎö
     unsigned      noname:1;   /* "if () {}" block or limit_except */ //nginx»á°Ñif Ö¸ÁîÅäÖÃÒ²¿´×öÒ»¸ölocation£¬¼´nonameÀàÐÍ¡£
     
     unsigned      lmt_excpt:1; //limit_exceptÅäÖÃÖÃÎ»
+
+    /*
+location / {
+  try_files index.html index.htm @fallback;
+}
+
+location @fallback {
+  root /var/www/error;
+  index index.html;
+}
+     */
  // @  ±íÊ¾ÎªÒ»¸ölocation½øÐÐÃüÃû£¬¼´×Ô¶¨ÒåÒ»¸ölocation£¬Õâ¸ölocation²»ÄÜ±»Íâ½çËù·ÃÎÊ£¬Ö»ÄÜÓÃÓÚNginx²úÉúµÄ×ÓÇëÇó£¬Ö÷ÒªÎªerror_pageºÍtry_files¡£  
     unsigned      named:1; //ÒÔ¡¯@¡¯¿ªÍ·µÄÃüÃûlocation£¬Èçlocation @test {}
     
@@ -816,9 +957,15 @@ struct ngx_http_core_loc_conf_s {
     unsigned      gzip_disable_degradation:2;
 #endif
 #endif
+    /*
+     Ê×ÏÈ´ÓlocationsÁ´±íÖÐÈ¥µôÄÇÐ©ÕýÔòÆ¥Åä£¬»¹ÓÐnamedºÍnonamedµÄlocation½Úµã¡£ÄÇÃ´locationÁ´±íÖÐÖ»Ê£ÏÂ¾«×¼Æ¥ÅäºÍÇ°×ºÆ¥ÅäµÄÄÇÐ©location½ÚµãÁË£¬
+     ´ÓÕâÐ©½ÚµãÖÐ²úÉústatic location tree¡£ 
 
-    ngx_http_location_tree_node_t   *static_locations; //ÔÚngx_http_init_static_location_treesÖÐ¶Ôexact/inclusive/noregex½øÐÐÈý²æÅÅÐò
-#if (NGX_PCRE)
+     //ngx_http_init_locationsÖÐ°Ñname location¼ÓÈëµ½named_locations£¬ÕýÔò±í´ïÊ½location¼ÓÈëµ½regex_locations  ÍêÈ«Æ¥ÅäºÍÇ°×ºÆ¥Åälocation´æÈëlocations
+     static_locations°ÑlocationsÖÐµÄ½Úµã´ÓÐÂ×é³ÉÐÂµÄstatic_locationsÈý²æÊ÷
+     */ 
+    ngx_http_location_tree_node_t   *static_locations; //ÔÚngx_http_init_static_location_treesÖÐ¶Ôserver{}¿éÄÚµÄlocation{}(°üÀ¨exact/inclusive/noregex)½øÐÐÈý²æÅÅÐò
+#if (NGX_PCRE)//ngx_http_init_locationsÖÐ°Ñname location¼ÓÈëµ½named_locations£¬ÕýÔò±í´ïÊ½location¼ÓÈëµ½regex_locations  ÍêÈ«Æ¥ÅäºÍÇ°×ºÆ¥Åälocation´æÈëlocations
     ngx_http_core_loc_conf_t       **regex_locations; /* ËùÓÐµÄlocation ÕýÔò±í´ïÊ½ {}ÕâÖÖngx_http_core_loc_conf_tÈ«²¿Ö¸Ïòregex_locations */
 #endif
 
@@ -826,7 +973,7 @@ struct ngx_http_core_loc_conf_s {
     //Ö´ÐÐlocation{} ctxµÄctx->loc_conf
     void        **loc_conf; //¸³Öµ¼ûngx_http_core_location£¬Ö¸Ïòngx_http_conf_ctx_t->loc_conf
 
-    uint32_t      limit_except;
+    uint32_t      limit_except; //"limit_except"ÅäÖÃ
     void        **limit_except_loc_conf;
 
     //ÒÔmytestÎªÀý£¬Ä£¿é×¢²áµÄhandlerÊÇÔÚngx_http_core_content_phaseÖ´ÐÐµÄ£¬ÊÂÊµÉÏngx_http_finalize_request¾ö¶¨ÁËngx_http_mytest_handlerÈçºÎÆð×÷ÓÃ¡£
@@ -979,7 +1126,10 @@ lingering_close
 */
     //Í·²¿ÊÇngx_queue_t£¬next¿ªÊ¼µÄ³ÉÔ±Îªngx_http_location_queue_t
     //location{}ÖÐµÄÅäÖÃ´æ´¢Á¬½ÓÔÚ¸¸¼¶server{}ÉÏÏÂÎÄµÄctx->loc_conf[ngx_http_core_module.ctx_index]->locationsÖÐ
-    //ËùÓÐµÄlocation{}×îÖÕ»áÔÚngx_http_init_locations½øÐÐÊý×éÅÅÐò£¬È»ºóÔÚngx_http_init_static_location_treesÖÐÉú³ÉÈý²æÊ÷
+    /*
+     ngx_http_init_locationsÖÐ°Ñname location¼ÓÈëµ½named_locations£¬ÕýÔò±í´ïÊ½location¼ÓÈëµ½regex_locations  ÍêÈ«Æ¥ÅäºÍÇ°×ºÆ¥Åälocation´æÈëlocations
+     static_locations°ÑlocationsÖÐµÄ½Úµã´ÓÐÂ×é³ÉÐÂµÄstatic_locationsÈý²æÊ÷
+     */ 
     ngx_queue_t  *locations;//ngx_http_add_locationº¯ÊýÖÐ·ÖÅä¿Õ¼ä  locationÖÐµÄlocÅäÖÃÍ¨¹ýÕâ¸öÁ´½Óµ½¸¸¼¶µÄserver{}ÀïÃæ·ÖÅäµÄloc_confÖÐ£¬¼ûngx_http_add_location
 
 #if 0
@@ -989,39 +1139,50 @@ lingering_close
 
 //³õÊ¼»¯¸³Öµ¼ûngx_http_add_location  
 //²ð·ÖÒÔÌá¸ßhttpÇëÇó£¬¼ûngx_http_init_locations
-typedef struct {
+typedef struct {  //Í¼ÐÎ»¯²Î¿¼http://blog.chinaunix.net/uid-27767798-id-3759557.html£¬Õâ¸ö²©¿ÍºÜºÃÀí½â
     ngx_queue_t                      queue;//ËùÓÐµÄlocÅäÖÃÍ¨¹ý¸Ã¶ÓÁÐÁ´½ÓÔÚÒ»Æð
 
+    //ÏÂÃæÕâÁ½¸ö×Ö¶ÎÖ¸Ã÷ÊÇ¾«È·Æ¥Åä»¹ÊÇÇ°×ºÆ¥Åä£¬ÒòÎª¸Ãngx_http_location_queue_t½á¹¹ÌåÊÇ×îºóÔÚngx_http_init_locations²ð·ÖºóµÄlocations£¬Òò´ËÖ»ÓÐ¾«È·Æ¥ÅäºÍÇ°×ºÆ¥ÅäÕâÁ½ÖÖlocation
     //ÍêÈ«Æ¥Åä ÖØÃüÃû(@name)location  noname  ÕýÔò±í´ïÊ½Æ¥Åä,½Úµã¶¼Ìí¼Óµ½exactÖ¸Õë
     ngx_http_core_loc_conf_t        *exact; //ÕýÔò±í´ïÊ½ noname name ÍùÇ°Æ¥ÅäµÄlocation¶¼ÊÇ´æµ½ÕâÀïÃæ£¬¼ûngx_http_add_location
+    //ngx_http_add_locationÖÐ¸³Öµ     ¾«È·Æ¥Åä ÕýÔò±í´ïÊ½ name  nonameÅäÖÃÒÔÍâµÄÆäËûÅäÖÃ¶¼Ëã×öÇ°×ºÆ¥Åä  ÀýÈç//location ^~  xxx{}      location /XXX {}
     ngx_http_core_loc_conf_t        *inclusive; //location ^~   Ó¦¸ÃÊÇÇ°×ºÆ¥Åä  Ç°×ºÆ¥Åängx_http_core_loc_conf_t½ÚµãÌí¼Óµ½¸ÃÖ¸ÕëÉÏ
     
     ngx_str_t                       *name;//µ±Ç°location /xxx {}ÖÐµÄ/XXXX
     u_char                          *file_name; //ËùÔÚµÄÅäÖÃÎÄ¼þÃû
     ngx_uint_t                       line; //ÔÚÅäÖÃÎÄ¼þÖÐµÄÐÐºÅ
     ngx_queue_t                      list; //Èý²æÊ÷ÅÅÐòÓÃµ½£¬Ö÷ÒªÊÇÇ°×ºÒ»ÑùµÄ×Ö·û´®Í¨¹ýlistÌí¼Ó£¬//ºÜºÃµÄÍ¼½â£¬²Î¿¼http://blog.csdn.net/fengmo_q/article/details/6683377
-} ngx_http_location_queue_t;
+} ngx_http_location_queue_t;//ngx_http_init_static_location_trees
 
+/*
+    ¶ÔÓÚ¾«È·Æ¥ÅäµÄlocation²»»á·ÅÔÚ¹«¹²Ç°×º½ÚµãµÄtree½ÚµãÖÐ£¬»áµ¥À­³öÀ´Ò»¸önodeºÍÇ°×º½ÚµãÆ½ÐÐ¡£Ò²¾ÍÊÇËµ¶ÔÓÚ¾«È·Æ¥
+    Åä £½/abcd ºÍÇ°×ºÆ¥ÅäµÄ/abcÁ½¸ölocationÅäÖÃ£¬=/abcd²»»áÊÇ/abc½ÚµãµÄtree½Úµã¡£=/abcd Ö»ÄÜÊÇ£¯abcµÄright½Úµã 
+*/
 //ngx_http_init_locationsÖÐname noname regexÒÔÍâµÄlocation(exact/inclusive ÍêÈ«Æ¥Åä/Ç°×ºÆ¥Åä)
 //Í¼½â²Î¿¼:http://blog.csdn.net/fengmo_q/article/details/6683377
-struct ngx_http_location_tree_node_s {
-    ngx_http_location_tree_node_t   *left; 
-    ngx_http_location_tree_node_t   *right;
-    ngx_http_location_tree_node_t   *tree; //ÆÕÍ¨locationÖÐÄ³½ÚµãµÄlist³ÉÔ±ÐÎ³ÉµÄÊý  ÎÞ·¨ÍêÈ«Æ¥ÅäµÄlocation×é³ÉµÄÊ÷
+//²Î¿¼ngx_http_core_find_static_location
+struct ngx_http_location_tree_node_s {//Í¼½âºÃµÄ²Î¿¼http://blog.chinaunix.net/uid-27767798-id-3759557.html
+/*
+static location tree´ó´óÓÅ»¯ÁË¾«×¼Æ¥ÅäºÍÇ°×ºÆ¥ÅäµÄlocationµÄ²éÕÒ¹ý³Ì£¬ÏßÐÔµÝ¹é²éÕÒÐ§ÂÊµÍÏÂ£¬Èý²æÊ÷µÄ×ó½Úµã´ú±íµ±Ç°±Ènode½ÚµãµÄnameÐ¡µÄ½Úµã£¬
+ÓÒ½Úµã´ú±í±Èµ±Ç°node½Úµãname´óµÄ½Úµã£¬tree½Úµã±íÊ¾ÓµÓÐÏàÍ¬Ç°×ºµÄ½Úµã¡£
+*/
+    ngx_http_location_tree_node_t   *left; //×ó½Úµã´ú±íµ±Ç°±Ènode½ÚµãµÄnameÐ¡µÄ½Úµã
+    ngx_http_location_tree_node_t   *right; //ÓÒ½Úµã´ú±í±Èµ±Ç°node½Úµãname´óµÄ½Úµã
+    ngx_http_location_tree_node_t   *tree; //tree½Úµã±íÊ¾ÓµÓÐÏàÍ¬Ç°×ºµÄ½Úµã¡£  ÆÕÍ¨locationÖÐÄ³½ÚµãµÄlist³ÉÔ±ÐÎ³ÉµÄÊý  ÎÞ·¨ÍêÈ«Æ¥ÅäµÄlocation×é³ÉµÄÊ÷
 
     /*
     Èç¹ûlocation¶ÔÓ¦µÄURIÆ¥Åä×Ö·û´®ÊôÓÚÄÜ¹»ÍêÈ«Æ¥ÅäµÄÀàÐÍ£¬ÔòexactÖ¸ÏòÆä¶ÔÓ¦µÄngx_http_core_loc_conf_t½á¹¹Ìå£¬·ñÔòÎªNULL¿ÕÖ¸Õë
-     */
+     */ //ÕâÁ½¸öÖ¸ÕëµÄ×îÖÕÀ´Ô´¼ûngx_http_add_location
     ngx_http_core_loc_conf_t        *exact;  //¾«È·Æ¥Åä   Ö¸ÏòÐÎ³ÉÈý²æÊ÷µÄ¶ÓÁÐngx_http_location_queue_t->exact
-    ngx_http_core_loc_conf_t        *inclusive; //Ç°×ºÆ¥Åä
+    ngx_http_core_loc_conf_t        *inclusive; //Ç°×ºÆ¥Åä½Úµã
 
     u_char                           auto_redirect; //×Ô¶¯ÖØ¶¨Ïò±êÖ¾
     u_char                           len;  //name×Ö·û´®µÄÊµ¼Ê³¤¶È
     u_char                           name[1]; //nameÖ¸Ïòlocation¶ÔÓ¦µÄURIÆ¥Åä±í´ïÊ½
 };
 
-
 void ngx_http_core_run_phases(ngx_http_request_t *r);
+const char* ngx_http_phase_2str(ngx_uint_t phase);
 ngx_int_t ngx_http_core_generic_phase(ngx_http_request_t *r,
     ngx_http_phase_handler_t *ph);
 ngx_int_t ngx_http_core_rewrite_phase(ngx_http_request_t *r,
@@ -1114,8 +1275,8 @@ extern ngx_str_t  ngx_http_core_get_method;
     if (r->headers_out.content_length) {                                      \
         r->headers_out.content_length->hash = 0;                              \
         r->headers_out.content_length = NULL;                                 \
-    }
-
+    }              
+ 
 #define ngx_http_clear_accept_ranges(r)                                       \
                                                                               \
     r->allow_ranges = 0;                                                      \

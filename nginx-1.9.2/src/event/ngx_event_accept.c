@@ -142,7 +142,7 @@ ngx_event_accept(ngx_event_t *ev) //在ngx_process_events_and_timers中执行
 //ngx_accept_disabled = 1; 减去1后为0，可以继续竞争
                     ngx_accept_disabled = 1; 
                 } else { ////如果是不需要实现负载均衡，则扫尾延时下继续在ngx_process_events_and_timers中accept
-                    ngx_add_timer(ev, ecf->accept_mutex_delay); 
+                    ngx_add_timer(ev, ecf->accept_mutex_delay, NGX_FUNC_LINE);
                 }
             }
 

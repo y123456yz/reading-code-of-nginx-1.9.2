@@ -17,9 +17,10 @@ typedef struct {
 } ngx_http_index_t;
 
 
-typedef struct {
-    ngx_array_t             *indices;    /* array of ngx_http_index_t */
-    size_t                   max_index_len;
+typedef struct { //空间创建和赋值见ngx_http_index_set_index
+    //把index  11.html 22.xx中的11.html和22.xx字符串保存到indices数组
+    ngx_array_t             *indices;    /* array of ngx_http_index_t */  
+    size_t                   max_index_len; //该值为indices数组中中字符串最大的长度
 } ngx_http_index_loc_conf_t;
 
 

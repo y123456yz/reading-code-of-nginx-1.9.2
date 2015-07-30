@@ -1000,8 +1000,8 @@ ngx_ssl_ocsp_connect(ngx_ssl_ocsp_ctx_t *ctx)
 
     ctx->process = ngx_ssl_ocsp_process_status_line;
 
-    ngx_add_timer(ctx->peer.connection->read, ctx->timeout);
-    ngx_add_timer(ctx->peer.connection->write, ctx->timeout);
+    ngx_add_timer(ctx->peer.connection->read, ctx->timeout, NGX_FUNC_LINE);
+    ngx_add_timer(ctx->peer.connection->write, ctx->timeout, NGX_FUNC_LINE);
 
     if (rc == NGX_OK) {
         ngx_ssl_ocsp_write_handler(ctx->peer.connection->write);
@@ -1046,10 +1046,10 @@ ngx_ssl_ocsp_write_handler(ngx_event_t *wev)
             wev->handler = ngx_ssl_ocsp_dummy_handler;
 
             if (wev->timer_set) {
-                ngx_del_timer(wev);
+                ngx_del_timer(wev, NGX_FUNC_LINE);
             }
 
-            if (ngx_handle_write_event(wev, 0) != NGX_OK) {
+            if (ngx_handle_write_event(wev, 0, NGX_FUNC_LINE) != NGX_OK) {
                 ngx_ssl_ocsp_error(ctx);
             }
 
@@ -1058,7 +1058,7 @@ ngx_ssl_ocsp_write_handler(ngx_event_t *wev)
     }
 
     if (!wev->timer_set) {
-        ngx_add_timer(wev, ctx->timeout);
+        ngx_add_timer(wev, ctx->timeout, NGX_FUNC_LINE);
     }
 }
 
@@ -1113,7 +1113,7 @@ ngx_ssl_ocsp_read_handler(ngx_event_t *rev)
 
         if (n == NGX_AGAIN) {
 
-            if (ngx_handle_read_event(rev, 0) != NGX_OK) {
+            if (ngx_handle_read_event(rev, 0, NGX_FUNC_LINE) != NGX_OK) {
                 ngx_ssl_ocsp_error(ctx);
             }
 

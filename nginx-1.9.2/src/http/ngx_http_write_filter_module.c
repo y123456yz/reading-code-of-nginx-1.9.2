@@ -343,7 +343,7 @@ Connection: keep-alive
             delay = (ngx_msec_t) (- limit * 1000 / r->limit_rate + 1);
             //添加定时器的时候为什么没有ngx_handle_write_event? 因为一旦添加wrie epoll事件，那么只要内核数据发送出去就会触发write事件，
             //从而执行ngx_http_writer，这个过程是很快的，这样就起不到限速的作用了
-            ngx_add_timer(c->write, delay); //handle应该是ngx_http_request_handler
+            ngx_add_timer(c->write, delay, NGX_FUNC_LINE); //handle应该是ngx_http_request_handler
 
             c->buffered |= NGX_HTTP_WRITE_BUFFERED;
 
@@ -411,7 +411,7 @@ Connection: keep-alive
             c->write->delayed = 1;
             //添加定时器的时候为什么没有ngx_handle_write_event? 因为一旦添加wrie epoll事件，那么只要内核数据发送出去就会触发write事件，
             //从而执行ngx_http_writer，这个过程是很快的，这样就起不到限速的作用了
-            ngx_add_timer(c->write, delay);
+            ngx_add_timer(c->write, delay, NGX_FUNC_LINE);
         }
     }
 
@@ -422,7 +422,7 @@ Connection: keep-alive
         c->write->delayed = 1;
         //添加定时器的时候为什么没有ngx_handle_write_event? 因为一旦添加wrie epoll事件，那么只要内核数据发送出去就会触发write事件，
         //从而执行ngx_http_writer，这个过程是很快的，这样就起不到限速的作用了
-        ngx_add_timer(c->write, 1);
+        ngx_add_timer(c->write, 1, NGX_FUNC_LINE);
     }
 
     /*

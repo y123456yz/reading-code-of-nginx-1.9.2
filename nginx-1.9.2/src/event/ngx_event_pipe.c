@@ -62,16 +62,16 @@ ngx_event_pipe(ngx_event_pipe_t *p, ngx_int_t do_write)
 
         flags = (rev->eof || rev->error) ? NGX_CLOSE_EVENT : 0;
 
-        if (ngx_handle_read_event(rev, flags) != NGX_OK) {
+        if (ngx_handle_read_event(rev, flags, NGX_FUNC_LINE) != NGX_OK) {
             return NGX_ABORT;
         }
 
         if (!rev->delayed) {
             if (rev->active && !rev->ready) {
-                ngx_add_timer(rev, p->read_timeout);
+                ngx_add_timer(rev, p->read_timeout, NGX_FUNC_LINE);
 
             } else if (rev->timer_set) {
-                ngx_del_timer(rev);
+                ngx_del_timer(rev, NGX_FUNC_LINE);
             }
         }
     }
@@ -80,16 +80,16 @@ ngx_event_pipe(ngx_event_pipe_t *p, ngx_int_t do_write)
         && p->downstream->data == p->output_ctx)
     {
         wev = p->downstream->write;
-        if (ngx_handle_write_event(wev, p->send_lowat) != NGX_OK) {
+        if (ngx_handle_write_event(wev, p->send_lowat, NGX_FUNC_LINE) != NGX_OK) {
             return NGX_ABORT;
         }
 
         if (!wev->delayed) {
             if (wev->active && !wev->ready) {
-                ngx_add_timer(wev, p->send_timeout);
+                ngx_add_timer(wev, p->send_timeout, NGX_FUNC_LINE);
 
             } else if (wev->timer_set) {
-                ngx_del_timer(wev);
+                ngx_del_timer(wev, NGX_FUNC_LINE);
             }
         }
     }
@@ -184,7 +184,7 @@ ngx_event_pipe_read_upstream(ngx_event_pipe_t *p)
                 if (limit <= 0) {
                     p->upstream->read->delayed = 1;
                     delay = (ngx_msec_t) (- limit * 1000 / p->limit_rate + 1);
-                    ngx_add_timer(p->upstream->read, delay);
+                    ngx_add_timer(p->upstream->read, delay, NGX_FUNC_LINE);
                     break;
                 }
 
@@ -365,7 +365,7 @@ ngx_event_pipe_read_upstream(ngx_event_pipe_t *p)
 
         if (delay > 0) {
             p->upstream->read->delayed = 1;
-            ngx_add_timer(p->upstream->read, delay);
+            ngx_add_timer(p->upstream->read, delay, NGX_FUNC_LINE);
             break;
         }
     }

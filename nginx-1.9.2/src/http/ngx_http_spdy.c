@@ -580,7 +580,7 @@ ngx_http_spdy_read_handler(ngx_event_t *rev)
 
     } while (rev->ready);
 
-    if (ngx_handle_read_event(rev, 0) != NGX_OK) {
+    if (ngx_handle_read_event(rev, 0, NGX_FUNC_LINE) != NGX_OK) {
         ngx_http_spdy_finalize_connection(sc, NGX_HTTP_INTERNAL_SERVER_ERROR);
         return;
     }
@@ -594,7 +594,7 @@ ngx_http_spdy_read_handler(ngx_event_t *rev)
 
     if (sc->processing) {
         if (rev->timer_set) {
-            ngx_del_timer(rev);
+            ngx_del_timer(rev, NGX_FUNC_LINE);
         }
         return;
     }
@@ -707,7 +707,7 @@ ngx_http_spdy_send_output_queue(ngx_http_spdy_connection_t *sc)
     clcf = ngx_http_get_module_loc_conf(sc->http_connection->conf_ctx,
                                         ngx_http_core_module);
 
-    if (ngx_handle_write_event(wev, clcf->send_lowat) != NGX_OK) {
+    if (ngx_handle_write_event(wev, clcf->send_lowat, NGX_FUNC_LINE) != NGX_OK) {
         goto error;
     }
 
@@ -750,11 +750,11 @@ ngx_http_spdy_send_output_queue(ngx_http_spdy_connection_t *sc)
     }
 
     if (cl) {
-        ngx_add_timer(wev, clcf->send_timeout);
+        ngx_add_timer(wev, clcf->send_timeout, NGX_FUNC_LINE);
 
     } else {
         if (wev->timer_set) {
-            ngx_del_timer(wev);
+            ngx_del_timer(wev, NGX_FUNC_LINE);
         }
     }
 
@@ -821,7 +821,7 @@ ngx_http_spdy_handle_connection(ngx_http_spdy_connection_t *sc)
     sscf = ngx_http_get_module_srv_conf(sc->http_connection->conf_ctx,
                                         ngx_http_spdy_module);
     if (sc->incomplete) {
-        ngx_add_timer(c->read, sscf->recv_timeout);
+        ngx_add_timer(c->read, sscf->recv_timeout, NGX_FUNC_LINE);
         return;
     }
 
@@ -850,10 +850,10 @@ ngx_http_spdy_handle_connection(ngx_http_spdy_connection_t *sc)
     c->read->handler = ngx_http_spdy_keepalive_handler;
 
     if (c->write->timer_set) {
-        ngx_del_timer(c->write);
+        ngx_del_timer(c->write, NGX_FUNC_LINE);
     }
 
-    ngx_add_timer(c->read, sscf->keepalive_timeout);
+    ngx_add_timer(c->read, sscf->keepalive_timeout, NGX_FUNC_LINE);
 }
 
 
@@ -3423,7 +3423,7 @@ ngx_http_spdy_close_stream(ngx_http_spdy_stream_t *stream, ngx_int_t rc)
     }
 
     if (ev->timer_set) {
-        ngx_del_timer(ev);
+        ngx_del_timer(ev, NGX_FUNC_LINE);
     }
 
     if (ev->posted) {
@@ -3438,7 +3438,7 @@ ngx_http_spdy_close_stream(ngx_http_spdy_stream_t *stream, ngx_int_t rc)
     }
 
     if (ev->timer_set) {
-        ngx_del_timer(ev);
+        ngx_del_timer(ev, NGX_FUNC_LINE);
     }
 
     if (ev->posted) {

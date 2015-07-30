@@ -875,6 +875,9 @@ ngx_hash_keys_array_init(ngx_hash_keys_arrays_t *ha, ngx_uint_t type) //使用方法
     {
         return NGX_ERROR;
     }
+
+    //下面这几个实际上是hash通的各个桶的头部指针，每个hash有ha->hsize个桶头部指针，在ngx_hash_add_key的时候头部指针指向每个桶
+    //中具体的成员列表
     
   /*
   初始化二位数组，这个数组存放的第一个维度代表的是bucket的编号，那么keys_hash[i]中存放的是所有的key算出来的hash值对hsize取

@@ -187,7 +187,7 @@ struct ngx_log_s {
 级别（通常是由nginx.conf配置文件中指定），就会输出日志内容，否则这条日志会被忽略。
 */
 #define ngx_log_error(level, log, ...)                                        \
-    if ((log)->log_level >= level) ngx_log_error_core(level, log,__FILE__, __LINE__, __VA_ARGS__)
+    if ((log)->log_level >= level) ngx_log_error_core(level, log,__FUNCTION__, __LINE__, __VA_ARGS__)
 
 void ngx_log_error_core(ngx_uint_t level, ngx_log_t *log, const char* filename, int lineno, ngx_err_t err,
     const char *fmt, ...);
@@ -220,7 +220,7 @@ DEBUG调试级别的，这里的level由各子模块定义。level的取值范围参见表4-7。
 */
 #define ngx_log_debug(level, log, ...)                                        \
     if ((log)->log_level & level)                                             \
-        ngx_log_error_core(NGX_LOG_DEBUG, log,__FILE__, __LINE__, __VA_ARGS__)
+        ngx_log_error_core(NGX_LOG_DEBUG, log,__FUNCTION__, __LINE__, __VA_ARGS__)
 
 /*********************************/
 
@@ -229,14 +229,14 @@ DEBUG调试级别的，这里的level由各子模块定义。level的取值范围参见表4-7。
 #define NGX_HAVE_VARIADIC_MACROS  1
 
 #define ngx_log_error(level, log, args...)                                    \
-    if ((log)->log_level >= level) ngx_log_error_core(level, log,__FILE__, __LINE__, args)
+    if ((log)->log_level >= level) ngx_log_error_core(level, log,__FUNCTION__, __LINE__, args)
 
 void ngx_log_error_core(ngx_uint_t level, ngx_log_t *log, const char* filename, int lineno, ngx_err_t err,
     const char *fmt, ...);
 
 #define ngx_log_debug(level, log, args...)                                    \
     if ((log)->log_level & level)                                             \
-        ngx_log_error_core(NGX_LOG_DEBUG, log,__FILE__, __LINE__, args)
+        ngx_log_error_core(NGX_LOG_DEBUG, log,__FUNCTION__, __LINE__, args)
 
 /*********************************/
 

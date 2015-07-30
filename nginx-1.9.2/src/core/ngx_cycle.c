@@ -906,7 +906,7 @@ old_shm_zone_done:
     *old = old_cycle;
 
     if (!ngx_cleaner_event.timer_set) {
-        ngx_add_timer(&ngx_cleaner_event, 30000);
+        ngx_add_timer(&ngx_cleaner_event, 30000, NGX_FUNC_LINE);
         ngx_cleaner_event.timer_set = 1;
     }
 
@@ -1446,7 +1446,7 @@ ngx_clean_old_cycles(ngx_event_t *ev)
     ngx_log_debug1(NGX_LOG_DEBUG_CORE, log, 0, "old cycles status: %d", live);
 
     if (live) {
-        ngx_add_timer(ev, 30000);
+        ngx_add_timer(ev, 30000, NGX_FUNC_LINE);
 
     } else {
         ngx_destroy_pool(ngx_temp_pool);

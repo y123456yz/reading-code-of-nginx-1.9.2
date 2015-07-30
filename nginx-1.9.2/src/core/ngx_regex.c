@@ -90,7 +90,7 @@ ngx_regex_malloc_done(void)
     ngx_pcre_pool = NULL;
 }
 
-
+//PCREÊ¹ÓÃ²Î¿¼http://blog.chinaunix.net/uid-26575352-id-3517146.html
 ngx_int_t
 ngx_regex_compile(ngx_regex_compile_t *rc)
 {

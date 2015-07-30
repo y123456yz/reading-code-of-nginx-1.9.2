@@ -10,6 +10,7 @@ extern ngx_module_t  ngx_conf_module;
 extern ngx_module_t  ngx_events_module;
 extern ngx_module_t  ngx_event_core_module;
 extern ngx_module_t  ngx_epoll_module;
+extern ngx_module_t  ngx_thread_pool_module;
 extern ngx_module_t  ngx_regex_module;
 extern ngx_module_t  ngx_http_module;
 extern ngx_module_t  ngx_http_core_module;
@@ -66,6 +67,7 @@ ngx_module_t *ngx_modules[] = {
     &ngx_events_module,
     &ngx_event_core_module,
     &ngx_epoll_module,
+    &ngx_thread_pool_module,
     &ngx_regex_module,
     &ngx_http_module,
     &ngx_http_core_module,

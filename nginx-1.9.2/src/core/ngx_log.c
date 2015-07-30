@@ -201,18 +201,22 @@ ngx_log_error_core(ngx_uint_t level, ngx_log_t *log, const char* filename, int l
     ssize_t      n;
     ngx_uint_t   wrote_stderr, debug_connection;
     u_char       errstr[NGX_MAX_ERROR_STR];
+    char filebuf[52];
 
     last = errstr + NGX_MAX_ERROR_STR;
-
+    
     p = ngx_cpymem(errstr, ngx_cached_err_log_time.data,
                    ngx_cached_err_log_time.len);
 
+    snprintf(filebuf, sizeof(filebuf), "[%35s, %5d]", filename, lineno);
+    p = ngx_slprintf(p, last, "%s ", filebuf);  
+    
     p = ngx_slprintf(p, last, " [%V] ", &err_levels[level]);
 
     /* pid#tid */
     p = ngx_slprintf(p, last, "%P#" NGX_TID_T_FMT ": ",
                     ngx_log_pid, ngx_log_tid);
-
+    
     if (log->connection) {
         p = ngx_slprintf(p, last, "*%uA ", log->connection);
     }
@@ -309,7 +313,7 @@ ngx_log_error(ngx_uint_t level, ngx_log_t *log, ngx_err_t err,
 
     if (log->log_level >= level) {
         va_start(args, fmt);
-        ngx_log_error_core(level, log,__FILE__, __LINE__, err, fmt, args);
+        ngx_log_error_core(level, log,__FUNCTION__, __LINE__, err, fmt, args);
         va_end(args);
     }
 }
@@ -321,7 +325,7 @@ ngx_log_debug_core(ngx_log_t *log, ngx_err_t err, const char *fmt, ...)
     va_list  args;
 
     va_start(args, fmt);
-    ngx_log_error_core(NGX_LOG_DEBUG, log,__FILE__, __LINE__, err, fmt, args);
+    ngx_log_error_core(NGX_LOG_DEBUG, log,__FUNCTION__, __LINE__, err, fmt, args);
     va_end(args);
 }
 

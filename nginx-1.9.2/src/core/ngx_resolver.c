@@ -417,7 +417,7 @@ ngx_resolve_name_done(ngx_resolver_ctx_t *ctx)
     }
 
     if (ctx->event && ctx->event->timer_set) {
-        ngx_del_timer(ctx->event);
+        ngx_del_timer(ctx->event, NGX_FUNC_LINE);
     }
 
     /* lock name mutex */
@@ -673,11 +673,11 @@ ngx_resolve_name_locked(ngx_resolver_t *r, ngx_resolver_ctx_t *ctx)
         ctx->event->log = r->log;
         rn->ident = -1;
 
-        ngx_add_timer(ctx->event, ctx->timeout);
+        ngx_add_timer(ctx->event, ctx->timeout, NGX_FUNC_LINE);
     }
 
     if (ngx_queue_empty(&r->name_resend_queue)) {
-        ngx_add_timer(r->event, (ngx_msec_t) (r->resend_timeout * 1000));
+        ngx_add_timer(r->event, (ngx_msec_t) (r->resend_timeout * 1000), NGX_FUNC_LINE);
     }
 
     rn->expire = ngx_time() + r->resend_timeout;
@@ -866,10 +866,10 @@ ngx_resolve_addr(ngx_resolver_ctx_t *ctx)
     ctx->event->log = r->log;
     rn->ident = -1;
 
-    ngx_add_timer(ctx->event, ctx->timeout);
+    ngx_add_timer(ctx->event, ctx->timeout, NGX_FUNC_LINE);
 
     if (ngx_queue_empty(resend_queue)) {
-        ngx_add_timer(r->event, (ngx_msec_t) (r->resend_timeout * 1000));
+        ngx_add_timer(r->event, (ngx_msec_t) (r->resend_timeout * 1000), NGX_FUNC_LINE);
     }
 
     rn->expire = ngx_time() + r->resend_timeout;
@@ -949,7 +949,7 @@ ngx_resolve_addr_done(ngx_resolver_ctx_t *ctx)
                    "resolve addr done: %i", ctx->state);
 
     if (ctx->event && ctx->event->timer_set) {
-        ngx_del_timer(ctx->event);
+        ngx_del_timer(ctx->event, NGX_FUNC_LINE);
     }
 
     /* lock addr mutex */
@@ -1174,7 +1174,7 @@ ngx_resolver_resend_handler(ngx_event_t *ev)
 #endif
 
     if (timer) {
-        ngx_add_timer(r->event, (ngx_msec_t) (timer * 1000));
+        ngx_add_timer(r->event, (ngx_msec_t) (timer * 1000), NGX_FUNC_LINE);
     }
 }
 

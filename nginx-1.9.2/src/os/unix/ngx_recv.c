@@ -137,10 +137,10 @@ ngx_unix_recv(ngx_connection_t *c, u_char *buf, size_t size)
 
     do {
         //n = recv(c->fd, buf, size, 0); yang test
-        n = recv(c->fd, buf, 10, 0);
+        n = recv(c->fd, buf, size, 0);
 
         ngx_log_debug3(NGX_LOG_DEBUG_EVENT, c->log, 0,
-                           "recv: fd:%d %d of %d", c->fd, n, size);
+                           "recv: fd:%d read-size:%d of %d", c->fd, n, size);
 
         //读取成功，直接返回
         if (n == 0) { //表示TCP错误，见ngx_http_read_request_header

@@ -79,7 +79,7 @@ static char *ngx_http_client_errors[] = {
 //°Ñngx_http_headers_inÖĞµÄËùÓĞ³ÉÔ±×öhashÔËËã£¬È»ºó´æ·Åµ½cmcf->headers_in_hashÖĞ
 ngx_http_header_t  ngx_http_headers_in[] = {
     { ngx_string("Host"), offsetof(ngx_http_headers_in_t, host),
-                 ngx_http_process_host },
+                 ngx_http_process_host }, //ngx_http_process_request_headersÖĞÖ´ĞĞhandler
 
     { ngx_string("Connection"), offsetof(ngx_http_headers_in_t, connection),
                  ngx_http_process_connection },
@@ -273,6 +273,10 @@ ngx_http_init_connection(ngx_connection_t *c)
                 }
             }
 
+          /*
+                ÕâÀïÒ²ÌåÏÖÁËÔÚngx_http_init_connectionÖĞ»ñÈ¡http{}ÉÏÏÂÎÄctx£¬Èç¹û¿Í»§¶ËÇëÇóÖĞ´øÓĞhost²ÎÊı£¬Ôò»á¼ÌĞøÔÚngx_http_set_virtual_server
+                ÖĞÖØĞÂ»ñÈ¡¶ÔÓ¦µÄserver{}ºÍlocation{}£¬Èç¹û¿Í»§¶ËÇëÇó²»´øhostÍ·²¿ĞĞ£¬ÔòÊ¹ÓÃÄ¬ÈÏµÄserver{},¼û ngx_http_init_connection  
+            */
             hc->addr_conf = &addr[i].conf;
 
             break;
@@ -384,10 +388,10 @@ ngx_http_init_connection·½·¨¶¼ÊÇÓÉÁ½¸öÊÂ¼ş£¨TCPÁ¬½Ó½¨Á¢³É¹¦ÊÂ¼şºÍÁ¬½ÓÉÏµÄ¿É¶ÁÊÂ¼
 µ÷ÓÃngx_add_timer·½·¨°Ñ¶ÁÊÂ¼şÌí¼Óµ½¶¨Ê±Æ÷ÖĞ£¬ÉèÖÃµÄ³¬Ê±Ê±¼äÔòÊÇnginx.confÖĞclient_header_timeoutÅäÖÃÏîÖ¸¶¨µÄ²ÎÊı¡£
 Ò²¾ÍÊÇËµ£¬Èç¹û¾­¹ıclient_header_timeoutÊ±¼äºóÕâ¸öÁ¬½ÓÉÏ»¹Ã»ÓĞÓÃ»§Êı¾İµ½´ï£¬Ôò»áÓÉ¶¨Ê±Æ÷´¥·¢µ÷ÓÃ¶ÁÊÂ¼şµÄngx_http_init_request´¦Àí·½·¨¡£
  */
-    ngx_add_timer(rev, c->listening->post_accept_timeout); //°Ñ½ÓÊÕÊÂ¼şÌí¼Óµ½¶¨Ê±Æ÷ÖĞ£¬µ±post_accept_timeoutÃë»¹Ã»ÓĞ¿Í»§¶ËÊı¾İµ½À´£¬¾Í¹Ø±ÕÁ¬½Ó
+    ngx_add_timer(rev, c->listening->post_accept_timeout, NGX_FUNC_LINE); //°Ñ½ÓÊÕÊÂ¼şÌí¼Óµ½¶¨Ê±Æ÷ÖĞ£¬µ±post_accept_timeoutÃë»¹Ã»ÓĞ¿Í»§¶ËÊı¾İµ½À´£¬¾Í¹Ø±ÕÁ¬½Ó
     ngx_reusable_connection(c, 1);
 
-    if (ngx_handle_read_event(rev, 0) != NGX_OK) { //µ±ÏÂ´ÎÓĞÊı¾İ´Ó¿Í»§¶Ë·¢ËÍ¹ıÀ´µÄÊ±ºò£¬»áÔÚngx_epoll_process_events°Ñ¶ÔÓ¦µÄreadyÖÃ1¡£
+    if (ngx_handle_read_event(rev, 0, NGX_FUNC_LINE) != NGX_OK) { //µ±ÏÂ´ÎÓĞÊı¾İ´Ó¿Í»§¶Ë·¢ËÍ¹ıÀ´µÄÊ±ºò£¬»áÔÚngx_epoll_process_events°Ñ¶ÔÓ¦µÄreadyÖÃ1¡£
         ngx_http_close_connection(c);
         return;
     }
@@ -456,11 +460,11 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
 
     if (n == NGX_AGAIN) {
         if (!rev->timer_set) {
-            ngx_add_timer(rev, c->listening->post_accept_timeout);
+            ngx_add_timer(rev, c->listening->post_accept_timeout, NGX_FUNC_LINE);
             ngx_reusable_connection(c, 1);
         }
 
-        if (ngx_handle_read_event(rev, 0) != NGX_OK) {
+        if (ngx_handle_read_event(rev, 0, NGX_FUNC_LINE) != NGX_OK) {
             ngx_http_close_connection(c);
             return;
         }
@@ -687,11 +691,11 @@ ngx_http_ssl_handshake(ngx_event_t *rev)
             rev->ready = 0;
 
             if (!rev->timer_set) {
-                ngx_add_timer(rev, c->listening->post_accept_timeout);
+                ngx_add_timer(rev, c->listening->post_accept_timeout, NGX_FUNC_LINE);
                 ngx_reusable_connection(c, 1);
             }
 
-            if (ngx_handle_read_event(rev, 0) != NGX_OK) {
+            if (ngx_handle_read_event(rev, 0, NGX_FUNC_LINE) != NGX_OK) {
                 ngx_http_close_connection(c);
             }
 
@@ -752,7 +756,7 @@ ngx_http_ssl_handshake(ngx_event_t *rev)
             if (rc == NGX_AGAIN) {
 
                 if (!rev->timer_set) {
-                    ngx_add_timer(rev, c->listening->post_accept_timeout);
+                    ngx_add_timer(rev, c->listening->post_accept_timeout, NGX_FUNC_LINE);
                 }
 
                 ngx_reusable_connection(c, 0);
@@ -1380,9 +1384,10 @@ ngx_http_process_request_headers(ngx_event_t *rev)
                 ngx_strlow(h->lowcase_key, h->key.data, h->key.len);
             }
 
-            //¼ûngx_http_headers_in
+            //¼ûngx_http_headers_in  //¼ì²é½âÎöµ½µÄÍ·²¿key:valueÖĞµÄ¶ÔÓ¦ngx_http_header_t½á¹¹£¬¼´ngx_http_headers_inÖĞµÄ³ÉÔ±
             hh = ngx_hash_find(&cmcf->headers_in_hash, h->hash,
-                               h->lowcase_key, h->key.len); //¼ì²éÊÇ·ñ¸ÃnameÒÑ¾­´æÔÚ
+                               h->lowcase_key, h->key.len); 
+            
 
             //´Óngx_http_headers_inÕÒµ½ÓënameÆ¥ÅäµÄ×Ö·û´®£¬È»ºóÖ»Ğè¶ÔÓ¦µÄhandler,Ò»°ã¾ÍÊÇ°Ñ½âÎö³öµÄname:valueÖĞµÄvalue´æ·Åµ½headers_in³ÉÔ±µÄheadersÁ´±íÖĞ
             
@@ -1483,10 +1488,10 @@ ngx_http_read_request_header(ngx_http_request_t *r)
             cscf = ngx_http_get_module_srv_conf(r, ngx_http_core_module);
             //×¢Òâ£¬ÔÚ½âÎöµ½ÍêÕûµÄÍ·²¿ĞĞºÍÇëÇóĞĞºó£¬»áÔÚngx_http_process_requestÖĞ»á°Ñ¶ÁÊÂ¼ş³¬Ê±¶¨Ê±Æ÷É¾³ı
             //ÔÚÇëÇó´¦ÀíÍê·¢ËÍ¸ø¿Í»§¶ËÊı¾İºó£¬rev->handler = ngx_http_keepalive_handler
-            ngx_add_timer(rev, cscf->client_header_timeout);  
+            ngx_add_timer(rev, cscf->client_header_timeout, NGX_FUNC_LINE);
         }
 
-        if (ngx_handle_read_event(rev, 0) != NGX_OK) {
+        if (ngx_handle_read_event(rev, 0, NGX_FUNC_LINE) != NGX_OK) {
             ngx_http_close_request(r, NGX_HTTP_INTERNAL_SERVER_ERROR);
             return NGX_ERROR;
         }
@@ -1701,7 +1706,11 @@ ngx_http_process_unique_header_line(ngx_http_request_t *r, ngx_table_elt_t *h,
     return NGX_ERROR;
 }
 
-
+//ngx_http_process_request_headers->ngx_http_process_host->ngx_http_set_virtual_server
+/*
+handlerµÄÈı¸ö²ÎÊı·Ö±ğÎª(r, h, hh->offset):rÎª¶ÔÓ¦µÄÁ¬½ÓÇëÇó£¬h´æ´¢ÎªÍ·²¿ĞĞkey:value(Èç:Content-Type: text/html)Öµ£¬hh->offset¼´
+ngx_http_headers_inÖĞ³ÉÔ±µÄ¶ÔÓ¦offset(ÈçÇëÇóĞĞ´øÓĞhost£¬Ôòoffset=offsetof(ngx_http_headers_in_t, host))
+*/
 static ngx_int_t
 ngx_http_process_host(ngx_http_request_t *r, ngx_table_elt_t *h,
     ngx_uint_t offset)
@@ -1729,7 +1738,7 @@ ngx_http_process_host(ngx_http_request_t *r, ngx_table_elt_t *h,
         return NGX_ERROR;
     }
 
-    if (r->headers_in.server.len) {
+    if (r->headers_in.server.len) { //À´×ÔÍ¬Ò»¸öTCPÁ¬½ÓµÄ¿Í»§¶Ë£¬ËûÃÇµÄserverÊÇÒ»ÑùµÄ
         return NGX_OK;
     }
 
@@ -2000,7 +2009,7 @@ ngx_http_process_request(ngx_http_request_t *r)
     ¼ì²é¶ÁÊÂ¼ş¶ÔÓ¦µÄtimer_set±êÖ¾Î»£¬Á¦1Ê±±íÊ¾¶ÁÊÂ¼şÒÑ¾­Ìí¼Óµ½¶¨Ê±Æ÷ÖĞÁË£¬ÕâÊ±ĞèÒªµ÷ÓÃngx_del_timer´Ó¶¨Ê±Æ÷ÖĞÒÆ³ı¶ÁÊÂ¼ş£»
      */
     if (c->read->timer_set) {//ngx_http_read_request_headerÖĞ¶ÁÈ¡²»µ½Êı¾İµÄÊ±ºò·µ»ØNGX_AGIN£¬»áÌí¼Ó¶¨Ê±Æ÷ºÍ¶ÁÊÂ¼ş±íÊ¾¼ÌĞøµÈ´ı¿Í»§¶ËÊı¾İµ½À´
-        ngx_del_timer(c->read);
+        ngx_del_timer(c->read, NGX_FUNC_LINE);
     }
 
 #if (NGX_STAT_STUB)
@@ -2126,6 +2135,26 @@ ngx_http_validate_host(ngx_str_t *host, ngx_pool_t *pool, ngx_uint_t alloc)
     return NGX_OK;
 }
 
+/*
+µ±¿Í»§¶Ë½¨Á¢Á¬½Óºó£¬²¢·¢ËÍÇëÇóÊı¾İ¹ıÀ´ºó£¬ÔÚngx_http_create_requestÖĞ´Óngx_http_connection_t->conf_ctx»ñÈ¡ÕâÈı¸öÖµ£¬Ò²¾ÍÊÇ¸ù¾İ¿Í»§¶ËÁ¬½Ó
+±¾¶ËËù´¦IP:portËù¶ÔÓ¦µÄÄ¬ÈÏserver{}¿éÉÏÏÂÎÄ£¬Èç¹ûÊÇÒÔÏÂÇé¿ö:ip:portÏàÍ¬£¬µ¥ÔÚ²»Í¬µÄserver{}¿éÖĞ£¬ÄÇÃ´ÓĞ¿ÉÄÜ¿Í»§¶ËÇëÇó¹ıÀ´µÄÊ±ºòĞ¯´øµÄhost
+Í·²¿ÏîµÄserver_name²»ÔÚÄ¬ÈÏµÄserver{}ÖĞ£¬¶øÔÚÁíÍâµÄserver{}ÖĞ£¬ËùÒÔĞèÒªÍ¨¹ıngx_http_set_virtual_serverÖØĞÂ»ñÈ¡server{}ºÍlocation{}ÉÏÏÂÎÄÅäÖÃ
+ÀıÈç:
+    server {  #1
+        listen 1.1.1.1:80;
+        server_name aaa
+    }
+
+    server {   #2
+        listen 1.1.1.1:80;
+        server_name bbb
+    }
+    Õâ¸öÅäÖÃÔÚngx_http_init_connectionÖĞ°Ñngx_http_connection_t->conf_ctxÖ¸Ïòngx_http_addr_conf_s->default_server,Ò²¾ÍÊÇÖ¸Ïò#1,È»ºó
+    ngx_http_create_requestÖĞ°Ñmain_conf srv_conf  loc_conf Ö¸Ïò#1,
+    µ«Èç¹ûÇëÇóĞĞµÄÍ·²¿µÄhost:bbb£¬ÄÇÃ´ĞèÒªÖØĞÂ»ñÈ¡¶ÔÓ¦µÄserver{} #2,¼ûngx_http_set_virtual_server
+ */
+
+//ÔÚ½âÎöµ½httpÍ·²¿µÄhost×Ö¶Îºó£¬»áÍ¨¹ı//ngx_http_process_request_headers->ngx_http_process_host->ngx_http_set_virtual_server
 //»ñÈ¡server_nameÅäÖÃºÍhost×Ö·û´®ÍêÈ«Ò»ÑùµÄserver{}ÉÏÏÂÎÄÅäÖÃngx_http_core_srv_conf_tºÍngx_http_core_loc_conf_t
 static ngx_int_t
 ngx_http_set_virtual_server(ngx_http_request_t *r, ngx_str_t *host)
@@ -2199,7 +2228,30 @@ ngx_http_set_virtual_server(ngx_http_request_t *r, ngx_str_t *host)
         return NGX_OK;
     }
 
+    /*
+µ±¿Í»§¶Ë½¨Á¢Á¬½Óºó£¬²¢·¢ËÍÇëÇóÊı¾İ¹ıÀ´ºó£¬ÔÚngx_http_create_requestÖĞ´Óngx_http_connection_t->conf_ctx»ñÈ¡ÕâÈı¸öÖµ£¬Ò²¾ÍÊÇ¸ù¾İ¿Í»§¶ËÁ¬½Ó
+±¾¶ËËù´¦IP:portËù¶ÔÓ¦µÄÄ¬ÈÏserver{}¿éÉÏÏÂÎÄ£¬Èç¹ûÊÇÒÔÏÂÇé¿ö:ip:portÏàÍ¬£¬µ¥ÔÚ²»Í¬µÄserver{}¿éÖĞ£¬ÄÇÃ´ÓĞ¿ÉÄÜ¿Í»§¶ËÇëÇó¹ıÀ´µÄÊ±ºòĞ¯´øµÄhost
+Í·²¿ÏîµÄserver_name²»ÔÚÄ¬ÈÏµÄserver{}ÖĞ£¬¶øÔÚÁíÍâµÄserver{}ÖĞ£¬ËùÒÔĞèÒªÍ¨¹ıngx_http_set_virtual_serverÖØĞÂ»ñÈ¡server{}ºÍlocation{}ÉÏÏÂÎÄÅäÖÃ
+ÀıÈç:
+    server {  #1
+        listen 1.1.1.1:80;
+        server_name aaa
+    }
+
+    server {   #2
+        listen 1.1.1.1:80;
+        server_name bbb
+    }
+    Õâ¸öÅäÖÃÔÚngx_http_init_connectionÖĞ°Ñngx_http_connection_t->conf_ctxÖ¸Ïòngx_http_addr_conf_s->default_server,Ò²¾ÍÊÇÖ¸Ïò#1,È»ºó
+    ngx_http_create_requestÖĞ°Ñmain_conf srv_conf  loc_conf Ö¸Ïò#1,
+    µ«Èç¹ûÇëÇóĞĞµÄÍ·²¿µÄhost:bbb£¬ÄÇÃ´ĞèÒªÖØĞÂ»ñÈ¡¶ÔÓ¦µÄserver{} #2,¼ûngx_http_set_virtual_server
+ */
     //°Ñ srv_conf  loc_confÖ¸ÏòhostÓëserver_nameÅäÖÃÏàÍ¬µÄserver{]ÉÏÏÂÎÄÅäÖÃsrv_conf  loc_conf
+
+    /*
+        ÕâÀïÒ²ÌåÏÖÁËÔÚngx_http_init_connectionÖĞ»ñÈ¡http{}ÉÏÏÂÎÄctx£¬Èç¹û¿Í»§¶ËÇëÇóÖĞ´øÓĞhost²ÎÊı£¬Ôò»á¼ÌĞøÔÚngx_http_set_virtual_serverÖĞÖØĞÂ»ñÈ¡
+        ¶ÔÓ¦µÄserver{}ºÍlocation{}£¬Èç¹û¿Í»§¶ËÇëÇó²»´øhostÍ·²¿ĞĞ£¬ÔòÊ¹ÓÃÄ¬ÈÏµÄserver{},¼û ngx_http_init_connection
+    */
     r->srv_conf = cscf->ctx->srv_conf;
     r->loc_conf = cscf->ctx->loc_conf;
 
@@ -2214,7 +2266,7 @@ ngx_http_set_virtual_server(ngx_http_request_t *r, ngx_str_t *host)
 static ngx_int_t
 ngx_http_find_virtual_server(ngx_connection_t *c,
     ngx_http_virtual_names_t *virtual_names, ngx_str_t *host,
-    ngx_http_request_t *r, ngx_http_core_srv_conf_t **cscfp)
+    ngx_http_request_t *r, ngx_http_core_srv_conf_t **cscfp) //»ñÈ¡host×Ö·û´®¶ÔÓ¦µÄserver_nameËù¶Ô´¦µÄserver{}ÅäÖÃ¿éĞÅÏ¢
 {
     ngx_http_core_srv_conf_t  *cscf;
 
@@ -2302,6 +2354,9 @@ ngx_http_process_request·½·¨¸ºÔğÔÚ½ÓÊÕÍêHTTPÍ·²¿ºó£¬µÚÒ»´ÎÓë¸÷¸öHTTPÄ£¿é¹²Í¬°´½×
 
 µ±½âÎöµ½ÍêÕûµÄÍ·²¿ĞĞºÍÇëÇóĞĞºó£¬²»»áÔÙĞèÒª½ÓÊÕHTTPÇëÇóĞĞ»òÕßÍ·²¿£¬ËùÒÔĞèÒªÖØĞÂÉèÖÃµ±Ç°Á¬½Ó¶Á/Ğ´ÊÂ¼şµÄ»Øµ÷·½·¨¡£½«Í¬Ê±°Ñ¶ÁÊÂ¼ş¡¢Ğ´ÊÂ¼şµÄ»Øµ÷
 ·½·¨¶¼ÉèÖÃÎªngx_http_request_handler·½·¨£¬ÇëÇóµÄºóĞø´¦Àí¶¼ÊÇÍ¨¹ıngx_http_request_handler·½·¨½øĞĞµÄ¡£
+
+HTTP¿ò¼ÜÎŞÂÛÊÇµ÷ÓÃngx_http_process_request·½·¨£¨Ê×´Î´ÓÒµÎñÉÏ´¦ÀíÇëÇó£©»¹ÊÇngx_http_request_handler·½·¨£¨TCPÁ¬½ÓÉÏºóĞøµÄÊÂ¼ş´¥·¢Ê±£©´¦Àí
+ÇëÇó£¬×îºó¶¼ÓĞÒ»¸ö²½Öè£¬¾ÍÊÇµ÷ÓÃngx_http_run_posted_requests·½·¨´¦ÀípostÇëÇó
 */
 static void
 ngx_http_request_handler(ngx_event_t *ev)
@@ -2329,12 +2384,12 @@ ngx_http_request_ handlerÊÇHTTPÇëÇóÉÏ¶Á£¯Ğ´ÊÂ¼şµÄ»Øµ÷·½·¨¡£ÔÚngx_event_t½á¹¹Ìå±í
 Èç¹ûÒ»¸öÊÂ¼şµÄ¶ÁĞ´±êÖ¾Í¬Ê±Îª1Ê±£¬½öwrite_event_handler·½·¨»á±»µ÷ÓÃ£¬¼´¿ÉĞ´ÊÂ¼şµÄ´¦ÀíÓÅÏÈÓÚ¿É¶ÁÊÂ¼ş£¨ÕâÕıÊÇNginx¸ßĞÔÄÜÉè¼ÆµÄÌåÏÖ£¬
 ÓÅÏÈ´¦Àí¿ÉĞ´ÊÂ¼ş¿ÉÒÔ¾¡¿ìÊÍ·ÅÄÚÓĞ£¬¾¡Á¿±£³Ö¸÷HTTPÄ£¿éÉÙÊ¹ÓÃÄÚ´æÒÔÌá¸ß²¢·¢ÄÜÁ¦£©¡£ÒòÎª·şÎñÆ÷·¢ËÍ¸ø¿Í»§¶ËµÄ±¨ÎÄ³¤¶ÈÒ»°ã±ÈÇëÇó±¨ÎÄ´óºÜ¶à
  */
-    printf("yang test .....................write:%u\n", ev->write);
+    //printf("yang test .....................write:%u\n", ev->write);
     if (ev->write) { //Ä¬ÈÏÒ»Ö±Î´1£¬ÏÂÃæµÄreadºÃÏñÒ»Ö±Ö´ĞĞ²»ÁË ???????????????????????
         r->write_event_handler(r); //ngx_http_core_run_phases
 
     } else {
-         printf("yang test ........XXXXXXXXXXXXXX read.............write:%u\n", ev->write);   
+         //printf("yang test ........XXXXXXXXXXXXXX read.............write:%u\n", ev->write);   
         r->read_event_handler(r);
     }
 
@@ -2433,9 +2488,9 @@ HTTP¿ò¼ÜÏ£ÍûÃ¿¸ö¶¯×÷½áÊøÊ±½öÎ¬»¤×Ô¼ºµÄÒµÎñ£¬²»ÓÃÈ¥¹ØĞÄÕâ¸öÇëÇóÊÇ·ñ»¹×öÁËÆäËû¶¯×÷
     ÕâÖÖÉè¼Æ¾ßÌåÓÖÊÇÔõÃ´ÊµÏÖµÄÄØ£¿Ã¿¸öHTTPÇëÇó¶¼ÓĞÒ»¸öÒıÓÃ¼ÆÊı£¬Ã¿ÅÉÉú³öÒ»ÖÖĞÂµÄ»á¶ÀÁ¢ÏòÊÂ¼şÊÕ¼¯Æ÷×¢²áÊÂ¼şµÄ¶¯×÷Ê±£¨Èçngx_http_
 read_ client_request_body·½·¨»òÕßngx_http_subrequest·½·¨£©£¬¶¼»á°ÑÒıÓÃ¼ÆÊı¼Ó1£¬ÕâÑùÃ¿¸ö¶¯×÷½áÊøÊ±¶¼Í¨¹ıµ÷ÓÃngx_http_finalize_request·½·¨
 À´½áÊøÇëÇó£¬¶øngx_http_finalize_request·½·¨Êµ¼ÊÉÏÈ´»áÔÚÒıÓÃ¼ÆÊı¼õ1ºóÏÈ¼ì²éÒıÓÃ¼ÆÊıµÄÖµ£¬Èç¹û²»ÎªOÊÇ²»»áÕæÕıÏú»ÙÇëÇóµÄ¡£
-*/
+*/ //ngx_http_finalize_request -> ngx_http_finalize_connection ,×¢ÒâºÍngx_http_terminate_requestµÄÇø±ğ
 void
-ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
+ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc) 
 {
     ngx_connection_t          *c;
     ngx_http_request_t        *pr;
@@ -2447,6 +2502,11 @@ ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
                    "http finalize request: %d, \"%V?%V\" a:%d, c:%d",
                    rc, &r->uri, &r->args, r == c->data, r->main->count);
 
+    /*
+    NGX_DONE²ÎÊı±íÊ¾²»ĞèÒª×öÈÎºÎÊÂ£¬Ö±½Óµ÷ÓÃngx_http_finalize_connection·½·¨£¬Ö®ºóngx_http_finalize_request·½·¨½áÊø¡£µ±Ä³Ò»ÖÖ¶¯×÷
+£¨Èç½ÓÊÕHTTPÇëÇó°üÌå£©Õı³£½áÊø¶øÇëÇó»¹ÓĞÒµÎñÒª¼ÌĞø´¦ÀíÊ±£¬¶à°ë¶¼ÊÇ´«µİNGX_DONE²ÎÊı¡£Õâ¸öngx_http_finalize_connection·½·¨»¹»áÈ¥¼ì
+²éÒıÓÃ¼ÆÊıÇé¿ö£¬²¢²»Ò»¶¨»áÏú»ÙÇëÇó¡£
+     */
     if (rc == NGX_DONE) {
         ngx_http_finalize_connection(r);  
         return;
@@ -2456,6 +2516,12 @@ ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
         c->error = 1;
     }
 
+    /*
+   NGX_DECLINED²ÎÊı±íÊ¾ÇëÇó»¹ĞèÒª°´ÕÕ11¸öHTTP½×¶Î¼ÌĞø´¦ÀíÏÂÈ¥£¬ÕâÊ±ĞèÒª¼ÌĞøµ÷ÓÃngx_http_core_run_phases·½·¨´¦ÀíÇëÇó¡£Õâ
+Ò»²½ÖĞÊ×ÏÈ»á°Ñngx_http_request_t½á¹¹ÌåµÄwrite¡ªevent handlerÉèÎªngx_http_core_run_phases·½·¨¡£Í¬Ê±£¬½«ÇëÇóµÄcontent_handler³ÉÔ±
+ÖÃÎªNULL¿ÕÖ¸Õë£¬ËüÊÇÒ»ÖÖÓÃÓÚÔÚNGX_HTTP_CONTENT_PHASE½×¶Î´¦ÀíÇëÇóµÄ·½Ê½£¬½«ÆäÉèÖÃÎªNULL×ãÎªÁËÈÃngx_http_core_content_phase·½·¨
+¿ÉÒÔ¼ÌĞøµ÷ÓÃNGX_HTTP_CONTENT_PHASE½×¶ÎµÄÆäËû´¦Àí·½·¨¡£
+     */
     if (rc == NGX_DECLINED) {
         r->content_handler = NULL;
         r->write_event_handler = ngx_http_core_run_phases;
@@ -2463,6 +2529,10 @@ ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
         return;
     }
 
+    /*
+    ¼ì²éµ±Ç°ÇëÇóÊÇ·ñÎªsubrequest×ÓÇëÇó£¬Èç¹ûÊÇ×ÓÇëÇó£¬ÄÇÃ´µ÷ÓÃpost_subrequestÏÂµÄhandler»Øµ÷·½·¨¡£subrequestµÄÓÃ·¨£¬¿ÉÒÔ¿´
+    µ½post_subrequestÕıÊÇ´ËÊ±±»µ÷ÓÃµÄ¡£
+     */
     if (r != r->main && r->post_subrequest) {//Èç¹ûµ±Ç°ÇëÇóÊôÓÚÄ³¸öÔ­Ê¼ÇëÇóµÄ×ÓÇëÇó
         rc = r->post_subrequest->handler(r, r->post_subrequest->data, rc); //r±äÁ¿ÊÇ×ÓÇëÇó£¨²»ÊÇ¸¸ÇëÇó£©
     }
@@ -2472,6 +2542,7 @@ ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
         || rc == NGX_HTTP_CLIENT_CLOSED_REQUEST
         || c->error)
     {
+        //Ö±½Óµ÷ÓÃngx_http_terminate_request·½·¨Ç¿ÖÆ½áÊøÇëÇó£¬Í¬Ê±£¬ngx_http_finalize_request·½·¨½áÊø¡£
         if (ngx_http_post_action(r) == NGX_OK) {
             return;
         }
@@ -2484,6 +2555,10 @@ ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
         return;
     }
 
+    /*
+    Èç¹ûrcÎªNGX_HTTP_NO_CONTENT¡¢NGX_HTTP_CREATED»òÕß´óÓÚ»òµÈÓÚNGX_HTTP_SPECIAL_RESPONSE£¬Ôò±íÊ¾ÇëÇóµÄ¶¯×÷ÊÇÉÏ´«ÎÄ¼ş£¬
+    »òÕßHTTPÄ£¿éĞèÒªHTTP¿ò¼Ü¹¹Ôì²¢·¢ËÍÏìÓ¦Âë´óÓÚ»òµÈÓÚ300ÒÔÉÏµÄÌØÊâÏìÓ¦
+     */
     if (rc >= NGX_HTTP_SPECIAL_RESPONSE
         || rc == NGX_HTTP_CREATED
         || rc == NGX_HTTP_NO_CONTENT)
@@ -2493,26 +2568,35 @@ ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
             return;
         }
 
+        /*
+            ¼ì²éµ±Ç°ÇëÇóµÄmainÊÇ·ñÖ¸Ïò×Ô¼º£¬Èç¹ûÊÇ£¬Õâ¸öÇëÇó¾ÍÊÇÀ´×Ô¿Í»§¶ËµÄÔ­Ê¼ÇëÇó£¨·Ç×ÓÇëÇó£©£¬ÕâÊ±¼ì²é¶Á/Ğ´ÊÂ¼şµÄtimer_set±êÖ¾Î»£¬
+            Èç¹ûtimer_setÎª1£¬Ôò±íÃ÷ÊÂ¼şÔÚ¶¨Ê±Æ÷Éê£¬ĞèÒªµ÷ÓÃngx_del_timer·½·¨°Ñ¶Á/Ğ´ÊÂ¼ş´Ó¶¨Ê±Æ÷ÖĞÒÆ³ı¡£
+          */
         if (r == r->main) {
             if (c->read->timer_set) {
-                ngx_del_timer(c->read);
+                ngx_del_timer(c->read, NGX_FUNC_LINE);
             }
 
             if (c->write->timer_set) {
-                ngx_del_timer(c->write);
+                ngx_del_timer(c->write, NGX_FUNC_LINE);
             }
         }
 
+        /* ÉèÖÃ¶Á£¯Ğ´ÊÂ¼şµÄ»Øµ÷·½·¨Îªngx_http_request_handler·½·¨£¬Õâ¸ö·½·¨£¬Ëü»á¼ÌĞø´¦ÀíHTTPÇëÇó¡£ */
         c->read->handler = ngx_http_request_handler;
         c->write->handler = ngx_http_request_handler;
 
+    /*
+      µ÷ÓÃngx_http_special_response_handler·½·¨£¬¸Ã·½·¨¸ºÔğ¸ù¾İrc²ÎÊı¹¹ÔìÍêÕûµÄHTTPÏìÓ¦¡£ÎªÊ²Ã´¿ÉÒÔÔÚÕâÒ»²½ÖĞ¹¹ÔìÕâÑùµÄÏìÓ¦ÄØ£¿
+      ÕâÊ±rcÒªÃ´ÊÇ±íÊ¾ÉÏ´«³É¹¦µÄ201»òÕß204£¬ÒªÃ´¾ÍÊÇ±íÊ¾Òì²½µÄ300ÒÔÉÏµÄÏìÓ¦Âë£¬¶ÔÓÚÕâĞ©Çé¿ö£¬¶¼ÊÇ¿ÉÒÔÈÃHTTP¿ò¼Ü¶ÀÁ¢¹¹ÔìÏìÓ¦°üµÄ¡£
+      */
         ngx_http_finalize_request(r, ngx_http_special_response_handler(r, rc));
         return;
     }
 
-    if (r != r->main) {
+    if (r != r->main) { //×ÓÇëÇó
 
-        if (r->buffered || r->postponed) {
+        if (r->buffered || r->postponed) { //¼ì²éout»º³åÇøÄÚÊÇ·ñ»¹ÓĞÃ»·¢ËÍÍêµÄÏìÓ¦
 
             if (ngx_http_set_write_handler(r) != NGX_OK) { 
                 ngx_http_terminate_request(r, 0);
@@ -2521,6 +2605,11 @@ ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
             return;
         }
 
+        /*
+            ÓÉÓÚµ±Ç°ÇëÇóÊÇ×ÓÇëÇó£¬ÄÇÃ´Õı³£Çé¿öÏÂĞèÒªÌøµ½ËüµÄ¸¸ÇëÇóÉÏ£¬¼¤»î¸¸ÇëÇó¼ÌĞøÏòÏÂÖ´ĞĞ£¬ËùÒÔÕâÒ»²½Ê×ÏÈ¸ù¾İngx_http_request_t½á
+        ¹¹ÌåµÄparent³ÉÔ±ÕÒµ½¸¸ÇëÇó£¬ÔÙ¹¹ÔìÒ»¸öngx_http_posted_request_t½á¹¹Ìå°Ñ¸¸ÇëÇó·ÅÖÃÆäÖĞ£¬×îºó°Ñ¸Ã½á¹¹ÌåÌí¼Óµ½Ô­Ê¼ÇëÇóµÄ
+        posted_requestsÁ´±íÖĞ£¬ÕâÑùngx_http_run_posted_requests·½·¨¾Í»áµ÷ÓÃ¸¸ÇëÇóµÄwrite_event_handler·½·¨ÁË¡£
+          */
         pr = r->parent;
 
         if (r == c->data) {
@@ -2607,13 +2696,15 @@ ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
         return;
     }
 
+    /* µ½ÁËÕâÀïÕæµÄÒª½áÊøÇëÇóÁË¡£Ê×ÏÈÅĞ¶Ï¶Á£¯Ğ´ÊÂ¼şµÄtimer-set±êÖ¾Î»£¬Èç¹ûtimer-setÎª1£¬ÔòĞèÒª°ÑÏàÓ¦µÄ¶Á/Ğ´ÊÂ¼ş´Ó¶¨Ê±Æ÷ÖĞÒÆ³ı */
+
     if (c->read->timer_set) {
-        ngx_del_timer(c->read);
+        ngx_del_timer(c->read, NGX_FUNC_LINE);
     }
 
     if (c->write->timer_set) {
         c->write->delayed = 0;
-        ngx_del_timer(c->write);
+        ngx_del_timer(c->write, NGX_FUNC_LINE);
     }
 
     if (c->read->eof) {
@@ -2624,7 +2715,11 @@ ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
     ngx_http_finalize_connection(r);
 }
 
-
+/*
+ngx_http_terminate_request·½·¨ÊÇÌá¹©¸øHTTPÄ£¿éÊ¹ÓÃµÄ½áÊøÇëÇó·½·¨£¬µ«ËüÊôÓÚ·ÇÕı³£½áÊøµÄ³¡¾°£¬¿ÉÒÔÀí½âÎªÇ¿ÖÆ¹Ø±ÕÇëÇó¡£Ò²¾ÍÊÇËµ£¬
+µ±µ÷ÓÃngx_http_terminate_request·½·¨½áÊøÇëÇóÊ±£¬Ëü»áÖ±½ÓÕÒ³ö¸ÃÇëÇóµÄmain³ÉÔ±Ö¸ÏòµÄÔ­Ê¼ÇëÇó£¬²¢Ö±½Ó½«¸ÃÔ­Ê¼ÇëÇóµÄÒıÓÃ¼ÆÊıÖÃÎª1£¬
+Í¬Ê±»áµ÷ÓÃngx_http_close_request·½·¨È¥¹Ø±ÕÇëÇó
+*/ //ngx_http_finalize_request -> ngx_http_finalize_connection ,×¢ÒâºÍngx_http_terminate_requestµÄÇø±ğ
 static void
 ngx_http_terminate_request(ngx_http_request_t *r, ngx_int_t rc)
 {
@@ -2686,8 +2781,8 @@ ngx_http_terminate_handler(ngx_http_request_t *r)
 
 /*
 ngx_http_finalize_connection·½·¨ËäÈ»±Èngx_http_close_request·½·¨¸ßÁËÒ»¸ö²ã´Î£¬µ«HTTPÄ£¿éÒ»°ã»¹ÊÇ²»»áÖ±½Óµ÷ÓÃËü¡£
-ngx_http_finalize_connection·½·¨ÔÚ½áÊøÇëÇóÊ±£¬½â¾öÁËkeepaliveÌØĞÔºÍ×ÓÇëÇóµÄÎÊÌâ
-*/
+ngx_http_finalize_connection·½·¨ÔÚ½áÊøÇëÇóÊ±£¬½â¾öÁËkeepaliveÌØĞÔºÍ×ÓÇëÇóµÄÎÊÌâ   ngx_http_finalize_request -> ngx_http_finalize_connection ,×¢ÒâºÍngx_http_terminate_requestµÄÇø±ğ
+*/ //¸Ãº¯ÊıÓÃÓÚÅĞ¶ÏÊÇÀí½â¹Ø±ÕÁ¬½Ó£¬»¹ÊÇÍ¨¹ı±£»î³¬Ê±¹Ø±ÕÁ¬½Ó£¬»¹ÊÇÑÓ³Ù¹Ø±ÕÁ¬½Ó
 static void
 ngx_http_finalize_connection(ngx_http_request_t *r) //ngx_http_finalize_request->ngx_http_finalize_connection
 {
@@ -2711,7 +2806,7 @@ discard_bodyÎªl£¬Ôò±íÊ¾ÕıÔÚ¶ªÆú°üÌå£¬ÕâÊ±»áÔÙÒ»´Î°ÑÇëÇóµÄread_event_handler³ÉÔ±É
         if (r->discard_body) {
             r->read_event_handler = ngx_http_discarded_request_body_handler;
             //½«¶ÁÊÂ¼şÌí¼Óµ½¶¨Ê±Æ÷ÖĞ£¬ÆäÖĞ³¬Ê±Ê±¼äÊÇlingering_timeoutÅäÖÃÏî¡£
-            ngx_add_timer(r->connection->read, clcf->lingering_timeout);
+            ngx_add_timer(r->connection->read, clcf->lingering_timeout, NGX_FUNC_LINE);
 
             if (r->lingering_time == 0) {
                 r->lingering_time = ngx_time()
@@ -2724,7 +2819,7 @@ discard_bodyÎªl£¬Ôò±íÊ¾ÕıÔÚ¶ªÆú°üÌå£¬ÕâÊ±»áÔÙÒ»´Î°ÑÇëÇóµÄread_event_handler³ÉÔ±É
     }
 
     if (r->reading_body) {
-        r->keepalive = 0; //¶ÁÈ¡¿Í»§¶ËÊı¾İ³ö´íÁË£¬¾ÍÑÓ³Ù¹Ø±ÕÁ¬½Ó
+        r->keepalive = 0; //Ê¹ÓÃÑÓ³Ù¹Ø±ÕÁ¬½Ó¹¦ÄÜ£¬¾Í²»ĞèÒªÔÙÅĞ¶Ïkeepalive¹¦ÄÜ¹ØÁ¬½ÓÁË
         r->lingering_close = 1;
     }
 
@@ -2788,10 +2883,10 @@ ngx_http_set_write_handler(ngx_http_request_t *r)
 
     clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
     if (!wev->delayed) {
-        ngx_add_timer(wev, clcf->send_timeout);
+        ngx_add_timer(wev, clcf->send_timeout, NGX_FUNC_LINE);
     }
 
-    if (ngx_handle_write_event(wev, clcf->send_lowat) != NGX_OK) {
+    if (ngx_handle_write_event(wev, clcf->send_lowat, NGX_FUNC_LINE) != NGX_OK) {
         ngx_http_close_request(r, 0);
         return NGX_ERROR;
     }
@@ -2849,9 +2944,9 @@ ngx_http_writer(ngx_http_request_t *r)
           */
         if (!wev->ready) {
             //½«Ğ´ÊÂ¼şÌí¼Óµ½¶¨Ê±Æ÷ÖĞ£¬ÕâÀïµÄ³¬Ê±Ê±¼ä¾ÍÊÇÅäÖÃÎÄ¼şÖĞµÄsend_timeout²ÎÊı£¬ÓëÏŞËÙ¹¦ÄÜÎŞ¹Ø¡£
-            ngx_add_timer(wev, clcf->send_timeout);
+            ngx_add_timer(wev, clcf->send_timeout, NGX_FUNC_LINE);
 
-            if (ngx_handle_write_event(wev, clcf->send_lowat) != NGX_OK) {
+            if (ngx_handle_write_event(wev, clcf->send_lowat, NGX_FUNC_LINE) != NGX_OK) {
                 ngx_http_close_request(r, 0);
             }
 
@@ -2864,7 +2959,7 @@ ngx_http_writer(ngx_http_request_t *r)
         ngx_log_debug0(NGX_LOG_DEBUG_HTTP, wev->log, 0,
                        "http writer delayed");
 
-        if (ngx_handle_write_event(wev, clcf->send_lowat) != NGX_OK) {
+        if (ngx_handle_write_event(wev, clcf->send_lowat, NGX_FUNC_LINE) != NGX_OK) {
             ngx_http_close_request(r, 0);
         }
 
@@ -2900,10 +2995,10 @@ ngx_http_writer(ngx_http_request_t *r)
 #endif
 
         if (!wev->delayed) {
-            ngx_add_timer(wev, clcf->send_timeout);
+            ngx_add_timer(wev, clcf->send_timeout, NGX_FUNC_LINE);
         }
 
-        if (ngx_handle_write_event(wev, clcf->send_lowat) != NGX_OK) {
+        if (ngx_handle_write_event(wev, clcf->send_lowat, NGX_FUNC_LINE) != NGX_OK) {
             ngx_http_close_request(r, 0);
         }
 
@@ -3065,6 +3160,10 @@ closed:
     ngx_http_finalize_request(r, NGX_HTTP_CLIENT_CLOSED_REQUEST);
 }
 
+/*
+ngx_http_set_keepalive·½·¨½«µ±Ç°Á¬½ÓÉèÎªkeepalive×´Ì¬¡£ËüÊµ¼ÊÉÏ»á°Ñ±íÊ¾ÇëÇóµÄngx_http_request_t½á¹¹ÌåÊÍ·Å£¬È´ÓÖ²»»áµ÷ÓÃ
+ngx_http_close_connection·½·¨¹Ø±ÕÁ¬½Ó£¬Í¬Ê±Ò²ÔÚ¼ì²âkeepaliveÁ¬½ÓÊÇ·ñ³¬Ê±£¬¶ÔÓÚÕâ¸ö·½·¨£¬´Ë´¦²»×öÏêÏ¸½âÊÍ
+*/
 //ngx_http_finalize_request -> ngx_http_finalize_connection ->ngx_http_set_keepalive
 static void
 ngx_http_set_keepalive(ngx_http_request_t *r)
@@ -3088,7 +3187,7 @@ ngx_http_set_keepalive(ngx_http_request_t *r)
     if (r->discard_body) {
         r->write_event_handler = ngx_http_request_empty_handler;
         r->lingering_time = ngx_time() + (time_t) (clcf->lingering_time / 1000);
-        ngx_add_timer(rev, clcf->lingering_timeout);
+        ngx_add_timer(rev, clcf->lingering_timeout, NGX_FUNC_LINE);
         return;
     }
 
@@ -3142,7 +3241,7 @@ ngx_http_set_keepalive(ngx_http_request_t *r)
 
     c->data = hc;
 
-    if (ngx_handle_read_event(rev, 0) != NGX_OK) {
+    if (ngx_handle_read_event(rev, 0, NGX_FUNC_LINE) != NGX_OK) {
         ngx_http_close_connection(c);
         return;
     }
@@ -3170,7 +3269,7 @@ ngx_http_set_keepalive(ngx_http_request_t *r)
         c->destroyed = 0;
 
         if (rev->timer_set) {
-            ngx_del_timer(rev);
+            ngx_del_timer(rev, NGX_FUNC_LINE);
         }
 
         rev->handler = ngx_http_process_request_line;
@@ -3290,7 +3389,7 @@ ngx_http_set_keepalive(ngx_http_request_t *r)
     c->idle = 1;
     ngx_reusable_connection(c, 1);
 
-    ngx_add_timer(rev, clcf->keepalive_timeout); //Æô¶¯±£»î¶¨Ê±Æ÷£¬Ê±¼äÍ¨¹ıkeepalive_timeoutÉèÖÃ
+    ngx_add_timer(rev, clcf->keepalive_timeout, NGX_FUNC_LINE); //Æô¶¯±£»î¶¨Ê±Æ÷£¬Ê±¼äÍ¨¹ıkeepalive_timeoutÉèÖÃ
 
     if (rev->ready) {
         ngx_post_event(rev, &ngx_posted_events);
@@ -3374,7 +3473,7 @@ ngx_http_keepalive_handler(ngx_event_t *rev)
     c->log_error = NGX_ERROR_INFO;
 
     if (n == NGX_AGAIN) {//tcpÁ¬½ÓÕı³££¬²¢ÇÒÃ»ÓĞÊı¾İ
-        if (ngx_handle_read_event(rev, 0) != NGX_OK) {
+        if (ngx_handle_read_event(rev, 0, NGX_FUNC_LINE) != NGX_OK) {
             ngx_http_close_connection(c);
             return;
         }
@@ -3427,7 +3526,7 @@ ngx_http_keepalive_handler(ngx_event_t *rev)
     c->sent = 0;
     c->destroyed = 0;
 
-    ngx_del_timer(rev);
+    ngx_del_timer(rev, NGX_FUNC_LINE);
 
 /*
 ÕâÑùµÄÇëÇóĞĞ³¤¶ÈÊÇ²»¶¨µÄ£¬ËüÓëURI³¤¶ÈÏà¹Ø£¬ÕâÒâÎ¶×ÅÔÚ¶ÁÊÂ¼ş±»´¥·¢Ê±£¬ÄÚºËÌ×½Ó×Ö»º³åÇøµÄ´óĞ¡Î´±Ø×ã¹»½ÓÊÕµ½È«²¿µÄHTTPÇëÇóĞĞ£¬ÓÉ´Ë¿ÉÒÔµÃ³ö½áÂÛ£º
@@ -3470,9 +3569,9 @@ ngx_http_set_lingering_close(ngx_http_request_t *r)
 
     r->lingering_time = ngx_time() + (time_t) (clcf->lingering_time / 1000);
     //ÔÚ×¼±¸¶Ï¿ªÁ¬½ÓµÄÊ±ºò£¬Èç¹ûÉèÖÃÁËlingering_close always£¬ÄÇÃ´ÔÚ´¦ÀíÍê¸÷ÖÖÊÂÇéºó£¬»áÑÓ³Ùlingering_timeoutÕâÃ´¶àÊ±¼äÄÚ£¬Èç¹û¿Í»§¶Ë»¹ÊÇÊı¾İµ½À´£¬·şÎñÆ÷¶Ë¿ÉÒÔ¼ÌĞø¶ÁÈ¡
-    ngx_add_timer(rev, clcf->lingering_timeout); //rev->handler = ngx_http_lingering_close_handler;
+    ngx_add_timer(rev, clcf->lingering_timeout, NGX_FUNC_LINE); //rev->handler = ngx_http_lingering_close_handler;
 
-    if (ngx_handle_read_event(rev, 0) != NGX_OK) {
+    if (ngx_handle_read_event(rev, 0, NGX_FUNC_LINE) != NGX_OK) {
         ngx_http_close_request(r, 0);
         return;
     }
@@ -3539,7 +3638,7 @@ ngx_http_lingering_close_handler(ngx_event_t *rev)
 
     } while (rev->ready);
 
-    if (ngx_handle_read_event(rev, 0) != NGX_OK) {
+    if (ngx_handle_read_event(rev, 0, NGX_FUNC_LINE) != NGX_OK) {
         ngx_http_close_request(r, 0);
         return;
     }
@@ -3554,7 +3653,7 @@ ngx_http_lingering_close_handler(ngx_event_t *rev)
 
     //Èç¹ûÔÚlingering_timeoutÊ±¼äÄÚÓÖÊı¾İ´ïµ½£¬Ôò°ÑÖØĞÂÌí¼Ó¶¨Ê±Æ÷£¬ÆäÊ±¼äÎªtimer£¬Òò´ËÖ»Òªlingering_timeoutÊ±¼äÄÚÓĞÊı¾İ´ïµ½£¬
     //ÔòÁ¬½ÓÔÚlingering_timeoutµÄÊ±ºò¹Ø±Õ
-    ngx_add_timer(rev, timer); //ngx_http_lingering_close_handler
+    ngx_add_timer(rev, timer, NGX_FUNC_LINE); //ngx_http_lingering_close_handler
 }
 
 /*
@@ -3679,10 +3778,10 @@ ngx_http_close_request(ngx_http_request_t *r, ngx_int_t rc)
      ÇëÇó³öÏÖ²»¿ÉÖªµÄÑÏÖØ´íÎó¡£Õâ¾ÍÒªÇóÃ¿¸ö²Ù×÷ÔÚ¡°ÈÏÎª¡±×ÔÉíµÄ¶¯×÷½áÊøÊ±£¬¶¼µÃ×îÖÕµ÷ÓÃµ½ngx_http_close_request·½·¨£¬¸Ã·½·¨»á×Ô¶¯¼ì²éÒıÓÃ
      ¼ÆÊı£¬µ±ÒıÓÃ¼ÆÊıÎª0Ê±²ÅÕæÕıµØÏú»ÙÇëÇó
 
-        ÓÉngx_http_request_t½á¹¹ÌåµÄmain³ÉÔ±ÖĞÈ¡³ö¶ÔÓ¦µÄÔ­Ê¼ÇëÇó£¨µ±È»£¬¿ÉÄÜ¾ÍÊÇÕâ¸öÇëÇó±¾Éí£©£¬ÔÙÈ¡³öcountÒıÓÃ¼ÆÊı²¢¼õl¡£
+         ÓÉngx_http_request_t½á¹¹ÌåµÄmain³ÉÔ±ÖĞÈ¡³ö¶ÔÓ¦µÄÔ­Ê¼ÇëÇó£¨µ±È»£¬¿ÉÄÜ¾ÍÊÇÕâ¸öÇëÇó±¾Éí£©£¬ÔÙÈ¡³öcountÒıÓÃ¼ÆÊı²¢¼õl¡£
 	È»ºó£¬¼ì²écountÒıÓÃ¼ÆÊıÊÇ·ñÒÑ¾­Îª0£¬ÒÔ¼°blocked±êÖ¾Î»ÊÇ·ñÎª0¡£Èç¹ûcountÒÑ¾­ÎªO£¬ÔòÖ¤Ã÷ÇëÇóÃ»ÓĞÆäËû¶¯×÷ÒªÊ¹ÓÃÁË£¬Í¬Ê±blocked±ê
-	Ö¾Î»Ò²Îª0£¬±íÊ¾Ã»ÓĞHTTPÄ£¿é»¹ĞèÒª´¦ÀíÇëÇó£¬ËùÒÔ´ËÊ±ÇëÇó¿ÉÒÔÕæÕıÊÍ·Å£¬ÕâÊ±Ìøµ½µÚ2²½Ö´ĞĞ£»Èç¹ûcountÒıÓÃ¼ÆÊı´ó¸É0£¬»òÕßblocked´ó
-	ÓÚ0£¬ÕâÑù¶¼²»¿ÉÒÔ½áÊøÇëÇó£¬ngx_http_close_reques't·½·¨Ö±½Ó½áÊø¡£
+	Ö¾Î»Ò²Îª0£¬±íÊ¾Ã»ÓĞHTTPÄ£¿é»¹ĞèÒª´¦ÀíÇëÇó£¬ËùÒÔ´ËÊ±ÇëÇó¿ÉÒÔÕæÕıÊÍ·Å£»Èç¹ûcountÒıÓÃ¼ÆÊı´ó¸É0£¬»òÕßblocked´óÓÚ0£¬ÕâÑù¶¼²»¿ÉÒÔ½á
+	ÊøÇëÇó£¬ngx_http_close_reques't·½·¨Ö±½Ó½áÊø¡£
      */
     if (r->count || r->blocked) {
         return;

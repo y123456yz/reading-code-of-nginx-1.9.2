@@ -8,7 +8,7 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_event.h>
-
+#include <ngx_log.h>
 
 #define DEFAULT_CONNECTIONS  512
 
@@ -368,7 +368,7 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
     delta = ngx_current_msec - delta; //(void) ngx_process_events(cycle, timer, flags)ÖÐepollµÈ´ýÊÂ¼þ´¥·¢¹ý³Ì»¨·ÑµÄÊ±¼ä
 
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
-                   "timer delta: %M", delta);
+                   "epoll_wait timer range(delta): %M", delta);
                    
     //À´×ÔÓÚ¿Í»§¶ËµÄacceptÊÂ¼þÁ¢epoll_wait·µ»ØºóÂíÖ´ÐÐ£¬Ö®ÐÐÎªaccpetÊÂ¼þºó£¬Á¢ÂíÊÍ·Ångx_accept_mutexËø£¬ÕâÑùÆäËû½ø³Ì¾Í¿ÉÒÔÁ¢Âí»ñµÃËøaccept¿Í»§¶ËÁ¬½Ó
     ngx_event_process_posted(cycle, &ngx_posted_accept_events); 
@@ -432,13 +432,18 @@ EPOLLINÊÂ¼þ£º
 EPOLLINÊÂ¼þÔòÖ»ÓÐµ±¶Ô¶ËÓÐÊý¾ÝÐ´ÈëÊ±²Å»á´¥·¢£¬ËùÒÔ´¥·¢Ò»´ÎºóÐèÒª²»¶Ï¶ÁÈ¡ËùÓÐÊý¾ÝÖ±µ½¶ÁÍêEAGAINÎªÖ¹¡£·ñÔòÊ£ÏÂµÄÊý¾ÝÖ»ÓÐÔÚÏÂ´Î¶Ô¶ËÓÐÐ´ÈëÊ±²ÅÄÜÒ»ÆðÈ¡³öÀ´ÁË¡£
 */
 ngx_int_t
-ngx_handle_read_event(ngx_event_t *rev, ngx_uint_t flags) //recv¶ÁÈ¡·µ»ØNGX_AGAINºó£¬ÐèÒªÔÙ´Îngx_handle_read_eventÀ´¼ì²â¸ÃfdÔÚepollÉÏÃæµÄ¶ÁÊÂ¼þ
+ngx_handle_read_event(ngx_event_t *rev, ngx_uint_t flags, const char* func, int line) //recv¶ÁÈ¡·µ»ØNGX_AGAINºó£¬ÐèÒªÔÙ´Îngx_handle_read_eventÀ´¼ì²â¸ÃfdÔÚepollÉÏÃæµÄ¶ÁÊÂ¼þ
 {
+    char tmpbuf[128];
+    
     if (ngx_event_flags & NGX_USE_CLEAR_EVENT) { //epoll±ßÑØ´¥·¢etÄ£Ê½
 
         /* kqueue, epoll */
 
         if (!rev->active && !rev->ready) {
+            snprintf(tmpbuf, sizeof(tmpbuf), "<%25s, %5d> epoll NGX_USE_CLEAR_EVENT(et) read add", func, line);
+            ngx_log_debug0(NGX_LOG_DEBUG_EVENT, rev->log, 0, tmpbuf);
+                       
             if (ngx_add_event(rev, NGX_READ_EVENT, NGX_CLEAR_EVENT)
                 == NGX_ERROR)
             {
@@ -453,6 +458,10 @@ ngx_handle_read_event(ngx_event_t *rev, ngx_uint_t flags) //recv¶ÁÈ¡·µ»ØNGX_AGAI
         /* select, poll, /dev/poll */
 
         if (!rev->active && !rev->ready) {
+        
+            snprintf(tmpbuf, sizeof(tmpbuf), "<%25s, %5d> epoll NGX_USE_LEVEL_EVENT read add", func, line);
+            ngx_log_debug0(NGX_LOG_DEBUG_EVENT, rev->log, 0, tmpbuf);
+            
             if (ngx_add_event(rev, NGX_READ_EVENT, NGX_LEVEL_EVENT)
                 == NGX_ERROR)
             {
@@ -463,6 +472,10 @@ ngx_handle_read_event(ngx_event_t *rev, ngx_uint_t flags) //recv¶ÁÈ¡·µ»ØNGX_AGAI
         }
 
         if (rev->active && (rev->ready || (flags & NGX_CLOSE_EVENT))) {
+        
+            snprintf(tmpbuf, sizeof(tmpbuf), "<%25s, %5d> epoll NGX_USE_LEVEL_EVENT read del", func, line);
+            ngx_log_debug0(NGX_LOG_DEBUG_EVENT, rev->log, 0, tmpbuf);
+            
             if (ngx_del_event(rev, NGX_READ_EVENT, NGX_LEVEL_EVENT | flags)
                 == NGX_ERROR)
             {
@@ -523,10 +536,11 @@ EPOLLINÊÂ¼þÔòÖ»ÓÐµ±¶Ô¶ËÓÐÊý¾ÝÐ´ÈëÊ±²Å»á´¥·¢£¬ËùÒÔ´¥·¢Ò»´ÎºóÐèÒª²»¶Ï¶ÁÈ¡ËùÓÐÊý¾ÝÖ
 
 */ ////write¶ÁÈ¡·µ»ØNGX_AGAINºó£¬ÐèÒªÔÙ´Îngx_handle_write_eventÀ´¼ì²â¸ÃfdÔÚepollÉÏÃæµÄ¶ÁÊÂ¼þ
 ngx_int_t
-ngx_handle_write_event(ngx_event_t *wev, size_t lowat)  
+ngx_handle_write_event(ngx_event_t *wev, size_t lowat, const char* func, int line) 
 {
     ngx_connection_t  *c;
-
+    char tmpbuf[256];
+    
     if (lowat) {
         c = wev->data;
 
@@ -540,6 +554,9 @@ ngx_handle_write_event(ngx_event_t *wev, size_t lowat)
         /* kqueue, epoll */
 
         if (!wev->active && !wev->ready) {
+            snprintf(tmpbuf, sizeof(tmpbuf), "<%25s, %5d> epoll NGX_USE_CLEAR_EVENT write add", func, line);
+            ngx_log_debug0(NGX_LOG_DEBUG_EVENT, wev->log, 0, tmpbuf);
+            
             if (ngx_add_event(wev, NGX_WRITE_EVENT,
                               NGX_CLEAR_EVENT | (lowat ? NGX_LOWAT_EVENT : 0))
                 == NGX_ERROR)
@@ -555,6 +572,10 @@ ngx_handle_write_event(ngx_event_t *wev, size_t lowat)
         /* select, poll, /dev/poll */
 
         if (!wev->active && !wev->ready) {
+
+            snprintf(tmpbuf, sizeof(tmpbuf), "<%25s, %5d> epoll NGX_USE_LEVEL_EVENT write add", func, line);
+            ngx_log_debug0(NGX_LOG_DEBUG_EVENT, wev->log, 0, tmpbuf);
+            
             if (ngx_add_event(wev, NGX_WRITE_EVENT, NGX_LEVEL_EVENT)
                 == NGX_ERROR)
             {
@@ -565,6 +586,10 @@ ngx_handle_write_event(ngx_event_t *wev, size_t lowat)
         }
 
         if (wev->active && wev->ready) {
+
+            snprintf(tmpbuf, sizeof(tmpbuf), "<%25s, %5d> epoll NGX_USE_LEVEL_EVENT write del", func, line);
+            ngx_log_debug0(NGX_LOG_DEBUG_EVENT, wev->log, 0, tmpbuf);
+            
             if (ngx_del_event(wev, NGX_WRITE_EVENT, NGX_LEVEL_EVENT)
                 == NGX_ERROR)
             {

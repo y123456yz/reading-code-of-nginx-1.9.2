@@ -252,9 +252,9 @@ ngx_mail_smtp_greeting(ngx_mail_session_t *s, ngx_connection_t *c)
     sscf = ngx_mail_get_module_srv_conf(s, ngx_mail_smtp_module);
 
     timeout = sscf->greeting_delay ? sscf->greeting_delay : cscf->timeout;
-    ngx_add_timer(c->read, timeout);
+    ngx_add_timer(c->read, timeout, NGX_FUNC_LINE);
 
-    if (ngx_handle_read_event(c->read, 0) != NGX_OK) {
+    if (ngx_handle_read_event(c->read, 0, NGX_FUNC_LINE) != NGX_OK) {
         ngx_mail_close_connection(c);
     }
 
@@ -294,9 +294,9 @@ ngx_mail_smtp_invalid_pipelining(ngx_event_t *rev)
 
         c->read->handler = ngx_mail_smtp_init_protocol;
 
-        ngx_add_timer(c->read, cscf->timeout);
+        ngx_add_timer(c->read, cscf->timeout, NGX_FUNC_LINE);
 
-        if (ngx_handle_read_event(c->read, 0) != NGX_OK) {
+        if (ngx_handle_read_event(c->read, 0, NGX_FUNC_LINE) != NGX_OK) {
             ngx_mail_close_connection(c);
             return;
         }
@@ -809,7 +809,7 @@ ngx_mail_smtp_discard_command(ngx_mail_session_t *s, ngx_connection_t *c,
     }
 
     if (n == NGX_AGAIN) {
-        if (ngx_handle_read_event(c->read, 0) != NGX_OK) {
+        if (ngx_handle_read_event(c->read, 0, NGX_FUNC_LINE) != NGX_OK) {
             ngx_mail_session_internal_server_error(s);
             return NGX_ERROR;
         }

@@ -233,7 +233,7 @@ ngx_mail_ssl_init_connection(ngx_ssl_t *ssl, ngx_connection_t *c)
 
         cscf = ngx_mail_get_module_srv_conf(s, ngx_mail_core_module);
 
-        ngx_add_timer(c->read, cscf->timeout);
+        ngx_add_timer(c->read, cscf->timeout, NGX_FUNC_LINE);
 
         c->ssl->handler = ngx_mail_ssl_handshake_handler;
 
@@ -631,7 +631,7 @@ ngx_mail_send(ngx_event_t *wev)
     }
 
     if (s->out.len == 0) {
-        if (ngx_handle_write_event(c->write, 0) != NGX_OK) {
+        if (ngx_handle_write_event(c->write, 0, NGX_FUNC_LINE) != NGX_OK) {
             ngx_mail_close_connection(c);
         }
 
@@ -649,7 +649,7 @@ ngx_mail_send(ngx_event_t *wev)
         }
 
         if (wev->timer_set) {
-            ngx_del_timer(wev);
+            ngx_del_timer(wev, NGX_FUNC_LINE);
         }
 
         if (s->quit) {
@@ -675,9 +675,9 @@ again:
 
     cscf = ngx_mail_get_module_srv_conf(s, ngx_mail_core_module);
 
-    ngx_add_timer(c->write, cscf->timeout);
+    ngx_add_timer(c->write, cscf->timeout, NGX_FUNC_LINE);
 
-    if (ngx_handle_write_event(c->write, 0) != NGX_OK) {
+    if (ngx_handle_write_event(c->write, 0, NGX_FUNC_LINE) != NGX_OK) {
         ngx_mail_close_connection(c);
         return;
     }
@@ -704,7 +704,7 @@ ngx_mail_read_command(ngx_mail_session_t *s, ngx_connection_t *c)
     }
 
     if (n == NGX_AGAIN) {
-        if (ngx_handle_read_event(c->read, 0) != NGX_OK) {
+        if (ngx_handle_read_event(c->read, 0, NGX_FUNC_LINE) != NGX_OK) {
             ngx_mail_session_internal_server_error(s);
             return NGX_ERROR;
         }
@@ -761,7 +761,7 @@ ngx_mail_auth(ngx_mail_session_t *s, ngx_connection_t *c)
     s->state = 0;
 
     if (c->read->timer_set) {
-        ngx_del_timer(c->read);
+        ngx_del_timer(c->read, NGX_FUNC_LINE);
     }
 
     s->login_attempt++;
