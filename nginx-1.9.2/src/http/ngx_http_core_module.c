@@ -3878,7 +3878,7 @@ ngx_http_internal_redirect(ngx_http_request_t *r,
     return NGX_DONE;
 }
 
-
+//@name命名重定向
 ngx_int_t
 ngx_http_named_location(ngx_http_request_t *r, ngx_str_t *name)
 {
@@ -3956,7 +3956,7 @@ ngx_http_named_location(ngx_http_request_t *r, ngx_str_t *name)
 
 //poll的清理用ngx_pool_cleanup_add, ngx_http_request_t的清理用ngx_http_cleanup_add
 ngx_http_cleanup_t *
-ngx_http_cleanup_add(ngx_http_request_t *r, size_t size)
+ngx_http_cleanup_add(ngx_http_request_t *r, size_t size) //申请一个ngx_http_cleanup_t添加到r->cleanup头部 
 {
     ngx_http_cleanup_t  *cln;
 
@@ -6985,7 +6985,8 @@ ngx_http_core_resolver(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     }
 
     value = cf->args->elts;
-
+    
+    // 初始化，第二个参数是我们设置的域名解析服务器的IP地址
     clcf->resolver = ngx_resolver_create(cf, &value[1], cf->args->nelts - 1);
     if (clcf->resolver == NULL) {
         return NGX_CONF_ERROR;

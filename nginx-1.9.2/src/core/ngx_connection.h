@@ -241,13 +241,13 @@ struct ngx_connection_s {  //cycle->read_events和cycle->write_events这两个数组存
     void               *data;//listen过程中，指向原始请求ngx_http_connection_t(ngx_http_init_connection)  
 //如果是文件异步i/o中的ngx_event_aio_t，则它来自ngx_event_aio_t->ngx_event_t(只有读),如果是网络事件中的event,则为ngx_connection_s中的event(包括读和写)
     ngx_event_t        *read;//连接对应的读事件   赋值在ngx_event_process_init
-    ngx_event_t        *write; //连接对应的写事件  赋值在ngx_event_process_init
+    ngx_event_t        *write; //连接对应的写事件  赋值在ngx_event_process_init  一般在ngx_handle_write_event中添加些事件
 
     ngx_socket_t        fd;//套接字句柄
 
     //服务端通过ngx_http_wait_request_handler读取数据
-    ngx_recv_pt         recv; //直接接收网络字符流的方法  见ngx_event_accept   赋值为ngx_os_io
-    ngx_send_pt         send; //直接发送网络字符流的方法  见ngx_event_accept   赋值为ngx_os_io
+    ngx_recv_pt         recv; //直接接收网络字符流的方法  见ngx_event_accept或者ngx_http_upstream_connect   赋值为ngx_os_io  在接收到客户端连接或者向上游服务器发起连接后赋值
+    ngx_send_pt         send; //直接发送网络字符流的方法  见ngx_event_accept或者ngx_http_upstream_connect   赋值为ngx_os_io  在接收到客户端连接或者向上游服务器发起连接后赋值
 
     //以ngx_chain_t链表为参数来接收网络字符流的方法  ngx_recv_chain
     ngx_recv_chain_pt   recv_chain;  //赋值见ngx_event_accept     ngx_event_pipe_read_upstream中执行
@@ -371,7 +371,7 @@ struct ngx_connection_s {  //cycle->read_events和cycle->write_events这两个数组存
     NGX_TCP_NODELAY_DISABLED
     )  ngx_connection_tcp_nodelay_e;
      */
-    unsigned            tcp_nodelay:2;   /* ngx_connection_tcp_nodelay_e */
+    unsigned            tcp_nodelay:2;   /* ngx_connection_tcp_nodelay_e */ //域套接字默认是disable的,
 
     /*
     标志位，表示如何使用TCP的nopush特性。它的取值范围是下面这个枚举类型ngx_connection_tcp_nopush_e：
@@ -380,7 +380,7 @@ struct ngx_connection_s {  //cycle->read_events和cycle->write_events这两个数组存
     NGX_TCP_NOPUSH_SET,
     NGX_TCP_NOPUSH_DISABLED
     )  ngx_connection_tcp_nopush_e
-     */
+     */ //域套接字默认是disable的,
     unsigned            tcp_nopush:2;    /* ngx_connection_tcp_nopush_e */
 
     unsigned            need_last_buf:1;

@@ -147,6 +147,10 @@ ngx_thread_pool_init(ngx_thread_pool_t *tp, ngx_log_t *log, ngx_pool_t *pool)
 #endif
 
     for (n = 0; n < tp->threads; n++) {
+        /*
+        线程原语：pthread_create()，pthread_self()，pthread_exit(),pthread_join(),pthread_cancel(),pthread_detach( .
+        好的线程理解大全参考(有图解例子，很好):http://blog.csdn.net/tototuzuoquan/article/details/39553427
+         */
         err = pthread_create(&tid, &attr, ngx_thread_pool_cycle, tp);
         if (err) {
             ngx_log_error(NGX_LOG_ALERT, log, err,

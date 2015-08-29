@@ -52,7 +52,7 @@ ngx_alloc_chain_link(ngx_pool_t *pool)
     cl = pool->chain;
 
     if (cl) {
-        pool->chain = cl->next;
+        pool->chain = cl->next; //被释放的ngx_chain_t是通过ngx_free_chain添加到poll->chain上的
         return cl;
     }
 
@@ -269,14 +269,14 @@ ngx_chain_coalesce_file(ngx_chain_t **in, off_t limit)
     return total;
 }
 
-
+//计算本次掉用ngx_writev发送出去的send字节在in链表中所有数据的那个位置
 ngx_chain_t *
 ngx_chain_update_sent(ngx_chain_t *in, off_t sent)
 {
     off_t  size;
 
     for ( /* void */ ; in; in = in->next) {
-
+        //又遍历一次这个链接，为了找到那块只成功发送了一部分数据的内存块，从它继续开始发送。
         if (ngx_buf_special(in->buf)) {
             continue;
         }
@@ -287,11 +287,11 @@ ngx_chain_update_sent(ngx_chain_t *in, off_t sent)
 
         size = ngx_buf_size(in->buf);
 
-        if (sent >= size) {
-            sent -= size;
+        if (sent >= size) { //说明该in->buf数据已经全部发送出去
+            sent -= size;//标记后面还有多少数据是我发送过的
 
-            if (ngx_buf_in_memory(in->buf)) {
-                in->buf->pos = in->buf->last;
+            if (ngx_buf_in_memory(in->buf)) {//说明该in->buf数据已经全部发送出去
+                in->buf->pos = in->buf->last;//清空这段内存。继续找下一个
             }
 
             if (in->buf->in_file) {
@@ -301,8 +301,8 @@ ngx_chain_update_sent(ngx_chain_t *in, off_t sent)
             continue;
         }
 
-        if (ngx_buf_in_memory(in->buf)) {
-            in->buf->pos += (size_t) sent;
+        if (ngx_buf_in_memory(in->buf)) { //说明发送出去的最后一字节数据的下一字节数据在in->buf->pos+send位置，下次从这个位置开始发送
+            in->buf->pos += (size_t) sent;//这块内存没有完全发送完毕，悲剧，下回得从这里开始。
         }
 
         if (in->buf->in_file) {
@@ -312,5 +312,5 @@ ngx_chain_update_sent(ngx_chain_t *in, off_t sent)
         break;
     }
 
-    return in;
+    return in; //下次从这个in开始发送in->buf->pos
 }

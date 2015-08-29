@@ -55,6 +55,7 @@
 */
 ngx_rbtree_t              ngx_event_timer_rbtree;
 static ngx_rbtree_node_t  ngx_event_timer_sentinel;
+//哨兵节点是所有最下层的叶子节点都指向一个NULL空节点，图形化参考:http://blog.csdn.net/xzongyuan/article/details/22389185
 
 /*
  * the event timer rbtree may contain the duplicate keys, however,
@@ -134,7 +135,7 @@ ngx_event_expire_timers(void)
 
         ev->timedout = 1;
 
-        ev->handler(ev);
+        ev->handler(ev); //超时的时候出发读写事件回调函数，从而在里面判断timedout标志位
     }
 }
 

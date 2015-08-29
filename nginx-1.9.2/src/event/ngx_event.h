@@ -35,7 +35,7 @@ struct ngx_event_s {
     void            *data;  //赋值见ngx_get_connection
 
     //标志位，为1时表示事件是可写的。通常情况下，它表示对应的TCP连接目前状态是可写的，也就是连接处于可以发送网络包的状态
-    unsigned         write:1; //见ngx_get_connection，默认为1  没看到有置0的地方
+    unsigned         write:1; //见ngx_get_connection，可写事件ev默认为1  读ev事件应该默认还是0
 
     //标志位，为1时表示为此事件可以建立新的连接。通常情况下，在ngx_cycle_t中的listening动态数组中，每一个监听对象ngx_listening_t对
     //应的读事件中的accept标志位才会是l
@@ -72,7 +72,9 @@ struct ngx_event_s {
     标志位，为1时表示当前事件是活跃的，为0时表示事件是不活跃的。这个状态对应着事件驱动模块处理方式的不同。例如，在添加事件、
     删除事件和处理事件时，active标志位的不同都会对应着不同的处理方式。在使用事件时，一般不会直接改变active标志位
      */  //ngx_epoll_add_event中也会置1  在调用该函数后，该值一直为1，除非调用ngx_epoll_del_event
-    unsigned         active:1; //标记是否已经添加到事件驱动中，避免重复添加  在server端accept成功后，或者在client端connect的时候把active置1，见ngx_epoll_add_connection
+    unsigned         active:1; //标记是否已经添加到事件驱动中，避免重复添加  在server端accept成功后，
+    //或者在client端connect的时候把active置1，见ngx_epoll_add_connection。第一次添加epoll_ctl为EPOLL_CTL_ADD,如果再次添加发
+    //现active为1,则epoll_ctl为EPOLL_CTL_MOD
 
     /*
     标志位，为1时表示禁用事件，仅在kqueue或者rtsig事件驱动模块中有效，而对于epoll事件驱动模块则无意义，这里不再详述
@@ -107,7 +109,7 @@ struct ngx_event_s {
       如果在post_accept_timeout这么长事件内没有数据到来则超时，开始处理关闭TCP流程*/
     unsigned         timedout:1; //定时器超时标记，见ngx_event_expire_timers
     //标志位，为1时表示这个事件存在于定时器中
-    unsigned         timer_set:1; //ngx_event_add_timer中置1   ngx_event_expire_timers置0
+    unsigned         timer_set:1; //ngx_event_add_timer ngx_add_timer中置1   ngx_event_expire_timers置0
 
     //标志位，delayed为1时表示需要延迟处理这个事件，它仅用于限速功能
     unsigned         delayed:1; //限速见ngx_http_write_filter
@@ -178,8 +180,10 @@ struct ngx_event_s {
      赋值为ngx_http_process_request_line     ngx_event_process_init中初始化为ngx_event_accept  如果是文件异步i/o，赋值为ngx_epoll_eventfd_handler
      //当accept客户端连接后ngx_http_init_connection中赋值为ngx_http_wait_request_handler来读取客户端数据  
      在解析完客户端发送来的请求的请求行和头部行后，设置handler为ngx_http_request_handler
-     */
-    ngx_event_handler_pt  handler; 
+     */ //一般与客户端的数据读写是 ngx_http_request_handler;  与后端服务器读写为ngx_http_upstream_handler(如fastcgi proxy memcache gwgi等)
+    
+    //监听sock:ngx_event_accept，ngx_http_request_handler,ngx_http_upstream_handler
+    ngx_event_handler_pt  handler; //由epoll读写事件在ngx_epoll_process_events触发
    
 
 
@@ -504,7 +508,7 @@ ngx_event_actions = ngx_select_module_ctx.actions;
 #define ngx_process_events   ngx_event_actions.process_events //ngx_process_events_and_timers中执行
 #define ngx_done_events      ngx_event_actions.done
 
-#define ngx_add_event        ngx_event_actions.add // 
+#define ngx_add_event        ngx_event_actions.add // ngx_epoll_add_event会调用该函数
 #define ngx_del_event        ngx_event_actions.del
 
 #define ngx_add_conn         ngx_event_actions.add_conn //connect和accept返回的时候用到  已经channel读的时候用

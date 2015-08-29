@@ -269,10 +269,10 @@ $server_protocol 表示服务器向客户端发送响应的协议，如HTTP/1.1或HTTP/1.0
 /*
 核心模块ngx_http_core_module提供的变量使用ngx_http_core_variables 描述，由preconfiguration回调函数 ngx_http_variables_add_core_vars进行定义：
 */ //http://ialloc.org/posts/2013/10/20/ngx-notes-http-variables/
-static ngx_http_variable_t  ngx_http_core_variables[] = { //参考<输入剖析nginx-变量>
+static ngx_http_variable_t  ngx_http_core_variables[] = { //参考<输入剖析nginx-变量>  下面这些变量的值的来源是ngx_http_headers_in中的handler函数
 
-    { ngx_string("http_host"), NULL, ngx_http_variable_header,
-      offsetof(ngx_http_request_t, headers_in.host), 0, 0 },
+    { ngx_string("http_host"), NULL, ngx_http_variable_header, //ngx_http_get_variable中执行ngx_http_variable_header，从而从headers_in.host获取值
+      offsetof(ngx_http_request_t, headers_in.host), 0, 0 }, 
 
     { ngx_string("http_user_agent"), NULL, ngx_http_variable_header,
       offsetof(ngx_http_request_t, headers_in.user_agent), 0, 0 },

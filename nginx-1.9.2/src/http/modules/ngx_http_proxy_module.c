@@ -1005,7 +1005,7 @@ static ngx_keyval_t  ngx_http_proxy_headers[] = {
     { ngx_null_string, ngx_null_string }
 };
 
-
+//最终添加到了ngx_http_upstream_conf_t->hide_headers_hash表中 不需要发送给客户端
 static ngx_str_t  ngx_http_proxy_hide_headers[] = {
     ngx_string("Date"),
     ngx_string("Server"),

@@ -136,14 +136,20 @@ ngx_unix_recv(ngx_connection_t *c, u_char *buf, size_t size)
     rev = c->read;
 
     do {
+        /*
+            针对非阻塞I/O执行的系统调用则总是立即返回，而不管事件足否已经发生。如果事件没有眭即发生，这些系统调用就
+        返回—1．和出错的情况一样。此时我们必须根据errno来区分这两种情况。对accept、send和recv而言，事件未发牛时errno
+        通常被设置成EAGAIN（意为“再来一次”）或者EWOULDBLOCK（意为“期待阻塞”）：对conncct而言，errno则被
+        设置成EINPROGRESS（意为“在处理中"）。
+          */
         //n = recv(c->fd, buf, size, 0); yang test
-        n = recv(c->fd, buf, size, 0);
+        n = recv(c->fd, buf, size, 0);//表示TCP错误，见ngx_http_read_request_header   recv返回0表示对方已经关闭连接
 
         ngx_log_debug3(NGX_LOG_DEBUG_EVENT, c->log, 0,
                            "recv: fd:%d read-size:%d of %d", c->fd, n, size);
 
-        //读取成功，直接返回
-        if (n == 0) { //表示TCP错误，见ngx_http_read_request_header
+        //读取成功，直接返回   
+        if (n == 0) { //表示TCP错误，见ngx_http_read_request_header   recv返回0表示对方已经关闭连接
             rev->ready = 0;//数据读取完毕ready置0
             rev->eof = 1;
             return n;

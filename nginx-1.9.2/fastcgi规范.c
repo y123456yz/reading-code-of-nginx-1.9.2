@@ -764,7 +764,7 @@ typedef struct {
 fastcgi_param 详解 .
 分类： nginx 2012-12-28 11:18 14537人阅读 评论(0) 收藏 举报 
 [php] view plaincopyprint?
-01.fastcgi_param  SCRIPT_FILENAME    $document_root$fastcgi_script_name;#脚本文件请求的路径  
+01.fastcgi_param  SCRIPT_FILENAME    $document_root$fastcgi_script_name;#脚本文件请求的路径   请求获取的后端PHP服务器的文件目录，通过文件目录+uri获取指定文件
 02.fastcgi_param  QUERY_STRING       $query_string; #请求的参数;如?app=123  
 03.fastcgi_param  REQUEST_METHOD     $request_method; #请求的动作(GET,POST)  
 04.fastcgi_param  CONTENT_TYPE       $content_type; #请求头中的Content-Type字段  
@@ -952,6 +952,14 @@ HTTP_FCGI_PARAMS_MAX
 
 
 
+您可能会说基于HTTP接口的开发效率不错。是的，基于HTTP协议的开发效率很高，而且它适合各种网络环境。但是由于HTTP协议需要发送大量的头部，
+所以导致性能不是很理想。那么有没有一种比HTTP协议性能好并且比基于TCP接口的开发效率高的解决方案呢？答案是肯定的，就是本文接下来要介绍的基于FastCGI的接口开发。
+
+
+那么CGI程序的性能问题在哪呢？PHP解析器每次都会解析php.ini文件，初始化执行环境。标准的CGI对每个请求都会执行这些步骤，所以处理每个时间的时间会比较长。
+那么FastCGI是怎么做的呢？首先，FastCGI会先启一个master，解析配置文件，初始化执行环境，然后再启动多个worker。当请求过来时，master会传递给一个worker，
+然后立即可以接受下一个请求。这样就避免了重复的劳动，效率自然是高。而且当worker不够用时，master可以根据配置预先启动几个worker等着；当然空闲worker太多时，
+也会停掉一些，这样就提高了性能，也节约了资源。这就是FastCGI的对进程的管理。
 
 
 
@@ -967,4 +975,16 @@ Fastcgi官方文档：http://www.fastcgi.com/devkit/doc/fcgi-spec.html
 
 fastcgi中文详解:http://fuzhong1983.blog.163.com/blog/static/1684705201051002951763/
 http://www.cppblog.com/woaidongmao/archive/2011/06/21/149097.html
+
+http://my.oschina.net/goal/blog/196599  这里有图解说明，不错
+
+
+nginx和php安装调试:http://www.cnblogs.com/jsckdao/archive/2011/05/05/2038265.html  
+http://www.nginx.cn/231.html      nginx php-fpm安装配置
+http://www.cnblogs.com/jsckdao/archive/2011/05/05/2038265.html nginx+php的配置 
+
+php-cgi连接数多了后挂死原因:http://bbs.csdn.net/topics/380138192  修改源码php-5.3.8\sapi\cgi\cgi_main.c： int max_requests = 500;
+改大点，或者直接修改环境变量PHP_FCGI_MAX_REQUESTS
+
+
 */

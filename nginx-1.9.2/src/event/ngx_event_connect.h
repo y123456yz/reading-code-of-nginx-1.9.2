@@ -51,18 +51,19 @@ struct ngx_peer_connection_s {
     ngx_str_t                       *name; //远端服务器的名称 
 
     //表示在连接一个远端服务器时，当前连接出现异常失败后可以重试的次数，也就是允许的最多失败次数
-    ngx_uint_t                       tries;
-    ngx_msec_t                       start_time;
+    ngx_uint_t                       tries; //赋值见ngx_http_upstream_init_xxx_peer(例如ngx_http_upstream_init_round_robin_peer)
+    ngx_msec_t                       start_time;//向后端服务器发起连接的时间ngx_http_upstream_init_request
 
+    //ngx_event_connect_peer中执行
     //获取连接的方法，如果使用长连接构成的连接池，那么必须要实现get方法
-    ngx_event_get_peer_pt            get;
+    ngx_event_get_peer_pt            get; //赋值见ngx_http_upstream_init_xxx_peer(例如ngx_http_upstream_init_round_robin_peer)
     ngx_event_free_peer_pt           free; //与get方法对应的释放连接的方法
 
     /*
      这个data指针仅用于和上面的get、free方法配合传递参数，它的具体含义与实现get方法、free
      方法的模块相关，可参照ngx_event_get_peer_pt和ngx_event_free_pee r_pt方法原型中的data参数
      */
-    void                            *data;
+    void                            *data; //例如rr算法,对应结构ngx_http_upstream_rr_peer_data_t，创建空间在ngx_http_upstream_create_round_robin_peer
 
 #if (NGX_SSL)
     ngx_event_set_peer_session_pt    set_session;

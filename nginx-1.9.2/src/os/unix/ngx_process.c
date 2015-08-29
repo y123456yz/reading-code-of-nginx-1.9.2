@@ -29,7 +29,7 @@ char           **ngx_os_argv; //指向nginx运行时候所带的参数，见ngx_save_argv
 
 //当前操作的进程在ngx_processes数组中的下标
 ngx_int_t        ngx_process_slot;
-ngx_socket_t     ngx_channel;  //存储所有子进程的数组  ngx_spawn_process中赋值
+ngx_socket_t     ngx_channel;  //存储所有子进程的数组  ngx_spawn_process中赋值  ngx_channel = ngx_processes[s].channel[1]
 
 //ngx_processes数组中有意义的ngx_process_t元素中最大的下标
 ngx_int_t        ngx_last_process;
@@ -873,15 +873,15 @@ ngx_signal_handler(int signo)
             action = ", changing binary";
             break;
 
-        case SIGALRM: //子进程终止, 这时候内核同时向父进程发送个sigchld信号.等待父进程waitpid回收，避免僵死进程
-            ngx_sigalrm = 1;
+        case SIGALRM: 
+            ngx_sigalrm = 1; //子进程会重新设置定时器信号，见ngx_timer_signal_handler
             break;
 
         case SIGIO:
             ngx_sigio = 1;
             break;
 
-        case SIGCHLD:
+        case SIGCHLD: //子进程终止, 这时候内核同时向父进程发送个sigchld信号.等待父进程waitpid回收，避免僵死进程
             ngx_reap = 1;
             break;
         }
@@ -1082,7 +1082,7 @@ ngx_unlock_mutexes(ngx_pid_t pid)
 
 
 void
-ngx_debug_point(void)
+ngx_debug_point(void)//让自己停止，通知父进程
 {
     ngx_core_conf_t  *ccf;
 

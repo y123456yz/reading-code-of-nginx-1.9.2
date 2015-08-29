@@ -444,5 +444,12 @@ find $storepath1   -execdir touch  -d "$date1" {} \;
 
 #define NGX_CONFIGURE " --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads"
 
+
+
+别人开源的nginx模块，有:
+https://github.com/cfsego/nginx-limit-upstream
+
+nginx日志切割和记录cookie .http://blog.csdn.net/chlaws/article/details/8468080
+
 */
 

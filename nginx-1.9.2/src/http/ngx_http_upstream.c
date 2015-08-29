@@ -174,10 +174,10 @@ static ngx_int_t ngx_http_upstream_ssl_name(ngx_http_request_t *r,
 
 //Í¨¹ıngx_http_upstream_init_main_conf°ÑËùÓĞngx_http_upstream_headers_in³ÉÔ±×öhashÔËËã£¬·ÅÈëngx_http_upstream_main_conf_tµÄheaders_in_hashÖĞ
 //ÕâĞ©³ÉÔ±×îÖÕ»á¸³Öµ¸øngx_http_request_t->upstream->headers_in
-ngx_http_upstream_header_t  ngx_http_upstream_headers_in[] = {
+ngx_http_upstream_header_t  ngx_http_upstream_headers_in[] = { //ºó¶ËÓ¦´ğµÄÍ·²¿ĞĞÆ¥ÅäÕâÀïÃæµÄ×Ö¶Îºó£¬×îÖÕÓÉngx_http_upstream_headers_in_tÀïÃæµÄ³ÉÔ±Ö¸Ïò
 
     { ngx_string("Status"),
-                 ngx_http_upstream_process_header_line,
+                 ngx_http_upstream_process_header_line, //Í¨¹ı¸Ãhandlerº¯Êı°Ñ´Óºó¶Ë·şÎñÆ÷½âÎöµ½µÄÍ·²¿ĞĞ×Ö¶Î¸³Öµ¸øngx_http_upstream_headers_in_t->status
                  offsetof(ngx_http_upstream_headers_in_t, status),
                  ngx_http_upstream_copy_header_line, 0, 0 },
 
@@ -218,7 +218,7 @@ ngx_http_upstream_header_t  ngx_http_upstream_headers_in[] = {
                  ngx_http_upstream_copy_header_line, 0, 0 },
 
 //Ö»ÓĞÔÚÅäÖÃÁËlocation /uri {mytest;}ºó£¬HTTP¿ò¼Ü²Å»áÔÚÄ³¸öÇëÇóÆ¥ÅäÁË/uriºóµ÷ÓÃËü´¦ÀíÇëÇó
-    { ngx_string("Location"),
+    { ngx_string("Location"),  //ºó¶ËÓ¦´ğÕâ¸ö£¬±íÊ¾ĞèÒªÖØ¶¨Ïò
                  ngx_http_upstream_process_header_line,
                  offsetof(ngx_http_upstream_headers_in_t, location),
                  ngx_http_upstream_rewrite_location, 0, 0 },
@@ -380,9 +380,22 @@ upstream backend {
   server backend1.example.com weight=5;
   server 127.0.0.1:8080       max_fails=3  fail_timeout=30s;
   server unix:/tmp/backend3;
+
+  server backup1.example.com:8080 backup; 
 }ÇëÇó½«°´ÕÕÂÖÑ¯µÄ·½Ê½·Ö·¢µ½ºó¶Ë·şÎñÆ÷£¬µ«Í¬Ê±Ò²»á¿¼ÂÇÈ¨ÖØ¡£
 ÔÚÉÏÃæµÄÀı×ÓÖĞÈç¹ûÃ¿´Î·¢Éú7¸öÇëÇó£¬5¸öÇëÇó½«±»·¢ËÍµ½backend1.example.com£¬ÆäËûÁ½Ì¨½«·Ö±ğµÃµ½Ò»¸öÇëÇó£¬Èç¹ûÓĞÒ»Ì¨·şÎñÆ÷²»¿ÉÓÃ£¬ÄÇÃ´
 ÇëÇó½«±»×ª·¢µ½ÏÂÒ»Ì¨·şÎñÆ÷£¬Ö±µ½ËùÓĞµÄ·şÎñÆ÷¼ì²é¶¼Í¨¹ı¡£Èç¹ûËùÓĞµÄ·şÎñÆ÷¶¼ÎŞ·¨Í¨¹ı¼ì²é£¬ÄÇÃ´½«·µ»Ø¸ø¿Í»§¶Ë×îºóÒ»Ì¨¹¤×÷µÄ·şÎñÆ÷²úÉúµÄ½á¹û¡£
+
+max_fails=number
+
+  ÉèÖÃÔÚfail_timeout²ÎÊıÉèÖÃµÄÊ±¼äÄÚ×î´óÊ§°Ü´ÎÊı£¬Èç¹ûÔÚÕâ¸öÊ±¼äÄÚ£¬ËùÓĞÕë¶Ô¸Ã·şÎñÆ÷µÄÇëÇó
+  ¶¼Ê§°ÜÁË£¬ÄÇÃ´ÈÏÎª¸Ã·şÎñÆ÷»á±»ÈÏÎªÊÇÍ£»úÁË£¬Í£»úÊ±¼äÊÇfail_timeoutÉèÖÃµÄÊ±¼ä¡£Ä¬ÈÏÇé¿öÏÂ£¬
+  ²»³É¹¦Á¬½ÓÊı±»ÉèÖÃÎª1¡£±»ÉèÖÃÎªÁãÔò±íÊ¾²»½øĞĞÁ´½ÓÊıÍ³¼Æ¡£ÄÇĞ©Á¬½Ó±»ÈÏÎªÊÇ²»³É¹¦µÄ¿ÉÒÔÍ¨¹ı
+  proxy_next_upstream, fastcgi_next_upstream£¬ºÍmemcached_next_upstreamÖ¸ÁîÅäÖÃ¡£http_404
+  ×´Ì¬²»»á±»ÈÏÎªÊÇ²»³É¹¦µÄ³¢ÊÔ¡£
+
+fail_time=time
+  ÉèÖÃ ¶à³¤Ê±¼äÄÚÊ§°Ü´ÎÊı´ïµ½×î´óÊ§°Ü´ÎÊı»á±»ÈÏÎª·şÎñÆ÷Í£»úÁË·şÎñÆ÷»á±»ÈÏÎªÍ£»úµÄÊ±¼ä³¤¶È Ä¬ÈÏÇé¿öÏÂ£¬³¬Ê±Ê±¼ä±»ÉèÖÃÎª10S
 */
     { ngx_string("upstream"),
       NGX_HTTP_MAIN_CONF|NGX_CONF_BLOCK|NGX_CONF_TAKE1,
@@ -634,7 +647,21 @@ void ngx_http_upstream_init(ngx_http_request_t *r) //ÔÚ¶ÁÈ¡Íêä¯ÀÀÆ÷·¢ËÍÀ´µÄÇëÇóÍ
 
     if (ngx_event_flags & NGX_USE_CLEAR_EVENT) { //Èç¹ûepollÊ¹ÓÃ±ßÔµ´¥·¢
 
+/*
+2025/04/24 05:31:47[             ngx_http_upstream_init,   654]  [debug] 15507#15507: *1 <   ngx_http_upstream_init,   653> epoll NGX_WRITE_EVENT(et) read add
+2025/04/24 05:31:47[                ngx_epoll_add_event,  1400]  [debug] 15507#15507: *1 epoll modify read and write event: fd:11 op:3 ev:80002005
+025/04/24 05:31:47[           ngx_epoll_process_events,  1624]  [debug] 15507#15507: begin to epoll_wait, epoll timer: 60000 
+2025/04/24 05:31:47[           ngx_epoll_process_events,  1709]  [debug] 15507#15507: epoll: fd:11 epoll-out(ev:0004) d:B26A00E8
+Êµ¼ÊÉÏÊÇÍ¨¹ıngx_http_upstream_initÖĞµÄmod epoll_ctlÌí¼Ó¶ÁĞ´ÊÂ¼ş´¥·¢µÄ£¬µ±±¾´ÎÑ­»·ÍË»Øµ½ngx_worker_process_cycle ..->ngx_epoll_process_events
+µÄÊ±ºò£¬¾Í»á´¥·¢epoll_out,´Ó¶øÖ´ĞĞngx_http_upstream_wr_check_broken_connection
+*/
+        //ÕâÀïÊµ¼ÊÉÏÊÇ´¥·¢Ö´ĞĞngx_http_upstream_check_broken_connection
         if (!c->write->active) {//ÒªÔö¼Ó¿ÉĞ´ÊÂ¼şÍ¨Öª£¬ÎªÉ¶?ÒòÎª´ı»á¿ÉÄÜ¾ÍÄÜĞ´ÁË,¿ÉÄÜ»á×ª·¢ÉÏÓÎ·şÎñÆ÷µÄÄÚÈİ¸øä¯ÀÀÆ÷µÈ¿Í»§¶Ë
+            //Êµ¼ÊÉÏÊÇ¼ì²éºÍ¿Í»§¶ËµÄÁ¬½ÓÊÇ·ñÒì³£ÁË
+            char tmpbuf[256];
+            
+            snprintf(tmpbuf, sizeof(tmpbuf), "<%25s, %5d> epoll NGX_WRITE_EVENT(et) read add", NGX_FUNC_LINE);
+            ngx_log_debug0(NGX_LOG_DEBUG_EVENT, c->log, 0, tmpbuf);
             if (ngx_add_event(c->write, NGX_WRITE_EVENT, NGX_CLEAR_EVENT)
                 == NGX_ERROR)
             {
@@ -646,7 +673,6 @@ void ngx_http_upstream_init(ngx_http_request_t *r) //ÔÚ¶ÁÈ¡Íêä¯ÀÀÆ÷·¢ËÍÀ´µÄÇëÇóÍ
 
     ngx_http_upstream_init_request(r);
 }
-
 
 //ngx_http_upstream_initµ÷ÓÃÕâÀï£¬´ËÊ±¿Í»§¶Ë·¢ËÍµÄÊı¾İ¶¼ÒÑ¾­½ÓÊÕÍê±ÏÁË¡£
 /*
@@ -708,11 +734,22 @@ ngx_http_upstream_init_request(ngx_http_request_t *r)
     ÉèÖÃNginxÓëÏÂÓÎ¿Í»§¶ËÖ®¼äTCPÁ¬½ÓµÄ¼ì²é·½·¨
     Êµ¼ÊÉÏ£¬ÕâÁ½¸ö·½·¨¶¼»áÍ¨¹ıngx_http_upstream_check_broken_connection·½·¨¼ì²éNginxÓëÏÂÓÎµÄÁ¬½ÓÊÇ·ñÕı³££¬Èç¹û³öÏÖ´íÎó£¬¾Í»áÁ¢¼´ÖÕÖ¹Á¬½Ó¡£
      */
+/*
+2025/04/24 05:31:47[             ngx_http_upstream_init,   654]  [debug] 15507#15507: *1 <   ngx_http_upstream_init,   653> epoll NGX_WRITE_EVENT(et) read add
+2025/04/24 05:31:47[                ngx_epoll_add_event,  1400]  [debug] 15507#15507: *1 epoll modify read and write event: fd:11 op:3 ev:80002005
+2025/04/24 05:31:47[           ngx_epoll_process_events,  1624]  [debug] 15507#15507: begin to epoll_wait, epoll timer: 60000 
+2025/04/24 05:31:47[           ngx_epoll_process_events,  1709]  [debug] 15507#15507: epoll: fd:11 epoll-out(ev:0004) d:B26A00E8
+Êµ¼ÊÉÏÊÇÍ¨¹ıngx_http_upstream_initÖĞµÄmod epoll_ctlÌí¼Ó¶ÁĞ´ÊÂ¼ş´¥·¢µÄ£¬µ±±¾´ÎÑ­»·ÍË»Øµ½ngx_worker_process_cycle ..->ngx_epoll_process_events
+µÄÊ±ºò£¬¾Í»á´¥·¢epoll_out,´Ó¶øÖ´ĞĞngx_http_upstream_wr_check_broken_connection
+*/
     if (!u->store && !r->post_action && !u->conf->ignore_client_abort) {
+        //×¢ÒâÕâÊ±ºòµÄr»¹ÊÇ¿Í»§¶ËµÄÁ¬½Ó£¬ÓëÉÏÓÎ·şÎñÆ÷µÄÁ¬½Ór»¹Ã»ÓĞ½¨Á¢
         r->read_event_handler = ngx_http_upstream_rd_check_broken_connection; //ÉèÖÃ»Øµ÷ĞèÒª¼ì²âÁ¬½ÓÊÇ·ñÓĞÎÊÌâ¡£
         r->write_event_handler = ngx_http_upstream_wr_check_broken_connection;
     }
+    
 
+    //ÓĞ½ÓÊÕµ½¿Í»§¶Ë°üÌå£¬Ôò°Ñ°üÌå½á¹¹¸³Öµ¸øu->request_bufs£¬ÔÚºóÃæµÄif (u->create_request(r) != NGX_OK) {»áÓÃµ½
     if (r->request_body) {//¿Í»§¶Ë·¢ËÍ¹ıÀ´µÄPOSTÊı¾İ´æ·ÅÔÚ´Ë,ngx_http_read_client_request_body·ÅµÄ
         u->request_bufs = r->request_body->bufs; //¼ÇÂ¼¿Í»§¶Ë·¢ËÍµÄÊı¾İ£¬ÏÂÃæÔÚcreate_requestµÄÊ±ºò¿½±´µ½·¢ËÍ»º³åÁ´½Ó±íÀïÃæµÄ¡£
     }
@@ -725,16 +762,19 @@ ngx_http_upstream_init_request(ngx_http_request_t *r)
 	Èç¹ûÊÇProxyÄ£¿é£¬ngx_http_proxy_create_request×é¼ş·´Ïò´úÀíµÄÍ·²¿É¶µÄ,·Åµ½u->request_bufsÀïÃæ
 	FastCGI memcached  uwsgi  scgi proxy¶¼»áÓÃµ½upstreamÄ£¿é
      */
-    if (u->create_request(r) != NGX_OK) {
+    if (u->create_request(r) != NGX_OK) { //ngx_http_XXX_create_request
         ngx_http_finalize_request(r, NGX_HTTP_INTERNAL_SERVER_ERROR);
         return;
     }
 
+    
+    /* »ñÈ¡ngx_http_upstream_t½á¹¹ÖĞÖ÷¶¯Á¬½Ó½á¹¹peerµÄlocal±¾µØµØÖ·ĞÅÏ¢ */
     u->peer.local = ngx_http_upstream_get_local(r, u->conf->local);
 
     clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
-
-    u->output.alignment = clcf->directio_alignment;
+    
+    /* ³õÊ¼»¯ngx_http_upstream_t½á¹¹ÖĞ³ÉÔ±outputÏòÏÂÓÎ·¢ËÍÏìÓ¦µÄ·½Ê½ */
+    u->output.alignment = clcf->directio_alignment; //
     u->output.pool = r->pool;
     u->output.bufs.num = 1;
     u->output.bufs.size = clcf->client_body_buffer_size;
@@ -746,8 +786,9 @@ ngx_http_upstream_init_request(ngx_http_request_t *r)
     }
 
     u->writer.pool = r->pool;
-
-    if (r->upstream_states == NULL) {
+    
+    /* Ìí¼ÓÓÃÓÚ±íÊ¾ÉÏÓÎÏìÓ¦µÄ×´Ì¬£¬ÀıÈç£º´íÎó±àÂë¡¢°üÌå³¤¶ÈµÈ */
+    if (r->upstream_states == NULL) {//Êı×éupstream_states£¬±£ÁôupstreamµÄ×´Ì¬ĞÅÏ¢¡£
 
         r->upstream_states = ngx_array_create(r->pool, 1,
                                             sizeof(ngx_http_upstream_state_t));
@@ -768,14 +809,14 @@ ngx_http_upstream_init_request(ngx_http_request_t *r)
         ngx_memzero(u->state, sizeof(ngx_http_upstream_state_t));
     }
 
-    cln = ngx_http_cleanup_add(r, 0);
+    cln = ngx_http_cleanup_add(r, 0);//»·ĞÎÁ´±í£¬ÉêÇëÒ»¸öĞÂµÄÔªËØ¡£
     if (cln == NULL) {
         ngx_http_finalize_request(r, NGX_HTTP_INTERNAL_SERVER_ERROR);
         return;
     }
 
     cln->handler = ngx_http_upstream_cleanup; //µ±ÇëÇó½áÊøÊ±£¬Ò»¶¨»áµ÷ÓÃngx_http_upstream_cleanup·½·¨
-    cln->data = r;
+    cln->data = r;//Ö¸ÏòËùÖ¸µÄÇëÇó½á¹¹Ìå¡£
     u->cleanup = &cln->handler;
 
     /*
@@ -793,16 +834,17 @@ ngx_http_upstream_init_request(ngx_http_request_t *r)
     ¶øµÚ¶şÖÖÇé¿öÓÖ·ÖÎª2ÖÖ£¬Ò»ÖÖÊÇÔÚ½øÈëupstreamÖ®Ç°£¬Ò²¾ÍÊÇ upstreamÄ£¿éµÄhandlerÖ®ÖĞÒÑ¾­±»resolveµÄµØÖ·(Çë¿´ngx_http_XXX_evalº¯Êı)£¬
     Ò»ÖÖÊÇÃ»ÓĞ±»resolve£¬´ËÊ±¾ÍĞèÒªupstreamÄ£¿éÀ´½øĞĞresolve¡£½ÓÏÂÀ´µÄ´úÂë¾ÍÊÇ´¦ÀíÕâ²¿·ÖµÄ¶«Î÷¡£
     */
-    if (u->resolved == NULL) {//ÉÏÓÎµÄIPµØÖ·ÊÇ·ñ±»½âÎö¹ı£¬ngx_http_fastcgi_handlerµ÷ÓÃngx_http_fastcgi_eval»á½âÎö¡£
-
-        uscf = u->conf->upstream;
-
-    } else {
+    if (u->resolved == NULL) {//ÉÏÓÎµÄIPµØÖ·ÊÇ·ñ±»½âÎö¹ı£¬ngx_http_fastcgi_handlerµ÷ÓÃngx_http_fastcgi_eval»á½âÎö¡£ ÎªNULLËµÃ÷Ã»ÓĞ½âÎö¹ı£¬Ò²¾ÍÊÇfastcgi_pas xxxÖĞµÄxxx²ÎÊıÃ»ÓĞ±äÁ¿
+        uscf = u->conf->upstream; //upstream¸³ÖµÔÚngx_http_fastcgi_pass
+        printf("yang test ............. resoleved NULL\n");
+    } else { //fastcgi_pass xxxµÄxxxÖĞÓĞ±äÁ¿£¬ËµÃ÷ºó¶Ë·şÎñÆ÷ÊÇ»á¸ù¾İÇëÇó¶¯Ì¬±ä»¯µÄ£¬²Î¿¼ngx_http_fastcgi_handler
 
 #if (NGX_HTTP_SSL)
         u->ssl_name = u->resolved->host;
 #endif
     //ngx_http_fastcgi_handler »áµ÷ÓÃ ngx_http_fastcgi_evalº¯Êı£¬½øĞĞfastcgi_pass ºóÃæµÄURLµÄ¼òÎö£¬½âÎö³öunixÓò£¬»òÕßsocket.
+         printf("yang test ............. resoleved NO NULL, host:%s\n", u->resolved->host.data);
+        // Èç¹ûÒÑ¾­ÊÇipµØÖ·¸ñÊ½ÁË£¬¾Í²»ĞèÒªÔÙ½øĞĞ½âÎö
         if (u->resolved->sockaddr) {//Èç¹ûµØÖ·ÒÑ¾­±»resolve¹ıÁË£¬ÎÒIPµØÖ·£¬´ËÊ±´´½¨round robin peer¾ÍĞĞ
 
             if (ngx_http_upstream_create_round_robin_peer(r, u->resolved)
@@ -818,22 +860,24 @@ ngx_http_upstream_init_request(ngx_http_request_t *r)
             return;
         }
 
-        host = &u->resolved->host;
+        //ÏÂÃæ¿ªÊ¼²éÕÒÓòÃû£¬ÒòÎªfcgi_passºóÃæ²»ÊÇip:port£¬¶øÊÇurl£»
+        host = &u->resolved->host;//»ñÈ¡hostĞÅÏ¢¡£ 
+        // ½ÓÏÂÀ´¾ÍÒª¿ªÊ¼²éÕÒÓòÃû
 
         umcf = ngx_http_get_module_main_conf(r, ngx_http_upstream_module);
 
         uscfp = umcf->upstreams.elts;
 
-        for (i = 0; i < umcf->upstreams.nelts; i++) {
+        for (i = 0; i < umcf->upstreams.nelts; i++) {//±éÀúËùÓĞµÄÉÏÓÎÄ£¿é£¬¸ù¾İÆähost½øĞĞ²éÕÒ£¬ÕÒµ½host,portÏàÍ¬µÄ¡£
 
-            uscf = uscfp[i];
+            uscf = uscfp[i];//ÕÒÒ»¸öIPÒ»ÑùµÄÉÏÁ÷Ä£¿é
 
             if (uscf->host.len == host->len
                 && ((uscf->port == 0 && u->resolved->no_port)
                      || uscf->port == u->resolved->port)
                 && ngx_strncasecmp(uscf->host.data, host->data, host->len) == 0)
             {
-                goto found;
+                goto found;//Õâ¸öhostÕıºÃÏàµÈ
             }
         }
 
@@ -845,30 +889,35 @@ ngx_http_upstream_init_request(ngx_http_request_t *r)
             return;
         }
 
+        //Ã»°ì·¨ÁË£¬url²»ÔÚupstreamsÊı×éÀïÃæ£¬Ò²¾ÍÊÇ²»ÊÇÎÒÃÇÅäÖÃµÄ£¬ÄÇÃ´³õÊ¼»¯ÓòÃû½âÎöÆ÷
         temp.name = *host;
-
-        ctx = ngx_resolve_start(clcf->resolver, &temp);
+        
+        // ³õÊ¼»¯ÓòÃû½âÎöÆ÷
+        ctx = ngx_resolve_start(clcf->resolver, &temp);//½øĞĞÓòÃû½âÎö£¬´ø»º´æµÄ¡£ÉêÇëÏà¹ØµÄ½á¹¹£¬·µ»ØÉÏÏÂÎÄµØÖ·¡£
         if (ctx == NULL) {
             ngx_http_upstream_finalize_request(r, u,
                                                NGX_HTTP_INTERNAL_SERVER_ERROR);
             return;
         }
 
-        if (ctx == NGX_NO_RESOLVER) {
+        if (ctx == NGX_NO_RESOLVER) {//ÎŞ·¨½øĞĞÓòÃû½âÎö¡£ 
+            // ·µ»ØNGX_NO_RESOLVER±íÊ¾ÎŞ·¨½øĞĞÓòÃû½âÎö
             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                           "no resolver defined to resolve %V", host);
 
             ngx_http_upstream_finalize_request(r, u, NGX_HTTP_BAD_GATEWAY);
             return;
         }
-
+        
+        // ÉèÖÃĞèÒª½âÎöµÄÓòÃûµÄÀàĞÍÓëĞÅÏ¢
         ctx->name = *host;
-        ctx->handler = ngx_http_upstream_resolve_handler;
+        ctx->handler = ngx_http_upstream_resolve_handler;//ÉèÖÃÓòÃû½âÎöÍê³ÉºóµÄ»Øµ÷º¯Êı¡£
         ctx->data = r;
         ctx->timeout = clcf->resolver_timeout;
 
         u->resolved->ctx = ctx;
 
+        //¿ªÊ¼ÓòÃû½âÎö£¬Ã»ÓĞÍê³ÉÒ²»á·µ»ØµÄ¡£
         if (ngx_resolve_name(ctx) != NGX_OK) {
             u->resolved->ctx = NULL;
             ngx_http_upstream_finalize_request(r, u,
@@ -877,6 +926,7 @@ ngx_http_upstream_init_request(ngx_http_request_t *r)
         }
 
         return;
+        // ÓòÃû»¹Ã»ÓĞ½âÎöÍê³É£¬ÔòÖ±½Ó·µ»Ø
     }
 
 found:
@@ -893,7 +943,7 @@ found:
     u->ssl_name = uscf->host;
 #endif
 
-    if (uscf->peer.init(r, uscf) != NGX_OK) {
+    if (uscf->peer.init(r, uscf) != NGX_OK) {//ngx_http_upstream_init_round_XX_peer(ngx_http_upstream_init_round_robin_peer)
         ngx_http_upstream_finalize_request(r, u,
                                            NGX_HTTP_INTERNAL_SERVER_ERROR);
         return;
@@ -1245,50 +1295,71 @@ failed:
     ngx_http_run_posted_requests(c);
 }
 
-
+//ºÍºó¶Ë·şÎñÆ÷µÄ¶ÁĞ´ÊÂ¼ş´¥·¢ºó×ßµ½ÕâÀï
 static void
 ngx_http_upstream_handler(ngx_event_t *ev)
 {
     ngx_connection_t     *c;
     ngx_http_request_t   *r;
     ngx_http_upstream_t  *u;
-
+    int writef = ev->write;
+    
     c = ev->data;
-    r = c->data;
+    r = c->data; 
 
     u = r->upstream;
     c = r->connection;
 
     ngx_http_set_log_request(c->log, r);
 
-    ngx_log_debug2(NGX_LOG_DEBUG_HTTP, c->log, 0,
-                   "http upstream request: \"%V?%V\"", &r->uri, &r->args);
+    ngx_log_debug3(NGX_LOG_DEBUG_HTTP, c->log, 0, "http upstream request(ev->write:%d): \"%V?%V\"", writef, &r->uri, &r->args);
 
-    if (ev->write) {
-        u->write_event_handler(r, u);
+    //µ±evÎªngx_connection_t->write Ä¬ÈÏwriteÎª1£»µ±evÎªngx_connection_t->read Ä¬ÈÏwriteÎª0
+    if (ev->write) { //ËµÃ÷ÊÇc->writeÊÂ¼ş
+        u->write_event_handler(r, u);//ngx_http_upstream_send_request_handler
 
-    } else {
-        u->read_event_handler(r, u);
+    } else { //ËµÃ÷ÊÇc->readÊÂ¼ş
+        u->read_event_handler(r, u); //ngx_http_upstream_process_header
+        
     }
 
     ngx_http_run_posted_requests(c);
 }
 
-
+/*
+2025/04/24 05:31:47[             ngx_http_upstream_init,   654]  [debug] 15507#15507: *1 <   ngx_http_upstream_init,   653> epoll NGX_WRITE_EVENT(et) read add
+2025/04/24 05:31:47[                ngx_epoll_add_event,  1400]  [debug] 15507#15507: *1 epoll modify read and write event: fd:11 op:3 ev:80002005
+025/04/24 05:31:47[           ngx_epoll_process_events,  1624]  [debug] 15507#15507: begin to epoll_wait, epoll timer: 60000 
+2025/04/24 05:31:47[           ngx_epoll_process_events,  1709]  [debug] 15507#15507: epoll: fd:11 epoll-out(ev:0004) d:B26A00E8
+Êµ¼ÊÉÏÊÇÍ¨¹ıngx_http_upstream_initÖĞµÄmod epoll_ctlÌí¼Ó¶ÁĞ´ÊÂ¼ş´¥·¢µÄ
+*/
 static void
 ngx_http_upstream_rd_check_broken_connection(ngx_http_request_t *r)
 {
     ngx_http_upstream_check_broken_connection(r, r->connection->read);
 }
 
-
+/*
+2025/04/24 05:31:47[             ngx_http_upstream_init,   654]  [debug] 15507#15507: *1 <   ngx_http_upstream_init,   653> epoll NGX_WRITE_EVENT(et) read add
+2025/04/24 05:31:47[                ngx_epoll_add_event,  1400]  [debug] 15507#15507: *1 epoll modify read and write event: fd:11 op:3 ev:80002005
+025/04/24 05:31:47[           ngx_epoll_process_events,  1624]  [debug] 15507#15507: begin to epoll_wait, epoll timer: 60000 
+2025/04/24 05:31:47[           ngx_epoll_process_events,  1709]  [debug] 15507#15507: epoll: fd:11 epoll-out(ev:0004) d:B26A00E8
+Êµ¼ÊÉÏÊÇÍ¨¹ıngx_http_upstream_initÖĞµÄmod epoll_ctlÌí¼Ó¶ÁĞ´ÊÂ¼ş´¥·¢µÄ
+*/
 static void
 ngx_http_upstream_wr_check_broken_connection(ngx_http_request_t *r)
 {
     ngx_http_upstream_check_broken_connection(r, r->connection->write);
 }
 
-
+/*
+2025/04/24 05:31:47[             ngx_http_upstream_init,   654]  [debug] 15507#15507: *1 <   ngx_http_upstream_init,   653> epoll NGX_WRITE_EVENT(et) read add
+2025/04/24 05:31:47[                ngx_epoll_add_event,  1400]  [debug] 15507#15507: *1 epoll modify read and write event: fd:11 op:3 ev:80002005
+025/04/24 05:31:47[           ngx_epoll_process_events,  1624]  [debug] 15507#15507: begin to epoll_wait, epoll timer: 60000 
+2025/04/24 05:31:47[           ngx_epoll_process_events,  1709]  [debug] 15507#15507: epoll: fd:11 epoll-out(ev:0004) d:B26A00E8
+Êµ¼ÊÉÏÊÇÍ¨¹ıngx_http_upstream_initÖĞµÄmod epoll_ctlÌí¼Ó¶ÁĞ´ÊÂ¼ş´¥·¢µÄ£¬µ±±¾´ÎÑ­»·ÍË»Øµ½ngx_worker_process_cycle ..->ngx_epoll_process_events
+µÄÊ±ºò£¬¾Í»á´¥·¢epoll_out,´Ó¶øÖ´ĞĞngx_http_upstream_wr_check_broken_connection
+*/
 static void
 ngx_http_upstream_check_broken_connection(ngx_http_request_t *r,
     ngx_event_t *ev)
@@ -1424,8 +1495,8 @@ ngx_http_upstream_check_broken_connection(ngx_http_request_t *r,
 
     err = ngx_socket_errno;
 
-    ngx_log_debug1(NGX_LOG_DEBUG_HTTP, ev->log, err,
-                   "http upstream recv(): %d", n);
+    ngx_log_debug2(NGX_LOG_DEBUG_HTTP, ev->log, err,
+                   "http upstream recv() size: %d, fd:%d", n, c->fd);
 
     if (ev->write && (n >= 0 || err == NGX_EAGAIN)) {
         return;
@@ -1484,6 +1555,9 @@ upstream»úÖÆÓëÉÏÓÎ·şÎñÆ÷ÊÇÍ¨¹ıTCP½¨Á¢Á¬½ÓµÄ£¬ÖÚËùÖÜÖª£¬½¨Á¢TCPÁ¬½ÓĞèÒªÈı´ÎÎÕÊÖ£¬
 ÓÉÓÚÊ¹ÓÃÁË·Ç×èÈûµÄÌ×½Ó×Ö£¬µ±·½·¨·µ»ØÊ±ÓëÉÏÓÎÖ®¼äµÄTCPÁ¬½ÓÎ´±Ø»á³É¹¦½¨Á¢£¬¿ÉÄÜ»¹ĞèÒªµÈ´ıÉÏÓÎ·şÎñÆ÷·µ»ØTCPµÄSYN/ACK°ü¡£Òò´Ë£¬
 ngx_http_upstream_connect·½·¨Ö÷Òª¸ºÔğ·¢Æğ½¨Á¢Á¬½ÓÕâ¸ö¶¯×÷£¬Èç¹ûÕâ¸ö·½·¨Ã»ÓĞÁ¢¿Ì·µ»Ø³É¹¦£¬ÄÇÃ´ĞèÒªÔÚepollÖĞ¼à¿ØÕâ¸öÌ×½Ó×Ö£¬µ±
 Ëü³öÏÖ¿ÉĞ´ÊÂ¼şÊ±£¬¾ÍËµÃ÷Á¬½ÓÒÑ¾­½¨Á¢³É¹¦ÁË¡£
+
+//µ÷ÓÃsocket,connectÁ¬½ÓÒ»¸öºó¶ËµÄpeer,È»ºóÉèÖÃ¶ÁĞ´ÊÂ¼ş»Øµ÷º¯Êı£¬½øÈë·¢ËÍÊı¾İµÄngx_http_upstream_send_requestÀïÃæ
+//ÕâÀï¸ºÔğÁ¬½Óºó¶Ë·şÎñ£¬È»ºóÉèÖÃ¸÷¸ö¶ÁĞ´ÊÂ¼ş»Øµ÷¡£×îºóÈç¹ûÁ¬½Ó½¨Á¢³É¹¦£¬»áµ÷ÓÃngx_http_upstream_send_request½øĞĞÊı¾İ·¢ËÍ¡£
 */
 static void
 ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
@@ -1509,13 +1583,15 @@ ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
     u->state->response_time = ngx_current_msec;
     u->state->connect_time = (ngx_msec_t) -1;
     u->state->header_time = (ngx_msec_t) -1;
-
+    //³õÊ¼¸³Öµ¼ûngx_http_upstream_connect->ngx_event_connect_peer(&u->peer);
+    //¿ÉÒÔ¿´³öÓĞ¶àÉÙ¸ö¿Í»§¶ËÁ¬½Ó£¬nginx¾ÍÒªÓëphp·şÎñÆ÷½¨Á¢¶àÉÙ¸öÁ¬½Ó£¬ÎªÊ²Ã´nginxºÍphp·şÎñÆ÷²»Ö»½¨Á¢Ò»¸öÁ¬½ÓÄØ????????????????
     rc = ngx_event_connect_peer(&u->peer); //½¨Á¢Ò»¸öTCPÌ×½Ó×Ö£¬Í¬Ê±£¬Õâ¸öÌ×½Ó×ÖĞèÒªÉèÖÃÎª·Ç×èÈûÄ£Ê½¡£
 
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                    "http upstream connect: %i", rc);
 
-    if (rc == NGX_ERROR) {
+    if (rc == NGX_ERROR) {//
+    //Èô rc = NGX_ERROR£¬±íÊ¾·¢ÆğÁ¬½ÓÊ§°Ü£¬Ôòµ÷ÓÃngx_http_upstream_finalize_request ·½·¨¹Ø±ÕÁ¬½ÓÇëÇó£¬²¢ return ´Óµ±Ç°º¯Êı·µ»Ø£»
         ngx_http_upstream_finalize_request(r, u,
                                            NGX_HTTP_INTERNAL_SERVER_ERROR);
         return;
@@ -1524,12 +1600,14 @@ ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
     u->state->peer = u->peer.name;
 
     if (rc == NGX_BUSY) {
+    //Èô rc = NGX_BUSY£¬±íÊ¾µ±Ç°ÉÏÓÎ·şÎñÆ÷´¦ÓÚ²»»îÔ¾×´Ì¬£¬Ôòµ÷ÓÃ ngx_http_upstream_next ·½·¨¸ù¾İ´«ÈëµÄ²ÎÊı³¢ÊÔÖØĞÂ·¢ÆğÁ¬½ÓÇëÇó£¬²¢ return ´Óµ±Ç°º¯Êı·µ»Ø£»
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "no live upstreams");
         ngx_http_upstream_next(r, u, NGX_HTTP_UPSTREAM_FT_NOLIVE);
         return;
     }
 
     if (rc == NGX_DECLINED) {
+    //Èô rc = NGX_DECLINED£¬±íÊ¾µ±Ç°ÉÏÓÎ·şÎñÆ÷¸ºÔØ¹ıÖØ£¬Ôòµ÷ÓÃ ngx_http_upstream_next ·½·¨³¢ÊÔÓëÆäËûÉÏÓÎ·şÎñÆ÷½¨Á¢Á¬½Ó£¬²¢ return ´Óµ±Ç°º¯Êı·µ»Ø£»
         ngx_http_upstream_next(r, u, NGX_HTTP_UPSTREAM_FT_ERROR);
         return;
     }
@@ -1539,12 +1617,17 @@ ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
     c = u->peer.connection;
 
     c->data = r;
-
-    c->write->handler = ngx_http_upstream_handler;
+/*
+ÉèÖÃÉÏÓÎÁ¬½Ó ngx_connection_t ½á¹¹ÌåµÄ¶ÁÊÂ¼ş¡¢Ğ´ÊÂ¼şµÄ»Øµ÷·½·¨ handler ¶¼Îª ngx_http_upstream_handler£¬ÉèÖÃ ngx_http_upstream_t 
+½á¹¹ÌåµÄĞ´ÊÂ¼ş write_event_handler µÄ»Øµ÷Îª ngx_http_upstream_send_request_handler£¬¶ÁÊÂ¼ş read_event_handler µÄ»Øµ÷·½·¨Îª 
+ngx_http_upstream_process_header£»
+*/
+    c->write->handler = ngx_http_upstream_handler; 
     c->read->handler = ngx_http_upstream_handler;
 
     //ÕâÒ»²½ÖèÊµ¼ÊÉÏ¾ö¶¨ÁËÏòÉÏÓÎ·şÎñÆ÷·¢ËÍÇëÇóµÄ·½·¨ÊÇngx_http_upstream_send_request_handler.
-    u->write_event_handler = ngx_http_upstream_send_request_handler;
+//ÓÉĞ´ÊÂ¼ş(Ğ´Êı¾İ»òÕß¿Í»§¶ËÁ¬½Ó·µ»Ø³É¹¦)´¥·¢c->write->handler = ngx_http_upstream_handler;È»ºóÔÚngx_http_upstream_handlerÖĞÖ´ĞĞngx_http_upstream_send_request_handler
+    u->write_event_handler = ngx_http_upstream_send_request_handler; //Èç¹ûngx_event_connect_peer·µ»ØNGX_AGAINÒ²Í¨¹ı¸Ãº¯Êı´¥·¢Á¬½Ó³É¹¦
 //ÉèÖÃupstream»úÖÆµÄread_event_handler·½·¨Îªngx_http_upstream_process_header£¬Ò²¾ÍÊÇÓÉngx_http_upstream_process_header·½·¨½ÓÊÕÉÏÓÎ·şÎñÆ÷µÄÏìÓ¦¡£
     u->read_event_handler = ngx_http_upstream_process_header;
 
@@ -1586,7 +1669,8 @@ ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
     if (r->request_body
         && r->request_body->buf
         && r->request_body->temp_file
-        && r == r->main)
+        && r == r->main) 
+    //¿Í»§¶Ë°üÌå´æÈëÁËÁÙÊ±ÎÄ¼şºó£¬ÔòÊ¹ÓÃr->request_body->bufsÁ´±íÖĞµÄngx_buf_t½á¹¹µÄfile_posºÍfile_lastÖ¸Ïò£¬ËùÒÔr->request_body->buf¿ÉÒÔ¼ÌĞø¶ÁÈ¡°üÌå
     {
         /*
          * the r->request_body->buf can be reused for one request only,
@@ -1611,8 +1695,45 @@ ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
     u->request_sent = 0;
     
-    if (rc == NGX_AGAIN) {
+    if (rc == NGX_AGAIN) { //ÕâÀïµÄ¶¨Ê±Æ÷ÔÚngx_http_upstream_send_request»áÉ¾³ı
+            /*
+            2025/04/24 02:54:29[             ngx_event_connect_peer,    32]  [debug] 14867#14867: *1 socket 12
+2025/04/24 02:54:29[           ngx_epoll_add_connection,  1486]  [debug] 14867#14867: *1 epoll add connection: fd:12 ev:80002005
+2025/04/24 02:54:29[             ngx_event_connect_peer,   125]  [debug] 14867#14867: *1 connect to 127.0.0.1:3666, fd:12 #2
+2025/04/24 02:54:29[          ngx_http_upstream_connect,  1549]  [debug] 14867#14867: *1 http upstream connect: -2 //·µ»ØNGX_AGAIN
+2025/04/24 02:54:29[                ngx_event_add_timer,    88]  [debug] 14867#14867: *1 <ngx_http_upstream_connect,  1665>  event timer add: 12: 60000:1677807811 //ÕâÀïÌí¼Ó
+2025/04/24 02:54:29[          ngx_http_finalize_request,  2526]  [debug] 14867#14867: *1 http finalize request: -4, "/test.php?" a:1, c:2
+2025/04/24 02:54:29[             ngx_http_close_request,  3789]  [debug] 14867#14867: *1 http request count:2 blk:0
+2025/04/24 02:54:29[           ngx_worker_process_cycle,  1110]  [debug] 14867#14867: worker(14867) cycle again
+2025/04/24 02:54:29[           ngx_trylock_accept_mutex,   405]  [debug] 14867#14867: accept mutex locked
+2025/04/24 02:54:29[           ngx_epoll_process_events,  1614]  [debug] 14867#14867: begin to epoll_wait, epoll timer: 60000 
+2025/04/24 02:54:29[           ngx_epoll_process_events,  1699]  [debug] 14867#14867: epoll: fd:11 epoll-out(ev:0004) d:B27440E8
+2025/04/24 02:54:29[           ngx_epoll_process_events,  1772]  [debug] 14867#14867: *1 post event AEB44068
+2025/04/24 02:54:29[           ngx_epoll_process_events,  1699]  [debug] 14867#14867: epoll: fd:12 epoll-out(ev:0004) d:B2744158
+2025/04/24 02:54:29[           ngx_epoll_process_events,  1772]  [debug] 14867#14867: *1 post event AEB44098
+2025/04/24 02:54:29[      ngx_process_events_and_timers,   371]  [debug] 14867#14867: epoll_wait timer range(delta): 2
+2025/04/24 02:54:29[           ngx_event_process_posted,    65]  [debug] 14867#14867: posted event AEB44068
+2025/04/24 02:54:29[           ngx_event_process_posted,    67]  [debug] 14867#14867: *1 delete posted event AEB44068
+2025/04/24 02:54:29[           ngx_http_request_handler,  2400]  [debug] 14867#14867: *1 http run request: "/test.php?"
+2025/04/24 02:54:29[ngx_http_upstream_check_broken_connection,  1335]  [debug] 14867#14867: *1 http upstream check client, write event:1, "/test.php"
+2025/04/24 02:54:29[ngx_http_upstream_check_broken_connection,  1458]  [debug] 14867#14867: *1 http upstream recv(): -1 (11: Resource temporarily unavailable)
+2025/04/24 02:54:29[           ngx_event_process_posted,    65]  [debug] 14867#14867: posted event AEB44098
+2025/04/24 02:54:29[           ngx_event_process_posted,    67]  [debug] 14867#14867: *1 delete posted event AEB44098
+2025/04/24 02:54:29[          ngx_http_upstream_handler,  1295]  [debug] 14867#14867: *1 http upstream request: "/test.php?"
+2025/04/24 02:54:29[ngx_http_upstream_send_request_handler,  2210]  [debug] 14867#14867: *1 http upstream send request handler
+2025/04/24 02:54:29[     ngx_http_upstream_send_request,  2007]  [debug] 14867#14867: *1 http upstream send request
+2025/04/24 02:54:29[ngx_http_upstream_send_request_body,  2095]  [debug] 14867#14867: *1 http upstream send request body
+2025/04/24 02:54:29[                   ngx_chain_writer,   690]  [debug] 14867#14867: *1 chain writer buf fl:0 s:968
+2025/04/24 02:54:29[                   ngx_chain_writer,   704]  [debug] 14867#14867: *1 chain writer in: 080EC838
+2025/04/24 02:54:29[                         ngx_writev,   192]  [debug] 14867#14867: *1 writev: 968 of 968
+2025/04/24 02:54:29[                   ngx_chain_writer,   740]  [debug] 14867#14867: *1 chain writer out: 00000000
+2025/04/24 02:54:29[                ngx_event_del_timer,    39]  [debug] 14867#14867: *1 <ngx_http_upstream_send_request,  2052>  event timer del: 12: 1677807811//ÕâÀïÉ¾³ı
+2025/04/24 02:54:29[                ngx_event_add_timer,    88]  [debug] 14867#14867: *1 <ngx_http_upstream_send_request,  2075>  event timer add: 12: 60000:1677807813
+           */
         /*
+          Èô rc = NGX_AGAIN£¬±íÊ¾µ±Ç°ÒÑ¾­·¢ÆğÁ¬½Ó£¬µ«ÊÇÃ»ÓĞÊÕµ½ÉÏÓÎ·şÎñÆ÷µÄÈ·ÈÏÓ¦´ğ±¨ÎÄ£¬¼´ÉÏÓÎÁ¬½ÓµÄĞ´ÊÂ¼ş²»¿ÉĞ´£¬ÔòĞèµ÷ÓÃ ngx_add_timer 
+          ·½·¨½«ÉÏÓÎÁ¬½ÓµÄĞ´ÊÂ¼şÌí¼Óµ½¶¨Ê±Æ÷ÖĞ£¬¹ÜÀí³¬Ê±È·ÈÏÓ¦´ğ£»
+            
           ÕâÒ»²½´¦Àí·Ç×èÈûµÄÁ¬½ÓÉĞÎ´³É¹¦½¨Á¢Ê±µÄ¶¯×÷¡£Êµ¼ÊÉÏ£¬ÔÚngx_event_connect_peerÖĞ£¬Ì×½Ó×ÖÒÑ¾­¼ÓÈëµ½epollÖĞ¼à¿ØÁË£¬Òò´Ë£¬
           ÕâÒ»²½½«µ÷ÓÃngx_add_timer·½·¨°ÑĞ´ÊÂ¼şÌí¼Óµ½¶¨Ê±Æ÷ÖĞ£¬³¬Ê±Ê±¼äÎªngx_http_upstream_conf_t½á¹¹ÌåÖĞµÄconnect_timeout
           ³ÉÔ±£¬ÕâÊÇÔÚÉèÖÃ½¨Á¢TCPÁ¬½ÓµÄ³¬Ê±Ê±¼ä¡£
@@ -1621,6 +1742,8 @@ ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
         return;
     }
 
+    
+//Èô rc = NGX_OK£¬±íÊ¾³É¹¦½¨Á¢Á¬½Ó£¬Ôòµ÷ÓÃ ngx_http_upsream_send_request ·½·¨ÏòÉÏÓÎ·şÎñÆ÷·¢ËÍÇëÇó£»
 #if (NGX_HTTP_SSL)
 
     if (u->ssl && c->ssl == NULL) {
@@ -1630,6 +1753,7 @@ ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
 #endif
 
+    printf("yang test ...........c->write->active:%u\n", c->write->active);
     //Èç´ôÒÑ¾­³É¹¦½¨Á¢Á¬½Ó£¬Ôòµ÷ÓÃngx_http_upstream_send_request·½·¨ÏòÉÏÓÎ·şÎñÆ÷·¢ËÍÇëÇó
     ngx_http_upstream_send_request(r, u, 1);
 }
@@ -1953,7 +2077,7 @@ ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u,
     ngx_int_t          rc;
     ngx_connection_t  *c;
 
-    c = u->peer.connection;
+    c = u->peer.connection; //ÏòÉÏÓÎ·şÎñÆ÷µÄÁ¬½ÓĞÅÏ¢
 
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, c->log, 0,
                    "http upstream send request");
@@ -1962,8 +2086,9 @@ ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u,
         u->state->connect_time = ngx_current_msec - u->state->response_time;
     }
 
-    if (!u->request_sent && ngx_http_upstream_test_connect(c) != NGX_OK) {
-        ngx_http_upstream_next(r, u, NGX_HTTP_UPSTREAM_FT_ERROR);
+    //Í¨¹ıgetsockopt²âÊÔÓëÉÏÓÎ·şÎñÆ÷µÄtcpÁ¬½ÓÊÇ·ñÒì³£
+    if (!u->request_sent && ngx_http_upstream_test_connect(c) != NGX_OK) {//²âÊÔÁ¬½ÓÊ§°Ü
+        ngx_http_upstream_next(r, u, NGX_HTTP_UPSTREAM_FT_ERROR);//Èç¹û²âÊÔÊ§°Ü£¬µ÷ÓÃngx_http_upstream_nextº¯Êı£¬Õâ¸öº¯Êı¿ÉÄÜÔÙ´Îµ÷ÓÃpeer.getµ÷ÓÃ±ğµÄÁ¬½Ó¡£
         return;
     }
 
@@ -1972,6 +2097,8 @@ ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u,
     rc = ngx_http_upstream_send_request_body(r, u, do_write);
 
     if (rc == NGX_ERROR) {
+        /*  Èô·µ»ØÖµrc=NGX_ERROR£¬±íÊ¾µ±Ç°Á¬½ÓÉÏ³ö´í£¬ ½«´íÎóĞÅÏ¢´«µİ¸øngx_http_upstream_next·½·¨£¬ ¸Ã·½·¨¸ù¾İ´íÎóĞÅÏ¢¾ö¶¨
+        ÊÇ·ñÖØĞÂÏòÉÏÓÎÆäËû·şÎñÆ÷·¢ÆğÁ¬½Ó£» ²¢return´Óµ±Ç°º¯Êı·µ»Ø£» */
         ngx_http_upstream_next(r, u, NGX_HTTP_UPSTREAM_FT_ERROR);
         return;
     }
@@ -1981,14 +2108,19 @@ ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u,
         return;
     }
 
+    /* 
+         Èô·µ»ØÖµrc = NGX_AGAIN£¬±íÊ¾ÇëÇóÊı¾İ²¢Î´ÍêÈ«·¢ËÍ£¬ ¼´ÓĞÊ£ÓàµÄÇëÇóÊı¾İ±£´æÔÚoutputÖĞ£¬µ«´ËÊ±£¬Ğ´ÊÂ¼şÒÑ¾­²»¿ÉĞ´£¬ 
+         Ôòµ÷ÓÃngx_add_timer·½·¨°Ñµ±Ç°Á¬½ÓÉÏµÄĞ´ÊÂ¼şÌí¼Óµ½¶¨Ê±Æ÷»úÖÆ£¬ ²¢µ÷ÓÃngx_handle_write_event·½·¨½«Ğ´ÊÂ¼ş×¢²áµ½epollÊÂ¼ş»úÖÆÖĞ£» 
+     */
     if (rc == NGX_AGAIN) {
         if (!c->write->ready) {
             ngx_add_timer(c->write, u->conf->send_timeout, NGX_FUNC_LINE);
 
-        } else if (c->write->timer_set) {
+        } else if (c->write->timer_set) { //ÀıÈçngx_http_upstream_send_request_body·¢ËÍÁËÈı´Î·µ»ØNGX_AGAIN,ÄÇÃ´µÚ¶ş´Î¾ÍĞèÒª°ÑµÚÒ»´ÎÉÏÃæµÄ³¬Ê±¶¨Ê±Æ÷¹ØÁË£¬±íÊ¾·¢ËÍÕı³£
             ngx_del_timer(c->write, NGX_FUNC_LINE);
         }
 
+        //ÔÚÁ¬½Óºó¶Ë·şÎñÆ÷conncetÇ°£¬ÓĞÉèÖÃngx_add_conn£¬ÀïÃæÒÑ¾­½«fdÌí¼Óµ½ÁË¶ÁĞ´ÊÂ¼şÖĞ£¬Òò´ËÕâÀïÊµ¼ÊÉÏÖ»ÊÇ¼òµ¥Ö´ĞĞÏÂngx_send_lowat
         if (ngx_handle_write_event(c->write, u->conf->send_lowat, NGX_FUNC_LINE) != NGX_OK) {
             ngx_http_upstream_finalize_request(r, u,
                                                NGX_HTTP_INTERNAL_SERVER_ERROR);
@@ -2000,10 +2132,45 @@ ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u,
 
     /* rc == NGX_OK */
 
-    if (c->write->timer_set) {
+    if (c->write->timer_set) { //ÕâÀïµÄ¶¨Ê±Æ÷ÊÇngx_http_upstream_connectÖĞconnect·µ»ØNGX_AGAINµÄÊ±ºòÌí¼ÓµÄ¶¨Ê±Æ÷
+        /*
+            2025/04/24 02:54:29[             ngx_event_connect_peer,    32]  [debug] 14867#14867: *1 socket 12
+2025/04/24 02:54:29[           ngx_epoll_add_connection,  1486]  [debug] 14867#14867: *1 epoll add connection: fd:12 ev:80002005
+2025/04/24 02:54:29[             ngx_event_connect_peer,   125]  [debug] 14867#14867: *1 connect to 127.0.0.1:3666, fd:12 #2
+2025/04/24 02:54:29[          ngx_http_upstream_connect,  1549]  [debug] 14867#14867: *1 http upstream connect: -2 //·µ»ØNGX_AGAIN
+2025/04/24 02:54:29[                ngx_event_add_timer,    88]  [debug] 14867#14867: *1 <ngx_http_upstream_connect,  1665>  event timer add: 12: 60000:1677807811 //ÕâÀïÌí¼Ó
+2025/04/24 02:54:29[          ngx_http_finalize_request,  2526]  [debug] 14867#14867: *1 http finalize request: -4, "/test.php?" a:1, c:2
+2025/04/24 02:54:29[             ngx_http_close_request,  3789]  [debug] 14867#14867: *1 http request count:2 blk:0
+2025/04/24 02:54:29[           ngx_worker_process_cycle,  1110]  [debug] 14867#14867: worker(14867) cycle again
+2025/04/24 02:54:29[           ngx_trylock_accept_mutex,   405]  [debug] 14867#14867: accept mutex locked
+2025/04/24 02:54:29[           ngx_epoll_process_events,  1614]  [debug] 14867#14867: begin to epoll_wait, epoll timer: 60000 
+2025/04/24 02:54:29[           ngx_epoll_process_events,  1699]  [debug] 14867#14867: epoll: fd:11 epoll-out(ev:0004) d:B27440E8
+2025/04/24 02:54:29[           ngx_epoll_process_events,  1772]  [debug] 14867#14867: *1 post event AEB44068
+2025/04/24 02:54:29[           ngx_epoll_process_events,  1699]  [debug] 14867#14867: epoll: fd:12 epoll-out(ev:0004) d:B2744158
+2025/04/24 02:54:29[           ngx_epoll_process_events,  1772]  [debug] 14867#14867: *1 post event AEB44098
+2025/04/24 02:54:29[      ngx_process_events_and_timers,   371]  [debug] 14867#14867: epoll_wait timer range(delta): 2
+2025/04/24 02:54:29[           ngx_event_process_posted,    65]  [debug] 14867#14867: posted event AEB44068
+2025/04/24 02:54:29[           ngx_event_process_posted,    67]  [debug] 14867#14867: *1 delete posted event AEB44068
+2025/04/24 02:54:29[           ngx_http_request_handler,  2400]  [debug] 14867#14867: *1 http run request: "/test.php?"
+2025/04/24 02:54:29[ngx_http_upstream_check_broken_connection,  1335]  [debug] 14867#14867: *1 http upstream check client, write event:1, "/test.php"
+2025/04/24 02:54:29[ngx_http_upstream_check_broken_connection,  1458]  [debug] 14867#14867: *1 http upstream recv(): -1 (11: Resource temporarily unavailable)
+2025/04/24 02:54:29[           ngx_event_process_posted,    65]  [debug] 14867#14867: posted event AEB44098
+2025/04/24 02:54:29[           ngx_event_process_posted,    67]  [debug] 14867#14867: *1 delete posted event AEB44098
+2025/04/24 02:54:29[          ngx_http_upstream_handler,  1295]  [debug] 14867#14867: *1 http upstream request: "/test.php?"
+2025/04/24 02:54:29[ngx_http_upstream_send_request_handler,  2210]  [debug] 14867#14867: *1 http upstream send request handler
+2025/04/24 02:54:29[     ngx_http_upstream_send_request,  2007]  [debug] 14867#14867: *1 http upstream send request
+2025/04/24 02:54:29[ngx_http_upstream_send_request_body,  2095]  [debug] 14867#14867: *1 http upstream send request body
+2025/04/24 02:54:29[                   ngx_chain_writer,   690]  [debug] 14867#14867: *1 chain writer buf fl:0 s:968
+2025/04/24 02:54:29[                   ngx_chain_writer,   704]  [debug] 14867#14867: *1 chain writer in: 080EC838
+2025/04/24 02:54:29[                         ngx_writev,   192]  [debug] 14867#14867: *1 writev: 968 of 968
+2025/04/24 02:54:29[                   ngx_chain_writer,   740]  [debug] 14867#14867: *1 chain writer out: 00000000
+2025/04/24 02:54:29[                ngx_event_del_timer,    39]  [debug] 14867#14867: *1 <ngx_http_upstream_send_request,  2052>  event timer del: 12: 1677807811//ÕâÀïÉ¾³ı
+2025/04/24 02:54:29[                ngx_event_add_timer,    88]  [debug] 14867#14867: *1 <ngx_http_upstream_send_request,  2075>  event timer add: 12: 60000:1677807813
+           */
         ngx_del_timer(c->write, NGX_FUNC_LINE);
     }
 
+    /* Èô·µ»ØÖµ rc = NGX_OK£¬±íÊ¾ÒÑ¾­·¢ËÍÍêÈ«²¿ÇëÇóÊı¾İ£¬ ×¼±¸½ÓÊÕÀ´×ÔÉÏÓÎ·şÎñÆ÷µÄÏìÓ¦±¨ÎÄ£¬ÔòÖ´ĞĞÒÔÏÂ³ÌĞò£»  */ 
     if (c->tcp_nopush == NGX_TCP_NOPUSH_SET) {
         if (ngx_tcp_push(c->fd) == NGX_ERROR) {
             ngx_log_error(NGX_LOG_CRIT, c->log, ngx_socket_errno,
@@ -2016,14 +2183,17 @@ ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u,
         c->tcp_nopush = NGX_TCP_NOPUSH_UNSET;
     }
 
-    u->write_event_handler = ngx_http_upstream_dummy_handler;
+    u->write_event_handler = ngx_http_upstream_dummy_handler; //Êı¾İÒÑ¾­ÔÚÇ°ÃæÈ«²¿·¢Íùºó¶Ë·şÎñÆ÷ÁË£¬ËùÒÔ²»ĞèÒªÔÙ×öĞ´´¦Àí
 
+    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, c->log, 0, "send out chain data to uppeer server OK");
+    //ÔÚÁ¬½Óºó¶Ë·şÎñÆ÷conncetÇ°£¬ÓĞÉèÖÃngx_add_conn£¬ÀïÃæÒÑ¾­½«fdÌí¼Óµ½ÁË¶ÁĞ´ÊÂ¼şÖĞ£¬Òò´ËÕâÀïÊµ¼ÊÉÏÖ»ÊÇ¼òµ¥Ö´ĞĞÏÂngx_send_lowat
     if (ngx_handle_write_event(c->write, 0, NGX_FUNC_LINE) != NGX_OK) {
         ngx_http_upstream_finalize_request(r, u,
                                            NGX_HTTP_INTERNAL_SERVER_ERROR);
         return;
     }
 
+    //Õâ»ØÊı¾İÒÑ¾­·¢ËÍÁË£¬¿ÉÒÔ×¼±¸½ÓÊÕÁË£¬ÉèÖÃ½ÓÊÕºó¶ËÓ¦´ğµÄ³¬Ê±¶¨Ê±Æ÷¡£
     ngx_add_timer(c->read, u->conf->read_timeout, NGX_FUNC_LINE);
 
     if (c->read->ready) {
@@ -2032,7 +2202,7 @@ ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u,
     }
 }
 
-
+//Ïòºó¶Ë·¢ËÍÇëÇóµÄµ÷ÓÃ¹ı³Ìngx_http_upstream_send_request_body->ngx_output_chain->ngx_chain_writer
 static ngx_int_t
 ngx_http_upstream_send_request_body(ngx_http_request_t *r,
     ngx_http_upstream_t *u, ngx_uint_t do_write)
@@ -2052,7 +2222,7 @@ ngx_http_upstream_send_request_body(ngx_http_request_t *r,
 
        if (!u->request_sent) {
            u->request_sent = 1;
-           out = u->request_bufs;
+           out = u->request_bufs; //Èç¹ûÊÇfastcgiÕâÀïÃæÎªÊµ¼Ê·¢Íùºó¶ËµÄÊı¾İ(°üÀ¨fastcgi¸ñÊ½Í·²¿+¿Í»§¶Ë°üÌåµÈ)
 
        } else {
            out = NULL;
@@ -2208,22 +2378,24 @@ ngx_http_upstream_read_request_handler(ngx_http_request_t *r)
     ngx_http_upstream_send_request(r, u, 0);
 }
 
-
+//ngx_http_upstream_handlerÖĞÖ´ĞĞ
 static void
 ngx_http_upstream_process_header(ngx_http_request_t *r, ngx_http_upstream_t *u)
-{
+{//¶ÁÈ¡FCGIÍ·²¿Êı¾İ£¬»òÕßproxyÍ·²¿Êı¾İ¡£ngx_http_upstream_send_request·¢ËÍÍêÊı¾İºó£¬
+//»áµ÷ÓÃÕâÀï£¬»òÕßÓĞ¿ÉĞ´ÊÂ¼şµÄÊ±ºò»áµ÷ÓÃÕâÀï¡£
+//ngx_http_upstream_connectº¯ÊıÁ¬½Ófastcgiºó£¬»áÉèÖÃÕâ¸ö»Øµ÷º¯ÊıÎªfcgiÁ¬½ÓµÄ¿É¶ÁÊÂ¼ş»Øµ÷¡£
     ssize_t            n;
     ngx_int_t          rc;
     ngx_connection_t  *c;
 
     c = u->peer.connection;
 
-    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, c->log, 0,
-                   "http upstream process header");
+    ngx_log_debug1(NGX_LOG_DEBUG_HTTP, c->log, 0,
+                   "http upstream process header, fd:%u", c->fd);
 
     c->log->action = "reading response header from upstream";
 
-    if (c->read->timedout) {
+    if (c->read->timedout) {//¶Á³¬Ê±ÁË£¬ÂÖÑ¯ÏÂÒ»¸ö¡£ ngx_event_expire_timers³¬Ê±ºó×ßµ½ÕâÀï
         ngx_http_upstream_next(r, u, NGX_HTTP_UPSTREAM_FT_TIMEOUT);
         return;
     }
@@ -2233,7 +2405,7 @@ ngx_http_upstream_process_header(ngx_http_request_t *r, ngx_http_upstream_t *u)
         return;
     }
 
-    if (u->buffer.start == NULL) {
+    if (u->buffer.start == NULL) { //·ÖÅäÒ»¿é»º´æ£¬ÓÃÀ´´æ·Å½ÓÊÜ»ØÀ´µÄÊı¾İ¡£
         u->buffer.start = ngx_palloc(r->pool, u->conf->buffer_size);
         if (u->buffer.start == NULL) {
             ngx_http_upstream_finalize_request(r, u,
@@ -2248,6 +2420,7 @@ ngx_http_upstream_process_header(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
         u->buffer.tag = u->output.tag;
 
+        //³õÊ¼»¯headers_in´æ·ÅÍ·²¿ĞÅÏ¢£¬ºó¶ËFCGI,proxy½âÎöºóµÄHTTPÍ·²¿½«·ÅÈëÕâÀï
         if (ngx_list_init(&u->headers_in.headers, r->pool, 8,
                           sizeof(ngx_table_elt_t))
             != NGX_OK)
@@ -2267,11 +2440,11 @@ ngx_http_upstream_process_header(ngx_http_request_t *r, ngx_http_upstream_t *u)
     }
 
     for ( ;; ) {
-
+        //recv Îª ngx_unix_recv£¬¶ÁÈ¡Êı¾İ·ÅÔÚu->buffer.lastµÄÎ»ÖÃ£¬·µ»Ø¶Áµ½µÄ´óĞ¡¡£
         n = c->recv(c, u->buffer.last, u->buffer.end - u->buffer.last);
 
-        if (n == NGX_AGAIN) {
-#if 0
+        if (n == NGX_AGAIN) { //ÄÚºË»º³åÇøÒÑ¾­Ã»Êı¾İÁË
+#if 0 
             ngx_add_timer(rev, u->read_timeout);
 #endif
 
@@ -2301,12 +2474,12 @@ ngx_http_upstream_process_header(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
         u->peer.cached = 0;
 #endif
-
-        rc = u->process_header(r);
+        //ngx_http_xxx_process_header
+        rc = u->process_header(r);//ngx_http_fastcgi_process_headerµÈ£¬½øĞĞÊı¾İ´¦Àí£¬±ÈÈçºó¶Ë·µ»ØµÄÊı¾İÍ·²¿½âÎö£¬body¶ÁÈ¡µÈ¡£
 
         if (rc == NGX_AGAIN) {
 
-            if (u->buffer.last == u->buffer.end) {
+            if (u->buffer.last == u->buffer.end) { //·ÖÅäµÄÓÃÀ´´æ´¢fastcgi STDOUTÍ·²¿ĞĞ°üÌåµÄbufÒÑ¾­ÓÃÍêÁËÍ·²¿ĞĞ¶¼»¹Ã»ÓĞ½âÎöÍê³É£¬
                 ngx_log_error(NGX_LOG_ERR, c->log, 0,
                               "upstream sent too big header");
 
@@ -2347,16 +2520,19 @@ ngx_http_upstream_process_header(ngx_http_request_t *r, ngx_http_upstream_t *u)
         }
     }
 
+    //µ½ÕâÀï£¬FCGIµÈ¸ñÊ½µÄÊı¾İÒÑ¾­½âÎöÎª±ê×¼HTTPµÄ±íÊ¾ĞÎÊ½ÁË(³ıÁËBODY)£¬ËùÒÔ¿ÉÒÔ½øĞĞupstreamµÄprocess_headers¡£
+	//ÉÏÃæµÄ u->process_header(r)ÒÑ¾­½øĞĞFCGIµÈ¸ñÊ½µÄ½âÎöÁË¡£ÏÂÃæ½«Í·²¿Êı¾İ¿½±´µ½headers_out.headersÊı×éÖĞ¡£
     if (ngx_http_upstream_process_headers(r, u) != NGX_OK) {
         return;
     }
 
-    if (!r->subrequest_in_memory) {
-        ngx_http_upstream_send_response(r, u);
+    if (!r->subrequest_in_memory) {//Èç¹ûÃ»ÓĞ×ÓÇëÇóÁË£¬ÄÇ¾ÍÖ±½Ó·¢ËÍÏìÓ¦¸ø¿Í»§¶Ë°É¡£
+        ngx_http_upstream_send_response(r, u);//¸ø¿Í»§¶Ë·¢ËÍÏìÓ¦£¬ÀïÃæ»á´¦Àíheader,body·Ö¿ª·¢ËÍµÄÇé¿öµÄ
         return;
     }
 
     /* subrequest content in memory */
+    //Èç¹û»¹ÓĞ×ÓÇëÇóµÄ»°¡£×ÓÇëÇó²»ÊÇ±ê×¼HTTP¡£
 
     if (u->input_filter == NULL) {
         u->input_filter_init = ngx_http_upstream_non_buffered_filter_init;
@@ -2387,7 +2563,7 @@ ngx_http_upstream_process_header(ngx_http_request_t *r, ngx_http_upstream_t *u)
         return;
     }
 
-    u->read_event_handler = ngx_http_upstream_process_body_in_memory;
+    u->read_event_handler = ngx_http_upstream_process_body_in_memory;//ÉèÖÃbody²¿·ÖµÄ¶ÁÊÂ¼ş»Øµ÷¡£
 
     ngx_http_upstream_process_body_in_memory(r, u);
 }
@@ -2559,7 +2735,7 @@ ngx_http_upstream_intercept_errors(ngx_http_request_t *r,
     return NGX_DECLINED;
 }
 
-
+//¼ì²éºÍc->fdµÄtcpÁ¬½ÓÊÇ·ñÓĞÒì³£
 static ngx_int_t
 ngx_http_upstream_test_connect(ngx_connection_t *c)
 {
@@ -2610,9 +2786,11 @@ ngx_http_upstream_test_connect(ngx_connection_t *c)
     return NGX_OK;
 }
 
-
-static ngx_int_t
-ngx_http_upstream_process_headers(ngx_http_request_t *r, ngx_http_upstream_t *u)
+/*
+½âÎöÇëÇóµÄÍ·²¿×Ö¶Î¡£Ã¿ĞĞHEADER»Øµ÷Æäcopy_handler£¬È»ºó¿½±´Ò»ÏÂ×´Ì¬ÂëµÈ¡£¿½±´Í·²¿×Ö¶Îµ½headers_out
+*/ //ngx_http_upstream_process_headerºÍngx_http_upstream_process_headersºÜÏñÅ¶£¬º¯ÊıÃû£¬×¢Òâ
+static ngx_int_t //°Ñ´Óºó¶Ë·µ»Ø¹ıÀ´µÄÍ·²¿ĞĞĞÅÏ¢¿½±´µ½r->headers_outÖĞ£¬ÒÔ±¸Íù¿Í»§¶Ë·¢ËÍÓÃ
+ngx_http_upstream_process_headers(ngx_http_request_t *r, ngx_http_upstream_t *u) 
 {
     ngx_str_t                       uri, args;
     ngx_uint_t                      i, flags;
@@ -2622,18 +2800,28 @@ ngx_http_upstream_process_headers(ngx_http_request_t *r, ngx_http_upstream_t *u)
     ngx_http_upstream_main_conf_t  *umcf;
 
     umcf = ngx_http_get_module_main_conf(r, ngx_http_upstream_module);
-
+    
     if (u->headers_in.x_accel_redirect
         && !(u->conf->ignore_headers & NGX_HTTP_UPSTREAM_IGN_XA_REDIRECT))
-    {
+    {//Èç¹ûÍ·²¿ÖĞÊ¹ÓÃÁËX-Accel-RedirectÌØĞÔ£¬Ò²¾ÍÊÇÏÂÔØÎÄ¼şµÄÌØĞÔ£¬ÔòÔÚÕâÀï½øĞĞÎÄ¼şÏÂÔØ¡££¬ÖØ¶¨Ïò¡£
+    /*nginx X-Accel-RedirectÊµÏÖÎÄ¼şÏÂÔØÈ¨ÏŞ¿ØÖÆ 
+    ¶ÔÎÄ¼şÏÂÔØµÄÈ¨ÏŞ½øĞĞ¾«È·¿ØÖÆÔÚºÜ¶àµØ·½¶¼ĞèÒª£¬ÀıÈçÓĞ³¥µÄÏÂÔØ·şÎñ¡¢ÍøÂçÓ²ÅÌ¡¢¸öÈËÏà²á¡¢·ÀÖ¹±¾Õ¾ÄÚÈİ±»ÍâÕ¾µÁÁ´µÈ
+    ²½Öè0£¬clientÇëÇóhttp://downloaddomain.com/download/my.iso£¬´ËÇëÇó±»CGI³ÌĞò½âÎö£¨¶ÔÓÚ nginxÓ¦¸ÃÊÇfastcgi£©¡£
+    ²½Öè1£¬CGI³ÌĞò¸ù¾İ·ÃÎÊÕßµÄÉí·İºÍËùÇëÇóµÄ×ÊÔ´ÆäÊÇ·ñÓĞÏÂÔØÈ¨ÏŞÀ´ÅĞ¶¨ÊÇ·ñÓĞ´ò¿ªµÄÈ¨ÏŞ¡£Èç¹ûÓĞ£¬ÄÇÃ´¸ù¾İ´ËÇëÇóµÃµ½¶ÔÓ¦ÎÄ¼şµÄ´ÅÅÌ´æ·ÅÂ·¾¶£¬ÀıÈçÊÇ /var/data/my.iso¡£
+        ÄÇÃ´³ÌĞò·µ»ØÊ±ÔÚHTTP header¼ÓÈëX-Accel-Redirect: /protectfile/data/my.iso£¬²¢¼ÓÉÏhead Content-Type:application/octet-stream¡£
+    ²½Öè2£¬nginxµÃµ½cgi³ÌĞòµÄ»ØÓ¦ºó·¢ÏÖ´øÓĞX-Accel-RedirectµÄheader£¬ÄÇÃ´¸ù¾İÕâ¸öÍ·¼ÇÂ¼µÄÂ·¾¶ĞÅÏ¢´ò¿ª´ÅÅÌÎÄ¼ş¡£
+    ²½Öè3£¬nginx°Ñ´ò¿ªÎÄ¼şµÄÄÚÈİ·µ»Ø¸øclient¶Ë¡£
+    ÕâÑùËùÓĞµÄÈ¨ÏŞ¼ì²é¶¼¿ÉÒÔÔÚ²½Öè1ÄÚÍê³É£¬¶øÇÒcgi·µ»Ø´øX-Accel-RedirectµÄÍ·ºó£¬ÆäÖ´ĞĞÒÑ¾­ÖÕÖ¹£¬Ê£ÏÂµÄ´«ÊäÎÄ¼şµÄ¹¤×÷ÓÉnginx À´½Ó¹Ü£¬
+        Í¬Ê±X-Accel-RedirectÍ·µÄĞÅÏ¢±»nginxÉ¾³ı£¬Ò²Òş²ØÁËÎÄ¼şÊµ¼Ê´æ´¢Ä¿Â¼£¬²¢ÇÒÓÉÓÚnginxÔÚ´ò¿ª¾²Ì¬ÎÄ¼şÉÏÊ¹ÓÃÁË sendfile(2)£¬ÆäIOĞ§ÂÊ·Ç³£¸ß¡£
+    */
         ngx_http_upstream_finalize_request(r, u, NGX_DECLINED);
 
-        part = &u->headers_in.headers.part;
+        part = &u->headers_in.headers.part; //ºó¶Ë·şÎñÆ÷Ó¦´ğµÄÍ·²¿ĞĞĞÅÏ¢È«²¿ÔÚ¸ÃheadersÁ´±íÊı×éÖĞ
         h = part->elts;
 
         for (i = 0; /* void */; i++) {
 
-            if (i >= part->nelts) {
+            if (i >= part->nelts) { //headersÉÏÃæµÄÏÂÒ»¸öÁ´±í
                 if (part->next == NULL) {
                     break;
                 }
@@ -2644,9 +2832,10 @@ ngx_http_upstream_process_headers(ngx_http_request_t *r, ngx_http_upstream_t *u)
             }
 
             hh = ngx_hash_find(&umcf->headers_in_hash, h[i].hash,
-                               h[i].lowcase_key, h[i].key.len);
+                               h[i].lowcase_key, h[i].key.len);  
 
-            if (hh && hh->redirect) {
+            if (hh && hh->redirect) { 
+            //Èç¹ûºó¶Ë·şÎñÆ÷ÓĞ·µ»Øngx_http_upstream_headers_inÖĞµÄÍ·²¿ĞĞ×Ö¶Î£¬Èç¹û¸ÃÊı×éÖĞµÄ³ÉÔ±redirectÎª1£¬ÔòÖ´ĞĞ³ÉÔ±µÄ¶ÔÓ¦µÄcopy_handler
                 if (hh->copy_handler(r, &h[i], hh->conf) != NGX_OK) {
                     ngx_http_finalize_request(r,
                                               NGX_HTTP_INTERNAL_SERVER_ERROR);
@@ -2655,7 +2844,7 @@ ngx_http_upstream_process_headers(ngx_http_request_t *r, ngx_http_upstream_t *u)
             }
         }
 
-        uri = u->headers_in.x_accel_redirect->value;
+        uri = u->headers_in.x_accel_redirect->value; //ĞèÒªÄÚ²¿ÖØ¶¨ÏòµÄĞÂµÄuri£¬Í¨¹ıºóÃæµÄngx_http_internal_redirect´ÓĞÂ×ß13 phase½×¶ÎÁ÷³Ì
 
         if (uri.data[0] == '@') {
             ngx_http_named_location(r, &uri);
@@ -2673,7 +2862,7 @@ ngx_http_upstream_process_headers(ngx_http_request_t *r, ngx_http_upstream_t *u)
                 r->method = NGX_HTTP_GET;
             }
 
-            ngx_http_internal_redirect(r, &uri, &args);
+            ngx_http_internal_redirect(r, &uri, &args);//Ê¹ÓÃÄÚ²¿ÖØ¶¨Ïò£¬ÇÉÃîµÄÏÂÔØ¡£ÀïÃæÓÖ»á×ßµ½¸÷ÖÖÇëÇó´¦Àí½×¶Î¡£
         }
 
         ngx_http_finalize_request(r, NGX_DONE);
@@ -2696,7 +2885,7 @@ ngx_http_upstream_process_headers(ngx_http_request_t *r, ngx_http_upstream_t *u)
         }
 
         if (ngx_hash_find(&u->conf->hide_headers_hash, h[i].hash,
-                          h[i].lowcase_key, h[i].key.len))
+                          h[i].lowcase_key, h[i].key.len)) //ÕâĞ©Í·²¿²»ĞèÒª·¢ËÍ¸ø¿Í»§¶Ë£¬Òş²Ø
         {
             continue;
         }
@@ -2704,16 +2893,17 @@ ngx_http_upstream_process_headers(ngx_http_request_t *r, ngx_http_upstream_t *u)
         hh = ngx_hash_find(&umcf->headers_in_hash, h[i].hash,
                            h[i].lowcase_key, h[i].key.len);
 
-        if (hh) {
-            if (hh->copy_handler(r, &h[i], hh->conf) != NGX_OK) {
+        if (hh) {//Ò»¸ö¸ö¿½±´µ½ÇëÇóµÄheaders_outÀïÃæ
+            if (hh->copy_handler(r, &h[i], hh->conf) != NGX_OK) { //´Óu->headers_in.headers¸´ÖÆµ½r->headers_out.headersÓÃÓÚ·¢ËÍ
                 ngx_http_upstream_finalize_request(r, u,
                                                NGX_HTTP_INTERNAL_SERVER_ERROR);
                 return NGX_DONE;
             }
 
-            continue;
+            continue; 
         }
 
+        //Èç¹ûÃ»ÓĞ×¢²á¾ä±ú(ÔÚngx_http_upstream_headers_inÕÒ²»µ½¸Ã³ÉÔ±)£¬¿½±´ºó¶Ë·şÎñÆ÷·µ»ØµÄÒ»ĞĞÒ»ĞĞµÄÍ·²¿ĞÅÏ¢(u->headers_in.headersÖĞµÄÍ·²¿ĞĞ¸³Öµ¸ør->headers_out.headers)
         if (ngx_http_upstream_copy_header_line(r, &h[i], 0) != NGX_OK) {
             ngx_http_upstream_finalize_request(r, u,
                                                NGX_HTTP_INTERNAL_SERVER_ERROR);
@@ -2729,6 +2919,7 @@ ngx_http_upstream_process_headers(ngx_http_request_t *r, ngx_http_upstream_t *u)
         r->headers_out.date->hash = 0;
     }
 
+    //¿½±´×´Ì¬ĞĞ£¬ÒòÎªÕâ¸ö²»ÊÇ´æÔÚheaders_inÀïÃæµÄ¡£
     r->headers_out.status = u->headers_in.status_n;
     r->headers_out.status_line = u->headers_in.status_line;
 
@@ -2829,7 +3020,7 @@ ngx_http_upstream_process_body_in_memory(ngx_http_request_t *r,
     }
 }
 
-
+//·¢ËÍÇëÇóÊı¾İ¸ø¿Í»§¶Ë¡£ÀïÃæ»á´¦Àíheader,body·Ö¿ª·¢ËÍµÄÇé¿öµÄ 
 static void
 ngx_http_upstream_send_response(ngx_http_request_t *r, ngx_http_upstream_t *u)
 {
@@ -2840,14 +3031,14 @@ ngx_http_upstream_send_response(ngx_http_request_t *r, ngx_http_upstream_t *u)
     ngx_connection_t          *c;
     ngx_http_core_loc_conf_t  *clcf;
 
-    rc = ngx_http_send_header(r);
+    rc = ngx_http_send_header(r);//ÏÈ·¢header£¬ÔÙ·¢body //µ÷ÓÃÃ¿Ò»¸öfilter¹ıÂË£¬´¦ÀíÍ·²¿Êı¾İ¡£×îºó½«Êı¾İ·¢ËÍ¸ø¿Í»§¶Ë¡£µ÷ÓÃngx_http_top_header_filter
 
     if (rc == NGX_ERROR || rc > NGX_OK || r->post_action) {
         ngx_http_upstream_finalize_request(r, u, rc);
         return;
     }
 
-    u->header_sent = 1;
+    u->header_sent = 1;//±ê¼ÇÒÑ¾­·¢ËÍÁËÍ·²¿×Ö¶Î£¬ÖÁÉÙÊÇÒÑ¾­¹ÒÔØ³öÈ¥£¬¾­¹ıÁËfilterÁË¡£
 
     if (u->upgrade) {
         ngx_http_upstream_upgrade(r, u);
@@ -2856,7 +3047,7 @@ ngx_http_upstream_send_response(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
     c = r->connection;
 
-    if (r->header_only) {
+    if (r->header_only) {//Èç¹ûÖ»ĞèÒª·¢ËÍÍ·²¿Êı¾İ£¬±ÈÈç¿Í»§¶ËÓÃcurl -I ·ÃÎÊµÄ¡£·µ»Ø204×´Ì¬Âë¼´¿É¡£
 
         if (!u->buffering) {
             ngx_http_upstream_finalize_request(r, u, rc);
@@ -3967,8 +4158,8 @@ ngx_http_upstream_dummy_handler(ngx_http_request_t *r, ngx_http_upstream_t *u)
                    "http upstream dummy handler");
 }
 
-
-static void
+//Èç¹û²âÊÔÊ§°Ü£¬µ÷ÓÃngx_http_upstream_nextº¯Êı£¬Õâ¸öº¯Êı¿ÉÄÜÔÙ´Îµ÷ÓÃpeer.getµ÷ÓÃ±ğµÄºó¶Ë·şÎñÆ÷½øĞĞÁ¬½Ó¡£
+static void // ngx_http_upstream_next ·½·¨³¢ÊÔÓëÆäËûÉÏÓÎ·şÎñÆ÷½¨Á¢Á¬½Ó
 ngx_http_upstream_next(ngx_http_request_t *r, ngx_http_upstream_t *u,
     ngx_uint_t ft_type)
 {
@@ -4097,7 +4288,7 @@ ngx_http_upstream_next(ngx_http_request_t *r, ngx_http_upstream_t *u,
         u->peer.connection = NULL;
     }
 
-    ngx_http_upstream_connect(r, u);
+    ngx_http_upstream_connect(r, u);//ÔÙ´Î·¢ÆğÁ¬½Ó
 }
 
 
@@ -4755,7 +4946,7 @@ ngx_http_upstream_copy_multi_header_lines(ngx_http_request_t *r,
     return NGX_OK;
 }
 
-
+//Content-Type:text/html;charset=ISO-8859-1½âÎö±àÂë·½Ê½´æµ½r->headers_out.charset
 static ngx_int_t
 ngx_http_upstream_copy_content_type(ngx_http_request_t *r, ngx_table_elt_t *h,
     ngx_uint_t offset)
@@ -5455,6 +5646,18 @@ server {
         proxy_pass http://backend;
     }
 }
+
+max_fails=number
+
+  ÉèÖÃÔÚfail_timeout²ÎÊıÉèÖÃµÄÊ±¼äÄÚ×î´óÊ§°Ü´ÎÊı£¬Èç¹ûÔÚÕâ¸öÊ±¼äÄÚ£¬ËùÓĞÕë¶Ô¸Ã·şÎñÆ÷µÄÇëÇó
+  ¶¼Ê§°ÜÁË£¬ÄÇÃ´ÈÏÎª¸Ã·şÎñÆ÷»á±»ÈÏÎªÊÇÍ£»úÁË£¬Í£»úÊ±¼äÊÇfail_timeoutÉèÖÃµÄÊ±¼ä¡£Ä¬ÈÏÇé¿öÏÂ£¬
+  ²»³É¹¦Á¬½ÓÊı±»ÉèÖÃÎª1¡£±»ÉèÖÃÎªÁãÔò±íÊ¾²»½øĞĞÁ´½ÓÊıÍ³¼Æ¡£ÄÇĞ©Á¬½Ó±»ÈÏÎªÊÇ²»³É¹¦µÄ¿ÉÒÔÍ¨¹ı
+  proxy_next_upstream, fastcgi_next_upstream£¬ºÍmemcached_next_upstreamÖ¸ÁîÅäÖÃ¡£http_404
+  ×´Ì¬²»»á±»ÈÏÎªÊÇ²»³É¹¦µÄ³¢ÊÔ¡£
+
+fail_time=time
+  ÉèÖÃ ¶à³¤Ê±¼äÄÚÊ§°Ü´ÎÊı´ïµ½×î´óÊ§°Ü´ÎÊı»á±»ÈÏÎª·şÎñÆ÷Í£»úÁË·şÎñÆ÷»á±»ÈÏÎªÍ£»úµÄÊ±¼ä³¤¶È Ä¬ÈÏÇé¿öÏÂ£¬³¬Ê±Ê±¼ä±»ÉèÖÃÎª10S
+
 */
 static char *
 ngx_http_upstream(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
@@ -5722,7 +5925,7 @@ ngx_http_upstream_add(ngx_conf_t *cf, ngx_url_t *u, ngx_uint_t flags)
 
     if (!(flags & NGX_HTTP_UPSTREAM_CREATE)) {
 
-        if (ngx_parse_url(cf->pool, u) != NGX_OK) {
+        if (ngx_parse_url(cf->pool, u) != NGX_OK) { //½âÎöuri£¬Èç¹ûuriÊÇIP:PORTĞÎÊ½Ôò»ñÈ¡ËûÃÇ£¬Èç¹ûÊÇÓòÃûwww.xxx.comĞÎÊ½£¬Ôò½âÎöÓòÃû
             if (u->err) {
                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                    "%s in upstream \"%V\"", u->err, &u->url);
@@ -5956,7 +6159,7 @@ ngx_http_upstream_get_local(ngx_http_request_t *r,
 //fastcgi_param  ParamsÊı¾İ°ü£¬ÓÃÓÚ´«µİÖ´ĞĞÒ³ÃæËùĞèÒªµÄ²ÎÊıºÍ»·¾³±äÁ¿¡£
 char *
 ngx_http_upstream_param_set_slot(ngx_conf_t *cf, ngx_command_t *cmd,
-    void *conf)
+    void *conf) //uboot.din
 {
     char  *p = conf;
 
@@ -5992,7 +6195,7 @@ ngx_http_upstream_param_set_slot(ngx_conf_t *cf, ngx_command_t *cmd,
             return NGX_CONF_ERROR;
         }
 
-        param->skip_empty = 1; //ºÍngx_http_fastcgi_init_paramsÅäºÏÔÄ¶Á
+        param->skip_empty = 1; //ºÍngx_http_fastcgi_init_paramsÅäºÏÔÄ¶Á£¬Èç¹ûÉèÖÃÁË¸ÃÖµ£¬²¢ÇÒvalue²¿·ÖÎª0£¬ÔòÖ±½Ó²»Ê¹ÓÃ´Ë±äÁ¿
     }
 
     return NGX_CONF_OK;
@@ -6152,7 +6355,7 @@ ngx_http_upstream_init_main_conf(ngx_conf_t *cf, void *conf)
         init = uscfp[i]->peer.init_upstream ? uscfp[i]->peer.init_upstream:
                                             ngx_http_upstream_init_round_robin;
 
-        if (init(cf, uscfp[i]) != NGX_OK) {
+        if (init(cf, uscfp[i]) != NGX_OK) { //Ö´ĞĞinit_upstream
             return NGX_CONF_ERROR;
         }
     }

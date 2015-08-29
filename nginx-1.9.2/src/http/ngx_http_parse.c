@@ -869,6 +869,7 @@ Accept-Encoding:gzip,deflate.
 返回NGX_OK表示解析出一行http头部
 如果返回NGX_AGAIN则表示状态机还没有解析到完整的http头部，要求upstream模块继续接收新的字符流再交由process_header回调方法解析
 */ //ngx_http_parse_request_line解析请求行， ngx_http_process_request_headers(ngx_http_parse_header_line)解析头部行(请求头部)
+//头部行最后面两个\r\n确定头部行全部解析完毕，也就是中间出现一个空行来区分头部行和body数据
 ngx_int_t
 ngx_http_parse_header_line(ngx_http_request_t *r, ngx_buf_t *b,
     ngx_uint_t allow_underscores) //每解析完一行name:value就会返回NGX_OK

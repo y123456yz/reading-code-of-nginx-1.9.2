@@ -22,7 +22,7 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
     ngx_event_t       *rev, *wev;
     ngx_connection_t  *c;
 
-    rc = pc->get(pc, pc->data);
+    rc = pc->get(pc, pc->data);//ngx_http_upstream_get_round_robin_peer获取一个peer
     if (rc != NGX_OK) {
         return rc;
     }
@@ -128,7 +128,14 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
      调用connect方法向上游服务器发起TCP连接，作为非阻塞套接字，connect方法可能立刻返回连接建立成功，也可能告诉用户继续等待上游服务器的响应
      对connect连接是否建立成功的检查会在函数外面的u->read_event_handler = ngx_http_upstream_process_header;见函数外层的ngx_http_upstream_connect
      */
-    rc = connect(s, pc->sockaddr, pc->socklen);
+     /*
+        针对非阻塞I/O执行的系统调用则总是立即返回，而不管事件足否已经发生。如果事件没有眭即发生，这些系统调用就
+    返回—1．和出错的情况一样。此时我们必须根据errno来区分这两种情况。对accept、send和recv而言，事件未发牛时errno
+    通常被设置成EAGAIN（意为“再来一次”）或者EWOULDBLOCK（意为“期待阻塞”）：对conncct而言，errno则被
+    设置成EINPROGRESS（意为“在处理中"）。
+      */ //connect的时候返回成功后使用的sock就是socket创建的sock，这和服务器端accept成功返回一个新的sock不一样
+      //上面的ngx_add_conn已经把读写事件一起添加到了epoll中
+    rc = connect(s, pc->sockaddr, pc->socklen); //connect返回值可以参考<linux高性能服务器开发> 9.5节
 
     if (rc == -1) {
         err = ngx_socket_errno;
@@ -173,7 +180,8 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
 
     if (ngx_add_conn) {
         if (rc == -1) {
-
+        //这个表示发出了连接三步握手中的SYN，单还没有等待对方完全应答回来表示连接成功通过外层的
+        //c->write->handler = ngx_http_upstream_handler;  u->write_event_handler = ngx_http_upstream_send_request_handler促发返回成功
             /* NGX_EINPROGRESS */
 
             return NGX_AGAIN;
@@ -223,6 +231,10 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
         event = NGX_LEVEL_EVENT;
     }
 
+    char tmpbuf[256];
+        
+        snprintf(tmpbuf, sizeof(tmpbuf), "<%25s, %5d> epoll NGX_READ_EVENT(et) read add", NGX_FUNC_LINE);
+        ngx_log_debug0(NGX_LOG_DEBUG_EVENT, pc->log, 0, tmpbuf);
     if (ngx_add_event(rev, NGX_READ_EVENT, event) != NGX_OK) {
         goto failed;
     }
@@ -230,12 +242,16 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
     if (rc == -1) {
 
         /* NGX_EINPROGRESS */
-
+        char tmpbuf[256];
+        
+        snprintf(tmpbuf, sizeof(tmpbuf), "<%25s, %5d> epoll NGX_WRITE_EVENT(et) read add", NGX_FUNC_LINE);
+        ngx_log_debug0(NGX_LOG_DEBUG_EVENT, pc->log, 0, tmpbuf);
         if (ngx_add_event(wev, NGX_WRITE_EVENT, event) != NGX_OK) {
             goto failed;
         }
 
-        return NGX_AGAIN;
+        return NGX_AGAIN; //这个表示发出了连接三步握手中的SYN，单还没有等待对方完全应答回来表示连接成功
+        //通过外层的 c->write->handler = ngx_http_upstream_handler;  u->write_event_handler = ngx_http_upstream_send_request_handler促发返回成功
     }
 
     ngx_log_debug0(NGX_LOG_DEBUG_EVENT, pc->log, 0, "connected");

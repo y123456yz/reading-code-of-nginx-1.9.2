@@ -77,7 +77,9 @@ static char *ngx_http_client_errors[] = {
 };
 
 //°Ñngx_http_headers_inÖĞµÄËùÓĞ³ÉÔ±×öhashÔËËã£¬È»ºó´æ·Åµ½cmcf->headers_in_hashÖĞ
-ngx_http_header_t  ngx_http_headers_in[] = {
+ngx_http_header_t  ngx_http_headers_in[] = {  
+//Í¨¹ıngx_http_variable_headerº¯Êı»ñÈ¡ngx_http_core_variablesÖĞÏà¹Ø±äÁ¿µÄÖµ£¬ÕâĞ©ÖµµÄÀ´Ô´¾ÍÊÇngx_http_headers_inÖĞµÄhander½âÎöµÄ¿Í»§¶ËÇëÇóÍ·²¿
+
     { ngx_string("Host"), offsetof(ngx_http_headers_in_t, host),
                  ngx_http_process_host }, //ngx_http_process_request_headersÖĞÖ´ĞĞhandler
 
@@ -390,7 +392,7 @@ ngx_http_init_connection·½·¨¶¼ÊÇÓÉÁ½¸öÊÂ¼ş£¨TCPÁ¬½Ó½¨Á¢³É¹¦ÊÂ¼şºÍÁ¬½ÓÉÏµÄ¿É¶ÁÊÂ¼
  */
     ngx_add_timer(rev, c->listening->post_accept_timeout, NGX_FUNC_LINE); //°Ñ½ÓÊÕÊÂ¼şÌí¼Óµ½¶¨Ê±Æ÷ÖĞ£¬µ±post_accept_timeoutÃë»¹Ã»ÓĞ¿Í»§¶ËÊı¾İµ½À´£¬¾Í¹Ø±ÕÁ¬½Ó
     ngx_reusable_connection(c, 1);
-
+    
     if (ngx_handle_read_event(rev, 0, NGX_FUNC_LINE) != NGX_OK) { //µ±ÏÂ´ÎÓĞÊı¾İ´Ó¿Í»§¶Ë·¢ËÍ¹ıÀ´µÄÊ±ºò£¬»áÔÚngx_epoll_process_events°Ñ¶ÔÓ¦µÄreadyÖÃ1¡£
         ngx_http_close_connection(c);
         return;
@@ -2024,8 +2026,8 @@ ngx_http_process_request(ngx_http_request_t *r)
 ´ÓÏÖÔÚ¿ªÊ¼²»»áÔÙĞèÒª½ÓÊÕHTTPÇëÇóĞĞ»òÕßÍ·²¿£¬ËùÒÔĞèÒªÖØĞÂÉèÖÃµ±Ç°Á¬½Ó¶Á/Ğ´ÊÂ¼şµÄ»Øµ÷·½·¨¡£ÔÚÕâÒ»²½ÖèÖĞ£¬½«Í¬Ê±°Ñ¶ÁÊÂ¼ş¡¢Ğ´ÊÂ¼şµÄ»Øµ÷
 ·½·¨¶¼ÉèÖÃÎªngx_http_request_handler·½·¨£¬ÇëÇóµÄºóĞø´¦Àí¶¼ÊÇÍ¨¹ıngx_http_request_handler·½·¨½øĞĞµÄ¡£
  */
-    c->read->handler = ngx_http_request_handler; //ÓÉ¶ÁĞ´ÊÂ¼ş´¥·¢ngx_http_request_handler
-    c->write->handler = ngx_http_request_handler;  
+    c->read->handler = ngx_http_request_handler; //ÓÉ¶ÁĞ´ÊÂ¼ş´¥·¢ngx_http_request_handler  //ÓÉepoll¶ÁÊÂ¼şÔÚngx_epoll_process_events´¥·¢
+    c->write->handler = ngx_http_request_handler;   //ÓÉepollĞ´ÊÂ¼şÔÚngx_epoll_process_events´¥·¢
 
 /*
 ÉèÖÃngx_http_request_t½á¹¹ÌåµÄread_event_handler·½·¨gx_http_block_reading¡£µ±ÔÙ´ÎÓĞ¶ÁÊÂ¼şµ½À´Ê±£¬½«»áµ÷ÓÃngx_http_block_reading·½·¨
@@ -2394,8 +2396,8 @@ ngx_http_request_ handlerÊÇHTTPÇëÇóÉÏ¶Á£¯Ğ´ÊÂ¼şµÄ»Øµ÷·½·¨¡£ÔÚngx_event_t½á¹¹Ìå±í
 
     ngx_http_set_log_request(c->log, r);
 
-    ngx_log_debug2(NGX_LOG_DEBUG_HTTP, c->log, 0,
-                   "http run request: \"%V?%V\"", &r->uri, &r->args);
+    ngx_log_debug3(NGX_LOG_DEBUG_HTTP, c->log, 0,
+                   "http run request(ev->write:%d): \"%V?%V\"", ev->write, &r->uri, &r->args);
 
 /*
  ¼ì²éÕâ¸öÊÂ¼şµÄwrite¿ÉĞ´±êÖ¾£¬Èç¹ûwrite±êÖ¾Îªl£¬Ôòµ÷ÓÃngx_http_request_t½á¹¹ÌåÖĞµÄwrite event- handler·½·¨¡£×¢Òâ£¬ÎÒÃÇÔÚngx_http_handler
@@ -2405,12 +2407,11 @@ ngx_http_request_ handlerÊÇHTTPÇëÇóÉÏ¶Á£¯Ğ´ÊÂ¼şµÄ»Øµ÷·½·¨¡£ÔÚngx_event_t½á¹¹Ìå±í
 Èç¹ûÒ»¸öÊÂ¼şµÄ¶ÁĞ´±êÖ¾Í¬Ê±Îª1Ê±£¬½öwrite_event_handler·½·¨»á±»µ÷ÓÃ£¬¼´¿ÉĞ´ÊÂ¼şµÄ´¦ÀíÓÅÏÈÓÚ¿É¶ÁÊÂ¼ş£¨ÕâÕıÊÇNginx¸ßĞÔÄÜÉè¼ÆµÄÌåÏÖ£¬
 ÓÅÏÈ´¦Àí¿ÉĞ´ÊÂ¼ş¿ÉÒÔ¾¡¿ìÊÍ·ÅÄÚ´æ£¬¾¡Á¿±£³Ö¸÷HTTPÄ£¿éÉÙÊ¹ÓÃÄÚ´æÒÔÌá¸ß²¢·¢ÄÜÁ¦£©¡£ÒòÎª·şÎñÆ÷·¢ËÍ¸ø¿Í»§¶ËµÄ±¨ÎÄ³¤¶ÈÒ»°ã±ÈÇëÇó±¨ÎÄ´óºÜ¶à
  */
-    //printf("yang test .....................write:%u\n", ev->write);
-    if (ev->write) { //Ä¬ÈÏÒ»Ö±Î´1£¬ÏÂÃæµÄreadºÃÏñÒ»Ö±Ö´ĞĞ²»ÁË ???????????????????????
+   //µ±evÎªngx_connection_t->write Ä¬ÈÏwriteÎª1£»µ±evÎªngx_connection_t->read Ä¬ÈÏwriteÎª0
+    if (ev->write) { //ËµÃ÷evÊÇngx_connection_t->write
         r->write_event_handler(r); //ngx_http_core_run_phases
 
-    } else {
-         //printf("yang test ........XXXXXXXXXXXXXX read.............write:%u\n", ev->write);   
+    } else {//ËµÃ÷evÊÇngx_connection_t->readÊÂ¼ş 
         r->read_event_handler(r);
     }
 
@@ -2467,7 +2468,7 @@ ngx_http_run_posted_requests(ngx_connection_t *c) //Ö´ĞĞr->main->posted_requests
           µ÷ÓÃÕâ¸öpostÇëÇóngx_http_request_t½á¹¹ÌåÖĞµÄwrite event handler·½·¨¡£ÎªÊ²Ã´²»ÊÇÖ´ĞĞread_ event_ handler·½·¨ÄØ£¿Ô­Òò
           ºÜ¼òµ¥£¬×ÓÇëÇó²»ÊÇ±»ÍøÂçÊÂ¼şÇı¶¯µÄ£¬Òò´Ë£¬Ö´ĞĞpostÇëÇóÊ±¾ÍÏàµ±ÓÚÓĞ¿ÉĞ´ÊÂ¼ş£¬ÓÉNginxÖ÷¶¯×ö³ö¶¯×÷¡£
           */
-        r->write_event_handler(r);
+        r->write_event_handler(r); 
     }
 }
 

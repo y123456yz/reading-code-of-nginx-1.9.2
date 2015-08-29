@@ -39,8 +39,8 @@ struct ngx_event_pipe_s { //ngx_http_XXX_handler(ngx_http_fastcgi_handler)中创建
      * from the raw bufs to an incoming chain
      */
 
-    ngx_event_pipe_input_filter_pt    input_filter;//ngx_http_XXX_input_filter(如ngx_http_fastcgi_input_filter)
-    void                             *input_ctx;
+    ngx_event_pipe_input_filter_pt    input_filter;//见ngx_http_fastcgi_handler(如见ngx_http_xxx_handler)
+    void                             *input_ctx; //指向对应的客户端连接ngx_http_request_t，见ngx_http_fastcgi_handler
 
     ngx_event_pipe_output_filter_pt   output_filter;
     void                             *output_ctx;

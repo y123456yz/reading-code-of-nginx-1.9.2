@@ -196,7 +196,9 @@ struct ngx_log_s  {
 #if (NGX_HAVE_VARIADIC_MACROS)
 void
 ngx_log_error_core(ngx_uint_t level, ngx_log_t *log, const char* filename, int lineno, ngx_err_t err,
-    const char *fmt, ...)
+    const char *fmt, ...) 
+//这里打印一定要注意，例如位标记用%d %u打印就会出现段错误，例如用%d打印ngx_event_t->write;
+//例如打印ngx_log_debug2(NGX_LOG_DEBUG_HTTP, c->log, 0, "http upstream request(ev->write:%u %u)  %V", ngx_event_t->write, ngx_event_t->write); 段错误
 #else
 
 void
@@ -220,6 +222,7 @@ ngx_log_error_core(ngx_uint_t level, ngx_log_t *log, const char* filename, int l
                    ngx_cached_err_log_time.len);
 
     snprintf(filebuf, sizeof(filebuf), "[%35s, %5d]", filename, lineno);
+
     p = ngx_slprintf(p, last, "%s ", filebuf);  
     
     p = ngx_slprintf(p, last, " [%V] ", &err_levels[level]);

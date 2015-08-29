@@ -13,6 +13,10 @@ ulimit -c 1024(ÏŞÖÆÎÄ¼ş´óĞ¡) »òÕßunlimited £¬Õâ¸öÒª×¢Òâ£¬Èç¹û²»×öÏŞÖÆ£¬coredumpÎ
 
 echo 0 > /proc/sys/kernel/core_uses_pid
 echo /var/corefile/core-%e > /path/core_pattern
+
+echo 0 > /proc/sys/kernel/core_uses_pid
+echo /var/corefile/core-%e > /proc/sys/kernel/core_pattern
+
 ÉÏÃæÁ½¾äÖ´ĞĞºó£¬¿ÉÒÔ±£Ö¤coredumpÎÄ¼şÎªcore-nginx
 
 

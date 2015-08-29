@@ -121,7 +121,7 @@ VAR_NOCACHEABLE标记，因为既然会被修改，自然也是不可缓存的
 这个值存放在哪儿，但是却需要比较复杂的逻辑获取（上面讲的内部变量$remote_port情况），此时就必须靠回调函数get_handler()来执行这部分逻辑。
 总之，不管简单或复杂，回调函数get_handler0帮我们去在合适的地方通过合适的方式，获取到该内部变量的值，这也是为什么我们并没有给Nginx内部变量赋值，
 却义能读到值，因为有这个回调函数的存在。来看看这两个示例变量的data字段与get_handler()回调字段情况。
-     */ //gethandler()回调字段，这个字段主要实现获取变量值的功能  
+     */ //gethandler()回调字段，这个字段主要实现获取变量值的功能   例如ngx_http_core_variables
      //ngx_http_rewrite_set中设置为ngx_http_rewrite_var  args的get_handler是ngx_http_variable_request ngx_http_variables_init_vars中设置"http_"等的get_handler
     ngx_http_get_variable_pt      get_handler; 
 

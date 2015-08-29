@@ -1030,7 +1030,7 @@ ngx_get_connection(ngx_socket_t s, ngx_log_t *log) //从连接池中获取一个ngx_conne
     rev->data = c;
     wev->data = c;
 
-    wev->write = 1;
+    wev->write = 1; //这里只是置位写事件ev为1，并没有修改读事件ev
 
     return c;
 }

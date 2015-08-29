@@ -251,7 +251,7 @@ ngx_module_t  ngx_event_core_module = {
     NGX_EVENT_MODULE,                      /* module type */
     NULL,                                  /* init master */
     ngx_event_module_init,                 /* init module */ //解析完配置文件后执行
-    ngx_event_process_init,                /* init process */ //在创建子进程的里面执行
+    ngx_event_process_init,                /* init process */ //在创建子进程的里面执行  ngx_worker_process_init
     NULL,                                  /* init thread */
     NULL,                                  /* exit thread */
     NULL,                                  /* exit process */
@@ -354,7 +354,7 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
                 if (timer == NGX_TIMER_INFINITE
                     || timer > ngx_accept_mutex_delay)
                 {
-                    timer = ngx_accept_mutex_delay;
+                    timer = ngx_accept_mutex_delay; //保证这么多时间超时的时候出发epoll_wait返回，从而可以更新内存时间
                 }
             }
         }
@@ -801,7 +801,7 @@ ngx_timer_signal_handler(int signo)
 }
 
 #endif
-
+//在创建子进程的里面执行  ngx_worker_process_init
 static ngx_int_t
 ngx_event_process_init(ngx_cycle_t *cycle)
 {
@@ -1097,11 +1097,16 @@ ngx_event_process_init(ngx_cycle_t *cycle)
           将监听对象连接的读事件添加到事件驱动模块中，这样，epoll等事件模块就开始检测监听服务，并开始向用户提供服务了。
           */ //如果ngx_use_accept_mutex为0也就是未开启accept_mutex锁，则在ngx_worker_process_init->ngx_event_process_init 中把accept连接读事件统计到epoll中
           //否则在ngx_process_events_and_timers->ngx_process_events_and_timers->ngx_trylock_accept_mutex中把accept连接读事件统计到epoll中
+
+        char tmpbuf[256];
+        
+        snprintf(tmpbuf, sizeof(tmpbuf), "<%25s, %5d> epoll NGX_READ_EVENT(et) read add", NGX_FUNC_LINE);
+        ngx_log_debug0(NGX_LOG_DEBUG_EVENT, cycle->log, 0, tmpbuf);
         if (ngx_add_event(rev, NGX_READ_EVENT, 0) == NGX_ERROR) { //如果是epoll则为ngx_epoll_add_event
             return NGX_ERROR;
         }
 
-#endif
+#endif  
 
     }
 

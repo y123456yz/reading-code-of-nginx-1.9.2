@@ -62,6 +62,26 @@ ngx_http_read_client_request_body(ngx_http_request_t *r,  //只有在连接后端服务器
     ngx_http_core_loc_conf_t  *clcf;
 
     /*
+        这里开辟真正的读取数据的空间后，buf的指针指向终端空间的头尾以及解析完的数据的位置，
+                    buf1                       buf2                    buf3
+        _________________________________________________________________________________
+        |                          |                         |                           |
+        |__________________________|_________________________|___________________________|
+
+     1.第一次开辟好存储数据的空间ngx_create_temp_buf后，r->request_body->buf pos last start指向buf1的头部，end指向buf3尾部
+     2.假设第一次读取完内核协议栈的数据后填充好了buf1,r->request_body->buf中的pos start指向buf1的头部，last指向buf1尾部(buf2头部)，end指向buf3尾部
+     3.开始调用ngx_http_request_body_filter，在该函数里面会重新分配一个ngx_buf_t，把r->request_body->buf成员赋值给她。然后把这个新的ngx_buf_t
+     添加到r->request_body->bufs链表中。赋值完后r->request_body->buf中的start指向buf1的头部，pos last指向buf1尾部(buf2头部)，end指向buf3尾部
+     4.从复上面的2 3步骤
+     5.当解析完buf3的内容后，发现r->request_body->buf从内核读取到buf空间中的网络数据包已经被三个新的ngx_buf_t指向，并且这三个ngx_buf_t
+       通过r->request_body->bufs链表连接在了一起，这时候r->request_body->buf中的end = last,也就是所有ngx_create_temp_buf开辟的内存空间
+       已经存满了(recv的数据存在该空间里面)，并且数据分成三个ngx_buf_t指向这些空间，然后连接到了转存到了r->request_body->bufs链表上。在
+     6.ngx_http_request_body_save_filter中检测到rb->buf->last == rb->buf->end，上面的buf(buf1+buf2+buf3)已经填满，然后通过r->request_body->bufs
+       把三个ngx_buf_t指向的内存空间一次性写入临时文件，写入临时文件后，r->request_body->buf中的pos last指针重新指向头部，又可以从新从
+       内核协议栈读取数据存储在里面了，然后从复1-5的过程
+*/
+
+    /*
      首先把该请求对应的原始请求的引用计数加l。这同时是在要求每一个HTTP模块在传入的post_handler方法被回调时，务必调用类似
      ngx_http_finalize_request的方法去结束请求，否则引用计数会始终无法清零，从而导致请求无法释放。
      */
@@ -263,6 +283,29 @@ content-length头部指定的长度，如果大干或等于则说明已经接收到完整的包体 */
     说明确实需要分配用于接收包体的缓冲区了。缓冲区长度由nginx.conf丈件中的client_body_buffer_size配置项指定，缓冲区就在ngx_http_request_body_t
     结构体的buf成员中存放着，同时，bufs和to_ write这两个缓冲区链表首部也指向该buf。
      */
+
+/*
+        这里开辟真正的读取数据的空间后，buf的指针指向终端空间的头尾以及解析完的数据的位置，
+                    buf1                       buf2                    buf3
+        _________________________________________________________________________________
+        |                          |                         |                           |
+        |__________________________|_________________________|___________________________|
+
+     1.第一次开辟好存储数据的空间ngx_create_temp_buf后，r->request_body->buf pos last start指向buf1的头部，end指向buf3尾部
+     2.假设第一次读取完内核协议栈的数据后填充好了buf1,r->request_body->buf中的pos start指向buf1的头部，last指向buf1尾部(buf2头部)，end指向buf3尾部
+     3.开始调用ngx_http_request_body_filter，在该函数里面会重新分配一个ngx_buf_t，把r->request_body->buf成员赋值给她。然后把这个新的ngx_buf_t
+     添加到r->request_body->bufs链表中。赋值完后r->request_body->buf中的start指向buf1的头部，pos last指向buf1尾部(buf2头部)，end指向buf3尾部
+     4.从复上面的2 3步骤
+     5.当解析完buf3的内容后，发现r->request_body->buf从内核读取到buf空间中的网络数据包已经被三个新的ngx_buf_t指向，并且这三个ngx_buf_t
+       通过r->request_body->bufs链表连接在了一起，这时候r->request_body->buf中的end = last,也就是所有ngx_create_temp_buf开辟的内存空间
+       已经存满了(recv的数据存在该空间里面)，并且数据分成三个ngx_buf_t指向这些空间，然后连接到了转存到了r->request_body->bufs链表上。在
+     6.ngx_http_request_body_save_filter中检测到rb->buf->last == rb->buf->end，上面的buf(buf1+buf2+buf3)已经填满，然后通过r->request_body->bufs
+       把三个ngx_buf_t指向的内存空间一次性写入临时文件，写入临时文件后，r->request_body->buf中的pos last指针重新指向头部，又可以从新从
+       内核协议栈读取数据存储在里面了，然后从复1-5的过程
+
+     
+    //读取客户包体即使是存入临时文件中，当所有包体读取完毕后(ngx_http_do_read_client_request_body)，还是会让r->request_body->bufs指向文件中的相关偏移内存地址
+*/
     rb->buf = ngx_create_temp_buf(r->pool, size); //这个是为下次读取准备的
     if (rb->buf == NULL) {
         rc = NGX_HTTP_INTERNAL_SERVER_ERROR;
@@ -561,7 +604,7 @@ ngx_http_do_read_client_request_body(ngx_http_request_t *r)//返回值大于NGX_HTTP_
     }
 
     //如果缓冲区中还有未写入文件的内容，调用ngx_http_write_request_body方法把最后的包体内容也写入文件。
-    if (rb->temp_file || r->request_body_in_file_only) {
+    if (rb->temp_file || r->request_body_in_file_only) { //只要之前的内存有写入文件，那么剩余的部分也要写入文件
 
         /* save the last part */
 
@@ -584,7 +627,7 @@ ngx_http_do_read_client_request_body(ngx_http_request_t *r)//返回值大于NGX_HTTP_
             b->file_last = rb->temp_file->file.offset;
             b->file = &rb->temp_file->file;
 
-            rb->bufs = cl;
+            rb->bufs = cl; //读取客户包体即使是存入临时文件中，当所有包体读取完毕后(ngx_http_do_read_client_request_body)，还是会让r->request_body->bufs指向文件中的相关偏移内存地址
 
         } else {
             rb->bufs = NULL;
@@ -603,6 +646,25 @@ ngx_http_do_read_client_request_body(ngx_http_request_t *r)//返回值大于NGX_HTTP_
     return NGX_OK;
 }
 
+/*
+        这里开辟真正的读取数据的空间后，buf的指针指向终端空间的头尾以及解析完的数据的位置，
+                    buf1                       buf2                    buf3
+        _________________________________________________________________________________
+        |                          |                         |                           |
+        |__________________________|_________________________|___________________________|
+
+     1.第一次开辟好存储数据的空间ngx_create_temp_buf后，r->request_body->buf pos last start指向buf1的头部，end指向buf3尾部
+     2.假设第一次读取完内核协议栈的数据后填充好了buf1,r->request_body->buf中的pos start指向buf1的头部，last指向buf1尾部(buf2头部)，end指向buf3尾部
+     3.开始调用ngx_http_request_body_filter，在该函数里面会重新分配一个ngx_buf_t，把r->request_body->buf成员赋值给她。然后把这个新的ngx_buf_t
+     添加到r->request_body->bufs链表中。赋值完后r->request_body->buf中的start指向buf1的头部，pos last指向buf1尾部(buf2头部)，end指向buf3尾部
+     4.从复上面的2 3步骤
+     5.当解析完buf3的内容后，发现r->request_body->buf从内核读取到buf空间中的网络数据包已经被三个新的ngx_buf_t指向，并且这三个ngx_buf_t
+       通过r->request_body->bufs链表连接在了一起，这时候r->request_body->buf中的end = last,也就是所有ngx_create_temp_buf开辟的内存空间
+       已经存满了(recv的数据存在该空间里面)，并且数据分成三个ngx_buf_t指向这些空间，然后连接到了转存到了r->request_body->bufs链表上。在
+     6.ngx_http_request_body_save_filter中检测到rb->buf->last == rb->buf->end，上面的buf(buf1+buf2+buf3)已经填满，然后通过r->request_body->bufs
+       把三个ngx_buf_t指向的内存空间一次性写入临时文件，写入临时文件后，r->request_body->buf中的pos last指针重新指向头部，又可以从新从
+       内核协议栈读取数据存储在里面了，然后从复1-5的过程
+*/
 //创建零食文件，并把rb = r->request_body->bufs中的所有ngx_chain_t中的所有数据写入到临时文件中，当一个ngx_chain_t中的ngx_buf_t填满后
 //就会通过ngx_http_write_request_body把bufs链表中的所有ngx_chain_t->ngx_buf_t中指向的数据写入到临时文件，并把ngx_buf_t结构加入poll->chain,通过poll统一释放他们
 static ngx_int_t //把bufs数据写入临时文件，然后把对应节点从bufs中摘除，之前bufs中ngx_http_request_body_t节点所指向的空间可以继续使用，来读写数据
@@ -1077,10 +1139,31 @@ ngx_http_test_expect(ngx_http_request_t *r)
     return NGX_ERROR;
 }
 
+/*
+        这里开辟真正的读取数据的空间后，buf的指针指向终端空间的头尾以及解析完的数据的位置，
+                    buf1                       buf2                    buf3
+        _________________________________________________________________________________
+        |                          |                         |                           |
+        |__________________________|_________________________|___________________________|
 
+     1.第一次开辟好存储数据的空间ngx_create_temp_buf后，r->request_body->buf pos last start指向buf1的头部，end指向buf3尾部
+     2.假设第一次读取完内核协议栈的数据后填充好了buf1,r->request_body->buf中的pos start指向buf1的头部，last指向buf1尾部(buf2头部)，end指向buf3尾部
+     3.开始调用ngx_http_request_body_filter，在该函数里面会重新分配一个ngx_buf_t，把r->request_body->buf成员赋值给她。然后把这个新的ngx_buf_t
+     添加到r->request_body->bufs链表中。赋值完后r->request_body->buf中的start指向buf1的头部，pos last指向buf1尾部(buf2头部)，end指向buf3尾部
+     4.从复上面的2 3步骤
+     5.当解析完buf3的内容后，发现r->request_body->buf从内核读取到buf空间中的网络数据包已经被三个新的ngx_buf_t指向，并且这三个ngx_buf_t
+       通过r->request_body->bufs链表连接在了一起，这时候r->request_body->buf中的end = last,也就是所有ngx_create_temp_buf开辟的内存空间
+       已经存满了(recv的数据存在该空间里面)，并且数据分成三个ngx_buf_t指向这些空间，然后连接到了转存到了r->request_body->bufs链表上。在
+     6.ngx_http_request_body_save_filter中检测到rb->buf->last == rb->buf->end，上面的buf(buf1+buf2+buf3)已经填满，然后通过r->request_body->bufs
+       把三个ngx_buf_t指向的内存空间一次性写入临时文件，写入临时文件后，r->request_body->buf中的pos last指针重新指向头部，又可以从新从
+       内核协议栈读取数据存储在里面了，然后从复1-5的过程
+
+     
+//读取客户包体即使是存入临时文件中，当所有包体读取完毕后(ngx_http_do_read_client_request_body)，还是会让r->request_body->bufs指向文件中的相关偏移内存地址
+*/
 static ngx_int_t
 ngx_http_request_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
-{
+{//in其实也是从r->request_body->buf中来的
     if (r->headers_in.chunked) {
         return ngx_http_request_body_chunked_filter(r, in);
 
@@ -1088,6 +1171,28 @@ ngx_http_request_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
         return ngx_http_request_body_length_filter(r, in);
     }
 }
+/*
+        这里开辟真正的读取数据的空间后，buf的指针指向终端空间的头尾以及解析完的数据的位置，
+                    buf1                       buf2                    buf3
+        _________________________________________________________________________________
+        |                          |                         |                           |
+        |__________________________|_________________________|___________________________|
+
+     1.第一次开辟好存储数据的空间ngx_create_temp_buf后，r->request_body->buf pos last start指向buf1的头部，end指向buf3尾部
+     2.假设第一次读取完内核协议栈的数据后填充好了buf1,r->request_body->buf中的pos start指向buf1的头部，last指向buf1尾部(buf2头部)，end指向buf3尾部
+     3.开始调用ngx_http_request_body_filter，在该函数里面会重新分配一个ngx_buf_t，把r->request_body->buf成员赋值给她。然后把这个新的ngx_buf_t
+     添加到r->request_body->bufs链表中。赋值完后r->request_body->buf中的start指向buf1的头部，pos last指向buf1尾部(buf2头部)，end指向buf3尾部
+     4.从复上面的2 3步骤
+     5.当解析完buf3的内容后，发现r->request_body->buf从内核读取到buf空间中的网络数据包已经被三个新的ngx_buf_t指向，并且这三个ngx_buf_t
+       通过r->request_body->bufs链表连接在了一起，这时候r->request_body->buf中的end = last,也就是所有ngx_create_temp_buf开辟的内存空间
+       已经存满了(recv的数据存在该空间里面)，并且数据分成三个ngx_buf_t指向这些空间，然后连接到了转存到了r->request_body->bufs链表上。在
+     6.ngx_http_request_body_save_filter中检测到rb->buf->last == rb->buf->end，上面的buf(buf1+buf2+buf3)已经填满，然后通过r->request_body->bufs
+       把三个ngx_buf_t指向的内存空间一次性写入临时文件，写入临时文件后，r->request_body->buf中的pos last指针重新指向头部，又可以从新从
+       内核协议栈读取数据存储在里面了，然后从复1-5的过程
+
+//读取客户包体即使是存入临时文件中，当所有包体读取完毕后(见ngx_http_do_read_client_request_body)，还是会让r->request_body->bufs指向文件中的相关偏移内存地址
+
+*/
 
 /*
 ngx_http_request_body_filter 函数的目的就是要解析读取到的数据 in，追加到 request body 里的 bufs 列表中，busy 也指向要解析到的 chain 和 buf，
@@ -1095,7 +1200,7 @@ ngx_http_request_body_filter 函数的目的就是要解析读取到的数据 in，追加到 request
 */ //指向该函数后一般in->buf->last = in->buf->pos
 static ngx_int_t
 ngx_http_request_body_length_filter(ngx_http_request_t *r, ngx_chain_t *in)
-{
+{ //in其实也是从r->request_body->buf中来的
     size_t                     size;
     ngx_int_t                  rc;
     ngx_buf_t                 *b;
@@ -1324,6 +1429,26 @@ ngx_http_request_body_chunked_filter(ngx_http_request_t *r, ngx_chain_t *in)
 
     return rc;
 }
+
+/*
+        这里开辟真正的读取数据的空间后，buf的指针指向终端空间的头尾以及解析完的数据的位置，
+                    buf1                       buf2                    buf3
+        _________________________________________________________________________________
+        |                          |                         |                           |
+        |__________________________|_________________________|___________________________|
+
+     1.第一次开辟好存储数据的空间ngx_create_temp_buf后，r->request_body->buf pos last start指向buf1的头部，end指向buf3尾部
+     2.假设第一次读取完内核协议栈的数据后填充好了buf1,r->request_body->buf中的pos start指向buf1的头部，last指向buf1尾部(buf2头部)，end指向buf3尾部
+     3.开始调用ngx_http_request_body_filter，在该函数里面会重新分配一个ngx_buf_t，把r->request_body->buf成员赋值给她。然后把这个新的ngx_buf_t
+     添加到r->request_body->bufs链表中。赋值完后r->request_body->buf中的start指向buf1的头部，pos last指向buf1尾部(buf2头部)，end指向buf3尾部
+     4.从复上面的2 3步骤
+     5.当解析完buf3的内容后，发现r->request_body->buf从内核读取到buf空间中的网络数据包已经被三个新的ngx_buf_t指向，并且这三个ngx_buf_t
+       通过r->request_body->bufs链表连接在了一起，这时候r->request_body->buf中的end = last,也就是所有ngx_create_temp_buf开辟的内存空间
+       已经存满了(recv的数据存在该空间里面)，并且数据分成三个ngx_buf_t指向这些空间，然后连接到了转存到了r->request_body->bufs链表上。在
+     6.ngx_http_request_body_save_filter中检测到rb->buf->last == rb->buf->end，上面的buf(buf1+buf2+buf3)已经填满，然后通过r->request_body->bufs
+       把三个ngx_buf_t指向的内存空间一次性写入临时文件，写入临时文件后，r->request_body->buf中的pos last指针重新指向头部，又可以从新从
+       内核协议栈读取数据存储在里面了，然后从复1-5的过程
+*/
 
 //把in表中的成员buff拼接到r->request_body后面,如果rb->buf->last == rb->buf->end则会把
 //当一个rb->buf填满后就会通过ngx_http_write_request_body把bufs链表中的所有ngx_chain_t->ngx_buf_t中指向的数据

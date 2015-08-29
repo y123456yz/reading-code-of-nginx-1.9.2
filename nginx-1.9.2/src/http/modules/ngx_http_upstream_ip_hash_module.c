@@ -50,6 +50,22 @@ upstream backend {
   server   backend3.example.com  down;
   server   backend4.example.com;
 }
+
+指定nginx负载均衡器组使用基于客户端ip的负载均衡算法。IPV4的前3个八进制位和所有的IPV6地址被用作一个hash key。这个方法确保了
+相同客户端的请求一直发送到相同的服务器上除非这个服务器被认为是停机。这种情况下，请求会被发送到其他主机上，然后可能会一直发 
+送到这个主机上。
+如果nginx负载均衡器组里面的一个服务器要临时移除，它应该用参数down标记，来防止之前的客户端IP还往这个服务器上发请求。
+例子：
+[cpp] view plaincopyprint?
+
+1.upstream backend {  
+2.    ip_hash;  
+3.   
+4.    server backend1.example.com;  
+5.    server backend2.example.com;  
+6.    server backend3.example.com down;  
+7.    server backend4.example.com;  
+8.}  
 */
     { ngx_string("ip_hash"),
       NGX_HTTP_UPS_CONF|NGX_CONF_NOARGS,
@@ -95,6 +111,54 @@ ngx_module_t  ngx_http_upstream_ip_hash_module = {
 
 static u_char ngx_http_upstream_ip_hash_pseudo_addr[3];
 
+/*
+Load-blance模块中4个关键回调函数：
+回调指针                  函数功能                          round_robin模块                     IP_hash模块
+ 
+uscf->peer.init_upstream
+解析配置文件过程中调用，根据upstream里各个server配置项做初始准备工作，另外的核心工作是设置回调指针us->peer.init。配置文件解析完后不再被调用
+
+ngx_http_upstream_init_round_robin
+设置：us->peer.init = ngx_http_upstream_init_round_robin_peer;
+ 
+ngx_http_upstream_init_ip_hash
+设置：us->peer.init = ngx_http_upstream_init_ip_hash_peer;
+ 
+
+
+us->peer.init
+在每一次Nginx准备转发客户端请求到后端服务器前都会调用该函数。该函数为本次转发选择合适的后端服务器做初始准备工作，另外的核心工
+作是设置回调指针r->upstream->peer.get和r->upstream->peer.free等
+ 
+ngx_http_upstream_init_round_robin_peer
+设置：r->upstream->peer.get = ngx_http_upstream_get_round_robin_peer;
+r->upstream->peer.free = ngx_http_upstream_free_round_robin_peer;
+ 
+ngx_http_upstream_init_ip_hash_peer
+设置：r->upstream->peer.get = ngx_http_upstream_get_ip_hash_peer;
+r->upstream->peer.free为空
+ 
+
+
+r->upstream->peer.get
+在每一次Nginx准备转发客户端请求到后端服务器前都会调用该函数。该函数实现具体的位本次转发选择合适的后端服务器的算法逻辑，即
+完成选择获取合适后端服务器的功能
+ 
+ngx_http_upstream_get_round_robin_peer
+加权选择当前权值最高的后端服务器
+ 
+ngx_http_upstream_get_ip_hash_peer
+根据IP哈希值选择后端服务器
+ 
+
+
+
+
+r->upstream->peer.free
+在每一次Nginx完成与后端服务器之间的交互后都会调用该函数。
+ngx_http_upstream_free_round_robin_peer
+更新相关数值，比如rrp->current
+*/
 
 static ngx_int_t
 ngx_http_upstream_init_ip_hash(ngx_conf_t *cf, ngx_http_upstream_srv_conf_t *us)
@@ -108,7 +172,55 @@ ngx_http_upstream_init_ip_hash(ngx_conf_t *cf, ngx_http_upstream_srv_conf_t *us)
     return NGX_OK;
 }
 
+/*
+Load-blance模块中4个关键回调函数：
+回调指针                  函数功能                          round_robin模块                     IP_hash模块
+ 
+uscf->peer.init_upstream (默认为ngx_http_upstream_init_round_robin 在ngx_http_upstream_init_main_conf中执行)
+解析配置文件过程中调用，根据upstream里各个server配置项做初始准备工作，另外的核心工作是设置回调指针us->peer.init。配置文件解析完后不再被调用
 
+ngx_http_upstream_init_round_robin
+设置：us->peer.init = ngx_http_upstream_init_round_robin_peer;
+ 
+ngx_http_upstream_init_ip_hash
+设置：us->peer.init = ngx_http_upstream_init_ip_hash_peer;
+ 
+
+
+us->peer.init
+在每一次Nginx准备转发客户端请求到后端服务器前都会调用该函数。该函数为本次转发选择合适的后端服务器做初始准备工作，另外的核心工
+作是设置回调指针r->upstream->peer.get和r->upstream->peer.free等
+ 
+ngx_http_upstream_init_round_robin_peer
+设置：r->upstream->peer.get = ngx_http_upstream_get_round_robin_peer;
+r->upstream->peer.free = ngx_http_upstream_free_round_robin_peer;
+ 
+ngx_http_upstream_init_ip_hash_peer
+设置：r->upstream->peer.get = ngx_http_upstream_get_ip_hash_peer;
+r->upstream->peer.free为空
+ 
+
+
+r->upstream->peer.get
+在每一次Nginx准备转发客户端请求到后端服务器前都会调用该函数。该函数实现具体的位本次转发选择合适的后端服务器的算法逻辑，即
+完成选择获取合适后端服务器的功能
+ 
+ngx_http_upstream_get_round_robin_peer
+加权选择当前权值最高的后端服务器
+ 
+ngx_http_upstream_get_ip_hash_peer
+根据IP哈希值选择后端服务器
+ 
+
+
+
+
+r->upstream->peer.free
+在每一次Nginx完成与后端服务器之间的交互后都会调用该函数。
+ngx_http_upstream_free_round_robin_peer
+更新相关数值，比如rrp->current
+*/
+//轮询负债均衡算法ngx_http_upstream_init_round_robin_peer  iphash负载均衡算法ngx_http_upstream_init_ip_hash_peer
 static ngx_int_t
 ngx_http_upstream_init_ip_hash_peer(ngx_http_request_t *r,
     ngx_http_upstream_srv_conf_t *us)
@@ -160,6 +272,50 @@ ngx_http_upstream_init_ip_hash_peer(ngx_http_request_t *r,
     return NGX_OK;
 }
 
+/*
+Load-blance模块中4个关键回调函数：
+回调指针                  函数功能                          round_robin模块                     IP_hash模块
+ 
+uscf->peer.init_upstream (默认为ngx_http_upstream_init_round_robin 在ngx_http_upstream_init_main_conf中执行)
+解析配置文件过程中调用，根据upstream里各个server配置项做初始准备工作，另外的核心工作是设置回调指针us->peer.init。配置文件解析完后不再被调用
+
+ngx_http_upstream_init_round_robin
+设置：us->peer.init = ngx_http_upstream_init_round_robin_peer;
+ 
+ngx_http_upstream_init_ip_hash
+设置：us->peer.init = ngx_http_upstream_init_ip_hash_peer;
+ 
+
+
+us->peer.init
+在每一次Nginx准备转发客户端请求到后端服务器前都会调用该函数。该函数为本次转发选择合适的后端服务器做初始准备工作，另外的核心工
+作是设置回调指针r->upstream->peer.get和r->upstream->peer.free等
+ 
+ngx_http_upstream_init_round_robin_peer
+设置：r->upstream->peer.get = ngx_http_upstream_get_round_robin_peer;
+r->upstream->peer.free = ngx_http_upstream_free_round_robin_peer;
+ 
+ngx_http_upstream_init_ip_hash_peer
+设置：r->upstream->peer.get = ngx_http_upstream_get_ip_hash_peer;
+r->upstream->peer.free为空
+ 
+
+
+r->upstream->peer.get
+在每一次Nginx准备转发客户端请求到后端服务器前都会调用该函数。该函数实现具体的位本次转发选择合适的后端服务器的算法逻辑，即
+完成选择获取合适后端服务器的功能
+ 
+ngx_http_upstream_get_round_robin_peer
+加权选择当前权值最高的后端服务器
+ 
+ngx_http_upstream_get_ip_hash_peer
+根据IP哈希值选择后端服务器
+
+r->upstream->peer.free
+在每一次Nginx完成与后端服务器之间的交互后都会调用该函数。
+ngx_http_upstream_free_round_robin_peer
+更新相关数值，比如rrp->current
+*/
 
 static ngx_int_t
 ngx_http_upstream_get_ip_hash_peer(ngx_peer_connection_t *pc, void *data)

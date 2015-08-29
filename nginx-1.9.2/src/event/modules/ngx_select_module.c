@@ -120,7 +120,6 @@ ngx_select_done(ngx_cycle_t *cycle)
     event_index = NULL;
 }
 
-
 static ngx_int_t
 ngx_select_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
 {

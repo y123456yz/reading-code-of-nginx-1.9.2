@@ -4975,4 +4975,737 @@ port of a proxied server as specified in the proxy_pass directive, or the protoc
 $proxy_add_x_forwarded_for
 the ¡°X-Forwarded-For¡± client request header field with the $remote_addr variable appended to it, separated by a comma. If the ¡°X-Forwarded-For¡± field is not present in the client request header, the $proxy_add_x_forwarded_for variable is equal to the $remote_addr variable.
 
+
+
+Survey: The Future of Application Development & Deployment
+We are interested in your ideas about the future of app development and delivery.
+Help shape the future and be the first to see the results. Get started
+
+english
+§â§å§ã§ã§Ü§Ú§Û
+
+news
+about
+download
+security
+documentation
+faq
+books
+support
+donation
+
+trac
+wiki
+twitter
+blog
+Module ngx_http_fastcgi_module
+Example Configuration
+Directives
+     fastcgi_bind
+     fastcgi_buffer_size
+     fastcgi_buffering
+     fastcgi_buffers
+     fastcgi_busy_buffers_size
+     fastcgi_cache
+     fastcgi_cache_bypass
+     fastcgi_cache_key
+     fastcgi_cache_lock
+     fastcgi_cache_lock_age
+     fastcgi_cache_lock_timeout
+     fastcgi_cache_methods
+     fastcgi_cache_min_uses
+     fastcgi_cache_path
+     fastcgi_cache_purge
+     fastcgi_cache_revalidate
+     fastcgi_cache_use_stale
+     fastcgi_cache_valid
+     fastcgi_catch_stderr
+     fastcgi_connect_timeout
+     fastcgi_force_ranges
+     fastcgi_hide_header
+     fastcgi_ignore_client_abort
+     fastcgi_ignore_headers
+     fastcgi_index
+     fastcgi_intercept_errors
+     fastcgi_keep_conn
+     fastcgi_limit_rate
+     fastcgi_max_temp_file_size
+     fastcgi_next_upstream
+     fastcgi_next_upstream_timeout
+     fastcgi_next_upstream_tries
+     fastcgi_no_cache
+     fastcgi_param
+     fastcgi_pass
+     fastcgi_pass_header
+     fastcgi_pass_request_body
+     fastcgi_pass_request_headers
+     fastcgi_read_timeout
+     fastcgi_request_buffering
+     fastcgi_send_lowat
+     fastcgi_send_timeout
+     fastcgi_split_path_info
+     fastcgi_store
+     fastcgi_store_access
+     fastcgi_temp_file_write_size
+     fastcgi_temp_path
+Parameters Passed to a FastCGI Server
+Embedded Variables
+ 
+The ngx_http_fastcgi_module module allows passing requests to a FastCGI server. 
+
+Example Configuration
+
+location / {
+    fastcgi_pass  localhost:9000;
+    fastcgi_index index.php;
+
+    fastcgi_param SCRIPT_FILENAME /home/www/scripts/php$fastcgi_script_name;
+    fastcgi_param QUERY_STRING    $query_string;
+    fastcgi_param REQUEST_METHOD  $request_method;
+    fastcgi_param CONTENT_TYPE    $content_type;
+    fastcgi_param CONTENT_LENGTH  $content_length;
+}
+
+Directives
+Syntax:  fastcgi_bind address | off;
+ 
+Default:  ¡ª  
+Context:  http, server, location
+ 
+
+This directive appeared in version 0.8.22. 
+
+Makes outgoing connections to a FastCGI server originate from the specified local IP address. Parameter value can contain variables (1.3.12). The special value off (1.3.12) cancels the effect of the fastcgi_bind directive inherited from the previous configuration level, which allows the system to auto-assign the local IP address. 
+
+Syntax:  fastcgi_buffer_size size;
+ 
+Default:  fastcgi_buffer_size 4k|8k; 
+Context:  http, server, location
+ 
+
+Sets the size of the buffer used for reading the first part of the response received from the FastCGI server. This part usually contains a small response header. By default, the buffer size is equal to one memory page. This is either 4K or 8K, depending on a platform. It can be made smaller, however. 
+
+Syntax:  fastcgi_buffering on | off;
+ 
+Default:  fastcgi_buffering on; 
+Context:  http, server, location
+ 
+
+This directive appeared in version 1.5.6. 
+
+Enables or disables buffering of responses from the FastCGI server. 
+
+When buffering is enabled, nginx receives a response from the FastCGI server as soon as possible, saving it into the buffers set by the fastcgi_buffer_size and fastcgi_buffers directives. If the whole response does not fit into memory, a part of it can be saved to a temporary file on the disk. Writing to temporary files is controlled by the fastcgi_max_temp_file_size and fastcgi_temp_file_write_size directives. 
+
+When buffering is disabled, the response is passed to a client synchronously, immediately as it is received. nginx will not try to read the whole response from the FastCGI server. The maximum size of the data that nginx can receive from the server at a time is set by the fastcgi_buffer_size directive. 
+
+Buffering can also be enabled or disabled by passing ¡°yes¡± or ¡°no¡± in the ¡°X-Accel-Buffering¡± response header field. This capability can be disabled using the fastcgi_ignore_headers directive. 
+
+Syntax:  fastcgi_buffers number size;
+ 
+Default:  fastcgi_buffers 8 4k|8k; 
+Context:  http, server, location
+ 
+
+Sets the number and size of the buffers used for reading a response from the FastCGI server, for a single connection. By default, the buffer size is equal to one memory page. This is either 4K or 8K, depending on a platform. 
+
+Syntax:  fastcgi_busy_buffers_size size;
+ 
+Default:  fastcgi_busy_buffers_size 8k|16k; 
+Context:  http, server, location
+ 
+
+When buffering of responses from the FastCGI server is enabled, limits the total size of buffers that can be busy sending a response to the client while the response is not yet fully read. In the meantime, the rest of the buffers can be used for reading the response and, if needed, buffering part of the response to a temporary file. By default, size is limited by the size of two buffers set by the fastcgi_buffer_size and fastcgi_buffers directives. 
+
+Syntax:  fastcgi_cache zone | off;
+ 
+Default:  fastcgi_cache off; 
+Context:  http, server, location
+ 
+
+Defines a shared memory zone used for caching. The same zone can be used in several places. Parameter value can contain variables (1.7.9). The off parameter disables caching inherited from the previous configuration level. 
+
+Syntax:  fastcgi_cache_bypass string ...;
+ 
+Default:  ¡ª  
+Context:  http, server, location
+ 
+
+Defines conditions under which the response will not be taken from a cache. If at least one value of the string parameters is not empty and is not equal to ¡°0¡± then the response will not be taken from the cache: 
+
+fastcgi_cache_bypass $cookie_nocache $arg_nocache$arg_comment;
+fastcgi_cache_bypass $http_pragma    $http_authorization;
+Can be used along with the fastcgi_no_cache directive. 
+
+Syntax:  fastcgi_cache_key string;
+ 
+Default:  ¡ª  
+Context:  http, server, location
+ 
+
+Defines a key for caching, for example 
+
+fastcgi_cache_key localhost:9000$request_uri;
+
+Syntax:  fastcgi_cache_lock on | off;
+ 
+Default:  fastcgi_cache_lock off; 
+Context:  http, server, location
+ 
+
+This directive appeared in version 1.1.12. 
+
+When enabled, only one request at a time will be allowed to populate a new cache element identified according to the fastcgi_cache_key directive by passing a request to a FastCGI server. Other requests of the same cache element will either wait for a response to appear in the cache or the cache lock for this element to be released, up to the time set by the fastcgi_cache_lock_timeout directive. 
+
+Syntax:  fastcgi_cache_lock_age time;
+ 
+Default:  fastcgi_cache_lock_age 5s; 
+Context:  http, server, location
+ 
+
+This directive appeared in version 1.7.8. 
+
+If the last request passed to the FastCGI server for populating a new cache element has not completed for the specified time, one more request may be passed to the FastCGI server. 
+
+Syntax:  fastcgi_cache_lock_timeout time;
+ 
+Default:  fastcgi_cache_lock_timeout 5s; 
+Context:  http, server, location
+ 
+
+This directive appeared in version 1.1.12. 
+
+Sets a timeout for fastcgi_cache_lock. When the time expires, the request will be passed to the FastCGI server, however, the response will not be cached. 
+
+Before 1.7.8, the response could be cached. 
+
+Syntax:  fastcgi_cache_methods GET | HEAD | POST ...;
+ 
+Default:  fastcgi_cache_methods GET HEAD; 
+Context:  http, server, location
+ 
+
+This directive appeared in version 0.7.59. 
+
+If the client request method is listed in this directive then the response will be cached. ¡°GET¡± and ¡°HEAD¡± methods are always added to the list, though it is recommended to specify them explicitly. See also the fastcgi_no_cache directive. 
+
+Syntax:  fastcgi_cache_min_uses number;
+ 
+Default:  fastcgi_cache_min_uses 1; 
+Context:  http, server, location
+ 
+
+Sets the number of requests after which the response will be cached. 
+
+Syntax:  fastcgi_cache_path path [levels=levels] [use_temp_path=on|off] keys_zone=name:size [inactive=time] [max_size=size] [loader_files=number] [loader_sleep=time] [loader_threshold=time] [purger=on|off] [purger_files=number] [purger_sleep=time] [purger_threshold=time];
+ 
+Default:  ¡ª  
+Context:  http
+ 
+
+Sets the path and other parameters of a cache. Cache data are stored in files. Both the key and file name in a cache are a result of applying the MD5 function to the proxied URL. The levels parameter defines hierarchy levels of a cache. For example, in the following configuration 
+
+fastcgi_cache_path /data/nginx/cache levels=1:2 keys_zone=one:10m;
+file names in a cache will look like this: 
+
+/data/nginx/cache/c/29/b7f54b2df7773722d382f4809d65029c
+
+A cached response is first written to a temporary file, and then the file is renamed. Starting from version 0.8.9, temporary files and the cache can be put on different file systems. However, be aware that in this case a file is copied across two file systems instead of the cheap renaming operation. It is thus recommended that for any given location both cache and a directory holding temporary files are put on the same file system. A directory for temporary files is set based on the use_temp_path parameter (1.7.10). If this parameter is omitted or set to the value on, the directory set by the fastcgi_temp_path directive for the given location will be used. If the value is set to off, temporary files will be put directly in the cache directory. 
+
+In addition, all active keys and information about data are stored in a shared memory zone, whose name and size are configured by the keys_zone parameter. One megabyte zone can store about 8 thousand keys. 
+
+Cached data that are not accessed during the time specified by the inactive parameter get removed from the cache regardless of their freshness. By default, inactive is set to 10 minutes. 
+
+The special ¡°cache manager¡± process monitors the maximum cache size set by the max_size parameter. When this size is exceeded, it removes the least recently used data. 
+
+A minute after the start the special ¡°cache loader¡± process is activated. It loads information about previously cached data stored on file system into a cache zone. The loading is done in iterations. During one iteration no more than loader_files items are loaded (by default, 100). Besides, the duration of one iteration is limited by the loader_threshold parameter (by default, 200 milliseconds). Between iterations, a pause configured by the loader_sleep parameter (by default, 50 milliseconds) is made. 
+
+Additionally, the following parameters are available as part of our commercial subscription: 
+
+
+purger=on|off 
+Instructs whether cache entries that match a wildcard key will be removed from the disk by the cache purger (1.7.12). Setting the parameter to on (default is off) will activate the ¡°cache purger¡± process that permanently iterates through all cache entries and deletes the entries that match the wildcard key. 
+purger_files=number 
+Sets the number of items that will be scanned during one iteration (1.7.12). By default, purger_files is set to 10. 
+purger_threshold=number 
+Sets the duration of one iteration (1.7.12). By default, purger_threshold is set to 50 milliseconds. 
+purger_sleep=number 
+Sets a pause between iterations (1.7.12). By default, purger_sleep is set to 50 milliseconds. 
+
+Syntax:  fastcgi_cache_purge string ...;
+ 
+Default:  ¡ª  
+Context:  http, server, location
+ 
+
+This directive appeared in version 1.5.7. 
+
+Defines conditions under which the request will be considered a cache purge request. If at least one value of the string parameters is not empty and is not equal to ¡°0¡± then the cache entry with a corresponding cache key is removed. The result of successful operation is indicated by returning the 204 (No Content) response. 
+
+If the cache key of a purge request ends with an asterisk (¡°*¡±), all cache entries matching the wildcard key will be removed from the cache. However, these entries will remain on the disk until they are deleted for either inactivity, or processed by the cache purger (1.7.12), or a client attempts to access them. 
+
+Example configuration: 
+
+fastcgi_cache_path /data/nginx/cache keys_zone=cache_zone:10m;
+
+map $request_method $purge_method {
+    PURGE   1;
+    default 0;
+}
+
+server {
+    ...
+    location / {
+        fastcgi_pass        backend;
+        fastcgi_cache       cache_zone;
+        fastcgi_cache_key   $uri;
+        fastcgi_cache_purge $purge_method;
+    }
+}
+
+This functionality is available as part of our commercial subscription. 
+
+Syntax:  fastcgi_cache_revalidate on | off;
+ 
+Default:  fastcgi_cache_revalidate off; 
+Context:  http, server, location
+ 
+
+This directive appeared in version 1.5.7. 
+
+Enables revalidation of expired cache items using conditional requests with the ¡°If-Modified-Since¡± and ¡°If-None-Match¡± header fields. 
+
+Syntax:  fastcgi_cache_use_stale error | timeout | invalid_header | updating | http_500 | http_503 | http_403 | http_404 | off ...;
+ 
+Default:  fastcgi_cache_use_stale off; 
+Context:  http, server, location
+ 
+
+Determines in which cases a stale cached response can be used when an error occurs during communication with the FastCGI server. The directive¡¯s parameters match the parameters of the fastcgi_next_upstream directive. 
+
+The error parameter also permits using a stale cached response if a FastCGI server to process a request cannot be selected. 
+
+Additionally, the updating parameter permits using a stale cached response if it is currently being updated. This allows minimizing the number of accesses to FastCGI servers when updating cached data. 
+
+To minimize the number of accesses to FastCGI servers when populating a new cache element, the fastcgi_cache_lock directive can be used. 
+
+Syntax:  fastcgi_cache_valid [code ...] time;
+ 
+Default:  ¡ª  
+Context:  http, server, location
+ 
+
+Sets caching time for different response codes. For example, the following directives 
+
+fastcgi_cache_valid 200 302 10m;
+fastcgi_cache_valid 404      1m;
+set 10 minutes of caching for responses with codes 200 and 302 and 1 minute for responses with code 404. 
+
+If only caching time is specified 
+
+fastcgi_cache_valid 5m;
+then only 200, 301, and 302 responses are cached. 
+
+In addition, the any parameter can be specified to cache any responses: 
+
+fastcgi_cache_valid 200 302 10m;
+fastcgi_cache_valid 301      1h;
+fastcgi_cache_valid any      1m;
+
+Parameters of caching can also be set directly in the response header. This has higher priority than setting of caching time using the directive. 
+
+?The ¡°X-Accel-Expires¡± header field sets caching time of a response in seconds. The zero value disables caching for a response. If the value starts with the @ prefix, it sets an absolute time in seconds since Epoch, up to which the response may be cached. 
+?If the header does not include the ¡°X-Accel-Expires¡± field, parameters of caching may be set in the header fields ¡°Expires¡± or ¡°Cache-Control¡±. 
+?If the header includes the ¡°Set-Cookie¡± field, such a response will not be cached. 
+?If the header includes the ¡°Vary¡± field with the special value ¡°*¡±, such a response will not be cached (1.7.7). If the header includes the ¡°Vary¡± field with another value, such a response will be cached taking into account the corresponding request header fields (1.7.7). 
+Processing of one or more of these response header fields can be disabled using the fastcgi_ignore_headers directive. 
+
+Syntax:  fastcgi_catch_stderr string;
+ 
+Default:  ¡ª  
+Context:  http, server, location
+ 
+
+Sets a string to search for in the error stream of a response received from a FastCGI server. If the string is found then it is considered that the FastCGI server has returned an invalid response. This allows handling application errors in nginx, for example: 
+
+location /php {
+    fastcgi_pass backend:9000;
+    ...
+    fastcgi_catch_stderr "PHP Fatal error";
+    fastcgi_next_upstream error timeout invalid_header;
+}
+
+Syntax:  fastcgi_connect_timeout time;
+ 
+Default:  fastcgi_connect_timeout 60s; 
+Context:  http, server, location
+ 
+
+Defines a timeout for establishing a connection with a FastCGI server. It should be noted that this timeout cannot usually exceed 75 seconds. 
+
+Syntax:  fastcgi_force_ranges on | off;
+ 
+Default:  fastcgi_force_ranges off; 
+Context:  http, server, location
+ 
+
+This directive appeared in version 1.7.7. 
+
+Enables byte-range support for both cached and uncached responses from the FastCGI server regardless of the ¡°Accept-Ranges¡± field in these responses. 
+
+Syntax:  fastcgi_hide_header field;
+ 
+Default:  ¡ª  
+Context:  http, server, location
+ 
+
+By default, nginx does not pass the header fields ¡°Status¡± and ¡°X-Accel-...¡± from the response of a FastCGI server to a client. The fastcgi_hide_header directive sets additional fields that will not be passed. If, on the contrary, the passing of fields needs to be permitted, the fastcgi_pass_header directive can be used. 
+
+Syntax:  fastcgi_ignore_client_abort on | off;
+ 
+Default:  fastcgi_ignore_client_abort off; 
+Context:  http, server, location
+ 
+
+Determines whether the connection with a FastCGI server should be closed when a client closes the connection without waiting for a response. 
+
+Syntax:  fastcgi_ignore_headers field ...;
+ 
+Default:  ¡ª  
+Context:  http, server, location
+ 
+
+Disables processing of certain response header fields from the FastCGI server. The following fields can be ignored: ¡°X-Accel-Redirect¡±, ¡°X-Accel-Expires¡±, ¡°X-Accel-Limit-Rate¡± (1.1.6), ¡°X-Accel-Buffering¡± (1.1.6), ¡°X-Accel-Charset¡± (1.1.6), ¡°Expires¡±, ¡°Cache-Control¡±, ¡°Set-Cookie¡± (0.8.44), and ¡°Vary¡± (1.7.7). 
+
+If not disabled, processing of these header fields has the following effect: 
+
+?¡°X-Accel-Expires¡±, ¡°Expires¡±, ¡°Cache-Control¡±, ¡°Set-Cookie¡±, and ¡°Vary¡± set the parameters of response caching; 
+?¡°X-Accel-Redirect¡± performs an internal redirect to the specified URI; 
+?¡°X-Accel-Limit-Rate¡± sets the rate limit for transmission of a response to a client; 
+?¡°X-Accel-Buffering¡± enables or disables buffering of a response; 
+?¡°X-Accel-Charset¡± sets the desired charset of a response. 
+
+Syntax:  fastcgi_index name;
+ 
+Default:  ¡ª  
+Context:  http, server, location
+ 
+
+Sets a file name that will be appended after a URI that ends with a slash, in the value of the $fastcgi_script_name variable. For example, with these settings 
+
+fastcgi_index index.php;
+fastcgi_param SCRIPT_FILENAME /home/www/scripts/php$fastcgi_script_name;
+and the ¡°/page.php¡± request, the SCRIPT_FILENAME parameter will be equal to ¡°/home/www/scripts/php/page.php¡±, and with the ¡°/¡± request it will be equal to ¡°/home/www/scripts/php/index.php¡±. 
+
+Syntax:  fastcgi_intercept_errors on | off;
+ 
+Default:  fastcgi_intercept_errors off; 
+Context:  http, server, location
+ 
+
+Determines whether FastCGI server responses with codes greater than or equal to 300 should be passed to a client or be redirected to nginx for processing with the error_page directive. 
+
+Syntax:  fastcgi_keep_conn on | off;
+ 
+Default:  fastcgi_keep_conn off; 
+Context:  http, server, location
+ 
+
+This directive appeared in version 1.1.4. 
+
+By default, a FastCGI server will close a connection right after sending the response. However, when this directive is set to the value on, nginx will instruct a FastCGI server to keep connections open. This is necessary, in particular, for keepalive connections to FastCGI servers to function. 
+
+Syntax:  fastcgi_limit_rate rate;
+ 
+Default:  fastcgi_limit_rate 0; 
+Context:  http, server, location
+ 
+
+This directive appeared in version 1.7.7. 
+
+Limits the speed of reading the response from the FastCGI server. The rate is specified in bytes per second. The zero value disables rate limiting. The limit is set per a request, and so if nginx simultaneously opens two connections to the FastCFI server, the overall rate will be twice as much as the specified limit. The limitation works only if buffering of responses from the FastCGI server is enabled. 
+
+Syntax:  fastcgi_max_temp_file_size size;
+ 
+Default:  fastcgi_max_temp_file_size 1024m; 
+Context:  http, server, location
+ 
+
+When buffering of responses from the FastCGI server is enabled, and the whole response does not fit into the buffers set by the fastcgi_buffer_size and fastcgi_buffers directives, a part of the response can be saved to a temporary file. This directive sets the maximum size of the temporary file. The size of data written to the temporary file at a time is set by the fastcgi_temp_file_write_size directive. 
+
+The zero value disables buffering of responses to temporary files. 
+
+
+This restriction does not apply to responses that will be cached or stored on disk. 
+
+Syntax:  fastcgi_next_upstream error | timeout | invalid_header | http_500 | http_503 | http_403 | http_404 | off ...;
+ 
+Default:  fastcgi_next_upstream error timeout; 
+Context:  http, server, location
+ 
+
+Specifies in which cases a request should be passed to the next server: 
+
+error
+an error occurred while establishing a connection with the server, passing a request to it, or reading the response header;
+timeout
+a timeout has occurred while establishing a connection with the server, passing a request to it, or reading the response header;
+invalid_header
+a server returned an empty or invalid response;
+http_500
+a server returned a response with the code 500;
+http_503
+a server returned a response with the code 503;
+http_403
+a server returned a response with the code 403;
+http_404
+a server returned a response with the code 404;
+off
+disables passing a request to the next server.
+
+One should bear in mind that passing a request to the next server is only possible if nothing has been sent to a client yet. That is, if an error or timeout occurs in the middle of the transferring of a response, fixing this is impossible. 
+
+The directive also defines what is considered an unsuccessful attempt of communication with a server. The cases of error, timeout and invalid_header are always considered unsuccessful attempts, even if they are not specified in the directive. The cases of http_500 and http_503 are considered unsuccessful attempts only if they are specified in the directive. The cases of http_403 and http_404 are never considered unsuccessful attempts. 
+
+Passing a request to the next server can be limited by the number of tries and by time. 
+
+Syntax:  fastcgi_next_upstream_timeout time;
+ 
+Default:  fastcgi_next_upstream_timeout 0; 
+Context:  http, server, location
+ 
+
+This directive appeared in version 1.7.5. 
+
+Limits the time allowed to pass a request to the next server. The 0 value turns off this limitation. 
+
+Syntax:  fastcgi_next_upstream_tries number;
+ 
+Default:  fastcgi_next_upstream_tries 0; 
+Context:  http, server, location
+ 
+
+This directive appeared in version 1.7.5. 
+
+Limits the number of possible tries for passing a request to the next server. The 0 value turns off this limitation. 
+
+Syntax:  fastcgi_no_cache string ...;
+ 
+Default:  ¡ª  
+Context:  http, server, location
+ 
+
+Defines conditions under which the response will not be saved to a cache. If at least one value of the string parameters is not empty and is not equal to ¡°0¡± then the response will not be saved: 
+
+fastcgi_no_cache $cookie_nocache $arg_nocache$arg_comment;
+fastcgi_no_cache $http_pragma    $http_authorization;
+Can be used along with the fastcgi_cache_bypass directive. 
+
+Syntax:  fastcgi_param parameter value [if_not_empty];
+ 
+Default:  ¡ª  
+Context:  http, server, location
+ 
+
+Sets a parameter that should be passed to the FastCGI server. The value can contain text, variables, and their combination. These directives are inherited from the previous level if and only if there are no fastcgi_param directives defined on the current level. 
+
+The following example shows the minimum required settings for PHP: 
+
+fastcgi_param SCRIPT_FILENAME /home/www/scripts/php$fastcgi_script_name;
+fastcgi_param QUERY_STRING    $query_string;
+
+The SCRIPT_FILENAME parameter is used in PHP for determining the script name, and the QUERY_STRING parameter is used to pass request parameters. 
+
+For scripts that process POST requests, the following three parameters are also required: 
+
+fastcgi_param REQUEST_METHOD  $request_method;
+fastcgi_param CONTENT_TYPE    $content_type;
+fastcgi_param CONTENT_LENGTH  $content_length;
+
+If PHP was built with the --enable-force-cgi-redirect configuration parameter, the REDIRECT_STATUS parameter should also be passed with the value ¡°200¡±: 
+
+fastcgi_param REDIRECT_STATUS 200;
+
+If a directive is specified with if_not_empty (1.1.11) then such a parameter will not be passed to the server until its value is not empty: 
+
+fastcgi_param HTTPS           $https if_not_empty;
+
+Syntax:  fastcgi_pass address;
+ 
+Default:  ¡ª  
+Context:  location, if in location
+ 
+
+Sets the address of a FastCGI server. The address can be specified as a domain name or IP address, and an optional port: 
+
+fastcgi_pass localhost:9000;
+or as a UNIX-domain socket path: 
+
+fastcgi_pass unix:/tmp/fastcgi.socket;
+
+If a domain name resolves to several addresses, all of them will be used in a round-robin fashion. In addition, an address can be specified as a server group. 
+
+Syntax:  fastcgi_pass_header field;
+ 
+Default:  ¡ª  
+Context:  http, server, location
+ 
+
+Permits passing otherwise disabled header fields from a FastCGI server to a client. 
+
+Syntax:  fastcgi_pass_request_body on | off;
+ 
+Default:  fastcgi_pass_request_body on; 
+Context:  http, server, location
+ 
+
+Indicates whether the original request body is passed to the FastCGI server. See also the fastcgi_pass_request_headers directive. 
+
+Syntax:  fastcgi_pass_request_headers on | off;
+ 
+Default:  fastcgi_pass_request_headers on; 
+Context:  http, server, location
+ 
+
+Indicates whether the header fields of the original request are passed to the FastCGI server. See also the fastcgi_pass_request_body directive. 
+
+Syntax:  fastcgi_read_timeout time;
+ 
+Default:  fastcgi_read_timeout 60s; 
+Context:  http, server, location
+ 
+
+Defines a timeout for reading a response from the FastCGI server. The timeout is set only between two successive read operations, not for the transmission of the whole response. If the FastCGI server does not transmit anything within this time, the connection is closed. 
+
+Syntax:  fastcgi_request_buffering on | off;
+ 
+Default:  fastcgi_request_buffering on; 
+Context:  http, server, location
+ 
+
+This directive appeared in version 1.7.11. 
+
+Enables or disables buffering of a client request body. 
+
+When buffering is enabled, the entire request body is read from the client before sending the request to a FastCGI server. 
+
+When buffering is disabled, the request body is sent to the FastCGI server immediately as it is received. In this case, the request cannot be passed to the next server if nginx already started sending the request body. 
+
+Syntax:  fastcgi_send_lowat size;
+ 
+Default:  fastcgi_send_lowat 0; 
+Context:  http, server, location
+ 
+
+If the directive is set to a non-zero value, nginx will try to minimize the number of send operations on outgoing connections to a FastCGI server by using either NOTE_LOWAT flag of the kqueue method, or the SO_SNDLOWAT socket option, with the specified size. 
+
+This directive is ignored on Linux, Solaris, and Windows. 
+
+Syntax:  fastcgi_send_timeout time;
+ 
+Default:  fastcgi_send_timeout 60s; 
+Context:  http, server, location
+ 
+
+Sets a timeout for transmitting a request to the FastCGI server. The timeout is set only between two successive write operations, not for the transmission of the whole request. If the FastCGI server does not receive anything within this time, the connection is closed. 
+
+Syntax:  fastcgi_split_path_info regex;
+ 
+Default:  ¡ª  
+Context:  location
+ 
+
+Defines a regular expression that captures a value for the $fastcgi_path_info variable. The regular expression should have two captures: the first becomes a value of the $fastcgi_script_name variable, the second becomes a value of the $fastcgi_path_info variable. For example, with these settings 
+
+location ~ ^(.+\.php)(.*)$ {
+    fastcgi_split_path_info       ^(.+\.php)(.*)$;
+    fastcgi_param SCRIPT_FILENAME /path/to/php$fastcgi_script_name;
+    fastcgi_param PATH_INFO       $fastcgi_path_info;
+and the ¡°/show.php/article/0001¡± request, the SCRIPT_FILENAME parameter will be equal to ¡°/path/to/php/show.php¡±, and the PATH_INFO parameter will be equal to ¡°/article/0001¡±. 
+
+Syntax:  fastcgi_store on | off | string;
+ 
+Default:  fastcgi_store off; 
+Context:  http, server, location
+ 
+
+Enables saving of files to a disk. The on parameter saves files with paths corresponding to the directives alias or root. The off parameter disables saving of files. In addition, the file name can be set explicitly using the string with variables: 
+
+fastcgi_store /data/www$original_uri;
+
+The modification time of files is set according to the received ¡°Last-Modified¡± response header field. The response is first written to a temporary file, and then the file is renamed. Starting from version 0.8.9, temporary files and the persistent store can be put on different file systems. However, be aware that in this case a file is copied across two file systems instead of the cheap renaming operation. It is thus recommended that for any given location both saved files and a directory holding temporary files, set by the fastcgi_temp_path directive, are put on the same file system. 
+
+This directive can be used to create local copies of static unchangeable files, e.g.: 
+
+location /images/ {
+    root                 /data/www;
+    error_page           404 = /fetch$uri;
+}
+
+location /fetch/ {
+    internal;
+
+    fastcgi_pass         backend:9000;
+    ...
+
+    fastcgi_store        on;
+    fastcgi_store_access user:rw group:rw all:r;
+    fastcgi_temp_path    /data/temp;
+
+    alias                /data/www/;
+}
+
+Syntax:  fastcgi_store_access users:permissions ...;
+ 
+Default:  fastcgi_store_access user:rw; 
+Context:  http, server, location
+ 
+
+Sets access permissions for newly created files and directories, e.g.: 
+
+fastcgi_store_access user:rw group:rw all:r;
+
+If any group or all access permissions are specified then user permissions may be omitted: 
+
+fastcgi_store_access group:rw all:r;
+
+Syntax:  fastcgi_temp_file_write_size size;
+ 
+Default:  fastcgi_temp_file_write_size 8k|16k; 
+Context:  http, server, location
+ 
+
+Limits the size of data written to a temporary file at a time, when buffering of responses from the FastCGI server to temporary files is enabled. By default, size is limited by two buffers set by the fastcgi_buffer_size and fastcgi_buffers directives. The maximum size of a temporary file is set by the fastcgi_max_temp_file_size directive. 
+
+Syntax:  fastcgi_temp_path path [level1 [level2 [level3]]];
+ 
+Default:  fastcgi_temp_path fastcgi_temp; 
+Context:  http, server, location
+ 
+
+Defines a directory for storing temporary files with data received from FastCGI servers. Up to three-level subdirectory hierarchy can be used underneath the specified directory. For example, in the following configuration 
+
+fastcgi_temp_path /spool/nginx/fastcgi_temp 1 2;
+a temporary file might look like this: 
+
+/spool/nginx/fastcgi_temp/7/45/00000123457
+
+See also the use_temp_path parameter of the fastcgi_cache_path directive. 
+
+Parameters Passed to a FastCGI Server
+HTTP request header fields are passed to a FastCGI server as parameters. In applications and scripts running as FastCGI servers, these parameters are usually made available as environment variables. For example, the ¡°User-Agent¡± header field is passed as the HTTP_USER_AGENT parameter. In addition to HTTP request header fields, it is possible to pass arbitrary parameters using the fastcgi_param directive. 
+
+Embedded Variables
+The ngx_http_fastcgi_module module supports embedded variables that can be used to set parameters using the fastcgi_param directive: 
+
+$fastcgi_script_name 
+request URI or, if a URI ends with a slash, request URI with an index file name configured by the fastcgi_index directive appended to it. This variable can be used to set the SCRIPT_FILENAME and PATH_TRANSLATED parameters that determine the script name in PHP. For example, for the ¡°/info/¡± request with the following directives 
+fastcgi_index index.php;
+fastcgi_param SCRIPT_FILENAME /home/www/scripts/php$fastcgi_script_name;
+the SCRIPT_FILENAME parameter will be equal to ¡°/home/www/scripts/php/info/index.php¡±. 
+When using the fastcgi_split_path_info directive, the $fastcgi_script_name variable equals the value of the first capture set by the directive. 
+
+$fastcgi_path_info
+the value of the second capture set by the fastcgi_split_path_info directive. This variable can be used to set the PATH_INFO parameter. 
+
 */

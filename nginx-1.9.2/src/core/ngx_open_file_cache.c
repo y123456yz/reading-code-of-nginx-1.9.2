@@ -994,6 +994,10 @@ ngx_open_file_add_event(ngx_open_file_cache_t *cache,
 
     file->event->log = ngx_cycle->log;
 
+    char tmpbuf[256];
+        
+        snprintf(tmpbuf, sizeof(tmpbuf), "<%25s, %5d> epoll NGX_VNODE_EVENT(et) read add", NGX_FUNC_LINE);
+        ngx_log_debug0(NGX_LOG_DEBUG_EVENT, ngx_cycle->log, 0, tmpbuf);
     if (ngx_add_event(file->event, NGX_VNODE_EVENT, NGX_ONESHOT_EVENT)
         != NGX_OK)
     {

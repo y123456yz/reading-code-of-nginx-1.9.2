@@ -285,7 +285,7 @@ typedef void (*ngx_rbtree_insert_pt) (ngx_rbtree_node_t *root,
 
 struct ngx_rbtree_s {
     ngx_rbtree_node_t     *root;      //指向树的根节点。注意，根节点也是数据元素
-    ngx_rbtree_node_t     *sentinel;  //指向NIL峭兵节点
+    ngx_rbtree_node_t     *sentinel;  //指向NIL峭兵节点  哨兵节点是所有最下层的叶子节点都指向一个NULL空节点，图形化参考:http://blog.csdn.net/xzongyuan/article/details/22389185
     ngx_rbtree_insert_pt   insert;    //表示红黑树添加元素的函数指针，它决定在添加新节点时的行为究竟是替换还是新增
 };
 

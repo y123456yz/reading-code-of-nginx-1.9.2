@@ -654,9 +654,10 @@ EPOLLINÊÂ¼þÔòÖ»ÓÐµ±¶Ô¶ËÓÐÊý¾ÝÐ´ÈëÊ±²Å»á´¥·¢£¬ËùÒÔ´¥·¢Ò»´ÎºóÐèÒª²»¶Ï¶ÁÈ¡ËùÓÐÊý¾ÝÖ
 #define EPOLLHUP       0x010
 
 
-#define EPOLLRDHUP     0x2000
+#define EPOLLRDHUP     0x2000 //µ±¶Ô¶ËÒÑ¾­¹Ø±Õ£¬±¾¶ËÐ´Êý¾Ý£¬»áÒýÆð¸ÃÊÂ¼þ
 
 #define EPOLLET        0x80000000 //±íÊ¾½«´¥·¢·½Ê½ÉèÖÃåù±ßÔµ´¥·¢(ET)£¬ÏµÍ³Ä¬ÈÏÎªË®Æ½´¥·¢(LT¡¯)  
+//ÉèÖÃ¸Ã±ê¼Çºó¶ÁÈ¡ÍêÊý¾Ýºó£¬Èç¹ûÕýÔÚ´¦ÀíÊý¾Ý¹ý³ÌÖÐÓÖÓÐÐÂµÄÊý¾Ýµ½À´£¬²»»á´¥·¢epoll_wait·µ»Ø£¬³ý·ÇÊý¾Ý´¦ÀíÍê±ÏºóÖØÐÂadd epoll_ctl²Ù×÷£¬²Î¿¼<linux¸ßÐÔÄÜ·þÎñÆ÷¿ª·¢>9.3.4½Ú
 #define EPOLLONESHOT   0x40000000
 
 #define EPOLL_CTL_ADD  1
@@ -756,8 +757,8 @@ typedef struct {
     /*
     eventsÊÇµ÷ÓÃepoll_wait·½·¨Ê±´«ÈËµÄµÚ3¸ö²ÎÊýmaxevents£¬¶øµÚ2¸ö²ÎÊýeventsÊý×éµÄ´óÐ¡Ò²ÊÇÓÉËü¾ö¶¨µÄ£¬ÏÂÃæ½«ÔÚngx_epoll_init·½·¨ÖÐ³õÊ¼»¯Õâ¸öÊý×é
      */
-    ngx_uint_t  events; // "epoll_events"²ÎÊýÉèÖÃ
-    ngx_uint_t  aio_requests; // "worker_aio_requests"²ÎÊýÉèÖÃ
+    ngx_uint_t  events; // "epoll_events"²ÎÊýÉèÖÃ  Ä¬ÈÏ512 ¼ûngx_epoll_init_conf
+    ngx_uint_t  aio_requests; // "worker_aio_requests"²ÎÊýÉèÖÃ  Ä¬ÈÏ32 ¼ûngx_epoll_init_conf
 } ngx_epoll_conf_t;
 
 
@@ -1378,9 +1379,10 @@ ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags) //¸Ãº¯Êý
 #endif
     }
 
+    //µÚÒ»´ÎÌí¼Óepoll_ctlÎªEPOLL_CTL_ADD,Èç¹ûÔÙ´ÎÌí¼Ó·¢ÏÖactiveÎª1,Ôòepoll_ctlÎªEPOLL_CTL_MOD
     if (e->active) { //¸ù¾Ýactive±êÖ¾Î»È·¶¨ÊÇ·ñÎª»îÔ¾ÊÂ¼þ£¬ÒÔ¾ö¶¨µ½µ×ÊÇÐÞ¸Ä»¹ÊÇÌí¼ÓÊÂ¼þ
-        op = EPOLL_CTL_MOD;
-        events |= prev;
+        op = EPOLL_CTL_MOD; 
+        events |= prev; //Èç¹ûÊÇactiveµÄ£¬Ôòevents= EPOLLIN|EPOLLRDHUP|EPOLLOUT;
 
     } else {
         op = EPOLL_CTL_ADD;
@@ -1393,9 +1395,19 @@ ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags) //¸Ãº¯Êý
      */
     ee.data.ptr = (void *) ((uintptr_t) c | ev->instance);
 
+    if (e->active) {//modify
+        ngx_log_debug3(NGX_LOG_DEBUG_EVENT, ev->log, 0,
+                   "epoll modify read and write event: fd:%d op:%d ev:%08XD", c->fd, op, ee.events);
+    } else {//add
+        if (event == NGX_READ_EVENT) {
+            ngx_log_debug3(NGX_LOG_DEBUG_EVENT, ev->log, 0,
+                       "epoll add read event: fd:%d op:%d ev:%08XD", c->fd, op, ee.events);
+        } else
+            ngx_log_debug3(NGX_LOG_DEBUG_EVENT, ev->log, 0,
+                       "epoll add write event: fd:%d op:%d ev:%08XD", c->fd, op, ee.events);
+    }
     ngx_log_debug3(NGX_LOG_DEBUG_EVENT, ev->log, 0,
-                   "epoll add event: fd:%d op:%d ev:%08XD",
-                   c->fd, op, ee.events);
+                   "cc xxx addadfadf add write event: fd:%d op:%d ev:%08XD", c->fd, op, ee.events);
     //EPOLL_CTL_ADDÒ»´Îºó£¬¾Í¿ÉÒÔÒ»Ö±Í¨¹ýepoll_waitÀ´»ñÈ¡¶ÁÊÂ¼þ£¬³ý·Çµ÷ÓÃEPOLL_CTL_DEL£¬²»ÊÇÃ¿´Î¶ÁÊÂ¼þ´¥·¢epoll_wait·µ»Øºó¶¼ÒªÖØÐÂÌí¼ÓEPOLL_CTL_ADD£¬
     //Ö®Ç°´úÂëÖÐÓÐµÄµØ·½ºÃÏñ±¸×¢´íÁË£¬±¸×¢ÎªÃ¿´Î¶ÁÊÂ¼þ´¥·¢ºó¶¼ÒªÖØÐÂaddÒ»´Î
     if (epoll_ctl(ep, op, c->fd, &ee) == -1) {//epoll_wait() ÏµÍ³µ÷ÓÃµÈ´ýÓÉÎÄ¼þÃèÊö·û c->fd ÒýÓÃµÄ epoll ÊµÀýÉÏµÄÊÂ¼þ
@@ -1404,6 +1416,7 @@ ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags) //¸Ãº¯Êý
         return NGX_ERROR;
     }
     //ºóÃæµÄngx_add_event->ngx_epoll_add_eventÖÐ°ÑlisteningÖÐµÄc->read->activeÖÃ1£¬ ngx_epoll_del_eventÖÐ°ÑlisteningÖÐÖÃread->activeÖÃ0
+    //µÚÒ»´ÎÌí¼Óepoll_ctlÎªEPOLL_CTL_ADD,Èç¹ûÔÙ´ÎÌí¼Ó·¢ÏÖactiveÎª1,Ôòepoll_ctlÎªEPOLL_CTL_MOD
     ev->active = 1; //½«ÊÂ¼þµÄactive±êÖ¾Î»ÖÃÎª1£¬±íÊ¾µ±Ç°ÊÂ¼þÊÇ»îÔ¾µÄ   ngx_epoll_del_eventÖÐÖÃ0
 #if 0
     ev->oneshot = (flags & NGX_ONESHOT_EVENT) ? 1 : 0;
@@ -1476,11 +1489,11 @@ ngx_epoll_add_connection(ngx_connection_t *c) //¸Ãº¯Êý·â×°Îªngx_add_connµÄ£¬Ê¹ÓÃ
 {
     struct epoll_event  ee;
 
-    ee.events = EPOLLIN|EPOLLOUT|EPOLLET|EPOLLRDHUP;
+    ee.events = EPOLLIN|EPOLLOUT|EPOLLET|EPOLLRDHUP; //×¢ÒâÕâÀïÊÇË®Æ½´¥·¢ 
     ee.data.ptr = (void *) ((uintptr_t) c | c->read->instance);
 
     ngx_log_debug2(NGX_LOG_DEBUG_EVENT, c->log, 0,
-                   "epoll add connection: fd:%d ev:%08XD", c->fd, ee.events);
+                   "epoll add connection(read and write): fd:%d ev:%08XD", c->fd, ee.events);
 
     if (epoll_ctl(ep, EPOLL_CTL_ADD, c->fd, &ee) == -1) {
         ngx_log_error(NGX_LOG_ALERT, c->log, ngx_errno,
@@ -1553,41 +1566,39 @@ ngx_epoll_notify(ngx_event_handler_pt handler)
 
 #endif
 
-char* ngx_epoll_event_2str(uint32_t event)
+void ngx_epoll_event_2str(uint32_t event, char* buf)
 {
-    switch (event) {
-    case EPOLLIN:
-        return "epoll-in";
-        
-    case EPOLLPRI:
-        return "epoll-pri";
+    if(event & EPOLLIN)
+        strcpy(buf, "EPOLLIN ");
 
-    case EPOLLOUT:
-        return "epoll-out";
-        
-    case EPOLLRDNORM:
-        return "epoll-rdnorm";
+    if(event & EPOLLPRI) 
+        strcat(buf, "EPOLLPRI ");
+  
+    if(event & EPOLLOUT)
+        strcat(buf, "EPOLLOUT ");
 
-    case EPOLLRDBAND:
-        return "epoll-rdband";
-        
-    case EPOLLWRNORM:
-        return "epoll-wrnorm";
+    if(event & EPOLLRDNORM)
+        strcat(buf, "EPOLLRDNORM ");
 
-    case EPOLLWRBAND:
-        return "epoll-wrband";
-        
-    case EPOLLMSG:
-        return "epoll-msg";
+    if(event & EPOLLRDBAND)
+        strcat(buf, "EPOLLRDBAND ");
 
-    case EPOLLERR:
-        return "epoll-err";
-        
-    case EPOLLHUP:
-        return "epoll-hup";
-    }
+    if(event & EPOLLWRNORM)
+        strcat(buf, "EPOLLWRNORM ");
 
-    return "err";
+    if(event & EPOLLWRBAND)
+        strcat(buf, "EPOLLWRBAND ");
+
+    if(event & EPOLLMSG) 
+        strcat(buf, "EPOLLMSG ");
+
+    if(event & EPOLLERR)
+        strcat(buf, "EPOLLERR ");
+        
+    if(event & EPOLLHUP)
+        strcat(buf, "EPOLLHUP ");
+        
+    strcat(buf, " ");
 }
 
 //ngx_epoll_process_events×¢²áµ½ngx_process_eventsµÄ  
@@ -1604,7 +1615,8 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
     ngx_event_t       *rev, *wev;
     ngx_queue_t       *queue;
     ngx_connection_t  *c;
-
+    char epollbuf[256];
+    
     /* NGX_TIMER_INFINITE == INFTIM */
 
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
@@ -1616,8 +1628,13 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
      */
     //The call was interrupted by a signal handler before any of the requested events occurred or the timeout expired;
     //Èç¹ûÓÐÐÅºÅ·¢Éú(¼ûº¯Êýngx_timer_signal_handler)£¬Èç¶¨Ê±Æ÷£¬Ôò»á·µ»Ø-1
-    //ÐèÒªºÍngx_add_eventÓëngx_add_connÅäºÏÊ¹ÓÃ
-    events = epoll_wait(ep, event_list, (int) nevents, timer);  //timerÎª-1±íÊ¾ÎÞÏÞµÈ´ý   
+    //ÐèÒªºÍngx_add_eventÓëngx_add_connÅäºÏÊ¹ÓÃ        
+    //event_list´æ´¢µÄÊÇ¾ÍÐ÷ºÃµÄÊÂ¼þ£¬Èç¹ûÊÇselectÔòÊÇ´«ÈëÓÃ»§×¢²áµÄÊÂ¼þ£¬ÐèÒª±éÀú¼ì²é£¬¶øÇÒÃ¿´Îselect·µ»ØºóÐèÒªÖØÐÂÉèÖÃÊÂ¼þ¼¯£¬epoll²»ÓÃ
+    /*
+    ÕâÀïÃæµÈ´ýµÄÊÂ¼þ°üÀ¨¿Í»§¶ËÁ¬½ÓÊÂ¼þ(Õâ¸öÊÇ´Ó¸¸½ø³Ì¼Ì³Ð¹ýÀ´µÄep£¬È»ºóÔÚ×Ó½ø³ÌwhileÇ°µÄngx_event_process_init->ngx_add_eventÌí¼Ó)£¬
+    ¶ÔÒÑ¾­½¨Á¢Á¬½ÓµÄfd¶ÁÐ´ÊÂ¼þµÄÌí¼ÓÔÚngx_event_accept->ngx_http_init_connection->ngx_handle_read_event
+    */
+    events = epoll_wait(ep, event_list, (int) nevents, timer);  //timerÎª-1±íÊ¾ÎÞÏÞµÈ´ý   nevents±íÊ¾×î¶à¼àÌý¶àÉÙ¸öÊÂ¼þ£¬±ØÐë´óÓÚ0
     //EPOLL_WAITÈç¹ûÃ»ÓÐ¶ÁÐ´ÊÂ¼þ»òÕß¶¨Ê±Æ÷³¬Ê±ÊÂ¼þ·¢Éú£¬Ôò»á½øÈëË¯Ãß£¬Õâ¸ö¹ý³Ì»áÈÃ³öCPU
 
     err = (events == -1) ? ngx_errno : 0;
@@ -1685,10 +1702,13 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
         }
 
         revents = event_list[i].events; //È¡³öÊÂ¼þÀàÐÍ
+        ngx_epoll_event_2str(revents, epollbuf);
 
+        memset(epollbuf, 0, sizeof(epollbuf));
+        ngx_epoll_event_2str(revents, epollbuf);
         ngx_log_debug4(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
                        "epoll: fd:%d %s(ev:%04XD) d:%p",
-                       c->fd, ngx_epoll_event_2str(revents), revents, event_list[i].data.ptr);
+                       c->fd, epollbuf, revents, event_list[i].data.ptr);
 
         if (revents & (EPOLLERR|EPOLLHUP)) { //ÀýÈç¶Ô·½closeµôÌ×½Ó×Ö£¬ÕâÀï»á¸ÐÓ¦µ½
             ngx_log_debug2(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
@@ -1737,7 +1757,7 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
                 ngx_post_event(rev, queue); 
 
             } else {
-                //Èç¹û½ÓÊÕµ½¿Í»§¶ËÊý¾Ý£¬ÕâÀïÎªngx_http_wait_request_handler
+                //Èç¹û½ÓÊÕµ½¿Í»§¶ËÊý¾Ý£¬ÕâÀïÎªngx_http_wait_request_handler  
                 rev->handler(rev); //Èç¹ûÎª»¹Ã»accept£¬ÔòÎªngx_event_process_initÖÐÉèÖÃÎªngx_event_accept¡£Èç¹ûÒÑ¾­½¨Á¢Á¬½Ó£¬Ôò¶ÁÊý¾ÝÎªngx_http_process_request_line
             }
         }

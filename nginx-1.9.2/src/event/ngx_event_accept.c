@@ -82,6 +82,12 @@ ngx_event_accept(ngx_event_t *ev) //在ngx_process_events_and_timers中执行
             s = accept(lc->fd, (struct sockaddr *) sa, &socklen);
         }
 #else
+    /*
+            针对非阻塞I/O执行的系统调用则总是立即返回，而不管事件足否已经发生。如果事件没有眭即发生，这些系统调用就
+        返回—1．和出错的情况一样。此时我们必须根据errno来区分这两种情况。对accept、send和recv而言，事件未发牛时errno
+        通常被设置成EAGAIN（意为“再来一次”）或者EWOULDBLOCK（意为“期待阻塞”）：对conncct而言，errno则被
+        设置成EINPROGRESS（意为“在处理中"）。
+          */
         s = accept(lc->fd, (struct sockaddr *) sa, &socklen);
 #endif
 
@@ -161,7 +167,7 @@ ngx_event_accept(ngx_event_t *ev) //在ngx_process_events_and_timers中执行
 
         //从连接池中获取一个空闲ngx_connection_t，用于客户端连接建立成功后向该连接读写数据，函数形参中的ngx_event_t对应的是为accept事件对应的
         //ngx_connection_t中对应的event
-        c = ngx_get_connection(s, ev->log); 
+        c = ngx_get_connection(s, ev->log);  //ngx_get_connection中c->fd = s;
         //注意，这里的ngx_connection_t是从连接池中从新获取的，和ngx_epoll_process_events中的ngx_connection_t是两个不同的。
 
         if (c == NULL) {
@@ -455,7 +461,11 @@ ngx_enable_accept_events(ngx_cycle_t *cycle)
         if (c == NULL || c->read->active) { //之前本进程已经accept成功的连接，不用再加入epoll事件中，避免重复
             continue;
         }
+
+        char tmpbuf[256];
         
+        snprintf(tmpbuf, sizeof(tmpbuf), "<%25s, %5d> epoll NGX_READ_EVENT(et) read add", NGX_FUNC_LINE);
+        ngx_log_debug0(NGX_LOG_DEBUG_EVENT, cycle->log, 0, tmpbuf);
         if (ngx_add_event(c->read, NGX_READ_EVENT, 0) == NGX_ERROR) { //ngx_epoll_add_event
             return NGX_ERROR;
         }

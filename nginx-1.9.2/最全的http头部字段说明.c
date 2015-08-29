@@ -131,5 +131,11 @@ Cookie: Ì¹°×µÄËµ£¬Ò»¸öcookie¾ÍÊÇ´æ´¢ÔÚÓÃ»§Ö÷»úä¯ÀÀÆ÷ÖÐµÄÒ»Ð¡¶ÎÎÄ±¾ÎÄ¼þ¡£CookiesÊ
         ÕâÐ©ÐÅÏ¢À´±êÊ¶ÓÃ»§¡£¶àÊýÐèÒªµÇÂ¼µÄÕ¾µãÍ¨³£»áÔÚÄãµÄÈÏÖ¤ÐÅÏ¢Í¨¹ýºóÀ´ÉèÖÃÒ»¸öcookie£¬Ö®ºóÖ»ÒªÕâ¸öcookie´æÔÚ²¢ÇÒºÏ·¨£¬Äã¾Í¿ÉÒÔ
         ×ÔÓÉµÄä¯ÀÀÕâ¸öÕ¾µãµÄËùÓÐ²¿·Ö¡£ÔÙ´Î£¬cookieÖ»ÊÇ°üº¬ÁËÊý¾Ý£¬¾ÍÆä±¾Éí¶øÑÔ²¢²»ÓÐº¦¡£
 
+
+°ÑÖ®Ç°µÄ¶ÁÈ¡¿Í»§¶Ë°üÌå½øÐÐÁËÖØÐÂ·ÖÎö£¬²¢×öÁËÏêÏ¸½âÊÍ£¬ÅäºÏÍ¼ÐÎËµÃ÷
+ÉÏÓÎ·þÎñÆ÷Á¬½ÓÏ¸»¯·ÖÎö£¬Ï¸»¯upstreamºÍfastcgiÅäºÏ¹ý³ÌÏ¸½Ú£¬output_chain´úÂëÏêÏ¸·ÖÎö ¸ºÔØ¾ùºâËã·¨(ÂÖÑ¯ºÍiphash)·ÖÎöÒÔ¼°
+ºÍupstream¡¢fastcgiÅäºÏµ÷ÓÃÕûÌåÁ÷³Ì·ÖÎö
+fastacgiÐ­ÒéÏ¸»¯£¬fastcgi¸ñÊ½×é°ü¹ý³Ì·ÖÎö¡£ writev_chain·ÖÎö   ±äÁ¿ÖÐµÄÎ»ÓÃ%d %uÖ®Àà´òÓ¡£¬ÈÝÒ×ÒýÆð¶Î´íÎó  fastcgiÓ¦´ðÍ·²¿ÐÐ½âÎö¹ý³ÌÒÔ¼°¸³Öµ¸ørequestµÄheaders_out¹ý³Ì
+ÐÂÔöÃ¿ÐÐÈÕÖ¾´òÓ¡º¯ÊýÃûºÍÐÐºÅ¹¦ÄÜ£¬ÓÐÀûÓÚ·ÖÎö³ÌÐòÖ´ÐÐÁ÷³Ì¡£
 */
 

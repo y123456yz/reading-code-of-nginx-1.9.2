@@ -145,7 +145,7 @@ typedef struct {
 struct ngx_resolver_ctx_s {
     ngx_resolver_ctx_t       *next;
     ngx_resolver_t           *resolver;
-    ngx_udp_connection_t     *udp_connection;
+    ngx_udp_connection_t     *udp_connection;// 用于连接dns服务器
 
     ngx_int_t                 state;
     ngx_str_t                 name;

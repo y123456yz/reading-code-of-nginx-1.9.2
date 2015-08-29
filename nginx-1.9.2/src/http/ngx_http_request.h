@@ -417,7 +417,7 @@ typedef struct {
 
     /*所有解析过的HTTP头部都在headers链表中，可以使用3.2.3节中介绍的遍历链表的方法来获取所有的HTTP头部。注意，这里headers链表的
     每一个元素都是ngx_table_elt_t成员*/ //从ngx_http_headers_in获取变量后存储到该链表中，链表中的成员就是下面的各个ngx_table_elt_t成员
-    ngx_list_t                        headers; //在ngx_http_process_request_line初始化list空间
+    ngx_list_t                        headers; //在ngx_http_process_request_line初始化list空间  ngx_http_process_request_headers中存储解析到的请求行value和key
 
     /*
       HTTP 头部解释
@@ -639,7 +639,8 @@ ngx_http_send_header方法执行后将其返回值return即可）。
 毕后才会序列化为TCP字符流发送到客户端，相关流程可参见11.9.1节
 */
 typedef struct { //包含在ngx_http_request_s结构中
-    ngx_list_t                        headers;//待发送的HTTP头部链表，与headers_in中的headers成员类似
+    //如果连接了后端(例如fastcgi到PHP服务器),里面存储的是后端服务器返回的一行一行的头部行信息,赋值在ngx_http_upstream_process_headers->ngx_http_upstream_copy_header_line
+    ngx_list_t                        headers;//待发送的HTTP头部链表，与headers_in中的headers成员类似  
 
     ngx_uint_t                        status;/*响应中的状态值，如200表示成功。这里可以使用3.6.1节中介绍过的各个宏，如NGX_HTTP_OK */
     ngx_str_t                         status_line;//响应的状态行，如“HTTP/1.1 201 CREATED”
@@ -784,7 +785,7 @@ typedef struct { //包含在ngx_http_request_s结构中
 /*可以调用ngx_http_set_content_type(r)方法帮助我们设置Content-Type头部，这个方法会根据URI中的文件扩展名并对应着mime.type来设置Content-Type值,取值如:image/jpeg*/
     size_t                            content_type_len;
     ngx_str_t                         content_type;
-    ngx_str_t                         charset;
+    ngx_str_t                         charset; //是从content_type中解析出来的，见ngx_http_upstream_copy_content_type
     u_char                           *content_type_lowcase;
     ngx_uint_t                        content_type_hash;
 
@@ -811,11 +812,14 @@ typedef void (*ngx_http_client_body_handler_pt)(ngx_http_request_t *r);
 的request_body成员中，接收HTTP包体就是围绕着这个数据结构进行的。
 */
 typedef struct {//在ngx_http_read_client_request_body中分配存储空间
+    //读取客户包体即使是存入临时文件中，当所有包体读取完毕后(ngx_http_do_read_client_request_body)，还是会让r->request_body->bufs指向文件中的相关偏移内存地址
     ngx_temp_file_t                  *temp_file; //存放HTTP包体的临时文件  ngx_http_write_request_body分配空间  //如果配置"client_body_in_file_only" on | clean 表示包体存储在磁盘文件中
     /* 接收HTTP包体的缓冲区链表。当包体需要全部存放在内存中时，如果一块ngx_buf_t缓冲区无法存放完，这时就需要使用ngx_chain_t链表来存放 */
     //该空间上分配的各种内存信息，最终会调用ngx_free_chain把之前分配的内存加入的poll->chain中，从而在poll中同一回收释放资源。
     //在ngx_http_write_request_body中会把bufs链表中的所有ngx_buf_t节点信息里面的各个指针指向的数据区域(从网络中读取的)写入到临时文件temp_file中，然后把这些ngx_buf_t从bufs中删除，
     //通过ngx_free_chain加入到poll->chain，见ngx_http_write_request_body把bufs中的内容写入临时文件后，会把bufs(ngx_chain_t)节点放入r->pool->chain中
+    
+    //读取客户包体即使是存入临时文件中，当所有包体读取完毕后(ngx_http_do_read_client_request_body)，还是会让r->request_body->bufs指向文件中的相关偏移内存地址
     ngx_chain_t                      *bufs;//如果包体存入临时文件中，则bufs指向的ngx_chain_t中的各个指针指向文件中的相关偏移//在ngx_http_read_client_request_body中赋值
     //当buf中的数据填满后(buf->end = buf->last)，就会写入到临时文件后或者发送到上游服务器，该内存空间就可以继续存储读取到的数据了
     //ngx_http_read_client_request_body分配空间，应该是临时用的，如果需要多次读取才会读取完毕的时候，每次读取到的数据临时存放在buf中，
@@ -1041,7 +1045,7 @@ struct ngx_http_request_s { //当接收到客户端请求数据后，调用ngx_http_create_requ
     表示指向void术指针的数组。HTTP框架就是在ctx数组中保存所有HTTP模块上下文结构体的指针的,所有模块的请求上下文空间在
     ngx_http_create_request中创建。获取和设置分别在ngx_http_get_module_ctx和ngx_http_set_ctx，为每个请求创建ngx_http_request_s的时候
     都会为该请求的ctx[]为所有的模块创建一个指针，也就是每个模块在ngx_http_request_s中有一个ctx
-    */
+    */ //在应答完后，在ngx_http_filter_finalize_request会把ctx指向的空间全部清0
     void                            **ctx; //指向存放所有HTTP模块的上下文结构体的指针数组,实际上发送给客户端的应答完成后，会把ctx全部置0
     /*
     当客户端建立连接后，并发送请求数据过来后，在ngx_http_create_request中从ngx_http_connection_t->conf_ctx获取这三个值，也就是根据客户端连接
@@ -1073,13 +1077,13 @@ struct ngx_http_request_s { //当接收到客户端请求数据后，调用ngx_http_create_requ
 
      //在读取客户端来的包体时，赋值为ngx_http_read_client_request_body_handler
      丢弃客户端的包体时，赋值为ngx_http_discarded_request_body_handler
-     */
+     */ //注意ngx_http_upstream_t和ngx_http_request_t都有该成员 分别在ngx_http_request_handler和ngx_http_upstream_handler中执行
     ngx_http_event_handler_pt         read_event_handler; //ngx_http_request_handler函数中执行
 
     /* 与read_event_handler回调方法类似，如果ngx_http_request_handler方法判断当前事件是可写事件，则调用write_event_handler处理请求 */
     /*请求行和请求头部解析完成后，会在ngx_http_handler中赋值为ngx_http_core_run_phases
        当发送响应的时候，如果一次没有发送完，则设在为ngx_http_writer
-     */
+     */ //注意ngx_http_upstream_t和ngx_http_request_t都有该成员 分别在ngx_http_request_handler和ngx_http_upstream_handler中执行
     ngx_http_event_handler_pt         write_event_handler;//父请求重新激活后的回调方法
 
 #if (NGX_HTTP_CACHE)
@@ -1109,13 +1113,15 @@ struct ngx_http_request_s { //当接收到客户端请求数据后，调用ngx_http_create_requ
     ngx_http_headers_in_t             headers_in; //http头部行解析后的内容都由该成员存储  header_in存放请求行，headers_in存放头部行
     //只要指定headers_out中的成员，就可以在调用ngx_http_send_header时正确地把HTTP头部发出
     //HTTP模块会把想要发送的HTTP响应信息放到headers_out中，期望HTTP框架将headers_out中的成员序列化为HTTP响应包发送给用户
-    ngx_http_headers_out_t            headers_out;
+    ngx_http_headers_out_t            headers_out; 
+    //如果是upstream赋值的来源是后端服务器会有的头部行中拷贝，参考ngx_http_upstream_headers_in中的copy_handler
 
 /*
 接收完请求的包体后，可以在r->request_body->temp_file->file中获取临时文件（假定将r->request_body_in_file_only标志位设为1，那就一定可以
-在这个变量获取到包体。更复杂的接收包体的方式本节暂不讨论）。file是一个ngx_file_t类型。这里，我们可以从
+在这个变量获取到包体。）。file是一个ngx_file_t类型。这里，我们可以从
 r->request_body->temp_file->file.name中获取Nginx接收到的请求包体所在文件的名称（包括路径）。
-*/ //在ngx_http_read_client_request_body中分配存储空间
+*/ //在ngx_http_read_client_request_body中分配存储空间 读取的客户端包体存储在r->request_body->bufs链表和临时文件r->request_body->temp_file中 ngx_http_read_client_request_body
+//读取客户包体即使是存入临时文件中，当所有包体读取完毕后(见ngx_http_do_read_client_request_body)，还是会让r->request_body->bufs指向文件中的相关偏移内存地址
     ngx_http_request_body_t          *request_body; //接收HTTP请求中包体的数据结构，为NULL表示还没有分配空间
     //min(lingering_time,lingering_timeout)这段时间内可以继续读取数据，如果客户端有发送数据过来，见ngx_http_set_lingering_close
     time_t                            lingering_time; //延迟关闭连接的时间
@@ -1183,7 +1189,7 @@ URL字符转义
 //unparsed_uri表示没有进行URL解码的原始请求。例如，当uri为“/a b”时，unparsed_uri是“/a%20b”（空格字符做完编码后是%20）。
     ngx_str_t                         unparsed_uri;//参考:为什么要对URI进行编码:
     ngx_str_t                         method_name;//见method   GET  POST等
-    ngx_str_t                         http_protocol;//http_protocol指向用户请求中HTTP的起始地址。
+    ngx_str_t                         http_protocol;//GET /sample.jsp HTTP/1.1  中的HTTP/1.1
 
 
 

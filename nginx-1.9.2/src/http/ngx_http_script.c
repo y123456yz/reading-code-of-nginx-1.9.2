@@ -841,7 +841,7 @@ ngx_http_script_copy_len_code(ngx_http_script_engine_t *e)
     return code->len;
 }
 
-
+//ngx_http_script_copy_code为拷贝变量到p buf中，ngx_http_script_copy_var_code为拷贝变量对应的value
 void
 ngx_http_script_copy_code(ngx_http_script_engine_t *e)
 {
@@ -852,7 +852,7 @@ ngx_http_script_copy_code(ngx_http_script_engine_t *e)
 
     p = e->pos;
 
-    if (!e->skip) {
+    if (!e->skip) {//在该函数中无需拷贝数据
         e->pos = ngx_copy(p, e->ip + sizeof(ngx_http_script_copy_code_t),
                           code->len);
     }
@@ -959,7 +959,7 @@ ngx_http_script_copy_var_len_code(ngx_http_script_engine_t *e)
 }
 
 // /* ngx_http_script_copy_var_code 用于获取 index 对应的变量取值 */
-void //获取变量值
+void //获取变量值  //ngx_http_script_copy_code为拷贝变量到p buf中，ngx_http_script_copy_var_code为拷贝变量对应的value
 ngx_http_script_copy_var_code(ngx_http_script_engine_t *e)
 {
     u_char                      *p;

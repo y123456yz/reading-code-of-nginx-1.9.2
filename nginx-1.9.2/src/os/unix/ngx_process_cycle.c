@@ -267,12 +267,27 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
     sigaddset(&set, ngx_signal_value(NGX_SHUTDOWN_SIGNAL));
     sigaddset(&set, ngx_signal_value(NGX_CHANGEBIN_SIGNAL));
 
-    if (sigprocmask(SIG_BLOCK, &set, NULL) == -1) {
+    /*
+     每个进程有一个信号掩码(signal mask)。简单地说，信号掩码是一个“位图”，其中每一位都对应着一种信号
+     如果位图中的某一位为1，就表示在执行当前信号的处理程序期间相应的信号暂时被“屏蔽”，使得在执行的过程中不会嵌套地响应那种信号。
+     
+     为什么对某一信号进行屏蔽呢？我们来看一下对CTRL_C的处理。大家知道，当一个程序正在运行时，在键盘上按一下CTRL_C，内核就会向相应的进程
+     发出一个SIGINT 信号，而对这个信号的默认操作就是通过do_exit()结束该进程的运行。但是，有些应用程序可能对CTRL_C有自己的处理，所以就要
+     为SIGINT另行设置一个处理程序，使它指向应用程序中的一个函数，在那个函数中对CTRL_C这个事件作出响应。但是，在实践中却发现，两次CTRL_C
+     事件往往过于密集，有时候刚刚进入第一个信号的处理程序，第二个SIGINT信号就到达了，而第二个信号的默认操作是杀死进程，这样，第一个信号
+     的处理程序根本没有执行完。为了避免这种情况的出现，就在执行一个信号处理程序的过程中将该种信号自动屏蔽掉。所谓“屏蔽”，与将信号忽略
+     是不同的，它只是将信号暂时“遮盖”一下，一旦屏蔽去掉，已到达的信号又继续得到处理。
+     
+     所谓屏蔽, 并不是禁止递送信号, 而是暂时阻塞信号的递送,
+     解除屏蔽后, 信号将被递送, 不会丢失
+     */ // 设置这些信号都阻塞，等我们sigpending调用才告诉我有这些事件
+    if (sigprocmask(SIG_BLOCK, &set, NULL) == -1) {   //参考下面的sigsuspend     
+    //父子进程的继承关系可以参考:http://blog.chinaunix.net/uid-20011314-id-1987626.html
         ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                       "sigprocmask() failed");
     }
 
-    sigemptyset(&set);
+    sigemptyset(&set); 
 
 
     size = sizeof(master_process);
@@ -351,7 +366,7 @@ ngx_noaccept，决定执行不同的分支流程，并循环执行（注意，每次一个循环执行完毕后进
 
             ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
                            "termination cycle: %d", delay);
-            delay = 2000;
+            //delay = 2000;
             itv.it_interval.tv_sec = 0;
             itv.it_interval.tv_usec = 0;
             itv.it_value.tv_sec = delay / 1000;
@@ -365,7 +380,7 @@ ngx_noaccept，决定执行不同的分支流程，并循环执行（注意，每次一个循环执行完毕后进
             ITIMER_VIRTUAL 设定程序执行时间；经过指定的时间后，内核将发送SIGVTALRM信号给本进程；
             ITIMER_PROF 设定进程执行以及内核因本进程而消耗的时间和，经过指定的时间后，内核将发送ITIMER_VIRTUAL信号给本进程；
             
-            */
+            */ //设置定时器，以系统真实时间来计算，送出SIGALRM信号,这个信号反过来会设置ngx_sigalrm为1，这样delay就会不断翻倍。
             if (setitimer(ITIMER_REAL, &itv, NULL) == -1) { //每隔itv时间发送一次SIGALRM信号
                 ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                               "setitimer() failed");
@@ -377,8 +392,20 @@ ngx_noaccept，决定执行不同的分支流程，并循环执行（注意，每次一个循环执行完毕后进
         /*
           sigsuspend(const sigset_t *mask))用于在接收到某个信号之前, 临时用mask替换进程的信号掩码, 并暂停进程执行，直到收到信号为止。
           sigsuspend 返回后将恢复调用之前的信号掩码。信号处理函数完成后，进程将继续执行。该系统调用始终返回-1，并将errno设置为EINTR。
-          */ //等待添加到set中的信号发生
-        sigsuspend(&set); //等待定时器超时，通过ngx_init_signals执行ngx_signal_handler中的SIGALRM信号，信号处理函数返回后，继续该函数后面的操作
+
+         
+          其实sigsuspend是一个原子操作，包含4个步骤：
+          (1) 设置新的mask阻塞当前进程；
+          (2) 收到信号，恢复原先mask；
+          (3) 调用该进程设置的信号处理函数；
+          (4) 待信号处理函数返回后，sigsuspend返回。
+          
+          */ 
+        /*
+        等待信号发生,前面sigprocmask后有设置sigemptyset(&set);所以这里会等待接收所有信号，只要有信号到来则返回。例如定时信号  ngx_reap ngx_terminate等信号
+        从上面的(2)步骤可以看出在处理函数中执行信号中断函数的嘿嘿，由于这时候已经恢复了原来的mask(也就是上面sigprocmask设置的掩码集)
+        所以在信号处理函数中不会再次引起接收信号，只能在该while()循环再次走到sigsuspend的时候引起信号中断，从而避免了同一时刻多次中断同一信号
+        */sigsuspend(&set); //等待定时器超时，通过ngx_init_signals执行ngx_signal_handler中的SIGALRM信号，信号处理函数返回后，继续该函数后面的操作
 
         ngx_time_update();
 
@@ -618,7 +645,11 @@ ngx_start_worker_processes(ngx_cycle_t *cycle, ngx_int_t n, ngx_int_t type)
     由master进程按照配置文件中worker进程的数目，启动这些子进程（也就是调用表8-2中的ngx_start_worker_processes方法）。
     */
     for (i = 0; i < n; i++) { //n为nginx.conf worker_processes中配置的进程数
-
+/*
+                                 |----------(ngx_worker_process_cycle->ngx_worker_process_init)
+    ngx_start_worker_processes---| ngx_processes[]相关的操作赋值流程
+                                 |----------ngx_pass_open_channel
+*/
         ngx_spawn_process(cycle, ngx_worker_process_cycle,
                           (void *) (intptr_t) i, "worker process", type);
 
@@ -631,6 +662,8 @@ ngx_start_worker_processes(ngx_cycle_t *cycle, ngx_int_t n, ngx_int_t type)
            这里每个子进程和父进程之间使用的是socketpair系统调用建立起来的全双工的socket  
            channel[]在父子进程中各有一套，channel[0]为写端，channel[1]为读端  
 
+            
+           父进程关闭socket[0],子进程关闭socket[1]，父进程从sockets[1]中读写，子进程从sockets[0]中读写，还是全双工形态。参考http://www.xuebuyuan.com/1691574.html
            把该子进程的相关channel信息传递给已经创建好的其他所有子进程
          */
         ngx_pass_open_channel(cycle, &ch); 
@@ -701,13 +734,18 @@ pathes申是否有某个路径的manage标志位打开来决定是否启动cache manage子进程。如果有
 }
 
 /*
-子进程创建的时候，父进程的东西都会被子进程继承，所以后面创建的进程能够得到前面进程的channel信息，直接可以和他们通信，
+子进程创建的时候，父进程的东西都会被子进程继承，所以后面创建的子进程能够得到前面创建的子进程的channel信息，直接可以和他们通信，
 那么前面创建的进程如何知道后面的进程信息呢？ 很简单，既然前面创建的进程能够接受消息，那么我就发个信息告诉他后面的进程
 的channel,并把信息保存在channel[0]中，这样就可以相互通信了。
 */
-static void
+/*
+                                 |----------(ngx_worker_process_cycle->ngx_worker_process_init)
+    ngx_start_worker_processes---| ngx_processes[]相关的操作赋值流程
+                                 |----------ngx_pass_open_channel
+*/
+static void 
 ngx_pass_open_channel(ngx_cycle_t *cycle, ngx_channel_t *ch)
-{
+{ //该函数可以建立本进程和其他所有子进程的通道关系，和父进程的通道关系是直接继承过来的，所以本进程可以通过ch->fd和所有的
     ngx_int_t  i;
 
     for (i = 0; i < ngx_last_process; i++) { /* ngx_last_process全局变量，同样在ngx_spawn_process()中被赋值，意为最后面的进程 */  
@@ -720,7 +758,7 @@ ngx_pass_open_channel(ngx_cycle_t *cycle, ngx_channel_t *ch)
             || ngx_processes[i].channel[0] == -1) //跳过自己和异常的worker     
         {
             continue;
-        }
+        } //
 
         ngx_log_debug6(NGX_LOG_DEBUG_CORE, cycle->log, 0,
                       "pass channel s:%d pid:%P fd:%d to s:%i pid:%P fd:%d",
@@ -738,7 +776,7 @@ ngx_pass_open_channel(ngx_cycle_t *cycle, ngx_channel_t *ch)
         //对于父进程而言，他知道所有进程的channel[0]， 直接可以向子进程发送命令。 
         
         ngx_write_channel(ngx_processes[i].channel[0],
-                          ch, sizeof(ngx_channel_t), cycle->log);
+                          ch, sizeof(ngx_channel_t), cycle->log); //ch为本进程信息，ngx_processes[i].channel[0]为其他进程信息
     }
 }
 
@@ -1019,7 +1057,12 @@ ngx_master_process_exit(ngx_cycle_t *cycle)
     exit(0);
 }
 
-//在Nginx主循环（这里的主循环是指8.5节提到的ngx_worker_process_cycle方法）中，会定期地调用事件模块，以检查是否有网络事件发生。
+/*
+                                 |----------(ngx_worker_process_cycle->ngx_worker_process_init)
+    ngx_start_worker_processes---| ngx_processes[]相关的操作赋值流程
+                                 |----------ngx_pass_open_channel
+*/
+//在Nginx主循环（这里的主循环是ngx_worker_process_cycle方法）中，会定期地调用事件模块，以检查是否有网络事件发生。
 static void
 ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
 {
@@ -1106,7 +1149,11 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
     }
 }
 
-
+/*
+                                 |----------(ngx_worker_process_cycle->ngx_worker_process_init)
+    ngx_start_worker_processes---| ngx_processes[]相关的操作赋值流程
+                                 |----------ngx_pass_open_channel
+*/
 static void
 ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
 {
@@ -1224,7 +1271,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
 
     for (i = 0; ngx_modules[i]; i++) {
         if (ngx_modules[i]->init_process) {
-            if (ngx_modules[i]->init_process(cycle) == NGX_ERROR) {
+            if (ngx_modules[i]->init_process(cycle) == NGX_ERROR) { //ngx_event_process_init等
                 /* fatal */
                 exit(2);
             }
@@ -1287,13 +1334,13 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
             continue;
         }
 
-        if (close(ngx_processes[n].channel[1]) == -1) {
+        if (close(ngx_processes[n].channel[1]) == -1) { //关闭除本进程以外的其他所有进程的读端
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           "close() channel failed");
         }
     }
 
-    if (close(ngx_processes[ngx_process_slot].channel[0]) == -1) {
+    if (close(ngx_processes[ngx_process_slot].channel[0]) == -1) { //关闭本进程的写端 ，剩下的一条通道还是全双工的
         ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                       "close() channel failed");
     }
@@ -1410,6 +1457,10 @@ ngx_channel_handler(ngx_event_t *ev)
         }
 
         if (ngx_event_flags & NGX_USE_EVENTPORT_EVENT) {
+            char tmpbuf[256];
+        
+            snprintf(tmpbuf, sizeof(tmpbuf), "<%25s, %5d> epoll NGX_READ_EVENT(et) read add", NGX_FUNC_LINE);
+            ngx_log_debug0(NGX_LOG_DEBUG_EVENT, ev->log, 0, tmpbuf);
             if (ngx_add_event(ev, NGX_READ_EVENT, 0) == NGX_ERROR) {
                 return;
             }

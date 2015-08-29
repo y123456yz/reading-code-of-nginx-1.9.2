@@ -38,7 +38,7 @@ typedef struct {
     u_char                     *args; //记录?后面的参数信息
 
     unsigned                    flushed:1;
-    unsigned                    skip:1;
+    unsigned                    skip:1; //生效见ngx_http_script_copy_code，置1表示没有需要拷贝的数据，直接跳过数据拷贝步骤
     unsigned                    quote:1; //和ngx_http_script_regex_code_t->redirect一样，见ngx_http_script_regex_start_code
     unsigned                    is_args:1; //ngx_http_script_mark_args_code和ngx_http_script_start_args_code中置1，表示参数中是否带有?
     unsigned                    log:1;

@@ -104,9 +104,7 @@ ngx_write_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size,
 在master进程向worker进程发送消息的场景，这时对于socketpair方法创建的channel[2]套接字对来说，master进程会使用channel[0]套接字
 来发送消息，而worker进程则会使用channel[l]套接字来接收消息。
 
-worker进程是怎样调度ngx_read_channel方法接收频道消息呢？毕竟Nginx是单线程程序，这唯一的线程还在同时处理大量的用户请求呢！这时就需要使
-用ngx_add_channel_event方法把接收频道消息的套接字添加到epoll中了，当接收到父进程消息时子进程会通过epoll的事件回调相应的handler方法来处
-理这个频道消息
+
 */
 //ngx_write_channel和ngx_read_channel配对
 ngx_int_t

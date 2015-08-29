@@ -11,18 +11,24 @@
 
 u_char  ngx_linux_kern_ostype[50];
 u_char  ngx_linux_kern_osrelease[50];
-
+/*
+#define ngx_recv             ngx_io.recv
+#define ngx_recv_chain       ngx_io.recv_chain
+#define ngx_udp_recv         ngx_io.udp_recv
+#define ngx_send             ngx_io.send
+#define ngx_send_chain       ngx_io.send_chain //epoll方式ngx_io = ngx_os_io;
+*/
 //如果是linux并且编译过程使能了sendfile这里面ngx_os_specific_init赋值ngx_os_io = ngx_linux_io;
 static ngx_os_io_t ngx_linux_io = {
-    ngx_unix_recv,
-    ngx_readv_chain,
-    ngx_udp_unix_recv,
-    ngx_unix_send,
+    ngx_unix_recv, //ngx_recv
+    ngx_readv_chain, //ngx_recv_chain
+    ngx_udp_unix_recv, //ngx_udp_recv
+    ngx_unix_send, //ngx_send
 #if (NGX_HAVE_SENDFILE)
     ngx_linux_sendfile_chain, //ngx_send_chain
     NGX_IO_SENDFILE
 #else
-    ngx_writev_chain,
+    ngx_writev_chain, //ngx_send_chain
     0
 #endif
 };

@@ -3109,6 +3109,11 @@ ngx_udp_connect(ngx_udp_connection_t *uc)
                 /* select, poll, /dev/poll */       NGX_LEVEL_EVENT;
                 /* eventport event type has no meaning: oneshot only */
 
+
+    char tmpbuf[256];
+        
+    snprintf(tmpbuf, sizeof(tmpbuf), "<%25s, %5d> epoll NGX_READ_EVENT(et) read add", NGX_FUNC_LINE);
+    ngx_log_debug0(NGX_LOG_DEBUG_EVENT, &uc->log, 0, tmpbuf);
     if (ngx_add_event(rev, NGX_READ_EVENT, event) != NGX_OK) {
         goto failed;
     }

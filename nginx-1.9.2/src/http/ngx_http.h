@@ -92,8 +92,8 @@ ctx获取所有HTTP模块为该请求创建的上下文结构体。
 /*
  ngx_http_set ctx接受3个参数，其中第1个参数是ngx_http_request_t指针，第2个参
 数是准备设置的上下文结构体的指针，第3个参数则是HTTP模块对象。
-*/
-#define ngx_http_set_ctx(r, c, module)      r->ctx[module.ctx_index] = c; //主要是http upstream上下文
+*/ //注意和conf->ctx的区别，参考ngx_http_get_module_loc_conf
+#define ngx_http_set_ctx(r, c, module)      r->ctx[module.ctx_index] = c; //主要是http upstream相关的fastcgi proxy memcached等上下文 
 
 
 ngx_int_t ngx_http_add_location(ngx_conf_t *cf, ngx_queue_t **locations,
