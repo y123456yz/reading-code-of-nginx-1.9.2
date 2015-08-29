@@ -213,13 +213,23 @@ ngx_uint_t    ngx_restart;
 
 static u_char  master_process[] = "master process";
 
+/*
+在Nginx中，如果启用了proxy(fastcgi) cache功能，master process会在启动的时候启动管理缓存的两个子进程(区别于处理请求的子进程)来管理内
+存和磁盘的缓存个体。第一个进程的功能是定期检查缓存，并将过期的缓存删除；第二个进程的作用是在启动的时候将磁盘中已经缓存的个
+体映射到内存中(目前Nginx设定为启动以后60秒)，然后退出。
 
+具体的，在这两个进程的ngx_process_events_and_timers()函数中，会调用ngx_event_expire_timers()。Nginx的ngx_event_timer_rbtree(红黑树)里
+面按照执行的时间的先后存放着一系列的事件。每次取执行时间最早的事件，如果当前时间已经到了应该执行该事件，就会调用事件的handler。两个
+进程的handler分别是ngx_cache_manager_process_handler和ngx_cache_loader_process_handler
+
+也就是说manger 和 loader的定时器会分别调用ngx_cache_manager_process_handler和ngx_cache_loader_process_handler，不过可以看到manager的定
+时器初始时间是0，而loader是60000毫秒。也就是说，manager在nginx一启动时就启动了，但是，loader是在nginx启动了1分钟后才会启动。
+*/
 static ngx_cache_manager_ctx_t  ngx_cache_manager_ctx = {
     ngx_cache_manager_process_handler, "cache manager process", 0
 };
-
 static ngx_cache_manager_ctx_t  ngx_cache_loader_ctx = {
-    ngx_cache_loader_process_handler, "cache loader process", 60000
+    ngx_cache_loader_process_handler, "cache loader process", 60000  //进程创建后60000m秒执行ngx_cache_loader_process_handler
 };
 
 
@@ -281,6 +291,7 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
      所谓屏蔽, 并不是禁止递送信号, 而是暂时阻塞信号的递送,
      解除屏蔽后, 信号将被递送, 不会丢失
      */ // 设置这些信号都阻塞，等我们sigpending调用才告诉我有这些事件
+     
     if (sigprocmask(SIG_BLOCK, &set, NULL) == -1) {   //参考下面的sigsuspend     
     //父子进程的继承关系可以参考:http://blog.chinaunix.net/uid-20011314-id-1987626.html
         ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
@@ -405,7 +416,9 @@ ngx_noaccept，决定执行不同的分支流程，并循环执行（注意，每次一个循环执行完毕后进
         等待信号发生,前面sigprocmask后有设置sigemptyset(&set);所以这里会等待接收所有信号，只要有信号到来则返回。例如定时信号  ngx_reap ngx_terminate等信号
         从上面的(2)步骤可以看出在处理函数中执行信号中断函数的嘿嘿，由于这时候已经恢复了原来的mask(也就是上面sigprocmask设置的掩码集)
         所以在信号处理函数中不会再次引起接收信号，只能在该while()循环再次走到sigsuspend的时候引起信号中断，从而避免了同一时刻多次中断同一信号
-        */sigsuspend(&set); //等待定时器超时，通过ngx_init_signals执行ngx_signal_handler中的SIGALRM信号，信号处理函数返回后，继续该函数后面的操作
+        */
+        //nginx sigsuspend分析，参考http://weakyon.com/2015/05/14/learning-of-sigsuspend.html
+        sigsuspend(&set); //等待定时器超时，通过ngx_init_signals执行ngx_signal_handler中的SIGALRM信号，信号处理函数返回后，继续该函数后面的操作
 
         ngx_time_update();
 
@@ -670,6 +683,15 @@ ngx_start_worker_processes(ngx_cycle_t *cycle, ngx_int_t n, ngx_int_t type)
     }
 }
 
+/*
+在Nginx中，如果启用了proxy(fastcgi) cache功能，master process会在启动的时候启动管理缓存的两个子进程(区别于处理请求的子进程)来管理内
+存和磁盘的缓存个体。第一个进程的功能是定期检查缓存，并将过期的缓存删除；第二个进程的作用是在启动的时候将磁盘中已经缓存的个
+体映射到内存中(目前Nginx设定为启动以后60秒)，然后退出。
+
+具体的，在这两个进程的ngx_process_events_and_timers()函数中，会调用ngx_event_expire_timers()。Nginx的ngx_event_timer_rbtree(红黑树)里
+面按照执行的时间的先后存放着一系列的事件。每次取执行时间最早的事件，如果当前时间已经到了应该执行该事件，就会调用事件的handler。两个
+进程的handler分别是ngx_cache_manager_process_handler和ngx_cache_loader_process_handler
+*/
 static void
 ngx_start_cache_manager_processes(ngx_cycle_t *cycle, ngx_uint_t respawn)
 {
@@ -696,10 +718,19 @@ ngx_start_cache_manager_processes(ngx_cycle_t *cycle, ngx_uint_t respawn)
 在这一步骤中，由master进程根据之前各模块的初始化情况来决定是否启动cachemanage子进程，也就是根据ngx_cycle_t中存储路径的动态数组
 pathes申是否有某个路径的manage标志位打开来决定是否启动cache manage子进程。如果有任何1个路径的manage标志位为1，则启动cache manage子进程。
 */
-    if (manager == 0) {
+    if (manager == 0) { //只有在配置了缓存信息才会置1，所以如果没有配置缓存不会启动cache manage和load进程
         return;
     }
 
+    /*
+    在Nginx中，如果启用了proxy(fastcgi) cache功能，master process会在启动的时候启动管理缓存的两个子进程(区别于处理请求的子进程)来管理内
+    存和磁盘的缓存个体。第一个进程的功能是定期检查缓存，并将过期的缓存删除；第二个进程的作用是在启动的时候将磁盘中已经缓存的个
+    体映射到内存中(目前Nginx设定为启动以后60秒)，然后退出。
+    
+    具体的，在这两个进程的ngx_process_events_and_timers()函数中，会调用ngx_event_expire_timers()。Nginx的ngx_event_timer_rbtree(红黑树)里
+    面按照执行的时间的先后存放着一系列的事件。每次取执行时间最早的事件，如果当前时间已经到了应该执行该事件，就会调用事件的handler。两个
+    进程的handler分别是ngx_cache_manager_process_handler和ngx_cache_loader_process_handler
+    */
     ngx_spawn_process(cycle, ngx_cache_manager_process_cycle,
                       &ngx_cache_manager_ctx, "cache manager process",
                       respawn ? NGX_PROCESS_JUST_RESPAWN : NGX_PROCESS_RESPAWN);
@@ -1516,8 +1547,14 @@ ngx_channel_handler(ngx_event_t *ev)
     }
 }
 
+/*
+除了充当代理服务器，nginx还可行使类似varnish/squid的缓存职责，即将客户端的请求内容缓存在Nginx服务器，下次同样的请求则由nginx直接返回，
+减轻了被代理服务器的压力；cache使用一块公共内存区域（共享内存），存放缓存的索引数据，Nginx启动时cache loader进程将磁盘缓存的对象文件
+(cycle->pathes，以红黑树组织)加载到内存中，加载完毕后自动退出；只有开启了proxy buffer才能使用proxy cache；
 
-static void
+注1：若被代理服务器返回的http头包含no-store/no-cache/private/max-age=0或者expires包含过期日期时，则该响应数据不被nginx缓存；
+*/ //后端应答数据在ngx_http_upstream_process_request->ngx_http_file_cache_update中进行缓存
+static void  
 ngx_cache_manager_process_cycle(ngx_cycle_t *cycle, void *data)
 {
     ngx_cache_manager_ctx_t *ctx = data;
@@ -1548,7 +1585,7 @@ ngx_cache_manager_process_cycle(ngx_cycle_t *cycle, void *data)
 
     ngx_setproctitle(ctx->name);
 
-    ngx_add_timer(&ev, ctx->delay, NGX_FUNC_LINE);
+    ngx_add_timer(&ev, ctx->delay, NGX_FUNC_LINE); //ctx->dealy秒执行ctx->handler;
 
     for ( ;; ) {
 
@@ -1567,8 +1604,20 @@ ngx_cache_manager_process_cycle(ngx_cycle_t *cycle, void *data)
     }
 }
 
+/*
+在Nginx中，如果启用了proxy(fastcgi) cache功能，master process会在启动的时候启动管理缓存的两个子进程(区别于处理请求的子进程)来管理内
+存和磁盘的缓存个体。第一个进程的功能是定期检查缓存，并将过期的缓存删除；第二个进程的作用是在启动的时候将磁盘中已经缓存的个
+体映射到内存中(目前Nginx设定为启动以后60秒)，然后退出。
 
-static void
+具体的，在这两个进程的ngx_process_events_and_timers()函数中，会调用ngx_event_expire_timers()。Nginx的ngx_event_timer_rbtree(红黑树)里
+面按照执行的时间的先后存放着一系列的事件。每次取执行时间最早的事件，如果当前时间已经到了应该执行该事件，就会调用事件的handler。两个
+进程的handler分别是ngx_cache_manager_process_handler和ngx_cache_loader_process_handler //后端应答数据在ngx_http_upstream_process_request->ngx_http_file_cache_update中进行缓存
+*/
+
+//这个函数调用了每个磁盘缓存路径对应的manager()函数，即ngx_http_file_cache_manager()函数。这个函数很简单，就是检查缓存队列，看
+//里面的索引信息有没有过期，如果过期，就把缓存的文件从磁盘删掉，并把索引从内存中释放。
+static void  
+//cache manager 负责维护缓存文件，定期清理过期的缓存条 目。同时，它也会检查缓存目录总大小，如果超出配置限制的话，强制清理掉最老的缓存 条目。 
 ngx_cache_manager_process_handler(ngx_event_t *ev)
 {
     time_t        next, n;
@@ -1578,17 +1627,18 @@ ngx_cache_manager_process_handler(ngx_event_t *ev)
     next = 60 * 60;
 
     path = ngx_cycle->paths.elts;
-    for (i = 0; i < ngx_cycle->paths.nelts; i++) {
-
+    for (i = 0; i < ngx_cycle->paths.nelts; i++) { //遍历所有的cache目录
+        //调用manger回调
         if (path[i]->manager) {
-            n = path[i]->manager(path[i]->data);
-
+            n = path[i]->manager(path[i]->data);//manager 回调函数需要返回它里面最近将要过期的缓存条目距当前时间点的间隔时长。
+            //取得下一次的定时器的时间，可以看到是取n和next的最小值
             next = (n <= next) ? n : next;
 
             ngx_time_update();
         }
     }
 
+    //cache manager 进程检查缓存条目有效性的间隔最长为 1 个小时。并且，为了避免占用过多 CPU， cache manger 最短检查间隔保证为 1 秒。 
     if (next == 0) {
         next = 1;
     }
@@ -1596,9 +1646,22 @@ ngx_cache_manager_process_handler(ngx_event_t *ev)
     ngx_add_timer(ev, next * 1000, NGX_FUNC_LINE);
 }
 
+/*
+在Nginx中，如果启用了proxy(fastcgi) cache功能，master process会在启动的时候启动管理缓存的两个子进程(区别于处理请求的子进程)来管理内
+存和磁盘的缓存个体。第一个进程的功能是定期检查缓存，并将过期的缓存删除；第二个进程的作用是在启动的时候将磁盘中已经缓存的个
+体映射到内存中(目前Nginx设定为启动以后60秒)，然后退出。
 
+Nginx 进程启动时，会试图从缓存对应的文件系统路径下的文件读取必要数据，然后重建 缓存的内存结构。这个过程由 cache loader 进程完成。 
+
+同时，常驻 Nginx 子进程 cache manager 负责维护缓存文件，定期清理过期的缓存条 目。同时，它也会检查缓存目录总大小，如果超出配置限制的话，
+强制清理掉最老的缓存 条目。 
+
+具体的，在这两个进程的ngx_process_events_and_timers()函数中，会调用ngx_event_expire_timers()。Nginx的ngx_event_timer_rbtree(红黑树)里
+面按照执行的时间的先后存放着一系列的事件。每次取执行时间最早的事件，如果当前时间已经到了应该执行该事件，就会调用事件的handler。两个
+进程的handler分别是ngx_cache_manager_process_handler和ngx_cache_loader_process_handler //后端应答数据在ngx_http_upstream_process_request->ngx_http_file_cache_update中进行缓存
+*/
 static void
-ngx_cache_loader_process_handler(ngx_event_t *ev)
+ngx_cache_loader_process_handler(ngx_event_t *ev) //从缓存对应的文件系统路径下的文件读取必要数据，然后重建 缓存的内存结构
 {
     ngx_uint_t     i;
     ngx_path_t   **path;

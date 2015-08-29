@@ -506,6 +506,8 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     cycle->log = &cycle->new_log;
     pool->log = &cycle->new_log;
 
+    /*  走到这里的时候，所有的配置已经解析完毕，如果配置"zone" proxy_cache_path fastcgi_cache_path等需要创建共享内存，则在下面依次创建对应的共享内存  */
+
     /* create shared memory */
     part = &cycle->shared_memory.part;
     shm_zone = part->elts;
@@ -549,7 +551,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
             if (ngx_strncmp(shm_zone[i].shm.name.data,
                             oshm_zone[n].shm.name.data,
-                            shm_zone[i].shm.name.len)
+                            shm_zone[i].shm.name.len) //
                 != 0)
             {
                 continue;
@@ -988,7 +990,8 @@ ngx_init_zone_pool(ngx_cycle_t *cycle, ngx_shm_zone_t *zn)
     u_char           *file;
     ngx_slab_pool_t  *sp;
 
-    sp = (ngx_slab_pool_t *) zn->shm.addr;
+    //共享内存的起始地址开始的sizeof(ngx_slab_pool_t)字节是用来存储管理共享内存的slab poll的
+    sp = (ngx_slab_pool_t *) zn->shm.addr; //共享内存起始地址
 
     if (zn->shm.exists) {
 
@@ -1037,6 +1040,7 @@ ngx_init_zone_pool(ngx_cycle_t *cycle, ngx_shm_zone_t *zn)
 
 #endif
 
+    //创建共享内存锁
     if (ngx_shmtx_create(&sp->mutex, &sp->lock, file) != NGX_OK) {
         return NGX_ERROR;
     }
@@ -1357,7 +1361,7 @@ ngx_shared_memory_add(ngx_conf_t *cf, ngx_str_t *name, size_t size, void *tag)
             continue;
         }
 
-        if (tag != shm_zone[i].tag) {
+        if (tag != shm_zone[i].tag) { //例如proxy_cache abc, fastcgi abc；同时配置，就会报错
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                             "the shared memory zone \"%V\" is "
                             "already declared for a different use",
@@ -1365,11 +1369,11 @@ ngx_shared_memory_add(ngx_conf_t *cf, ngx_str_t *name, size_t size, void *tag)
             return NULL;
         }
 
-        if (shm_zone[i].shm.size == 0) {
+        if (shm_zone[i].shm.size == 0) {//名字相同，大小不一致，错误。  例如在该配置之前有配置proxy_cache xxx，则xxx共享内存的大小就是0
             shm_zone[i].shm.size = size;
         }
 
-        if (size && size != shm_zone[i].shm.size) {
+        if (size && size != shm_zone[i].shm.size) {//之前已经有了name共享内存，但是新来的name需要创建的共享内存大小与之前的不相等，冲突了
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                             "the size %uz of shared memory zone \"%V\" "
                             "conflicts with already declared size %uz",
@@ -1377,9 +1381,11 @@ ngx_shared_memory_add(ngx_conf_t *cf, ngx_str_t *name, size_t size, void *tag)
             return NULL;
         }
 
+        //找到了一个相同名字的，并且现在知道的共享内存大小与之前的一样，则直接使用该共享内存，返回其在cf->cycle->shared_memory.part中的下标。
         return &shm_zone[i];
     }
 
+    /* 需要创建一个新的ngx_shm_zone_t来在ngx_init_cycle来真正创建共享内存 */
     shm_zone = ngx_list_push(&cf->cycle->shared_memory);
 
     if (shm_zone == NULL) {

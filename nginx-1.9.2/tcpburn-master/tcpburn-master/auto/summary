@@ -1,0 +1,22 @@
+
+# Copyright (C) bin wang
+# Copyright (C) NetEase, Inc.
+
+echo
+echo "Configuration summary"
+
+
+echo
+
+
+cat << END
+  tcpburn path prefix: "$TC_PREFIX"
+  tcpburn binary file: "$TC_SBIN_PATH"
+  tcpburn pid file: "$TC_PID_PATH"
+END
+
+if test -n "$TC_ERROR_LOG_PATH"; then
+  echo "  tcpburn error log file: \"$TC_ERROR_LOG_PATH\""
+else
+  echo "  tcpburn logs errors to stderr"
+fi

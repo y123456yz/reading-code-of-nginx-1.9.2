@@ -57,6 +57,12 @@ ngx_file_aio_init(ngx_file_t *file, ngx_pool_t *pool)
     return NGX_OK;
 }
 
+/*
+ 整个网络事件的驱动机制就是这样通过ngx_eventfd通知描述符和ngx_epoll_eventfd
+handler回调方法，并与文件异步I/O事件结合起来的。
+    那么，怎样向异步I/O上下文中提交异步I/O操作呢？看看ngx_linux_aio read.c文件中
+的ngx_file_aio_read方法，在打开文件异步I/O后，这个方法将会负责磁盘文件的读取
+*/
 ssize_t
 ngx_file_aio_read(ngx_file_t *file, u_char *buf, size_t size, off_t offset,
     ngx_pool_t *pool)

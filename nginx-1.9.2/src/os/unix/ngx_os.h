@@ -13,7 +13,7 @@
 #include <ngx_core.h>
 
 
-#define NGX_IO_SENDFILE    1
+#define NGX_IO_SENDFILE    1 //./configure配置了sendfile，编译的时候加上sendfile选项,，就会在ngx_linux_io把flag置为该值
 
 
 //一下四个方法在ngx_connection_s中包含
@@ -30,7 +30,7 @@ typedef struct {
     ngx_recv_pt        udp_recv;
     ngx_send_pt        send;
     ngx_send_chain_pt  send_chain;
-    ngx_uint_t         flags;
+    ngx_uint_t         flags;//例如NGX_IO_SENDFILE
 } ngx_os_io_t;
 
 ngx_int_t ngx_os_init(ngx_log_t *log);

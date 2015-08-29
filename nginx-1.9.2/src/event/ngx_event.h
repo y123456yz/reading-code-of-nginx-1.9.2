@@ -86,7 +86,8 @@ struct ngx_event_s {
     标志位，为1时表示当前事件已经淮备就绪，也就是说，允许这个事件的消费模块处理这个事件。在
     HTTP框架中，经常会检查事件的ready标志位以确定是否可以接收请求或者发送响应
     ready标志位，如果为1，则表示在与客户端的TCP连接上可以发送数据；如果为0，则表示暂不可发送数据。
-     */ //如果来自对端的数据读取完毕ready置1，见ngx_unix_recv
+     */ //如果来自对端的数据内核缓冲区没有数据(返回NGX_EAGAIN)，或者连接断开置0，见ngx_unix_recv
+     //在发送数据的时候，ngx_unix_send中的时候，如果希望发送1000字节，但是实际上send只返回了500字节(说明内核协议栈缓冲区满，需要通过epoll再次促发write的时候才能写)，或者链接异常，则把ready置0
     unsigned         ready:1; //在ngx_epoll_process_events中置1,读事件触发并读取数据后ngx_unix_recv中置0
 
     /*
@@ -112,7 +113,7 @@ struct ngx_event_s {
     unsigned         timer_set:1; //ngx_event_add_timer ngx_add_timer中置1   ngx_event_expire_timers置0
 
     //标志位，delayed为1时表示需要延迟处理这个事件，它仅用于限速功能
-    unsigned         delayed:1; //限速见ngx_http_write_filter
+    unsigned         delayed:1; //限速见ngx_http_write_filter  
 
     /*
      标志位，为1时表示延迟建立TCP连接，也就是说，经过TCP三次握手后并不建立连接，而是要等到真正收到数据包后才会建立TCP连接
@@ -228,18 +229,18 @@ struct ngx_event_s {
 
 #if (NGX_HAVE_FILE_AIO)
 
-struct ngx_event_aio_s { //ngx_file_aio_init中初始化
+struct ngx_event_aio_s { //ngx_file_aio_init中初始化,创建空间和赋值
     void                      *data; //指向ngx_http_request_t
 
     //执行地方在ngx_file_aio_event_handler，赋值地方在
     ngx_event_handler_pt       handler;//这是真正由业务模块实现的方法，在异步I/O事件完成后被调用
-    ngx_file_t                *file;
+    ngx_file_t                *file;//file为要读取的file文件信息
 
 #if (NGX_HAVE_AIO_SENDFILE)
     ssize_t                  (*preload_handler)(ngx_buf_t *file);
 #endif
 
-    ngx_fd_t                   fd;
+    ngx_fd_t                   fd;//file为要读取的file文件信息对应的文件描述符
 
 #if (NGX_HAVE_EVENTFD)
     int64_t                    res; //赋值见ngx_epoll_eventfd_handler
@@ -334,7 +335,7 @@ extern ngx_event_actions_t   ngx_event_actions;
 /*
  * The event filter requires to do i/o operation until EAGAIN: epoll.
  */
-#define NGX_USE_GREEDY_EVENT     0x00000020
+#define NGX_USE_GREEDY_EVENT     0x00000020  //epoll有添加该标记
 
 /*
  * The event filter is epoll.

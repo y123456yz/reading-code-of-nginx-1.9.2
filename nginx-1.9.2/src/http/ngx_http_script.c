@@ -243,7 +243,7 @@ ngx_http_set_complex_value_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_OK;
 }
 
-
+//ngx_http_set_predicate_slot赋值,在ngx_http_test_predicates解析
 ngx_int_t
 ngx_http_test_predicates(ngx_http_request_t *r, ngx_array_t *predicates)
 {
@@ -270,8 +270,10 @@ ngx_http_test_predicates(ngx_http_request_t *r, ngx_array_t *predicates)
     return NGX_OK;
 }
 
-
-char *
+//proxy_cache_bypass fastcgi_cache_bypass 调用ngx_http_set_predicate_slot赋值
+//proxy_cache_bypass  xx1 xx2设置的xx2不为空或者不为0，则不会从缓存中取，而是直接冲后端读取
+//proxy_no_cache  xx1 xx2设置的xx2不为空或者不为0，则后端回来的数据不会被缓存
+char * //ngx_http_set_predicate_slot赋值,在ngx_http_test_predicates解析
 ngx_http_set_predicate_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
     char  *p = conf;
@@ -631,7 +633,6 @@ ngx_http_script_flush_no_cacheable_variables(ngx_http_request_t *r,
         }
     }
 }
-
 
 static ngx_int_t
 ngx_http_script_init_arrays(ngx_http_script_compile_t *sc)

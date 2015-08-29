@@ -18,7 +18,16 @@ typedef struct {
 
 static ngx_int_t ngx_http_chunked_filter_init(ngx_conf_t *cf);
 
+/*
+格式:
 
+十六进制ea5表明这个暑假块有3749字节
+          这个块为3749字节，块数结束后\r\n表明这个块已经结束               这个块为3752字节，块数结束后\r\n表明这个块已经结束 
+                                                                                                                                 0表示最后一个块，最后跟两个\r\n
+ea5\r\n........................................................\r\n ea8\r\n..................................................\r\n 0\r\n\r\n
+
+参考:http://blog.csdn.net/zhangboyj/article/details/6236780
+*/
 static ngx_http_module_t  ngx_http_chunked_filter_module_ctx = {
     NULL,                                  /* preconfiguration */
     ngx_http_chunked_filter_init,          /* postconfiguration */
@@ -92,6 +101,17 @@ static ngx_http_module_t  ngx_http_chunked_filter_module_ctx = {
 ┃ngx_http_write_filter_module        ┃  仅对HTTP包体做处理。该模块负责向客户端发送HTTP响应              ┃
 ┗━━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
+
+
+格式:
+
+十六进制ea5表明这个暑假块有3749字节
+          这个块为3749字节，块数结束后\r\n表明这个块已经结束               这个块为3752字节，块数结束后\r\n表明这个块已经结束 
+                                                                                                                                 0表示最后一个块，最后跟两个\r\n
+ea5\r\n........................................................\r\n ea8\r\n..................................................\r\n 0\r\n\r\n
+
+参考:http://blog.csdn.net/zhangboyj/article/details/6236780
+
 */ngx_module_t  ngx_http_chunked_filter_module = {
     NGX_MODULE_V1,
     &ngx_http_chunked_filter_module_ctx,   /* module context */
@@ -111,7 +131,7 @@ static ngx_http_module_t  ngx_http_chunked_filter_module_ctx = {
 static ngx_http_output_header_filter_pt  ngx_http_next_header_filter;
 static ngx_http_output_body_filter_pt    ngx_http_next_body_filter;
 
-
+//是否按照chunked编码方式组包发送包体
 static ngx_int_t
 ngx_http_chunked_header_filter(ngx_http_request_t *r)
 {
@@ -124,10 +144,10 @@ ngx_http_chunked_header_filter(ngx_http_request_t *r)
         || r != r->main
         || (r->method & NGX_HTTP_HEAD))
     {
-        return ngx_http_next_header_filter(r);
+        return ngx_http_next_header_filter(r); //如果没有包体，则就不存在包体是否安装chunked编码方式发送组包解包问题了
     }
 
-    if (r->headers_out.content_length_n == -1) {
+    if (r->headers_out.content_length_n == -1) { //表示后端发送过来的头部行中不带有Content-length:xxx 这种情况1.1版本HTTP直接设置chunked为1
         if (r->http_version < NGX_HTTP_VERSION_11) {
             r->keepalive = 0;
 
@@ -135,7 +155,7 @@ ngx_http_chunked_header_filter(ngx_http_request_t *r)
             clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
 
             if (clcf->chunked_transfer_encoding) {
-                r->chunked = 1;
+                r->chunked = 1;//头部行中不带有Content-length:xxx 这种情况1.1版本HTTP直接设置chunked为1
 
                 ctx = ngx_pcalloc(r->pool,
                                   sizeof(ngx_http_chunked_filter_ctx_t));
@@ -165,10 +185,20 @@ ngx_http_chunked_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
     ngx_chain_t                    *out, *cl, *tl, **ll;
     ngx_http_chunked_filter_ctx_t  *ctx;
 
-    if (in == NULL || !r->chunked || r->header_only) {
+    if (in == NULL || !r->chunked || r->header_only) { //
         return ngx_http_next_body_filter(r, in);
     }
 
+/*
+格式:
+
+十六进制ea5表明这个暑假块有3749字节
+            这个块为3749字节，块数结束后\r\n表明这个块已经结束     这个块为3752字节，块数结束后\r\n表明这个块已经结束 
+                                                                                                                                 0表示最后一个块，最后跟两个\r\n
+.....ea5\r\n........................................................\r\n ea8\r\n..................................................\r\n 0\r\n\r\n
+
+*/
+    //以下一般是从ngx_http_send_special走到这里
     ctx = ngx_http_get_module_ctx(r, ngx_http_chunked_filter_module);
 
     out = NULL;
@@ -186,7 +216,7 @@ ngx_http_chunked_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
         if (cl->buf->flush
             || cl->buf->sync
             || ngx_buf_in_memory(cl->buf)
-            || cl->buf->in_file)
+            || cl->buf->in_file) //创建新的chain来指向in中的每一个buf，然后添加到out链中
         {
             tl = ngx_alloc_chain_link(r->pool);
             if (tl == NULL) {
@@ -205,7 +235,8 @@ ngx_http_chunked_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
         cl = cl->next;
     }
 
-    if (size) {
+    if (size) {//size为要发送的所有in链中的所有buf指向的数据的长度和，大于0所有有数据
+        //chain链in中有多少个成员chain这里就为其分配多少个存储起数据长度的16字节十六进制字符串
         tl = ngx_chain_get_free_buf(r->pool, &ctx->free);
         if (tl == NULL) {
             return NGX_ERROR;
@@ -214,7 +245,7 @@ ngx_http_chunked_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
         b = tl->buf;
         chunk = b->start;
 
-        if (chunk == NULL) {
+        if (chunk == NULL) { //16字节的空间用来存储一个chunk编码方式包体的16进制字符串格式
             /* the "0000000000000000" is 64-bit hexadecimal string */
 
             chunk = ngx_palloc(r->pool, sizeof("0000000000000000" CRLF) - 1);
@@ -230,13 +261,17 @@ ngx_http_chunked_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
         b->memory = 0;
         b->temporary = 1;
         b->pos = chunk;
-        b->last = ngx_sprintf(chunk, "%xO" CRLF, size);
-
-        tl->next = out;
+        //size按照16进制字符串存放在chunk中，标识整个in链中的所有buf的数据之和
+        b->last = ngx_sprintf(chunk, "%xO" CRLF, size); 
+        
+        tl->next = out; //这个in的chain tl添加到out链最前面
         out = tl;
     }
 
-    if (cl->buf->last_buf) {
+    int lastbuf = cl->buf->last_buf;
+    ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                       "yang test ..........xxxxxxxx ################## lstbuf:%d", lastbuf);
+    if (cl->buf->last_buf) { //如果是in链中的最后一个chain成员，则以一个标识0\r\n\r\n标识该in数据包体结束
         tl = ngx_chain_get_free_buf(r->pool, &ctx->free);
         if (tl == NULL) {
             return NGX_ERROR;

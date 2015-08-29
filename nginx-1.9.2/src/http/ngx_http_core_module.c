@@ -687,7 +687,13 @@ sendfile系统调用
 配置块：http、server、location
 可以启用Linux上的sendfile系统调用来发送文件，它减少了内核态与用户态之间的两次内存复制，这样就会从磁盘中读取文件后直接在内核态发送到网卡设备，
 提高了发送文件的效率。
-*/ //和aio互斥
+*/ 
+    /*
+    When both AIO and sendfile are enabled on Linux, AIO is used for files that are larger than or equal to the size specified in the 
+    directio directive, while sendfile is used for files of smaller sizes or when directio is disabled. 
+    如果aio on; sendfile都配置了，则当文件大小大于等于directio指定size(默认512)的时候使用aio,当小于size或者directio off的时候使用sendfile
+    生效见ngx_open_and_stat_file  if (of->directio <= ngx_file_size(&fi)) { ngx_directio_on }
+    */ //ngx_output_chain_as_is  ngx_output_chain_copy_buf是aio和sendfile和普通文件读写的分支点
     { ngx_string("sendfile"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_HTTP_LIF_CONF
                         |NGX_CONF_FLAG,
@@ -709,7 +715,66 @@ AIO系统调用
 默认：aio off;
 配置块：http、server、location
 此配置项表示是否在FreeBSD或Linux系统上启用内核级别的异步文件I/O功能。注意，它与sendfile功能是互斥的。
+
+Syntax:  aio on | off | threads[=pool];
+ 
+Default:  aio off; 
+Context:  http, server, location
+ 
+Enables or disables the use of asynchronous file I/O (AIO) on FreeBSD and Linux: 
+
+location /video/ {
+    aio            on;
+    output_buffers 1 64k;
+}
+
+On FreeBSD, AIO can be used starting from FreeBSD 4.3. AIO can either be linked statically into a kernel: 
+
+options VFS_AIO
+or loaded dynamically as a kernel loadable module: 
+
+kldload aio
+
+On Linux, AIO can be used starting from kernel version 2.6.22. Also, it is necessary to enable directio, or otherwise reading will be blocking: 
+
+location /video/ {
+    aio            on;
+    directio       512;
+    output_buffers 1 128k;
+}
+
+On Linux, directio can only be used for reading blocks that are aligned on 512-byte boundaries (or 4K for XFS). File’s unaligned end is 
+read in blocking mode. The same holds true for byte range requests and for FLV requests not from the beginning of a file: reading of 
+unaligned data at the beginning and end of a file will be blocking. 
+
+When both AIO and sendfile are enabled on Linux, AIO is used for files that are larger than or equal to the size specified in the directio 
+directive, while sendfile is used for files of smaller sizes or when directio is disabled. 
+
+location /video/ {
+    sendfile       on;
+    aio            on;
+    directio       8m;
+}
+
+Finally, files can be read and sent using multi-threading (1.7.11), without blocking a worker process: 
+
+location /video/ {
+    sendfile       on;
+    aio            threads;
+}
+Read and send file operations are offloaded to threads of the specified pool. If the pool name is omitted, the pool with the name “default” 
+is used. The pool name can also be set with variables: 
+
+aio threads=pool$disk;
+By default, multi-threading is disabled, it should be enabled with the --with-threads configuration parameter. Currently, multi-threading is 
+compatible only with the epoll, kqueue, and eventport methods. Multi-threaded sending of files is only supported on Linux. 
 */
+/*
+When both AIO and sendfile are enabled on Linux, AIO is used for files that are larger than or equal to the size specified in the 
+directio directive, while sendfile is used for files of smaller sizes or when directio is disabled. 
+如果aio on; sendfile都配置了，则当文件大小大于等于directio指定size(默认512)的时候使用aio,当小于size或者directio off的时候使用sendfile
+生效见ngx_open_and_stat_file  if (of->directio <= ngx_file_size(&fi)) { ngx_directio_on }
+*/ //ngx_output_chain_as_is  ngx_output_chain_copy_buf是aio和sendfile和普通文件读写的分支点
     { ngx_string("aio"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_http_core_set_aio,
@@ -730,6 +795,12 @@ AIO系统调用
 配置块：http、server、location
 此配置项在FreeBSD和Linux系统上使用O_DIRECT选项去读取文件，缓冲区大小为size，通常对大文件的读取速度有优化作用。注意，它与sendfile功能是互斥的。
 */
+/*
+When both AIO and sendfile are enabled on Linux, AIO is used for files that are larger than or equal to the size specified in the 
+directio directive, while sendfile is used for files of smaller sizes or when directio is disabled. 
+如果aio on; sendfile都配置了，则当文件大小大于等于directio指定size(默认512)的时候使用aio,当小于size或者directio off的时候使用sendfile
+生效见ngx_open_and_stat_file  if (of->directio <= ngx_file_size(&fi)) { ngx_directio_on }
+*/ //ngx_output_chain_as_is  ngx_output_chain_copy_buf是aio和sendfile和普通文件读写的分支点
     { ngx_string("directio"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_http_core_directio,
@@ -1865,7 +1936,7 @@ ngx_http_core_find_config_phase(ngx_http_request_t *r,
     ngx_str_t_2buf(buf, &r->uri);    
     
     ngx_log_debug3(NGX_LOG_DEBUG_HTTP, r->connection->log, 0, "find config phase: %ui (%s), uri:%s", r->phase_handler, 
-        ngx_http_phase_2str(ph->phase), buf);
+        (char*)ngx_http_phase_2str(ph->phase), buf);
 
     rc = ngx_http_core_find_location(r);//解析完HTTP{}块后，ngx_http_init_static_location_trees函数会创建一颗三叉树，以加速配置查找。
 	//找到所属的location，并且loc_conf也已经更新了r->loc_conf了。
@@ -1890,9 +1961,9 @@ ngx_http_core_find_config_phase(ngx_http_request_t *r,
     //这个很重要，更新location配置，主要是 r->content_handler = clcf->handler;设置回调从而在content_phrase阶段用这个handler。
     ngx_http_update_location_config(r);
 
-    ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                   "http cl:%O max:%O",
-                   r->headers_in.content_length_n, clcf->client_max_body_size);
+    ngx_log_debug3(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                   "http cl:%O max:%O, rc:%d",
+                   r->headers_in.content_length_n, clcf->client_max_body_size, rc);
 
     if (r->headers_in.content_length_n != -1
         && !r->discard_body
@@ -3147,6 +3218,7 @@ ngx_http_send_header(ngx_http_request_t *r)
         return NGX_OK;
     }
 
+    ngx_log_debugall(r->connection->log, 0, "ngx http send header");
     if (r->header_sent) {
         ngx_log_error(NGX_LOG_ALERT, r->connection->log, 0,
                       "header already sent");
@@ -3189,7 +3261,7 @@ Nginx是一个全异步的事件驱动架构，那么仅仅调用ngx_http_send_header方法和ngx_http_
 //调用ngx_http_output_filter方法即可向客户端发送HTTP响应包体，ngx_http_send_header发送响应行和响应头部
 ngx_int_t
 ngx_http_output_filter(ngx_http_request_t *r, ngx_chain_t *in)
-{
+{//如果内容被保存到了临时文件中，则会在ngx_http_copy_filter->ngx_output_chain->ngx_output_chain_copy_buf->ngx_read_file中读取文件内容，然后发送
     ngx_int_t          rc;
     ngx_connection_t  *c;
 
@@ -3198,7 +3270,8 @@ ngx_http_output_filter(ngx_http_request_t *r, ngx_chain_t *in)
     ngx_log_debug2(NGX_LOG_DEBUG_HTTP, c->log, 0,
                    "http output filter \"%V?%V\"", &r->uri, &r->args);
 
-    rc = ngx_http_top_body_filter(r, in);
+    
+    rc = ngx_http_top_body_filter(r, in); //filter上面的最后一个钩子是ngx_http_write_filter
 
     if (rc == NGX_ERROR) {
         /* NGX_ERROR may be returned by any filter */
@@ -3680,6 +3753,82 @@ SUBREQUEST_IN_MEMORY。这个宏会将子请求的subrequest_in_memory标志位置为1，
     (7)返回值
     返回NGX OK表示成功建立子请求；返回NGX—ERROR表示建立子请求失败。
 */
+
+/*
+在开发nginx module时，我们最有可能遇到的一件事就是，在处理一个请求时，我们需要访问其他多个backend server网络资源，拉取到结果后
+分析整理成一个response，再发给用户。这个过程是无法使用nginx upstream机制的，因为upstream被设计为用来支持nginx reverse proxy功能，
+所以呢，upstream默认是把其他server的http response body全部返回给client。这与我们的要求不符，这个时候，我们可以考虑subrequest了，
+nginx http模块提供的这个功能能够帮我们搞定它。
+
+最后我们要注意，一个请求中，我们只能调用一次subrequest，不能一次生成多个subrequest。我们可以在儿子请求中再创建孙子请求，一直下去都行，
+但是不能一次创建多个子请求。为什么呢？因为nginx本身的设计就是，每处理完一个事件后，将会检查有没有它对应的一个post事件（一对一），如果有则处理
+*/
+
+
+
+/*
+r是我们的module handler中，nginx调用时传给我们的请求，这时我们直接传给subrequest即可。uri和args是我们需要访问backend server的URL，
+而psr是subrequest函数执行完后返回给我们的新请求，即将要访问backend server的请求指针。ps指明了回调函数，就是说，如果这个请求执行完毕，
+接收到了backend server的响应后，就会回调这个函数。flags会指定这个子请求的一些特征。
+*/ 
+
+/*
+    好了，子请求创建完毕，一般来说子请求的创建都发生在某个请求的content handler或者某个filter内，从上面的函数可以看到子请求并没有马上被执行，
+只是被挂载在了主请求的posted_requests链表中，那它什么时候可以执行呢？之前说到posted_requests链表是在ngx_http_run_posted_requests函数中
+遍历，那么ngx_http_run_posted_requests函数又是在什么时候调用？它实际上是在某个请求的读（写）事件的handler中，执行完该请求相关的处理后
+被调用，比如主请求在走完一遍PHASE的时候会调用ngx_http_run_posted_requests，这时子请求得以运行。
+
+    这时实际还有1个问题需要解决，由于nginx是多进程，是不能够随意阻塞的（如果一个请求阻塞了当前进程，就相当于阻塞了这个进程accept到的所有
+其他请求，同时该进程也不能accept新请求），一个请求可能由于某些原因需要阻塞（比如访问io），nginx的做法是设置该请求的一些状态并在epoll
+中添加相应的事件，然后转去处理其他请求，等到该事件到来时再继续处理该请求，这样的行为就意味着一个请求可能需要多次执行机会才能完成，对
+于一个请求的多个子请求来说，意味着它们完成的先后顺序可能和它们创建的顺序是不一样的，所以必须有一种机制让提前完成的子请求保存它产生的
+数据，而不是直接输出到out chain，同时也能够让当前能够往out chain输出数据的请求及时的输出产生的数据。作者Igor采用ngx_connection_t中的
+data字段，以及一个body filter，即ngx_http_postpone_filter，还有ngx_http_finalize_request函数中的一些逻辑来解决这个问题。
+
+参考:http://blog.csdn.net/fengmo_q/article/details/6685840
+
+
+
+
+说明:
+root_r为原始最上层的请求r，postponed为该r->postponed指针，
+sbuxy_r中的x代表的是该子请求的父请求时x，y代表该子请求时父请求的第y个子请求。
+datax代表subx_r请求产生的一段数据,它是通过ngx_http_postpone_filter_add添加到r->postponed链中
+
+                          -----root_r     
+                          |postponed
+                          |
+            -------------sub1_r-------sub2_r-------data_root(属于root_r数据)
+            |                           |postponed                    
+            |postponed                  |
+            |                           sub21_r-----data2(属于sub2_r数据)
+            |                           |
+            |                           |
+            |                           -----data2(属于sub21_r数据)
+            |
+          sub11_r--------sub12_r-----data1(属于sub1_r数据)
+            |               |
+            |postponed      |postponed
+            |               |
+            -----data11     -----data12(属于sub12_r数据)
+
+
+    图中的root节点即为主请求，它的postponed链表从左至右挂载了3个节点，SUB1是它的第一个子请求，DATA1是它产生的一段数据，SUB2是它的第2个子请求，
+而且这2个子请求分别有它们自己的子请求及数据。ngx_connection_t中的data字段保存的是当前可以往out chain发送数据的请求，文章开头说到发到客户端
+的数据必须按照子请求创建的顺序发送，这里即是按后续遍历的方法（SUB11->DATA11->SUB12->DATA12->(SUB1)->DATA1->SUB21->SUB22->(SUB2)->(ROOT)），
+上图中当前能够往客户端（out chain）发送数据的请求显然就是SUB11，如果SUB12提前执行完成，并产生数据DATA121，只要前面它还有节点未发送完毕，
+DATA121只能先挂载在SUB12的postponed链表下。这里还要注意一下的是c->data的设置，当SUB11执行完并且发送完数据之后，下一个将要发送的节点应该是
+DATA11，但是该节点实际上保存的是数据，而不是子请求，所以c->data这时应该指向的是拥有改数据节点的SUB1请求。
+
+发送数据到客户端优先级:
+1.子请求优先级比父请求高
+2.同级(一个r产生多个子请求)请求，从左到右优先级由高到低(因为先创建的子请求先发送数据到客户端)
+发送数据到客户端顺序控制见ngx_http_postpone_filter
+
+*/
+
+//subrequest注意ngx_http_run_posted_requests与ngx_http_subrequest ngx_http_postpone_filter ngx_http_finalize_request配合阅读
+//subrequest参考http://blog.csdn.net/fengmo_q/article/details/6685840  nginx subrequest的实现解析
 ngx_int_t
 ngx_http_subrequest(ngx_http_request_t *r,
     ngx_str_t *uri, ngx_str_t *args, ngx_http_request_t **psr,
@@ -3754,6 +3903,8 @@ ngx_http_subrequest(ngx_http_request_t *r,
     ngx_log_debug2(NGX_LOG_DEBUG_HTTP, c->log, 0,
                    "http subrequest \"%V?%V\"", uri, &sr->args);
 
+     /* 解析flags， subrequest_in_memory在upstream模块解析完头部， 
+       发送body给downsstream时用到 */  
     sr->subrequest_in_memory = (flags & NGX_HTTP_SUBREQUEST_IN_MEMORY) != 0;
     sr->waited = (flags & NGX_HTTP_SUBREQUEST_WAITED) != 0;
 
@@ -3763,15 +3914,36 @@ ngx_http_subrequest(ngx_http_request_t *r,
 
     ngx_http_set_exten(sr);
 
+    /* 主请求保存在main字段中，这里其实就是最上层跟请求，例如当前是四层子请求，则main始终指向第一层父请求，
+        而不是第三次父请求，parent指向第三层父请求 */  
     sr->main = r->main;
-    sr->parent = r;
-    sr->post_subrequest = ps;
+    sr->parent = r; 
+    
+    sr->post_subrequest = ps;/* 保存回调handler及数据，在子请求执行完，将会调用 */  
+
+     /* 读事件handler赋值为不做任何事的函数，因为子请求不用再读数据或者检查连接状态； 
+       写事件handler为ngx_http_handler，它会重走phase */  
     sr->read_event_handler = ngx_http_request_empty_handler;
     sr->write_event_handler = ngx_http_handler;
 
-    if (c->data == r && r->postponed == NULL) {
-        c->data = sr;
-    }
+    /*
+                          -----root_r     
+                          |postponed
+                          |
+            -------------sub1_r-------data1-------sub2_r
+            |                                       |postponed                    
+            |postponed                              |
+            |                                     sub21_r-----sub22
+            |
+            |
+          sub11_r-----data11------sub12_r------data12
+
+          下面的这个if中最终c->data指向的是sub11_r，也就是最左下层的r
+     */
+    //注意:在创建子请求的过程中并没有创建新的ngx_connection_t，也就是始终用的root请求的ngx_connection_t
+    if (c->data == r && r->postponed == NULL) { //说明是r还没有子请求，在创建r的第一个子请求，例如第二层r的第一个子请求就是第三层r
+        c->data = sr;  //上层父请求r的data指向第一个r下层的子请求  在ngx_http_postpone_filter中会用到这个特性
+    }//ngx_connection_t中的data字段保存的是当前可以往out chain发送数据的请求,也就是所有子请求中优先级最高的请求
 
     /*
      对于子请求，虽然有独立的ngx_http_request_t对象r，但是却没有额的外创建r->variables，和父请求（或者说主请求）是共享的
@@ -3783,7 +3955,7 @@ ngx_http_subrequest(ngx_http_request_t *r,
 量值时，发现该变量是不可缓存的，于是也调用get_handler0函数从sub__req对象的args字段（即sr->args．注意对象sr与r之间是分隔开的）里
 去取，此时得到的值就可能是id=12。因而，在获取父子请求之间可变变量的值时，并不会相互干扰
      */
-    sr->variables = r->variables;
+    sr->variables = r->variables;/* 默认共享父请求的变量，当然你也可以根据需求在创建完子请求后，再创建子请求独立的变量集 */  
 
     sr->log_handler = r->log_handler;
 
@@ -3796,7 +3968,9 @@ ngx_http_subrequest(ngx_http_request_t *r,
     pr->out = NULL;
     pr->next = NULL;
 
-    if (r->postponed) {
+    //连接图形化可以参考http://blog.csdn.net/fengmo_q/article/details/6685840
+    if (r->postponed) {/* 把该子请求挂载在其父请求的postponed链表的队尾 */  
+        //同一个r中创建的子请求通过r->postponed->next连接在一起，这些子请求中分别在创建子请求则通过postponed指向各自的子请求
         for (p = r->postponed; p->next; p = p->next) { /* void */ }
         p->next = pr;
 
@@ -3806,6 +3980,7 @@ ngx_http_subrequest(ngx_http_request_t *r,
 
     sr->internal = 1;
 
+     /* 继承父请求的一些状态 */  
     sr->discard_body = r->discard_body;
     sr->expect_tested = 1;
     sr->main_filter_need_in_memory = r->main_filter_need_in_memory;
@@ -3815,12 +3990,13 @@ ngx_http_subrequest(ngx_http_request_t *r,
     tp = ngx_timeofday();
     sr->start_sec = tp->sec;
     sr->start_msec = tp->msec;
-
+     /* 增加主请求的引用数，这个字段主要是在ngx_http_finalize_request调用的一些结束请求和 
+       连接的函数中使用 */  
     r->main->count++;
 
     *psr = sr;
 
-    return ngx_http_post_request(sr, NULL);
+    return ngx_http_post_request(sr, NULL);/* ngx_http_post_request将该子请求挂载在主请求的posted_requests链表队尾 */  
 }
 
 //内部重定向是从NGX_HTTP_SERVER_REWRITE_PHASE处继续执行(ngx_http_internal_redirect)，而重新rewrite是从NGX_HTTP_FIND_CONFIG_PHASE处执行(ngx_http_core_post_rewrite_phase)

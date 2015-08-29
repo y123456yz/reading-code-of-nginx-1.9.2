@@ -650,7 +650,7 @@ EPOLLINÊÂ¼þÔòÖ»ÓÐµ±¶Ô¶ËÓÐÊý¾ÝÐ´ÈëÊ±²Å»á´¥·¢£¬ËùÒÔ´¥·¢Ò»´ÎºóÐèÒª²»¶Ï¶ÁÈ¡ËùÓÐÊý¾ÝÖ
 #define EPOLLWRNORM    0x100
 #define EPOLLWRBAND    0x200
 #define EPOLLMSG       0x400
-#define EPOLLERR       0x008 //EPOLLERR|EPOLLHUP¶¼±íÊ¾Á¬½ÓÒì³£Çé¿ö  fdÓÃÍê»òÕßÆäËû°É
+#define EPOLLERR       0x008 //EPOLLERR|EPOLLHUP¶¼±íÊ¾Á¬½ÓÒì³£Çé¿ö  fdÓÃÍê»òÕßÆäËû°É  //epoll EPOLLERR|EPOLLHUPÊµ¼ÊÉÏÊÇÍ¨¹ý´¥·¢¶ÁÐ´ÊÂ¼þ½øÐÐ¶ÁÐ´²Ù×÷recv writeÀ´¼ì²âÁ¬½ÓÒì³£
 #define EPOLLHUP       0x010
 
 
@@ -802,9 +802,9 @@ static ngx_connection_t     notify_conn;
 //ÓÃÓÚÍ¨ÖªÒì²½I/OÊÂ¼þµÄÃèÊö·û£¬ËüÓëiocb½á¹¹ÌåÖÐµÄaio_resfd³ÉÔ±ÊÇÒ»ÖÂµÄ  Í¨¹ý¸ÃfdÌí¼Óµ½epollÊÂ¼þÖÐ£¬´Ó¶ø¿ÉÒÔ¼ì²âÒì²½ioÊÂ¼þ
 int                         ngx_eventfd = -1;
 //Òì²½I/OµÄÉÏÏÂÎÄ£¬È«¾ÖÎ¨Ò»£¬±ØÐë¾­¹ýio_setup³õÊ¼»¯²ÅÄÜÊ¹ÓÃ
-aio_context_t               ngx_aio_ctx = 0;
+aio_context_t               ngx_aio_ctx = 0; //ngx_epoll_aio_init->io_setup´´½¨
 //Òì²½I/OÊÂ¼þÍê³Éºó½øÐÐÍ¨ÖªµÄÃèÊö·û£¬Ò²¾ÍÊÇngx_eventfdËù¶ÔÓ¦µÄngx_event_tÊÂ¼þ
-static ngx_event_t          ngx_eventfd_event;
+static ngx_event_t          ngx_eventfd_event; //¶ÁÊÂ¼þ
 //Òì²½I/OÊÂ¼þÍê³Éºó½øÐÐÍ¨ÖªµÄÃèÊö·ûngx_eventfdËù¶ÔÓ¦µÄngx_connectiontÁ¬½Ó
 static ngx_connection_t     ngx_eventfd_conn;
 
@@ -1015,6 +1015,9 @@ ngx_epoll_aio_init(ngx_cycle_t *cycle, ngx_epoll_conf_t *epcf)
     int                 n;
     struct epoll_event  ee;
 
+/*
+µ÷ÓÃeventfdÏµÍ³µ÷ÓÃÐÂ½¨Ò»¸öeventfd¶ÔÏó£¬µÚ¶þ¸ö²ÎÊýÖÐµÄ0±íÊ¾eventfdµÄ¼ÆÊýÆ÷³õÊ¼ÖµÎª0£¬ ÏµÍ³µ÷ÓÃ³É¹¦·µ»ØµÄÊÇÓëeventfd¶ÔÏó¹ØÁªµÄÃèÊö·û
+*/
 #if (NGX_HAVE_SYS_EVENTFD_H)
     ngx_eventfd = eventfd(0, 0); //  
 #else
@@ -1029,7 +1032,7 @@ ngx_epoll_aio_init(ngx_cycle_t *cycle, ngx_epoll_conf_t *epcf)
     }
 
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
-                   "eventfd: %d", ngx_eventfd);
+                   "aio eventfd: %d", ngx_eventfd);
 
     n = 1;
 
@@ -1069,6 +1072,8 @@ ngx_epoll_aio_init(ngx_cycle_t *cycle, ngx_epoll_conf_t *epcf)
 
     ngx_log_error(NGX_LOG_EMERG, cycle->log, ngx_errno,
                   "epoll_ctl(EPOLL_CTL_ADD, eventfd) failed");
+
+    //epoll_ctlÊ§°ÜÊ±Ðè»ÙÏúaioµÄcontext   
 
     if (io_destroy(ngx_aio_ctx) == -1) {
         ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
@@ -1406,8 +1411,7 @@ ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags) //¸Ãº¯Êý
             ngx_log_debug3(NGX_LOG_DEBUG_EVENT, ev->log, 0,
                        "epoll add write event: fd:%d op:%d ev:%08XD", c->fd, op, ee.events);
     }
-    ngx_log_debug3(NGX_LOG_DEBUG_EVENT, ev->log, 0,
-                   "cc xxx addadfadf add write event: fd:%d op:%d ev:%08XD", c->fd, op, ee.events);
+  
     //EPOLL_CTL_ADDÒ»´Îºó£¬¾Í¿ÉÒÔÒ»Ö±Í¨¹ýepoll_waitÀ´»ñÈ¡¶ÁÊÂ¼þ£¬³ý·Çµ÷ÓÃEPOLL_CTL_DEL£¬²»ÊÇÃ¿´Î¶ÁÊÂ¼þ´¥·¢epoll_wait·µ»Øºó¶¼ÒªÖØÐÂÌí¼ÓEPOLL_CTL_ADD£¬
     //Ö®Ç°´úÂëÖÐÓÐµÄµØ·½ºÃÏñ±¸×¢´íÁË£¬±¸×¢ÎªÃ¿´Î¶ÁÊÂ¼þ´¥·¢ºó¶¼ÒªÖØÐÂaddÒ»´Î
     if (epoll_ctl(ep, op, c->fd, &ee) == -1) {//epoll_wait() ÏµÍ³µ÷ÓÃµÈ´ýÓÉÎÄ¼þÃèÊö·û c->fd ÒýÓÃµÄ epoll ÊµÀýÉÏµÄÊÂ¼þ
@@ -1733,7 +1737,7 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
              * active handler
              */
 
-            revents |= EPOLLIN|EPOLLOUT;
+            revents |= EPOLLIN|EPOLLOUT; //epoll EPOLLERR|EPOLLHUPÊµ¼ÊÉÏÊÇÍ¨¹ý´¥·¢¶ÁÐ´ÊÂ¼þ½øÐÐ¶ÁÐ´²Ù×÷recv writeÀ´¼ì²âÁ¬½ÓÒì³£
         }
 
         if ((revents & EPOLLIN) && rev->active) { //Èç¹ûÊÇ¶ÁÊÂ¼þÇÒ¸ÃÊÂ¼þÊÇ»îÔ¾µÄ
@@ -1798,9 +1802,16 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
 Òì²½ÎÄ¼þi/oÉèÖÃÊÂ¼þµÄ»Øµ÷·½·¨Îªngx_file_aio_event_handler£¬ËüµÄµ÷ÓÃ¹ØÏµÀàËÆÕâÑù£ºepoll_wait(ngx_process_events_and_timers)ÖÐµ÷ÓÃ
 ngx_epoll_eventfd_handler·½·¨½«µ±Ç°ÊÂ¼þ·ÅÈëµ½ngx_posted_events¶ÓÁÐÖÐ£¬ÔÚÑÓºóÖ´ÐÐµÄ¶ÓÁÐÖÐµ÷ÓÃngx_file_aio_event_handler·½·¨
 */
+/*
+ Õû¸öÍøÂçÊÂ¼þµÄÇý¶¯»úÖÆ¾ÍÊÇÕâÑùÍ¨¹ýngx_eventfdÍ¨ÖªÃèÊö·ûºÍngx_epoll_eventfd
+handler»Øµ÷·½·¨£¬²¢ÓëÎÄ¼þÒì²½I/OÊÂ¼þ½áºÏÆðÀ´µÄ¡£
+    ÄÇÃ´£¬ÔõÑùÏòÒì²½I/OÉÏÏÂÎÄÖÐÌá½»Òì²½I/O²Ù×÷ÄØ£¿¿´¿´ngx_linux_aio read.cÎÄ¼þÖÐ
+µÄngx_file_aio_read·½·¨£¬ÔÚ´ò¿ªÎÄ¼þÒì²½I/Oºó£¬Õâ¸ö·½·¨½«»á¸ºÔð´ÅÅÌÎÄ¼þµÄ¶ÁÈ¡
+*/
+
 //¸Ãº¯ÊýÔÚngx_process_events_and_timersÖÐÖ´ÐÐ
 static void
-ngx_epoll_eventfd_handler(ngx_event_t *ev)
+ngx_epoll_eventfd_handler(ngx_event_t *ev) //´Óepoll_waitÖÐ¼ì²âµ½aio¶Á³É¹¦ÊÂ¼þ£¬Ôò×ßµ½ÕâÀï
 {
     int               n, events;
     long              i;
@@ -1813,11 +1824,11 @@ ngx_epoll_eventfd_handler(ngx_event_t *ev)
 
     ngx_log_debug0(NGX_LOG_DEBUG_EVENT, ev->log, 0, "eventfd handler");
     //»ñÈ¡ÒÑ¾­Íê³ÉµÄÊÂ¼þÊýÄ¿£¬²¢ÉèÖÃµ½readyÖÐ£¬×¢Òâ£¬Õâ¸öreadyÊÇ¿ÉÒÔ´óÓÚ64µÄ
-    n = read(ngx_eventfd, &ready, 8);
+    n = read(ngx_eventfd, &ready, 8);//µ÷ÓÃreadº¯Êý¶ÁÈ¡ÒÑÍê³ÉµÄI/OµÄ¸öÊý   
 
     err = ngx_errno;
 
-    ngx_log_debug1(NGX_LOG_DEBUG_EVENT, ev->log, 0, "eventfd: %d", n);
+    ngx_log_debug1(NGX_LOG_DEBUG_EVENT, ev->log, 0, "aio epoll handler eventfd: %d", n);
 
     if (n != 8) {
         if (n == -1) {
@@ -1855,7 +1866,10 @@ ngx_epoll_eventfd_handler(ngx_event_t *ev)
                                 event[i].data, event[i].obj,
                                 event[i].res, event[i].res2);
                 //data³ÉÔ±Ö¸ÏòÕâ¸öÒì²½I/OÊÂ¼þ¶ÔÓ¦×ÅµÄÊµ¼ÊÊÂ¼þ,ÕâÀïµÄngx_event_tÎªngx_event_aio_t->event
-                e = (ngx_event_t *) (uintptr_t) event[i].data; //ºÍngx_file_aio_read io_submit¶ÔÓ¦
+               /*ºÍngx_epoll_eventfd_handler¶ÔÓ¦,ÏÈÖ´ÐÐngx_file_aio_readÏëÒì²½I/OÖÐÌí¼Ó¶ÁÊÂ¼þ£¬È»ºóÍ¨¹ýepoll´¥·¢·µ»Ø¶ÁÈ¡
+               Êý¾Ý³É¹¦£¬ÔÙÖ´ÐÐngx_epoll_eventfd_handler*/
+               //ÕâÀïµÄeÊÇÔÚngx_file_aio_readÖÐÌí¼Ó½øÀ´µÄ£¬ÔÚºóÃæµÄngx_post_eventÖÐ»áÖ´ÐÐngx_file_aio_event_handler
+                e = (ngx_event_t *) (uintptr_t) event[i].data; //ºÍngx_file_aio_readÖÐio_submit¶ÔÓ¦
 
                 e->complete = 1;
                 e->active = 0;

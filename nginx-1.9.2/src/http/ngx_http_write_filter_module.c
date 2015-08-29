@@ -102,7 +102,7 @@ static ngx_http_module_t  ngx_http_write_filter_module_ctx = {
 
 /*
 ngx_http_header_filter发送头部内容是通过调用ngx_http_write_filter方法来发送响应头部的。事实上，这个方法是包体过滤模块链表中的
-最后一个模块ngx_http_write_filter_ module的处理方法，当HTTP模块调用ngx_http_output_filter方法发送包体时，最终也是通过该方法发送响应的
+最后一个模块ngx_http_write_filter_module的处理方法，当HTTP模块调用ngx_http_output_filter方法发送包体时，最终也是通过该方法发送响应的
 。当一次无法发送全部的缓冲区内容时，ngx_http_write_filter方法是会返回NGX_AGAIN的（同时将未发送完成的缓冲区放到请求的out成员
 中），也就是说，发送响应头部的ngx_http_header_filter方法会返回NGX_AGAIN。如果不需要再发送包体，那么这时就需要调用
 ngx_http_finalize_request方法来结束请求，其中第2个参数务必要传递NGX_AGAIN，这样HTTP框架才会继续将可写事件注册到epoll，并持
@@ -110,7 +110,8 @@ ngx_http_finalize_request方法来结束请求，其中第2个参数务必要传递NGX_AGAIN，这样H
 */ //发送数据的时候调用ngx_http_write_filter写数据，如果返回NGX_AGAIN,则以后的写数据触发通过在ngx_http_writer添加epoll write事件来触发
 ngx_int_t
 ngx_http_write_filter(ngx_http_request_t *r, ngx_chain_t *in)
-{
+//ngx_http_write_filter把in中的数据拼接到out后面，然后调用writev发送，没有发送完的数据最后留在out中
+{//将r->out里面的数据，和参数里面的数据一并以writev的机制发送给客户端，如果没有发送完所有的，则将剩下的放在r->out
     off_t                      size, sent, nsent, limit;
     ngx_uint_t                 last, flush, sync;
     ngx_msec_t                 delay;
@@ -370,7 +371,7 @@ Connection: keep-alive
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, c->log, 0,
                    "http write filter limit %O", limit);
     //注意这里发送的时候可能会出现超速，所以在发送成功后会重新计算是否超速，从而决定是否需要启动定时器延迟发送
-    //返回值应该是out中还没有发送出去的数据
+    //返回值应该是out中还没有发送出去的数据存放在chain中
     chain = c->send_chain(c, r->out, limit); //这里面会重新计算实际已经发送出去了多少字节
 
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, c->log, 0,
@@ -427,7 +428,7 @@ Connection: keep-alive
 
     /*
      重置ngx_http_request_t结构体的out缓冲区，把已经发送成功的缓冲区归还给内存池。如果out链表中还有剩余的没有发送出去的缓冲区，
-     则添加到out链表头部；如果已经将out链表中的所有缓冲区都发送给客户端了
+     则添加到out链表头部；如果已经将out链表中的所有缓冲区都发送给客户端了,则r->out链上为空
      */
     for (cl = r->out; cl && cl != chain; /* void */) { //chain为r->out中还未发送的数据不符
         ln = cl;
@@ -435,7 +436,10 @@ Connection: keep-alive
         ngx_free_chain(r->pool, ln);
     }
 
-    r->out = chain; //把还没有发送完的数据从新添加到out中  
+/*实际上p->busy最终指向的是ngx_http_write_filter中未发送完的r->out中保存的数据，这部分数据始终在r->out的最前面，后面在读到数据后在
+ngx_http_write_filter中会把新来的数据加到r->out后面，也就是未发送的数据在r->out前面新数据在链后面，所以实际write是之前未发送的先发送出去*/
+
+    r->out = chain; //把还没有发送完的数据从新添加到out中，实际上in中的相关chain和buf与r->out中的相关chain和buf指向了相同的还为发送出去的数据内存
 
     if (chain) { //还没有发送完成，需要继续发送
         c->buffered |= NGX_HTTP_WRITE_BUFFERED;

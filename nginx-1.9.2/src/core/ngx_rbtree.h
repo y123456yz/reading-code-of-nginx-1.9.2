@@ -235,7 +235,7 @@ typedef struct  {
 */
 struct ngx_rbtree_node_s {
     /* key成员是每个红黑树节点的关键字，它必须是整型。红黑树的排序主要依据key成员 */
-    ngx_rbtree_key_t       key; //无符号整型的关键字
+    ngx_rbtree_key_t       key; //无符号整型的关键字  参考ngx_http_file_cache_exists  其实就是ngx_http_cache_t->key的前4字节
     ngx_rbtree_node_t     *left;
     ngx_rbtree_node_t     *right;
     ngx_rbtree_node_t     *parent;
@@ -289,6 +289,7 @@ struct ngx_rbtree_s {
     ngx_rbtree_insert_pt   insert;    //表示红黑树添加元素的函数指针，它决定在添加新节点时的行为究竟是替换还是新增
 };
 
+//sentinel哨兵代表外部节点，所有的叶子以及根部的父节点，都指向这个唯一的哨兵nil，哨兵的颜色为黑色
 
 #define ngx_rbtree_init(tree, s, i)                                           \
     ngx_rbtree_sentinel_init(s);                                              \
@@ -301,7 +302,8 @@ void ngx_rbtree_delete(ngx_rbtree_t *tree, ngx_rbtree_node_t *node);
 void ngx_rbtree_insert_value(ngx_rbtree_node_t *root, ngx_rbtree_node_t *node,
     ngx_rbtree_node_t *sentinel);
 void ngx_rbtree_insert_timer_value(ngx_rbtree_node_t *root,
-    ngx_rbtree_node_t *node, ngx_rbtree_node_t *sentinel);
+    ngx_rbtree_node_t *node, ngx_rbtree_node_t *sentinel); 
+    
 
 
 #define ngx_rbt_red(node)               ((node)->color = 1)

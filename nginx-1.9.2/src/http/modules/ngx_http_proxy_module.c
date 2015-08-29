@@ -8,10 +8,12 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_http.h>
+#include <ngx_log.h>
 
-
-typedef struct {
-    ngx_array_t                    caches;  /* ngx_http_file_cache_t * */
+//(proxy_cache_path)等配置走到这里
+typedef struct { //赋值见ngx_http_file_cache_set_slot
+    //u->caches = &ngx_http_proxy_main_conf_t->caches;
+    ngx_array_t                    caches;  /* ngx_http_file_cache_t * */ //ngx_http_file_cache_t成员，最终被赋值给u->caches
 } ngx_http_proxy_main_conf_t;
 
 
@@ -21,33 +23,55 @@ typedef ngx_int_t (*ngx_http_proxy_rewrite_pt)(ngx_http_request_t *r,
     ngx_table_elt_t *h, size_t prefix, size_t len,
     ngx_http_proxy_rewrite_t *pr);
 
-struct ngx_http_proxy_rewrite_s {
-    ngx_http_proxy_rewrite_pt      handler;
+/*
+//如果没有配置proxy_redirect或者配置为proxy_redirect default,则pattern=plcf->url replacement=location(location /xxxx {}中的/xxx),
+见ngx_http_proxy_redirect和ngx_http_proxy_merge_loc_conf
+*/
+struct ngx_http_proxy_rewrite_s { //ngx_http_proxy_redirect中创建该结构空间
+    ngx_http_proxy_rewrite_pt      handler; //ngx_http_proxy_rewrite_complex_handler
 
+    //解析proxy_redirect   http://localhost:8000/    http://$host:$server_port/;中的http://localhost:8000/
     union {
-        ngx_http_complex_value_t   complex;
+        ngx_http_complex_value_t   complex; 
 #if (NGX_PCRE)
         ngx_http_regex_t          *regex;
 #endif
-    } pattern;
-
+    } pattern; 
+    
+    //解析proxy_redirect   http://localhost:8000/    http://$host:$server_port/;中的 http://$host:$server_port/
     ngx_http_complex_value_t       replacement;
 };
 
-
+/*
+  proxy_pass  http://10.10.0.103:8080/tttxxsss; 
+  浏览器输入:http://10.2.13.167/proxy1111/yangtest
+  实际上到后端的uri会变为/tttxxsss/yangtest
+  plcf->location:/proxy1111, ctx->vars.uri:/tttxxsss,  r->uri:/proxy1111/yangtest, r->args:, urilen:19
+ */
 typedef struct {
-    ngx_str_t                      key_start;
-    ngx_str_t                      schema;
-    ngx_str_t                      host_header;
-    ngx_str_t                      port;
-    ngx_str_t                      uri;
+    //proxy_pass  http://10.10.0.103:8080/tttxx;中的http://10.10.0.103:8080
+    ngx_str_t                      key_start; // 初始状态plcf->vars.key_start = plcf->vars.schema;
+    /*  "http://" 或者 "https://"  */ //指向的是uri，当时schema->len="http://" 或者 "https://"字符串长度7或者8，参考ngx_http_proxy_pass
+    ngx_str_t                      schema; ////proxy_pass  http://10.10.0.103:8080/tttxx;中的http://
+    
+    ngx_str_t                      host_header;//proxy_pass  http://10.10.0.103:8080/tttxx; 中的10.10.0.103:8080
+    ngx_str_t                      port; //"80"或者"443"，见ngx_http_proxy_set_vars
+    //proxy_pass  http://10.10.0.103:8080/tttxx; 中的/tttxx         uri不带http://http://10.10.0.103:8080 url带有http://10.10.0.103:8080
+    ngx_str_t                      uri; //ngx_http_proxy_set_vars里面赋值   uri是proxy_pass  http://10.10.0.103:8080/xxx中的/xxx，如果
+    //proxy_pass  http://10.10.0.103:8080则uri长度为0，没有uri
 } ngx_http_proxy_vars_t;
 
 
 typedef struct {
     ngx_array_t                   *flushes;
-    ngx_array_t                   *lengths;
-    ngx_array_t                   *values;
+     /* 
+    把proxy_set_header与ngx_http_proxy_headers合在一起，然后把其中的key:value字符串和长度信息添加到headers->lengths和headers->values中
+    把ngx_http_proxy_cache_headers合在一起，然后把其中的key:value字符串和长度信息添加到headers->lengths和headers->values中
+     */
+    //1. 里面存储的是ngx_http_proxy_headers和proxy_set_header设置的头部信息头添加到该lengths和values 存入ngx_http_proxy_loc_conf_t->headers
+    //2. 里面存储的是ngx_http_proxy_cache_headers设置的头部信息头添加到该lengths和values  存入ngx_http_proxy_loc_conf_t->headers_cache
+    ngx_array_t                   *lengths; //创建空间和赋值见ngx_http_proxy_init_headers
+    ngx_array_t                   *values;  //创建空间和赋值见ngx_http_proxy_init_headers
     ngx_hash_t                     hash;
 } ngx_http_proxy_headers_t;
 
@@ -55,37 +79,47 @@ typedef struct {
 typedef struct {
     ngx_http_upstream_conf_t       upstream;
 
-    ngx_array_t                   *body_flushes;
-    ngx_array_t                   *body_lengths;
-    ngx_array_t                   *body_values;
-    ngx_str_t                      body_source;
+    /* 下面这几个和proxy_set_body XXX配置相关 proxy_set_body设置包体后，就不会传送客户端发送来的数据到后端服务器(只传送proxy_set_body设置的包体)，
+    如果没有设置，则会发送客户端包体数据到后端， 参考ngx_http_proxy_create_request */
+    ngx_array_t                   *body_flushes; //从proxy_set_body XXX配置中获取，见ngx_http_proxy_merge_loc_conf
+    ngx_array_t                   *body_lengths; //从proxy_set_body XXX配置中获取，见ngx_http_proxy_merge_loc_conf
+    ngx_array_t                   *body_values;  //从proxy_set_body XXX配置中获取，见ngx_http_proxy_merge_loc_conf
+    ngx_str_t                      body_source; //proxy_set_body XXX配置中的xxx
 
-    ngx_http_proxy_headers_t       headers;
+    //数据来源是ngx_http_proxy_headers  proxy_set_header，见ngx_http_proxy_init_headers
+    ngx_http_proxy_headers_t       headers;//创建空间和赋值见ngx_http_proxy_merge_loc_conf
 #if (NGX_HTTP_CACHE)
-    ngx_http_proxy_headers_t       headers_cache;
+    //数据来源是ngx_http_proxy_cache_headers，见ngx_http_proxy_init_headers
+    ngx_http_proxy_headers_t       headers_cache;//创建空间和赋值见ngx_http_proxy_merge_loc_conf
 #endif
-    ngx_array_t                   *headers_source;
+    //通过proxy_set_header Host $proxy_host;设置并添加到该数组中
+    ngx_array_t                   *headers_source; //创建空间和赋值见ngx_http_proxy_init_headers
 
+    //解析uri中的变量的时候会用到下面两个，见ngx_http_proxy_pass  proxy_pass xxx中如果有变量，下面两个就不为空
     ngx_array_t                   *proxy_lengths;
     ngx_array_t                   *proxy_values;
-
-    ngx_array_t                   *redirects;
+    //proxy_redirect [ default|off|redirect replacement ]; 
+    //成员类型ngx_http_proxy_rewrite_t
+    ngx_array_t                   *redirects; //和配置proxy_redirect相关，见ngx_http_proxy_redirect创建空间
     ngx_array_t                   *cookie_domains;
     ngx_array_t                   *cookie_paths;
 
+    /* 此配置项表示转发时的协议方法名。例如设置为：proxy_method POST;那么客户端发来的GET请求在转发时方法名也会改为POST */
     ngx_str_t                      method;
-    ngx_str_t                      location;
-    ngx_str_t                      url;
+    ngx_str_t                      location; //当前location的名字 location xxx {} 中的xxx
+
+    //proxy_pass  http://10.10.0.103:8080/tttxx; 中的http://10.10.0.103:8080/tttxx
+    ngx_str_t                      url; //proxy_pass url名字，见ngx_http_proxy_pass
 
 #if (NGX_HTTP_CACHE)
-    ngx_http_complex_value_t       cache_key;
+    ngx_http_complex_value_t       cache_key;//proxy_cache_key为缓存建立索引时使用的关键字；见ngx_http_proxy_cache_key
 #endif
 
-    ngx_http_proxy_vars_t          vars;
-
-    ngx_flag_t                     redirect;
-
-    ngx_uint_t                     http_version;
+    ngx_http_proxy_vars_t          vars;//里面保存proxy_pass uri中的uri信息
+    //默认1
+    ngx_flag_t                     redirect;//和配置proxy_redirect相关，见ngx_http_proxy_redirect
+    //proxy_http_version设置，
+    ngx_uint_t                     http_version; //到后端服务器采用的http协议版本，默认NGX_HTTP_VERSION_10
 
     ngx_uint_t                     headers_hash_max_size;
     ngx_uint_t                     headers_hash_bucket_size;
@@ -104,19 +138,19 @@ typedef struct {
 } ngx_http_proxy_loc_conf_t;
 
 
-typedef struct {
-    ngx_http_status_t              status;
+typedef struct { //ngx_http_proxy_handler中创建空间
+    ngx_http_status_t              status; //HTTP/1.1 200 OK 赋值见ngx_http_proxy_process_status_line
     ngx_http_chunked_t             chunked;
     ngx_http_proxy_vars_t          vars;
-    off_t                          internal_body_length;
+    off_t                          internal_body_length; //长度为客户端发送过来的包体长度+proxy_set_body设置的字符包体长度和
 
     ngx_chain_t                   *free;
     ngx_chain_t                   *busy;
 
-    unsigned                       head:1;
+    unsigned                       head:1; //到后端的请求行请求时"HEAD"
     unsigned                       internal_chunked:1;
     unsigned                       header_sent:1;
-} ngx_http_proxy_ctx_t;
+} ngx_http_proxy_ctx_t; //proxy模块的各种上下文信息，例如读取后端数据的时候会有多次交换，这里面会记录状态信息ctx = ngx_http_get_module_ctx(r, ngx_http_proxy_module);
 
 
 static ngx_int_t ngx_http_proxy_eval(ngx_http_request_t *r,
@@ -208,7 +242,7 @@ static void ngx_http_proxy_set_vars(ngx_url_t *u, ngx_http_proxy_vars_t *v);
 static ngx_conf_post_t  ngx_http_proxy_lowat_post =
     { ngx_http_proxy_lowat_check };
 
-
+//这个决定后端返回的status来决定是否寻找下一个服务器进行连接
 static ngx_conf_bitmask_t  ngx_http_proxy_next_upstream_masks[] = {
     { ngx_string("error"), NGX_HTTP_UPSTREAM_FT_ERROR },
     { ngx_string("timeout"), NGX_HTTP_UPSTREAM_FT_TIMEOUT },
@@ -269,6 +303,67 @@ server {
     proxy_pass  http://backend;
   }
 }
+
+语法：proxy_pass URL 
+默认值：no 
+使用字段：location, location中的if字段 
+这个指令设置被代理服务器的地址和被映射的URI，地址可以使用主机名或IP加端口号的形式，例如：
+
+
+proxy_pass http://localhost:8000/uri/;或者一个unix socket：
+
+
+proxy_pass http://unix:/path/to/backend.socket:/uri/;路径在unix关键字的后面指定，位于两个冒号之间。
+注意：HTTP Host头没有转发，它将设置为基于proxy_pass声明，例如，如果你移动虚拟主机example.com到另外一台机器，然后重新配置正常（监听example.com到一个新的IP），同时在旧机器上手动将新的example.comIP写入/etc/hosts，同时使用proxy_pass重定向到http://example.com, 然后修改DNS到新的IP。
+当传递请求时，Nginx将location对应的URI部分替换成proxy_pass指令中所指定的部分，但是有两个例外会使其无法确定如何去替换：
+
+
+■location通过正则表达式指定；
+
+■在使用代理的location中利用rewrite指令改变URI，使用这个配置可以更加精确的处理请求（break）：
+
+location  /name/ {
+  rewrite      /name/([^/] +)  /users?name=$1  break;
+  proxy_pass   http://127.0.0.1;
+}这些情况下URI并没有被映射传递。
+此外，需要标明一些标记以便URI将以和客户端相同的发送形式转发，而不是处理过的形式，在其处理期间：
+
+
+■两个以上的斜杠将被替换为一个： ”//” – ”/”; 
+
+■删除引用的当前目录：”/./” – ”/”; 
+
+■删除引用的先前目录：”/dir /../” – ”/“。
+如果在服务器上必须以未经任何处理的形式发送URI，那么在proxy_pass指令中必须使用未指定URI的部分：
+
+location  /some/path/ {
+  proxy_pass   http://127.0.0.1;
+}在指令中使用变量是一种比较特殊的情况：被请求的URL不会使用并且你必须完全手工标记URL。
+这意味着下列的配置并不能让你方便的进入某个你想要的虚拟主机目录，代理总是将它转发到相同的URL（在一个server字段的配置）：
+
+
+location / {
+  proxy_pass   http://127.0.0.1:8080/VirtualHostBase/https/$server_name:443/some/path/VirtualHostRoot;
+}解决方法是使用rewrite和proxy_pass的组合：
+
+
+location / {
+  rewrite ^(.*)$ /VirtualHostBase/https/$server_name:443/some/path/VirtualHostRoot$1 break;
+  proxy_pass   http://127.0.0.1:8080;
+}这种情况下请求的URL将被重写， proxy_pass中的拖尾斜杠并没有实际意义。
+如果需要通过ssl信任连接到一个上游服务器组，proxy_pass前缀为 https://，并且同时指定ssl的端口，如：
+
+
+upstream backend-secure {
+  server 10.0.0.20:443;
+}
+ 
+server {
+  listen 10.0.0.1:443;
+  location / {
+    proxy_pass https://backend-secure;
+  }
+}
 */
     { ngx_string("proxy_pass"),
       NGX_HTTP_LOC_CONF|NGX_HTTP_LIF_CONF|NGX_HTTP_LMT_CONF|NGX_CONF_TAKE1,
@@ -300,7 +395,49 @@ location /one/ {
   proxy_pass       http://upstream:port/two/;
   proxy_redirect   http://upstream:port/two/   /one/;
 }
-*/
+
+语法：proxy_redirect [ default|off|redirect replacement ];
+默认值：proxy_redirect default;
+使用字段：http, server, location
+这个指令为被代理服务器应答中必须改变的应答头：”Location”和”Refresh”设置值。
+我们假设被代理的服务器返回的应答头字段为：Location: http://localhost:8000/two/some/uri/。
+指令：
+
+
+proxy_redirect http://localhost:8000/two/ http://frontend/one/;会将其重写为：Location: http://frontend/one/some/uri/。
+在重写字段里面可以不使用服务器名：
+
+proxy_redirect http://localhost:8000/two/ /;这样，默认的服务器名和端口将被设置，端口默认80。
+默认的重写可以使用参数default，将使用location和proxy_pass的值。
+下面两个配置是等价的：
+
+
+location /one/ {
+  proxy_pass       http://upstream:port/two/;
+  proxy_redirect   default;
+}
+ 
+location /one/ {
+  proxy_pass       http://upstream:port/two/;
+  proxy_redirect   http://upstream:port/two/   /one/;
+}同样，在重写字段中可以使用变量：
+
+
+proxy_redirect   http://localhost:8000/    http://$host:$server_port/;这个指令可以重复使用：
+
+
+proxy_redirect   default;
+proxy_redirect   http://localhost:8000/    /;
+proxy_redirect   http://www.example.com/   /;参数off在本级中禁用所有的proxy_redirect指令：
+
+
+proxy_redirect   off;
+proxy_redirect   default;
+proxy_redirect   http://localhost:8000/    /;
+proxy_redirect   http://www.example.com/   /;这个指令可以很容易的将被代理服务器的服务器名重写为代理服务器的服务器名：
+
+proxy_redirect   /   /;
+*/ //ngx_http_proxy_merge_loc_conf该if里面内容和ngx_http_proxy_redirect里面的proxy_redirect default一样，也就是说proxy_redirect默认为default
     { ngx_string("proxy_redirect"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE12,
       ngx_http_proxy_redirect,
@@ -322,6 +459,66 @@ location /one/ {
       0,
       NULL },
 
+    /*
+     语法：proxy_store [on | off | path] 
+     默认值：proxy_store off 
+     使用字段：http, server, location 
+     这个指令设置哪些传来的文件将被存储，参数”on”保持文件与alias或root指令指定的目录一致，参数”off”将关闭存储，路径名中可以使用变量：
+
+     proxy_store   /data/www$original_uri;应答头中的”Last-Modified”字段设置了文件最后修改时间，为了文件的安全，可以使用proxy_temp_path指定一个临时文件目录。
+     这个指令为那些不是经常使用的文件做一份本地拷贝。从而减少被代理服务器负载。
+     
+     location /images/ {
+       root                 /data/www;
+       error_page           404 = /fetch$uri;
+     }
+      
+     location /fetch {
+       internal;
+       proxy_pass           http://backend;
+       proxy_store          on;
+       proxy_store_access   user:rw  group:rw  all:r;
+       proxy_temp_path      /data/temp;
+       alias                /data/www;
+     }或者通过这种方式：
+     
+     location /images/ {
+       root                 /data/www;
+       error_page           404 = @fetch;
+     }
+      
+     location @fetch {
+       internal;
+      
+       proxy_pass           http://backend;
+       proxy_store          on;
+       proxy_store_access   user:rw  group:rw  all:r;
+       proxy_temp_path      /data/temp;
+      
+       root                 /data/www;
+     }注意proxy_store不是一个缓存，它更像是一个镜像。
+
+     nginx的存储系统分两类，一类是通过proxy_store开启的，存储方式是按照url中的文件路径，存储在本地。比如/file/2013/0001/en/test.html，
+     那么nginx就会在指定的存储目录下依次建立各个目录和文件。另一类是通过proxy_cache开启，这种方式存储的文件不是按照url路径来组织的，
+     而是使用一些特殊方式来管理的(这里称为自定义方式)，自定义方式就是我们要重点分析的。那么这两种方式各有什么优势呢？
+
+
+    按url路径存储文件的方式，程序处理起来比较简单，但是性能不行。首先有的url巨长，我们要在本地文件系统上建立如此深的目录，那么文件的打开
+    和查找都很会很慢(回想kernel中通过路径名查找inode的过程吧)。如果使用自定义方式来处理模式，尽管也离不开文件和路径，但是它不会因url长度
+    而产生复杂性增加和性能的降低。从某种意义上说这是一种用户态文件系统，最典型的应该算是squid中的CFS。nginx使用的方式相对简单，主要依靠
+    url的md5值来管理
+     */
+     /*
+       nginx的存储系统分两类，一类是通过proxy_store开启的，存储方式是按照url中的文件路径，存储在本地。比如/file/2013/0001/en/test.html，
+     那么nginx就会在指定的存储目录下依次建立各个目录和文件。另一类是通过proxy_cache开启，这种方式存储的文件不是按照url路径来组织的，
+     而是使用一些特殊方式来管理的(这里称为自定义方式)，自定义方式就是我们要重点分析的。那么这两种方式各有什么优势呢？
+
+
+    按url路径存储文件的方式，程序处理起来比较简单，但是性能不行。首先有的url巨长，我们要在本地文件系统上建立如此深的目录，那么文件的打开
+    和查找都很会很慢(回想kernel中通过路径名查找inode的过程吧)。如果使用自定义方式来处理模式，尽管也离不开文件和路径，但是它不会因url长度
+    而产生复杂性增加和性能的降低。从某种意义上说这是一种用户态文件系统，最典型的应该算是squid中的CFS。nginx使用的方式相对简单，主要依靠
+    url的md5值来管理
+     */
     { ngx_string("proxy_store"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_http_proxy_store,
@@ -329,6 +526,14 @@ location /one/ {
       0,
       NULL },
 
+    /*
+    语法：proxy_store_access users:permissions [users:permission …] 
+    默认值：proxy_store_access user:rw 
+    使用字段：http, server, location 
+    指定创建文件和目录的相关权限，如：
+    proxy_store_access  user:rw  group:rw  all:r;如果正确指定了组和所有的权限，则没有必要去指定用户的权限：
+    proxy_store_access  group:rw  all:r;
+     */
     { ngx_string("proxy_store_access"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE123,
       ngx_conf_set_access_slot,
@@ -380,6 +585,11 @@ nginx忽略被代理服务器的应答数目和所有应答的大小，接受proxy_buffer_size所指定的值
       offsetof(ngx_http_proxy_loc_conf_t, upstream.ignore_client_abort),
       NULL },
 
+    /*
+     proxy_bind  192.168.1.1;
+     在调用connect()前将上游socket绑定到一个本地地址，如果主机有多个网络接口或别名，但是你希望代理的连接通过指定的借口或地址，
+     可以使用这个指令。
+     */
     { ngx_string("proxy_bind"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_http_upstream_bind_set_slot,
@@ -422,6 +632,14 @@ nginx忽略被代理服务器的应答数目和所有应答的大小，接受proxy_buffer_size所指定的值
       offsetof(ngx_http_proxy_loc_conf_t, upstream.send_lowat),
       &ngx_http_proxy_lowat_post },
 
+    /*
+     语法：proxy_intercept_errors [ on|off ] 
+     默认值：proxy_intercept_errors off 
+     使用字段：http, server, location 
+     使nginx阻止HTTP应答代码为400或者更高的应答。
+     默认情况下被代理服务器的所有应答都将被传递。 
+     如果将其设置为on则nginx会将阻止的这部分代码在一个error_page指令处理，如果在这个error_page中没有匹配的处理方法，则被代理服务器传递的错误应答会按原样传递。
+     */
     { ngx_string("proxy_intercept_errors"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
       ngx_conf_set_flag_slot,
@@ -429,6 +647,27 @@ nginx忽略被代理服务器的应答数目和所有应答的大小，接受proxy_buffer_size所指定的值
       offsetof(ngx_http_proxy_loc_conf_t, upstream.intercept_errors),
       NULL },
 
+    /*
+    语法：proxy_set_header header value 
+    默认值： Host and Connection
+    使用字段：http, server, location 
+    这个指令允许将发送到被代理服务器的请求头重新定义或者增加一些字段。
+    这个值可以是一个文本，变量或者它们的组合。
+    proxy_set_header在指定的字段中没有定义时会从它的上级字段继承。
+    默认只有两个字段可以重新定义：
+
+    proxy_set_header Host $proxy_host;
+    proxy_set_header Connection Close;未修改的请求头“Host”可以用如下方式传送：
+
+    proxy_set_header Host $http_host;但是如果这个字段在客户端的请求头中不存在，那么不发送数据到被代理服务器。
+    这种情况下最好使用$Host变量，它的值等于请求头中的”Host”字段或服务器名：
+
+    proxy_set_header Host $host;此外，可以将被代理的端口与服务器名称一起传递：
+
+    proxy_set_header Host $host:$proxy_port;如果设置为空字符串，则不会传递头部到后端，例如下列设置将禁止后端使用gzip压缩：
+
+    proxy_set_header  Accept-Encoding  "";
+     */
     { ngx_string("proxy_set_header"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE2,
       ngx_conf_set_keyval_slot,
@@ -450,6 +689,11 @@ nginx忽略被代理服务器的应答数目和所有应答的大小，接受proxy_buffer_size所指定的值
       offsetof(ngx_http_proxy_loc_conf_t, headers_hash_bucket_size),
       NULL },
 
+/*
+Allows redefining the request body passed to the proxied server. The value can contain text, variables, and their combination. 
+*/ //设置通过后端的body的值，这个值可以包含变量。
+  /* 下面这几个和proxy_set_body XXX配置相关 proxy_set_body设置包体后，就不会传送客户端发送来的数据到后端服务器(只传送proxy_set_body设置的包体)，
+    如果没有设置，则会发送客户端包体数据到后端， 参考ngx_http_proxy_create_request */  
     { ngx_string("proxy_set_body"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_str_slot,
@@ -511,7 +755,7 @@ proxy_buffer_size
 设置从被代理服务器读取的第一部分应答的缓冲区大小。
 通常情况下这部分应答中包含一个小的应答头。
 默认情况下这个值的大小为指令proxy_buffers中指定的一个缓冲区的大小，不过可以将其设置为更小。
-*/
+*/ //指定的空间开辟在ngx_http_upstream_process_header  
     { ngx_string("proxy_buffer_size"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_size_slot,
@@ -519,7 +763,18 @@ proxy_buffer_size
       offsetof(ngx_http_proxy_loc_conf_t, upstream.buffer_size),
       NULL },
 
-    { ngx_string("proxy_read_timeout"),
+    /*
+    语法：proxy_read_timeout time 
+    默认值：proxy_read_timeout 60s 
+    使用字段：http, server, location 
+        决定读取后端服务器应答的超时时间，单位为秒，它决定nginx将等待多久时间来取得一个请求的应答。超时时间是指完成了两次握手后并
+    且状态为established后等待读取后端数据的事件。
+        相对于proxy_connect_timeout，这个时间可以扑捉到一台将你的连接放入连接池延迟处理并且没有数据传送的服务器，注意不要将此值设置太低，
+    某些情况下代理服务器将花很长的时间来获得页面应答（例如如当接收一个需要很多计算的报表时），当然你可以在不同的location里面设置不同的值。
+    可以通过指定时间单位以免引起混乱，支持的时间单位有”s”(秒), “ms”(毫秒), “y”(年), “M”(月), “w”(周), “d”(日), “h”(小时),和 “m”(分钟)。
+    这个值不能大于597小时。
+    */
+    { ngx_string("proxy_read_timeout"), //读取后端数据的超时时间
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
@@ -531,7 +786,7 @@ proxy_buffer_size
      默认值：proxy_buffers 8 4k/8k; 
      使用字段：http, server, location 
      设置用于读取应答（来自被代理服务器）的缓冲区数目和大小，默认情况也为分页大小，根据操作系统的不同可能是4k或者8k。
-     */
+     */ //该配置配置的空间真正分配空间在//在ngx_event_pipe_read_upstream中创建空间
     { ngx_string("proxy_buffers"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE2,
       ngx_conf_set_bufs_slot,
@@ -540,6 +795,8 @@ proxy_buffer_size
       NULL },
 
     //默认值：proxy_busy_buffers_size ["#proxy buffer size"] * 2; 
+    //xxx_buffers指定为接收后端服务器数据最多开辟这么多空间，xxx_busy_buffers_size指定一次发送后有可能数据没有全部发送出去，因此放入busy链中
+    //当没有发送出去的busy链中的数据达到xxx_busy_buffers_size就不能从后端读取数据，只有busy链中的数据发送一部分出去后小与xxx_busy_buffers_size才能继续读取
     { ngx_string("proxy_busy_buffers_size"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_size_slot,
@@ -562,6 +819,18 @@ proxy_buffer_size
       NULL },
 
 #if (NGX_HTTP_CACHE)
+/*
+       nginx的存储系统分两类，一类是通过proxy_store开启的，存储方式是按照url中的文件路径，存储在本地。比如/file/2013/0001/en/test.html，
+     那么nginx就会在指定的存储目录下依次建立各个目录和文件。另一类是通过proxy_cache开启，这种方式存储的文件不是按照url路径来组织的，
+     而是使用一些特殊方式来管理的(这里称为自定义方式)，自定义方式就是我们要重点分析的。那么这两种方式各有什么优势呢？
+
+
+    按url路径存储文件的方式，程序处理起来比较简单，但是性能不行。首先有的url巨长，我们要在本地文件系统上建立如此深的目录，那么文件的打开
+    和查找都很会很慢(回想kernel中通过路径名查找inode的过程吧)。如果使用自定义方式来处理模式，尽管也离不开文件和路径，但是它不会因url长度
+    而产生复杂性增加和性能的降低。从某种意义上说这是一种用户态文件系统，最典型的应该算是squid中的CFS。nginx使用的方式相对简单，主要依靠
+    url的md5值来管理
+     */
+
     /*
      语法：proxy_cache zone_name; 
 默认值：None 
@@ -572,7 +841,11 @@ proxy_buffer_size
 后端必须设置 "no-cache"或者"max-age=0"头，或者proxy_cache_key包含用户指定的数据如$cookie_xxx，使用cookie的值作为proxy_cache_key
 的一部分可以防止缓存私有数据，所以可以在不同的location中分别指定proxy_cache_key的值以便分开私有数据和公有数据。
 缓存指令依赖代理缓冲区(buffers)，如果proxy_buffers设置为off，缓存不会生效。
-     */
+*/ 
+//xxx_cache(proxy_cache fastcgi_cache) abc必须xxx_cache_path(proxy_cache_path fastcgi_cache_path) xxx keys_zone=abc:10m;一起，否则在ngx_http_proxy_merge_loc_conf会失败，因为没有为该abc创建ngx_http_file_cache_t
+//fastcgi_cache 指令指定了在当前作用域中使用哪个缓存维护缓存条目，参数对应的缓存必须事先由 fastcgi_cache_path 指令定义。 
+//获取该结构ngx_http_upstream_cache_get，实际上是通过proxy_cache xxx或者fastcgi_cache xxx来获取共享内存块名的，因此必须设置proxy_cache或者fastcgi_cache
+
     { ngx_string("proxy_cache"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_http_proxy_cache,
@@ -588,7 +861,7 @@ proxy_buffer_size
 proxy_cache_key "$host$request_uri$cookie_user";注意默认情况下服务器的主机名并没有包含到缓存关键字中，如果你为你的站点在不同的location中使用二级域，
 你可能需要在缓存关键字中包换主机名：
 
-proxy_cache_key "$scheme$host$request_uri";
+proxy_cache_key "$scheme$host$request_uri";  
 */
     { ngx_string("proxy_cache_key"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
@@ -612,11 +885,34 @@ proxy_cache_path  /data/nginx/cache  levels=1:2   keys_zone=one:10m;文件名类似于
 
 proxy_cache_path  /data/nginx/cache/one    levels=1      keys_zone=one:10m;
 proxy_cache_path  /data/nginx/cache/two    levels=2:2    keys_zone=two:100m;
-proxy_cache_path  /data/nginx/cache/three  levels=1:1:2  keys_zone=three:1000m;如果在inactive参数指定的时间内缓存的数据没有被请求则被删除，默认inactive为10分钟。
-一个名为cache manager的进程控制磁盘的缓存大小，它被用来删除不活动的缓存和控制缓存大小，这些都在max_size参数中定义，当目前缓存的值超出max_size指定的值之后，超过其大小后最少使用数据（LRU替换算法）将被删除。
+proxy_cache_path  /data/nginx/cache/three  levels=1:1:2  keys_zone=three:1000m;如果在inactive参数指定的时间内缓存的数据没有被请求则被删除，
+默认inactive为10分钟。
+一个名为cache manager的进程控制磁盘的缓存大小，它被用来删除不活动的缓存和控制缓存大小，这些都在max_size参数中定义，当目前缓存的值超出max_size
+指定的值之后，超过其大小后最少使用数据（LRU替换算法）将被删除。
 内存池的大小按照缓存页面数的比例进行设置，一个页面（文件）的元数据大小按照操作系统来定，FreeBSD/i386下为64字节，FreeBSD/amd64下为128字节。
 proxy_cache_path和proxy_temp_path应该使用在相同的文件系统上。
-*/
+
+Proxy_cache_path：缓存的存储路径和索引信息；
+  path 缓存文件的根目录；
+  level=N:N在目录的第几级hash目录缓存数据；
+  keys_zone=name:size 缓存索引重建进程建立索引时用于存放索引的内存区域名和大小；
+  interval=time强制更新缓存时间，规定时间内没有访问则从内存中删除，默认10s；
+  max_size=size硬盘中缓存数据的上限，由cache manager管理，超出则根据LRU策略删除；
+  loader_sleep=time索引重建进程在两次遍历间的暂停时长，默认50ms；
+  loader_files=number重建索引时每次加载数据元素的上限，进程递归遍历读取硬盘上的缓存目录和文件，对每个文件在内存中建立索引，每
+  建立一个索引称为加载一个数据元素，每次遍历时可同时加载多个数据元素，默认100；
+*/  //XXX_cache缓存是先写在xxx_temp_path再移到xxx_cache_path，所以这两个目录最好在同一个分区
+//xxx_cache(proxy_cache fastcgi_cache) abc必须xxx_cache_path(proxy_cache_path fastcgi_cache_path) xxx keys_zone=abc:10m;一起，否则在ngx_http_proxy_merge_loc_conf会失败，因为没有为该abc创建ngx_http_file_cache_t
+//fastcgi_cache 指令指定了在当前作用域中使用哪个缓存维护缓存条目，参数对应的缓存必须事先由 fastcgi_cache_path 指令定义。 
+//获取该结构ngx_http_upstream_cache_get，实际上是通过proxy_cache xxx或者fastcgi_cache xxx来获取共享内存块名的，因此必须设置proxy_cache或者fastcgi_cache
+
+/*
+非缓存方式(p->cacheable=0)p->temp_file->path = u->conf->temp_path; 由ngx_http_fastcgi_temp_path指定路径
+缓存方式(p->cacheable=1) p->temp_file->path = r->cache->file_cache->temp_path;见proxy_cache_path或者fastcgi_cache_path指定路径 
+见ngx_http_upstream_send_response 
+
+当前fastcgi_buffers 和fastcgi_buffer_size配置的空间都已经用完了，则需要把数据写道临时文件中去，参考ngx_event_pipe_read_upstream
+*/  //从ngx_http_file_cache_update可以看出，后端数据先写到临时文件后，在写入xxx_cache_path中，见ngx_http_file_cache_update
     { ngx_string("proxy_cache_path"),
       NGX_HTTP_MAIN_CONF|NGX_CONF_2MORE,
       ngx_http_file_cache_set_slot,
@@ -624,13 +920,46 @@ proxy_cache_path和proxy_temp_path应该使用在相同的文件系统上。
       offsetof(ngx_http_proxy_main_conf_t, caches),
       &ngx_http_proxy_module },
 
-    { ngx_string("proxy_cache_bypass"),
+/*
+语法: proxy_cache_bypass line […];
+默认值: off
+使用字段: http, server, location
+这个指令指定不使用缓存返回应答的条件，如果指定的变量中至少有一个为非空，或者不等于“0”，这个应答将不从缓存中返回：
+
+ proxy_cache_bypass $cookie_nocache $ arg_nocache$arg_comment;
+ proxy_cache_bypass $http_pragma $http_authorization;可以结合proxy_no_cache使用。
+
+ 
+Defines conditions under which the response will not be taken from a cache. If at least one value of the string parameters is not 
+empty and is not equal to “0” then the response will not be taken from the cache: 
+*/ //注意proxy_no_cache和proxy_cache_proxy的区别
+    { ngx_string("proxy_cache_bypass"), 
+    //proxy_cache_bypass  xx1 xx2设置的xx2不为空或者不为0，则不会从缓存中取，而是直接冲后端读取  但是这些请求的后端响应数据依然可以被 upstream 模块缓存。 
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_1MORE,
       ngx_http_set_predicate_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_proxy_loc_conf_t, upstream.cache_bypass),
       NULL },
 
+/*
+语法：proxy_no_cache variable1 variable2 …; 
+默认值：None 
+使用字段：http, server, location 
+确定在何种情况下缓存的应答将不会使用，示例：
+
+proxy_no_cache $cookie_nocache  $arg_nocache$arg_comment;
+proxy_no_cache $http_pragma     $http_authorization;如果为空字符串或者等于0，表达式的值等于false，例如，在上述例子中，如果在
+请求中设置了cookie “nocache”，请求将总是穿过缓存而被传送到后端。
+注意：来自后端的应答依然有可能符合缓存条件，有一种方法可以快速的更新缓存中的内容，那就是发送一个拥有你自己定义的请求头部字段
+的请求。例如：My-Secret-Header，那么在proxy_no_cache指令中可以这样定义：
+proxy_no_cache $http_my_secret_header;
+
+Defines conditions under which the response will not be saved to a cache. If at least one value of the string parameters is 
+not empty and is not equal to “0” then the response will not be saved(注意是not be saved): 
+*/ //注意proxy_no_cache和proxy_cache_proxy的区别
+
+    //proxy_cache_bypass  xx1 xx2设置的xx2不为空或者不为0，则不会从缓存中取，而是直接冲后端读取
+    //proxy_no_cache  xx1 xx2设置的xx2不为空或者不为0，则后端回来的数据不会被缓存
     { ngx_string("proxy_no_cache"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_1MORE,
       ngx_http_set_predicate_slot,
@@ -664,7 +993,7 @@ proxy_cache_path和proxy_temp_path应该使用在相同的文件系统上。
 默认值：proxy_cache_min_uses 1; 
 使用字段：http, server, location 
 多少次的查询后应答将被缓存，默认1。
-*/
+*/ //Proxy_cache_min_uses number 默认为1，当客户端发送相同请求达到规定次数后，nginx才对响应数据进行缓存；
     { ngx_string("proxy_cache_min_uses"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_num_slot,
@@ -701,14 +1030,29 @@ proxy_cache_methods POST;
       offsetof(ngx_http_proxy_loc_conf_t, upstream.cache_methods),
       &ngx_http_upstream_cache_method_mask },
 
-    { ngx_string("proxy_cache_lock"),
+/*
+When enabled, only one request at a time will be allowed to populate a new cache element identified according to the proxy_cache_key 
+directive by passing a request to a proxied server. Other requests of the same cache element will either wait for a response to appear 
+in the cache or the cache lock for this element to be released, up to the time set by the proxy_cache_lock_timeout directive. 
+
+
+这个主要解决一个问题:
+假设现在又两个客户端，一个客户端正在获取后端数据，并且后端返回了一部分，则nginx会缓存这一部分，并且等待所有后端数据返回继续缓存。
+但是在缓存的过程中如果客户端2页来想后端去同样的数据uri等都一样，则会去到客户端缓存一半的数据，这时候就可以通过该配置来解决这个问题，
+也就是客户端1还没缓存完全部数据的过程中客户端2只有等客户端1获取完全部后端数据，或者获取到proxy_cache_lock_timeout超时，则客户端2只有从后端获取数据
+*/
+    { ngx_string("proxy_cache_lock"), //默认关闭
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
       ngx_conf_set_flag_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_proxy_loc_conf_t, upstream.cache_lock),
       NULL },
 
-    { ngx_string("proxy_cache_lock_timeout"),
+/*
+If the last request passed to the proxied server for populating a new cache element has not completed for the specified time, one 
+more request may be passed to the proxied server. 
+*/
+    { ngx_string("proxy_cache_lock_timeout"),  //默认5S
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
@@ -731,13 +1075,33 @@ proxy_cache_methods POST;
 
 #endif
 
-    { ngx_string("proxy_temp_path"),
+    /*
+     语法：proxy_temp_path dir-path [ level1 [ level2 [ level3 ] ; 
+     默认值：在configure时由–http-proxy-temp-path指定 
+     使用字段：http, server, location 
+     类似于http核心模块中的client_body_temp_path指令，指定一个地址来缓冲比较大的被代理请求。
+     */ //XXX_cache缓存是先写在xxx_temp_path再移到xxx_cache_path，所以这两个目录最好在同一个分区
+
+         /*
+默认情况下p->temp_file->path = u->conf->temp_path; 也就是由ngx_http_fastcgi_temp_path指定路径，但是如果是缓存方式(p->cacheable=1)并且配置
+proxy_cache_path(fastcgi_cache_path) /a/b的时候带有use_temp_path=off(表示不使用ngx_http_fastcgi_temp_path配置的path)，
+则p->temp_file->path = r->cache->file_cache->temp_path; 也就是临时文件/a/b/temp。use_temp_path=off表示不使用ngx_http_fastcgi_temp_path
+配置的路径，而使用指定的临时路径/a/b/temp   见ngx_http_upstream_send_response 
+*/ //从ngx_http_file_cache_update可以看出，后端数据先写到临时文件后，在写入xxx_cache_path中，见ngx_http_file_cache_update
+    { ngx_string("proxy_temp_path"), //从ngx_http_file_cache_update可以看出，后端数据先写到临时文件后，在写入xxx_cache_path中，见ngx_http_file_cache_update
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1234,
       ngx_conf_set_path_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_proxy_loc_conf_t, upstream.temp_path),
       NULL },
 
+    /*
+     语法：proxy_max_temp_file_size size; 
+     默认值：proxy_max_temp_file_size 1G; 
+     使用字段：http, server, location, if 
+     当代理缓冲区过大时使用一个临时文件的最大值，如果文件大于这个值，将同步传递请求而不写入磁盘进行缓存。
+     如果这个值设置为零，则禁止使用临时文件。
+     */
     { ngx_string("proxy_max_temp_file_size"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_size_slot,
@@ -745,6 +1109,12 @@ proxy_cache_methods POST;
       offsetof(ngx_http_proxy_loc_conf_t, upstream.max_temp_file_size_conf),
       NULL },
 
+    /*
+     语法：proxy_temp_file_write_size size; 
+     默认值：proxy_temp_file_write_size [”#proxy buffer size”] * 2; 
+     使用字段：http, server, location, if 
+     设置在写入proxy_temp_path时数据的大小，在预防一个工作进程在传递文件时阻塞太长。
+     */
     { ngx_string("proxy_temp_file_write_size"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_size_slot,
@@ -767,19 +1137,12 @@ Nginx反向代理服务器会立刻把应答包转发给客户端。因此，一旦Nginx开始向客户端发送响
 error：当向上游服务器发起连接、发送请求、读取响应时出错。
 
 timeout：发送请求或读取响应时发生超时。
-
 invalid_header：上游服务器发送的响应是不合法的。
-
 http_500：上游服务器返回的HTTP响应码是500。
-
 http_502：上游服务器返回的HTTP响应码是502。
-
 http_503：上游服务器返回的HTTP响应码是503。
-
 http_504：上游服务器返回的HTTP响应码是504。
-
 http_404：上游服务器返回的HTTP响应码是404。
-
 off：关闭proxy_next_upstream功能—出错就选择另一台上游服务器再次转发。
 */
     { ngx_string("proxy_next_upstream"),
@@ -852,6 +1215,13 @@ location /files/ {
       offsetof(ngx_http_proxy_loc_conf_t, upstream.hide_headers),
       NULL },
 
+    /*
+     语法：proxy_ignore_headers name [name …] 
+     默认值：none 
+     使用字段：http, server, location 
+     这个指令(0.7.54+) 禁止处理来自代理服务器的应答。
+     可以指定的字段为”X-Accel-Redirect”, “X-Accel-Expires”, “Expires”或”Cache-Control”。
+     */
     { ngx_string("proxy_ignore_headers"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_1MORE,
       ngx_conf_set_bitmask_slot,
@@ -859,6 +1229,7 @@ location /files/ {
       offsetof(ngx_http_proxy_loc_conf_t, upstream.ignore_headers),
       &ngx_http_upstream_ignore_headers_masks },
 
+    //到后端服务器采用的http版本号，默认1.0，见ngx_http_proxy_create_request
     { ngx_string("proxy_http_version"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_enum_slot,
@@ -868,6 +1239,14 @@ location /files/ {
 
 #if (NGX_HTTP_SSL)
 
+    /*
+     proxy_ssl_session_reuse
+     语法：proxy_ssl_session_reuse [ on | off ];
+     默认值： proxy_ssl_session_reuse on;
+     使用字段：http, server, location
+     使用版本：≥ 0.7.11
+     当使用https连接到上游服务器时尝试重用ssl会话。
+     */
     { ngx_string("proxy_ssl_session_reuse"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
       ngx_conf_set_flag_slot,
@@ -998,7 +1377,7 @@ static ngx_keyval_t  ngx_http_proxy_headers[] = {
     { ngx_string("Connection"), ngx_string("close") },
     { ngx_string("Content-Length"), ngx_string("$proxy_internal_body_length") },
     { ngx_string("Transfer-Encoding"), ngx_string("$proxy_internal_chunked") },
-    { ngx_string("TE"), ngx_string("") },
+    { ngx_string("TE"), ngx_string("") }, //这里面的value为空，则如果proxy_set_header又重新设置了，则还是会生效，否则该项不生效，见ngx_http_proxy_init_headers
     { ngx_string("Keep-Alive"), ngx_string("") },
     { ngx_string("Expect"), ngx_string("") },
     { ngx_string("Upgrade"), ngx_string("") },
@@ -1043,6 +1422,21 @@ static ngx_keyval_t  ngx_http_proxy_cache_headers[] = {
 #endif
 
 
+/*
+该模块中包含一些内置变量，可以用于proxy_set_header指令中以创建头部。
+
+$proxy_add_x_forwarded_for
+包含客户端的请求头“X-Forwarded-For”与$remote_addr，用逗号分开，如果不存在X-Forwarded-For请求头，则$proxy_add_x_forwarded_for等于$remote_addr。
+
+$proxy_host
+被代理服务器的主机名与端口号。
+
+$proxy_internal_body_length
+通过proxy_set_body设置的代理请求实体的长度。
+
+$proxy_host
+被代理服务器的端口号
+*/
 static ngx_http_variable_t  ngx_http_proxy_vars[] = {
 
     { ngx_string("proxy_host"), NULL, ngx_http_proxy_host_variable, 0,
@@ -1074,6 +1468,12 @@ static ngx_path_init_t  ngx_http_proxy_temp_path = {
     ngx_string(NGX_HTTP_PROXY_TEMP_PATH), { 1, 2, 0 }
 };
 
+//配置proxy_pass后，在ngx_http_core_content_phase里面指向该函数
+/*
+那么，当有请求访问到特定的location的时候(假设这个location配置了proxy_pass指令)，
+跟其他请求一样，会调用各个phase的checker和handler，到了NGX_HTTP_CONTENT_PHASE的checker，
+即ngx_http_core_content_phase()的时候，会调用r->content_handler(r)，即ngx_http_proxy_handler。
+*/
 static ngx_int_t ngx_http_proxy_handler(ngx_http_request_t *r)
 {
     ngx_int_t                    rc;
@@ -1084,7 +1484,7 @@ static ngx_int_t ngx_http_proxy_handler(ngx_http_request_t *r)
     ngx_http_proxy_main_conf_t  *pmcf;
 #endif
 
-    if (ngx_http_upstream_create(r) != NGX_OK) {
+    if (ngx_http_upstream_create(r) != NGX_OK) { //生成一个ngx_http_upstream_t结构，赋值到r->upstream
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
@@ -1093,6 +1493,7 @@ static ngx_int_t ngx_http_proxy_handler(ngx_http_request_t *r)
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
+    //将这个上下文放到请求的ctx数组的ngx_http_proxy_module模块中，r->ctx[module.ctx_index] = c;
     ngx_http_set_ctx(r, ctx, ngx_http_proxy_module);
 
     plcf = ngx_http_get_module_loc_conf(r, ngx_http_proxy_module);
@@ -1107,7 +1508,8 @@ static ngx_int_t ngx_http_proxy_handler(ngx_http_request_t *r)
 #endif
 
     } else {
-        if (ngx_http_proxy_eval(r, ctx, plcf) != NGX_OK) {
+        if (ngx_http_proxy_eval(r, ctx, plcf) != NGX_OK) { 
+        //获取uri中变量的值，从而可以得到完整的uri，和ngx_http_proxy_pass配合阅读
             return NGX_HTTP_INTERNAL_SERVER_ERROR;
         }
     }
@@ -1123,9 +1525,13 @@ static ngx_int_t ngx_http_proxy_handler(ngx_http_request_t *r)
     u->create_key = ngx_http_proxy_create_key;
 #endif
 
-    u->create_request = ngx_http_proxy_create_request;
+    //为upstream准备各种请求的回调
+    u->create_request = ngx_http_proxy_create_request; //生成发送到上游服务器的请求缓冲（或者一条缓冲链），也就是要发给上游的数据
     u->reinit_request = ngx_http_proxy_reinit_request;
+    //处理回调就是第一行的回调，第一行处理完后会设置为ngx_http_proxy_process_header，走下一步
     u->process_header = ngx_http_proxy_process_status_line;
+    //一个upstream的u->read_event_handler 读事件回调被设置为ngx_http_upstream_process_header;，他会不断的读取数据，然后
+    //调用process_header对于FCGI，当然是调用对应的读取FCGI格式的函数了，对于代理模块，只要处理HTTP格式即可
     u->abort_request = ngx_http_proxy_abort_request;
     u->finalize_request = ngx_http_proxy_finalize_request;
     r->state = 0;
@@ -1145,8 +1551,12 @@ static ngx_int_t ngx_http_proxy_handler(ngx_http_request_t *r)
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
+    //设置在有buffering的状态下，nginx读取upstream的回调，如果是FCGI，则是对应的回调ngx_http_fastcgi_input_filter用来解析FCGI协议的数据。
+	//如果我们要实现我们自己的协议格式，那就用对应的解析方式。
     u->pipe->input_filter = ngx_http_proxy_copy_filter;
     u->pipe->input_ctx = r;
+
+    //buffering后端响应包体使用ngx_event_pipe_t->input_filter  非buffering方式响应后端包体使用ngx_http_upstream_s->input_filter ,在ngx_http_upstream_send_response分叉
 
     u->input_filter_init = ngx_http_proxy_input_filter_init;
     u->input_filter = ngx_http_proxy_non_buffered_copy_filter;
@@ -1291,7 +1701,8 @@ ngx_http_proxy_eval(ngx_http_request_t *r, ngx_http_proxy_ctx_t *ctx,
 
 #if (NGX_HTTP_CACHE)
 
-static ngx_int_t
+//解析proxy_cache_key xxx 参数值到r->cache->keys
+static ngx_int_t //ngx_http_upstream_cache中执行
 ngx_http_proxy_create_key(ngx_http_request_t *r)
 {
     size_t                      len, loc_len;
@@ -1313,18 +1724,27 @@ ngx_http_proxy_create_key(ngx_http_request_t *r)
         return NGX_ERROR;
     }
 
-    if (plcf->cache_key.value.data) {
+    if (plcf->cache_key.value.data) { //如果设置了proxy_cache_key
 
-        if (ngx_http_complex_value(r, &plcf->cache_key, key) != NGX_OK) {
+        if (ngx_http_complex_value(r, &plcf->cache_key, key) != NGX_OK) { //解析plcf->cache_key中的变量value值到r->cache->keys中
             return NGX_ERROR;
         }
 
         return NGX_OK;
     }
 
+    //如果没有设置proxy_cache_key，则使用默认Default:  proxy_cache_key $scheme$proxy_host$request_uri; 
+    /* 
+    
+     Syntax:  proxy_cache_key string;
+      
+     Default:  proxy_cache_key $scheme$proxy_host$request_uri; 
+     Context:  http, server, location
+     */
+    
     *key = ctx->vars.key_start;
 
-    key = ngx_array_push(&r->cache->keys);
+    key = ngx_array_push(&r->cache->keys); //下面这些代码是解析默认的 proxy_cache_key $scheme$proxy_host$request_uri; 存到keys数组
     if (key == NULL) {
         return NGX_ERROR;
     }
@@ -1390,14 +1810,24 @@ ngx_http_proxy_create_key(ngx_http_request_t *r)
 #endif
 
 /*
+  proxy_pass  http://10.10.0.103:8080/tttxxsss; 
+  浏览器输入:http://10.2.13.167/proxy1111/yangtest
+  实际上到后端的uri会变为/tttxxsss/yangtest
+  plcf->location:/proxy1111, ctx->vars.uri:/tttxxsss,  r->uri:/proxy1111/yangtest, r->args:, urilen:19
+*/
+
+/*
 如果是FCGI。下面组建好FCGI的各种头部，包括请求开始头，请求参数头，请求STDIN头。存放在u->request_bufs链接表里面。
 如果是Proxy模块，ngx_http_proxy_create_request组件反向代理的头部啥的,放到u->request_bufs里面
 FastCGI memcached  uwsgi  scgi proxy都会用到upstream模块
  */
 static ngx_int_t
-ngx_http_proxy_create_request(ngx_http_request_t *r)
+ngx_http_proxy_create_request(ngx_http_request_t *r) //ngx_http_upstream_init_request中执行
 {
-    size_t                        len, uri_len, loc_len, body_len;
+    size_t                          len, 
+                                    uri_len, 
+                                    loc_len,  //当前location的名字 location xxx {} 中的xxx的长度3
+                                    body_len;
     uintptr_t                     escape;
     ngx_buf_t                    *b;
     ngx_str_t                     method;
@@ -1413,9 +1843,9 @@ ngx_http_proxy_create_request(ngx_http_request_t *r)
     ngx_http_proxy_loc_conf_t    *plcf;
     ngx_http_script_len_code_pt   lcode;
 
-    u = r->upstream;
+    u = r->upstream;//得到在ngx_http_proxy_handler前面创建的上游结构
 
-    plcf = ngx_http_get_module_loc_conf(r, ngx_http_proxy_module);
+    plcf = ngx_http_get_module_loc_conf(r, ngx_http_proxy_module); //获取proxy模块的相关配置信息
 
 #if (NGX_HTTP_CACHE)
     headers = u->cacheable ? &plcf->headers_cache : &plcf->headers;
@@ -1424,7 +1854,7 @@ ngx_http_proxy_create_request(ngx_http_request_t *r)
 #endif
 
     if (u->method.len) {
-        /* HEAD was changed to GET to cache response */
+        /* 客户端head请求会被转换为GET到后端 HEAD was changed to GET to cache response */
         method = u->method;
         method.len++;
 
@@ -1436,6 +1866,7 @@ ngx_http_proxy_create_request(ngx_http_request_t *r)
         method.len++;
     }
 
+    //获取proxy模块状态等上下文信息，
     ctx = ngx_http_get_module_ctx(r, ngx_http_proxy_module);
 
     if (method.len == 5
@@ -1444,31 +1875,38 @@ ngx_http_proxy_create_request(ngx_http_request_t *r)
         ctx->head = 1;
     }
 
-    len = method.len + sizeof(ngx_http_proxy_version) - 1 + sizeof(CRLF) - 1;
+    //下面不断的对数据长度进行累加，算出要发送到后端的数据总共有多长，存在len变量里面
+    len = method.len + sizeof(ngx_http_proxy_version) - 1 + sizeof(CRLF) - 1; //头部行长度
 
     escape = 0;
     loc_len = 0;
     unparsed_uri = 0;
 
-    if (plcf->proxy_lengths && ctx->vars.uri.len) {
+    //下面处理一下uri长度以及location
+    if (plcf->proxy_lengths && ctx->vars.uri.len) {//proxy_pass xxxx配置
         uri_len = ctx->vars.uri.len;
 
-    } else if (ctx->vars.uri.len == 0 && r->valid_unparsed_uri && r == r->main)
-    {
+    }  else if (ctx->vars.uri.len == 0 && r->valid_unparsed_uri && r == r->main) {
         unparsed_uri = 1;
         uri_len = r->unparsed_uri.len;
 
     } else {
         loc_len = (r->valid_location && ctx->vars.uri.len) ?
-                      plcf->location.len : 0;
+                      plcf->location.len : 0;  //当前location的名字 location xxx {} 中的xxx的长度3
 
         if (r->quoted_uri || r->space_in_uri || r->internal) {
             escape = 2 * ngx_escape_uri(NULL, r->uri.data + loc_len,
                                         r->uri.len - loc_len, NGX_ESCAPE_URI);
         }
 
+        /*
+           proxy_pass  http://10.10.0.103:8080/tttxxsss; 
+           浏览器输入:http://10.2.13.167/proxy1111/yangtest
+           实际上到后端的uri会变为/tttxxsss/yangtest
+           plcf->location:/proxy1111, ctx->vars.uri:/tttxxsss,  r->uri:/proxy1111/yangtest, r->args:, urilen:19
+          */
         uri_len = ctx->vars.uri.len + r->uri.len - loc_len + escape
-                  + sizeof("?") - 1 + r->args.len;
+                  + sizeof("?") - 1 + r->args.len; //注意sizeof("?")是2字节
     }
 
     if (uri_len == 0) {
@@ -1477,14 +1915,14 @@ ngx_http_proxy_create_request(ngx_http_request_t *r)
         return NGX_ERROR;
     }
 
-    len += uri_len;
+    len += uri_len;//累加第一行，如: GET /XXX/Y.html HTTP/1.0
 
     ngx_memzero(&le, sizeof(ngx_http_script_engine_t));
 
     ngx_http_script_flush_no_cacheable_variables(r, plcf->body_flushes);
     ngx_http_script_flush_no_cacheable_variables(r, headers->flushes);
 
-    if (plcf->body_lengths) {
+    if (plcf->body_lengths) { //计算proxy_set_body 设置的body字符串长度
         le.ip = plcf->body_lengths->elts;
         le.request = r;
         le.flushed = 1;
@@ -1495,7 +1933,7 @@ ngx_http_proxy_create_request(ngx_http_request_t *r)
             body_len += lcode(&le);
         }
 
-        ctx->internal_body_length = body_len;
+        ctx->internal_body_length = body_len; //如果配置了proxy_set_body，则internal_body_length为proxy_set_body设置的包体长度，否则为客户端请求包体长度
         len += body_len;
 
     } else if (r->headers_in.chunked && r->reading_body) {
@@ -1503,9 +1941,11 @@ ngx_http_proxy_create_request(ngx_http_request_t *r)
         ctx->internal_chunked = 1;
 
     } else {
+        //如果配置了proxy_set_body，则internal_body_length为proxy_set_body设置的包体长度，否则为客户端请求包体长度
         ctx->internal_body_length = r->headers_in.content_length_n;
     }
 
+    //ngx_http_proxy_headers和proxy_set_header设置的头部信息里面的所有key:value值长度和
     le.ip = headers->lengths->elts;
     le.request = r;
     le.flushed = 1;
@@ -1518,8 +1958,8 @@ ngx_http_proxy_create_request(ngx_http_request_t *r)
         le.ip += sizeof(uintptr_t);
     }
 
-
-    if (plcf->upstream.pass_request_headers) {
+    //把客户端发送过来的头部行key:value也计算进来，注意避免和前面的ngx_http_proxy_headers和proxy_set_header添加的重复
+    if (plcf->upstream.pass_request_headers) {//是否要将HTTP请求头部的HEADER发送给后端，已HTTP_为前缀
         part = &r->headers_in.headers.part;
         header = part->elts;
 
@@ -1535,6 +1975,7 @@ ngx_http_proxy_create_request(ngx_http_request_t *r)
                 i = 0;
             }
 
+            /* 在ngx_http_proxy_loc_conf_t->headers中查找是否存在客户端请求行中的头部行信息r->headers_in.headers， 找到说明有重复，不继续len*/
             if (ngx_hash_find(&headers->hash, header[i].hash,
                               header[i].lowcase_key, header[i].key.len))
             {
@@ -1542,10 +1983,9 @@ ngx_http_proxy_create_request(ngx_http_request_t *r)
             }
 
             len += header[i].key.len + sizeof(": ") - 1
-                + header[i].value.len + sizeof(CRLF) - 1;
+                + header[i].value.len + sizeof(CRLF) - 1; //计算ngx_http_proxy_headers proxy_set_header设置的头部行以及客户端发送过来的头部行的key:value总长度
         }
     }
-
 
     b = ngx_create_temp_buf(r->pool, len);
     if (b == NULL) {
@@ -1557,12 +1997,12 @@ ngx_http_proxy_create_request(ngx_http_request_t *r)
         return NGX_ERROR;
     }
 
-    cl->buf = b;
+    cl->buf = b;//老办法，将这块缓冲放入连接表头部
 
 
+    /* 下面这部分把GET /XXX/Y.html HTTP/1.0拷贝到buf内存 */
     /* the request line */
-
-    b->last = ngx_copy(b->last, method.data, method.len);
+    b->last = ngx_copy(b->last, method.data, method.len); //先把请求行中的GET POST HEAD等方法拷贝的b内存空间
 
     u->uri.data = b->last;
 
@@ -1577,7 +2017,7 @@ ngx_http_proxy_create_request(ngx_http_request_t *r)
             b->last = ngx_copy(b->last, ctx->vars.uri.data, ctx->vars.uri.len);
         }
 
-        if (escape) {
+        if (escape) { //将空格进行转移，
             ngx_escape_uri(b->last, r->uri.data + loc_len,
                            r->uri.len - loc_len, NGX_ESCAPE_URI);
             b->last += r->uri.len - loc_len + escape;
@@ -1604,6 +2044,8 @@ ngx_http_proxy_create_request(ngx_http_request_t *r)
                              sizeof(ngx_http_proxy_version) - 1);
     }
 
+
+    /* 拷贝ngx_http_proxy_headers  proxy_set_header中设置的头部信息key:value到b内存中 */
     ngx_memzero(&e, sizeof(ngx_http_script_engine_t));
 
     e.ip = headers->values->elts;
@@ -1643,6 +2085,7 @@ ngx_http_proxy_create_request(ngx_http_request_t *r)
     b->last = e.pos;
 
 
+     /* 拷贝客户端请求中头部行信息key:value到b内存中 */
     if (plcf->upstream.pass_request_headers) {
         part = &r->headers_in.headers.part;
         header = part->elts;
@@ -1659,6 +2102,7 @@ ngx_http_proxy_create_request(ngx_http_request_t *r)
                 i = 0;
             }
 
+            //ngx_http_proxy_headers  proxy_set_header中设置的头部信息和客户端发送过来的重复，就不需要拷贝了
             if (ngx_hash_find(&headers->hash, header[i].hash,
                               header[i].lowcase_key, header[i].key.len))
             {
@@ -1682,8 +2126,9 @@ ngx_http_proxy_create_request(ngx_http_request_t *r)
 
 
     /* add "\r\n" at the header end */
-    *b->last++ = CR; *b->last++ = LF;
+    *b->last++ = CR; *b->last++ = LF;//以一个空行结束
 
+    //这里是指proxy_set_body额外增加的body数据添加到b内存中
     if (plcf->body_values) {
         e.ip = plcf->body_values->elts;
         e.pos = b->last;
@@ -1697,11 +2142,12 @@ ngx_http_proxy_create_request(ngx_http_request_t *r)
         b->last = e.pos;
     }
 
+    //把header信息全部打印出来
     ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                    "http proxy header:%N\"%*s\"",
                    (size_t) (b->last - b->pos), b->pos);
 
-    if (r->request_body_no_buffering) {
+    if (r->request_body_no_buffering) { //不需要缓存，这直接把头部行部分发送出去
 
         u->request_bufs = cl;
 
@@ -1710,7 +2156,8 @@ ngx_http_proxy_create_request(ngx_http_request_t *r)
             u->output.filter_ctx = r;
         }
 
-    } else if (plcf->body_values == NULL && plcf->upstream.pass_request_body) {
+    } else if (plcf->body_values == NULL && plcf->upstream.pass_request_body) { 
+    //如果没有设置proxy_set_body包体，并且需要传送包体，则把客户端包体也拷贝到内存中
 
         body = u->request_bufs;
         u->request_bufs = cl;
@@ -1734,7 +2181,7 @@ ngx_http_proxy_create_request(ngx_http_request_t *r)
             body = body->next;
         }
 
-    } else {
+    } else { //说明通过proxy_set_body设置了单独的包体
         u->request_bufs = cl;
     }
 
@@ -1938,7 +2385,7 @@ out:
 }
 
 
-static ngx_int_t
+static ngx_int_t //ngx_http_upstream_process_header中执行
 ngx_http_proxy_process_status_line(ngx_http_request_t *r)
 {
     size_t                 len;
@@ -1954,9 +2401,9 @@ ngx_http_proxy_process_status_line(ngx_http_request_t *r)
 
     u = r->upstream;
 
-    rc = ngx_http_parse_status_line(r, &u->buffer, &ctx->status);
+    rc = ngx_http_parse_status_line(r, &u->buffer, &ctx->status);//解析状态行(响应行)，也就是第一行
 
-    if (rc == NGX_AGAIN) {
+    if (rc == NGX_AGAIN) {//如果数据还没有那么多
         return rc;
     }
 
@@ -1987,7 +2434,7 @@ ngx_http_proxy_process_status_line(ngx_http_request_t *r)
         return NGX_OK;
     }
 
-    if (u->state && u->state->status == 0) {
+    if (u->state && u->state->status == 0) {//有状态字段，就保存状态码
         u->state->status = ctx->status.code;
     }
 
@@ -2017,7 +2464,12 @@ ngx_http_proxy_process_status_line(ngx_http_request_t *r)
 }
 
 
-static ngx_int_t
+/*
+//上游后端服务器模块的可读事件回调会调用ngx_http_upstream_process_header，然后调用process_header进行头部数据的解析了。
+//注意这里只读取头部字段(读取头部字段有可能会读取到一部分包体)，没有读取body部分，那body部分再申明地方读取的呢,如:
+//不管buffering是否打开，后端发送的头都不会被buffer，首先会发送header，然后才是body的发送，而body的发送就需要区分buffering选项了。
+*/
+static ngx_int_t //ngx_http_upstream_process_header中执行该函数
 ngx_http_proxy_process_header(ngx_http_request_t *r)
 {
     ngx_int_t                       rc;
@@ -2029,11 +2481,11 @@ ngx_http_proxy_process_header(ngx_http_request_t *r)
 
     umcf = ngx_http_get_module_main_conf(r, ngx_http_upstream_module);
 
-    for ( ;; ) {
+    for ( ;; ) {//启用cache的情况下，注意这时候buf的内容实际上已经在ngx_http_upstream_process_header中出去了为缓存如文件中预留的头部内存
 
         rc = ngx_http_parse_header_line(r, &r->upstream->buffer, 1);
 
-        if (rc == NGX_OK) {
+        if (rc == NGX_OK) {//下面将这个新的头部字段保存起来，保存到headers_in.headers
 
             /* a header line has been parsed successfully */
 
@@ -2054,7 +2506,7 @@ ngx_http_proxy_process_header(ngx_http_request_t *r)
             }
 
             h->value.data = h->key.data + h->key.len + 1;
-            h->lowcase_key = h->key.data + h->key.len + 1 + h->value.len + 1;
+            h->lowcase_key = h->key.data + h->key.len + 1 + h->value.len + 1; //key-value后面是key的小写字符串
 
             ngx_memcpy(h->key.data, r->header_name_start, h->key.len);
             h->key.data[h->key.len] = '\0';
@@ -2069,8 +2521,9 @@ ngx_http_proxy_process_header(ngx_http_request_t *r)
             }
 
             hh = ngx_hash_find(&umcf->headers_in_hash, h->hash,
-                               h->lowcase_key, h->key.len);
+                               h->lowcase_key, h->key.len); //在ngx_http_upstream_headers_in查找是否与其中的成员匹配
 
+            //ngx_http_upstream_headers_in中有匹配向，则执行对应的handler
             if (hh && hh->handler(r, h, hh->offset) != NGX_OK) {
                 return NGX_ERROR;
             }
@@ -2082,7 +2535,7 @@ ngx_http_proxy_process_header(ngx_http_request_t *r)
             continue;
         }
 
-        if (rc == NGX_HTTP_PARSE_HEADER_DONE) {
+        if (rc == NGX_HTTP_PARSE_HEADER_DONE) {//全部都已经解析完毕了，肯定是碰到空行\R\N了
 
             /* a whole header has been parsed successfully */
 
@@ -2093,8 +2546,8 @@ ngx_http_proxy_process_header(ngx_http_request_t *r)
              * if no "Server" and "Date" in header line,
              * then add the special empty headers
              */
-
-            if (r->upstream->headers_in.server == NULL) {
+            /* 说明向客户端发送的头部行中必须包括server:  date: ，如果后端没有发送这两个字段，则nginx会添加空value给这两个头部行 */
+            if (r->upstream->headers_in.server == NULL) { //如果后端没有发送server:xxx头部行，则直接添加server: value长度为0
                 h = ngx_list_push(&r->upstream->headers_in.headers);
                 if (h == NULL) {
                     return NGX_ERROR;
@@ -2108,7 +2561,7 @@ ngx_http_proxy_process_header(ngx_http_request_t *r)
                 h->lowcase_key = (u_char *) "server";
             }
 
-            if (r->upstream->headers_in.date == NULL) {
+            if (r->upstream->headers_in.date == NULL) {// Date 发送HTTP消息的日期。例如：Date: Mon,10PR 18:42:51 GMT 
                 h = ngx_list_push(&r->upstream->headers_in.headers);
                 if (h == NULL) {
                     return NGX_ERROR;
@@ -2125,7 +2578,7 @@ ngx_http_proxy_process_header(ngx_http_request_t *r)
 
             u = r->upstream;
 
-            if (u->headers_in.chunked) {
+            if (u->headers_in.chunked) { //chunked编码方式就不需要包含content-length: 头部行，包体长度有chunked报文格式指定包体内容长度
                 u->headers_in.content_length_n = -1;
             }
 
@@ -2148,11 +2601,14 @@ ngx_http_proxy_process_header(ngx_http_request_t *r)
             if (u->headers_in.status_n == NGX_HTTP_SWITCHING_PROTOCOLS) {
                 u->keepalive = 0;
 
-                if (r->headers_in.upgrade) {
+                if (r->headers_in.upgrade) {//后端返回//HTTP/1.1 101的时候置1  
                     u->upgrade = 1;
                 }
             }
 
+            int keepalive_t = u->keepalive;
+            ngx_log_debugall(r->connection->log, 0,
+                      "upstream send ok, u->keepalive:%d", keepalive_t);
             return NGX_OK;
         }
 
@@ -2161,9 +2617,7 @@ ngx_http_proxy_process_header(ngx_http_request_t *r)
         }
 
         /* there was error while a header line parsing */
-
-        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                      "upstream sent invalid header");
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "upstream sent invalid header");
 
         return NGX_HTTP_UPSTREAM_INVALID_HEADER;
     }
@@ -2185,7 +2639,7 @@ ngx_http_proxy_input_filter_init(void *data)
     }
 
     ngx_log_debug4(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                   "http proxy filter init s:%d h:%d c:%d l:%O",
+                   "http proxy filter init upstream status:%d is HEAD:%d chunked:%d content_length_n:%O",
                    u->headers_in.status_n, ctx->head, u->headers_in.chunked,
                    u->headers_in.content_length_n);
 
@@ -2283,6 +2737,9 @@ ngx_http_proxy_copy_filter(ngx_event_pipe_t *p, ngx_buf_t *buf)
                       "\"Content-Length\" header");
     }
 
+    int upstream_done = p->upstream_done;
+    if(upstream_done)
+        ngx_log_debugall(p->log, 0, "proxy copy filter upstream_done:%d", upstream_done);
     return NGX_OK;
 }
 
@@ -2392,9 +2849,10 @@ ngx_http_proxy_chunked_filter(ngx_event_pipe_t *p, ngx_buf_t *buf)
         return NGX_ERROR;
     }
 
-    ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                   "http proxy chunked state %d, length %d",
-                   ctx->chunked.state, p->length);
+    int upstream_done = p->upstream_done;
+    ngx_log_debug3(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                   "http proxy chunked state %d, length %d, p->upstream_done:%d",
+                   ctx->chunked.state, p->length, upstream_done);
 
     if (b) {
         b->shadow = buf;
@@ -2754,7 +3212,17 @@ ngx_http_proxy_internal_chunked_variable(ngx_http_request_t *r,
     return NGX_OK;
 }
 
+/*
+location /proxy1/ {			
+    proxy_pass  http://10.10.0.103:8080/; 		
+}
 
+如果url为http://10.2.13.167/proxy1/，则ngx_http_upstream_rewrite_location处理后，
+后端返回Location: http://10.10.0.103:8080/secure/MyJiraHome.jspa
+则实际发送给浏览器客户端的headers_out.headers.location为http://10.2.13.167/proxy1/secure/MyJiraHome.jspa
+*/
+//ngx_http_upstream_rewrite_location->ngx_http_proxy_rewrite_redirect中执行
+//获取新的重定向的新的uri解析出来，存入h->value(也就是ngx_http_upstream_headers_in_t->location中，见)
 static ngx_int_t
 ngx_http_proxy_rewrite_redirect(ngx_http_request_t *r, ngx_table_elt_t *h,
     size_t prefix)
@@ -2776,7 +3244,7 @@ ngx_http_proxy_rewrite_redirect(ngx_http_request_t *r, ngx_table_elt_t *h,
     len = h->value.len - prefix;
 
     for (i = 0; i < plcf->redirects->nelts; i++) {
-        rc = pr[i].handler(r, h, prefix, len, &pr[i]);
+        rc = pr[i].handler(r, h, prefix, len, &pr[i]); //ngx_http_proxy_rewrite_complex_handler
 
         if (rc != NGX_DECLINED) {
             return rc;
@@ -2871,14 +3339,25 @@ ngx_http_proxy_rewrite_cookie_value(ngx_http_request_t *r, ngx_table_elt_t *h,
     return NGX_DECLINED;
 }
 
+/*
+location /proxy1/ {			
+    proxy_pass  http://10.10.0.103:8080/; 		
+}
 
+如果url为http://10.2.13.167/proxy1/，则ngx_http_upstream_rewrite_location处理后，
+后端返回Location: http://10.10.0.103:8080/secure/MyJiraHome.jspa
+则实际发送给浏览器客户端的headers_out.headers.location为http://10.2.13.167/proxy1/secure/MyJiraHome.jspa
+*/
+//ngx_http_upstream_rewrite_location->ngx_http_proxy_rewrite_redirect中执行
+//获取新的重定向的新的uri解析出来，存入h->value
 static ngx_int_t
 ngx_http_proxy_rewrite_complex_handler(ngx_http_request_t *r,
     ngx_table_elt_t *h, size_t prefix, size_t len, ngx_http_proxy_rewrite_t *pr)
 {
     ngx_str_t  pattern, replacement;
 
-    if (ngx_http_complex_value(r, &pr->pattern.complex, &pattern) != NGX_OK) {
+    //解析proxy_redirect /xxx1/$adfa /xxx2/$dgg中的/xxx1/$adfa为完整字符串到pattern
+    if (ngx_http_complex_value(r, &pr->pattern.complex, &pattern) != NGX_OK) { 
         return NGX_ERROR;
     }
 
@@ -2889,6 +3368,7 @@ ngx_http_proxy_rewrite_complex_handler(ngx_http_request_t *r,
         return NGX_DECLINED;
     }
 
+    //解析proxy_redirect /xxx1/$adfa /xxx2/$dgg中的/xxx2/$dgg为完整字符串到replacement
     if (ngx_http_complex_value(r, &pr->replacement, &replacement) != NGX_OK) {
         return NGX_ERROR;
     }
@@ -2957,7 +3437,7 @@ ngx_http_proxy_rewrite_domain_handler(ngx_http_request_t *r,
     return ngx_http_proxy_rewrite(r, h, prefix, len, &replacement);
 }
 
-
+//拷贝replacement
 static ngx_int_t
 ngx_http_proxy_rewrite(ngx_http_request_t *r, ngx_table_elt_t *h, size_t prefix,
     size_t len, ngx_str_t *replacement)
@@ -3360,6 +3840,7 @@ ngx_http_proxy_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
         conf->upstream.cache_value = prev->upstream.cache_value;
     }
 
+    //proxy_cache abc必须和proxy_cache_path xxx keys_zone=abc:10m;一起，否则在ngx_http_proxy_merge_loc_conf会失败，因为没有为该abc创建ngx_http_file_cache_t
     if (conf->upstream.cache_zone && conf->upstream.cache_zone->data == NULL) {
         ngx_shm_zone_t  *shm_zone;
 
@@ -3485,8 +3966,9 @@ ngx_http_proxy_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
             conf->redirects = prev->redirects;
         }
 
+        //ngx_http_proxy_redirect和ngx_http_proxy_rewrite_redirect配合阅读，他们一起确定重定向后的地址
         if (conf->redirects == NULL && conf->url.data) {
-
+        //ngx_http_proxy_merge_loc_conf该if里面内容和ngx_http_proxy_redirect里面的proxy_redirect default一样，也就是说proxy_redirect默认为default
             conf->redirects = ngx_array_create(cf->pool, 1,
                                              sizeof(ngx_http_proxy_rewrite_t));
             if (conf->redirects == NULL) {
@@ -3506,7 +3988,7 @@ ngx_http_proxy_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
             pr->handler = ngx_http_proxy_rewrite_complex_handler;
 
             if (conf->vars.uri.len) {
-                pr->pattern.complex.value = conf->url;
+                pr->pattern.complex.value = conf->url; 
                 pr->replacement.value = conf->location;
 
             } else {
@@ -3631,7 +4113,12 @@ ngx_http_proxy_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     return NGX_CONF_OK;
 }
 
-
+/* 
+  把proxy_set_header与ngx_http_proxy_headers合在一起，然后把其中的key:value字符串和长度信息添加到headers->lengths和headers->values中
+  把ngx_http_proxy_cache_headers合在一起，然后把其中的key:value字符串和长度信息添加到headers->lengths和headers->values中
+*/
+//1. 里面存储的是ngx_http_proxy_headers和proxy_set_header设置的头部信息头添加到该lengths和values 存入ngx_http_proxy_loc_conf_t->headers
+//2. 里面存储的是ngx_http_proxy_cache_headers设置的头部信息头添加到该lengths和values  存入ngx_http_proxy_loc_conf_t->headers_cache
 static ngx_int_t
 ngx_http_proxy_init_headers(ngx_conf_t *cf, ngx_http_proxy_loc_conf_t *conf,
     ngx_http_proxy_headers_t *headers, ngx_keyval_t *default_headers)
@@ -3647,7 +4134,7 @@ ngx_http_proxy_init_headers(ngx_conf_t *cf, ngx_http_proxy_loc_conf_t *conf,
     ngx_http_script_compile_t     sc;
     ngx_http_script_copy_code_t  *copy;
 
-    if (headers->hash.buckets) {
+    if (headers->hash.buckets) { //如果不为空，返回，如果是第一次进入该函数，则走下面的流程创建空间初始化
         return NGX_OK;
     }
 
@@ -3671,18 +4158,18 @@ ngx_http_proxy_init_headers(ngx_conf_t *cf, ngx_http_proxy_loc_conf_t *conf,
         }
     }
 
-    headers->lengths = ngx_array_create(cf->pool, 64, 1);
+    headers->lengths = ngx_array_create(cf->pool, 64, 1); //64个1字节的数组
     if (headers->lengths == NULL) {
         return NGX_ERROR;
     }
 
-    headers->values = ngx_array_create(cf->pool, 512, 1);
+    headers->values = ngx_array_create(cf->pool, 512, 1); //512个1字节的数组
     if (headers->values == NULL) {
         return NGX_ERROR;
     }
 
     src = conf->headers_source->elts;
-    for (i = 0; i < conf->headers_source->nelts; i++) {
+    for (i = 0; i < conf->headers_source->nelts; i++) { //把proxy_set_header设置的头部信息添加到headers_merged数组中
 
         s = ngx_array_push(&headers_merged);
         if (s == NULL) {
@@ -3692,9 +4179,9 @@ ngx_http_proxy_init_headers(ngx_conf_t *cf, ngx_http_proxy_loc_conf_t *conf,
         *s = src[i];
     }
 
-    h = default_headers;
+    h = default_headers; //ngx_http_proxy_headers或者ngx_http_proxy_cache_headers
 
-    while (h->key.len) {
+    while (h->key.len) { //把default_headers(ngx_http_proxy_headers或者ngx_http_proxy_cache_headers)中不重复的元素添加到headers_merged中
 
         src = headers_merged.elts;
         for (i = 0; i < headers_merged.nelts; i++) {
@@ -3716,9 +4203,14 @@ ngx_http_proxy_init_headers(ngx_conf_t *cf, ngx_http_proxy_loc_conf_t *conf,
     }
 
 
+    /* 
+    把proxy_set_header与ngx_http_proxy_headers合在一起，然后把其中的key:value字符串和长度信息添加到headers->lengths和headers->values中
+    把ngx_http_proxy_cache_headers合在一起，然后把其中的key:value字符串和长度信息添加到headers->lengths和headers->values中
+     */
     src = headers_merged.elts;
     for (i = 0; i < headers_merged.nelts; i++) {
 
+        /* 拷贝headers_merged中的成员信息到headers_names数组中 */
         hk = ngx_array_push(&headers_names);
         if (hk == NULL) {
             return NGX_ERROR;
@@ -3728,7 +4220,7 @@ ngx_http_proxy_init_headers(ngx_conf_t *cf, ngx_http_proxy_loc_conf_t *conf,
         hk->key_hash = ngx_hash_key_lc(src[i].key.data, src[i].key.len);
         hk->value = (void *) 1;
 
-        if (src[i].value.len == 0) {
+        if (src[i].value.len == 0) { //value为空的，不用添加到headers->lengths中
             continue;
         }
 
@@ -3739,17 +4231,21 @@ ngx_http_proxy_init_headers(ngx_conf_t *cf, ngx_http_proxy_loc_conf_t *conf,
                 return NGX_ERROR;
             }
 
+            //key:value字符串长度code
             copy->code = (ngx_http_script_code_pt)
                                                  ngx_http_script_copy_len_code;
             copy->len = src[i].key.len + sizeof(": ") - 1
-                        + src[i].value.len + sizeof(CRLF) - 1;
+                        + src[i].value.len + sizeof(CRLF) - 1; //key:value字符串长度   
+                        //这个长度最后在解析key:value值的时候从ngx_http_script_copy_len_code获取
 
 
+            //key:value字符串code
             size = (sizeof(ngx_http_script_copy_code_t)
                        + src[i].key.len + sizeof(": ") - 1
                        + src[i].value.len + sizeof(CRLF) - 1
                        + sizeof(uintptr_t) - 1)
-                    & ~(sizeof(uintptr_t) - 1);
+                    & ~(sizeof(uintptr_t) - 1); //4字节对齐
+
 
             copy = ngx_array_push_n(headers->values, size);
             if (copy == NULL) {
@@ -3760,7 +4256,7 @@ ngx_http_proxy_init_headers(ngx_conf_t *cf, ngx_http_proxy_loc_conf_t *conf,
             copy->len = src[i].key.len + sizeof(": ") - 1
                         + src[i].value.len + sizeof(CRLF) - 1;
 
-            p = (u_char *) copy + sizeof(ngx_http_script_copy_code_t);
+            p = (u_char *) copy + sizeof(ngx_http_script_copy_code_t); //指向开辟空间实际的存储key:value的地方
 
             p = ngx_cpymem(p, src[i].key.data, src[i].key.len);
             *p++ = ':'; *p++ = ' ';
@@ -3768,6 +4264,9 @@ ngx_http_proxy_init_headers(ngx_conf_t *cf, ngx_http_proxy_loc_conf_t *conf,
             *p++ = CR; *p = LF;
 
         } else {
+            /*
+                ngx_http_proxy_cache_headers和ngx_http_proxy_cache_headers设置的头部里面存在变量
+               */
             copy = ngx_array_push_n(headers->lengths,
                                     sizeof(ngx_http_script_copy_code_t));
             if (copy == NULL) {
@@ -3836,14 +4335,14 @@ ngx_http_proxy_init_headers(ngx_conf_t *cf, ngx_http_proxy_loc_conf_t *conf,
             *p++ = CR; *p = LF;
         }
 
-        code = ngx_array_push_n(headers->lengths, sizeof(uintptr_t));
+        code = ngx_array_push_n(headers->lengths, sizeof(uintptr_t)); //headers->lengths末尾处添加空指针表示结束标记
         if (code == NULL) {
             return NGX_ERROR;
         }
 
         *code = (uintptr_t) NULL;
 
-        code = ngx_array_push_n(headers->values, sizeof(uintptr_t));
+        code = ngx_array_push_n(headers->values, sizeof(uintptr_t));//headers->values末尾处添加空指针表示结束标记
         if (code == NULL) {
             return NGX_ERROR;
         }
@@ -3859,6 +4358,7 @@ ngx_http_proxy_init_headers(ngx_conf_t *cf, ngx_http_proxy_loc_conf_t *conf,
     *code = (uintptr_t) NULL;
 
 
+    //
     hash.hash = &headers->hash;
     hash.key = ngx_hash_key_lc;
     hash.max_size = conf->headers_hash_max_size;
@@ -3870,7 +4370,64 @@ ngx_http_proxy_init_headers(ngx_conf_t *cf, ngx_http_proxy_loc_conf_t *conf,
     return ngx_hash_init(&hash, headers_names.elts, headers_names.nelts);
 }
 
+/*
+语法：proxy_pass URL 
+默认值：no 
+使用字段：location, location中的if字段 
+这个指令设置被代理服务器的地址和被映射的URI，地址可以使用主机名或IP加端口号的形式，例如：
+proxy_pass http://localhost:8000/uri/;或者一个unix socket：
+proxy_pass http://unix:/path/to/backend.socket:/uri/;路径在unix关键字的后面指定，位于两个冒号之间。
+注意：HTTP Host头没有转发，它将设置为基于proxy_pass声明，例如，如果你移动虚拟主机example.com到另外一台机器，然后重新配置正常
+（监听example.com到一个新的IP），同时在旧机器上手动将新的example.comIP写入/etc/hosts，同时使用proxy_pass重定向到http://example.com, 
+然后修改DNS到新的IP。
+当传递请求时，Nginx将location对应的URI部分替换成proxy_pass指令中所指定的部分，但是有两个例外会使其无法确定如何去替换：
 
+■location通过正则表达式指定；
+■在使用代理的location中利用rewrite指令改变URI，使用这个配置可以更加精确的处理请求（break）：
+
+location  /name/ {
+  rewrite      /name/([^/] +)  /users?name=$1  break;
+  proxy_pass   http://127.0.0.1;
+}这些情况下URI并没有被映射传递。
+此外，需要标明一些标记以便URI将以和客户端相同的发送形式转发，而不是处理过的形式，在其处理期间：
+
+
+■两个以上的斜杠将被替换为一个： ”//” – ”/”; 
+
+■删除引用的当前目录：”/./” – ”/”; 
+
+■删除引用的先前目录：”/dir /../” – ”/“。
+如果在服务器上必须以未经任何处理的形式发送URI，那么在proxy_pass指令中必须使用未指定URI的部分：
+
+location  /some/path/ {
+  proxy_pass   http://127.0.0.1;
+}在指令中使用变量是一种比较特殊的情况：被请求的URL不会使用并且你必须完全手工标记URL。
+这意味着下列的配置并不能让你方便的进入某个你想要的虚拟主机目录，代理总是将它转发到相同的URL（在一个server字段的配置）：
+
+
+location / {
+  proxy_pass   http://127.0.0.1:8080/VirtualHostBase/https/$server_name:443/some/path/VirtualHostRoot;
+}解决方法是使用rewrite和proxy_pass的组合：
+
+location / {
+  rewrite ^(.*)$ /VirtualHostBase/https/$server_name:443/some/path/VirtualHostRoot$1 break;
+  proxy_pass   http://127.0.0.1:8080;
+}这种情况下请求的URL将被重写， proxy_pass中的拖尾斜杠并没有实际意义。
+如果需要通过ssl信任连接到一个上游服务器组，proxy_pass前缀为 https://，并且同时指定ssl的端口，如：
+
+
+upstream backend-secure {
+  server 10.0.0.20:443;
+}
+ 
+server {
+  listen 10.0.0.1:443;
+  location / {
+    proxy_pass https://backend-secure;
+  }
+}
+*/
+//proxy_pass解析 //这个函数会在nginx碰到proxy_pass指令的时候，就调用，然后设置相关的回调函数到对应的模块中去
 static char *
 ngx_http_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -3888,8 +4445,11 @@ ngx_http_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return "is duplicate";
     }
 
+    //获取当前的location，即在哪个location配置的"proxy_pass"指令  
     clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
 
+    //设置loc的handler，这个clcf->handler会在ngx_http_update_location_config()里面赋予r->content_handler，从
+    // 而在NGX_HTTP_CONTENT_PHASE里面调用这个handler，即ngx_http_fastcgi_handler。  
     clcf->handler = ngx_http_proxy_handler;
 
     if (clcf->name.data[clcf->name.len - 1] == '/') {
@@ -3899,10 +4459,10 @@ ngx_http_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     value = cf->args->elts;
 
     url = &value[1];
-
+    //
     n = ngx_http_script_variables_count(url);
 
-    if (n) {
+    if (n) {//proxy_pass xxxx中是否带有变量，如果有变量，就解析对应的变量值
 
         ngx_memzero(&sc, sizeof(ngx_http_script_compile_t));
 
@@ -3925,6 +4485,7 @@ ngx_http_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_OK;
     }
 
+    //proxypass后面的参数必须以http://或者https://开头
     if (ngx_strncasecmp(url->data, (u_char *) "http://", 7) == 0) {
         add = 7;
         port = 80;
@@ -3949,14 +4510,15 @@ ngx_http_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     ngx_memzero(&u, sizeof(ngx_url_t));
 
-    u.url.len = url->len - add;
-    u.url.data = url->data + add;
-    u.default_port = port;
+    u.url.len = url->len - add; //设置url的长度，除去http://(https://)  
+    u.url.data = url->data + add; //设置url，除去http://(https://)，比如原来是"http://backend1"，现在就是"backend1"  
+    u.default_port = port; //默认port   80http  443htps 前面赋值
     u.uri_part = 1;
-    u.no_resolve = 1;
+    u.no_resolve = 1; //不要resolve这个url的域名  
 
-    plcf->upstream.upstream = ngx_http_upstream_add(cf, &u, 0);
-    if (plcf->upstream.upstream == NULL) {
+    //当做单个server的upstream加入到upstream里面,和 upstream {}类似，就相当于一个upstream{}配置块
+    plcf->upstream.upstream = ngx_http_upstream_add(cf, &u, 0); //upstream中保存的是取了http://头部的信息
+    if (plcf->upstream.upstream == NULL) { 
         return NGX_CONF_ERROR;
     }
 
@@ -3987,12 +4549,56 @@ ngx_http_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         plcf->location.len = 0;
     }
 
-    plcf->url = *url;
-
+    plcf->url = *url; 
+    
     return NGX_CONF_OK;
 }
 
+/*
+语法：proxy_redirect [ default|off|redirect replacement ];
+默认值：proxy_redirect default;
+使用字段：http, server, location
+这个指令为被代理服务器应答中必须改变的应答头：”Location”和”Refresh”设置值。
+我们假设被代理的服务器返回的应答头字段为：Location: http://localhost:8000/two/some/uri/。
+指令：
 
+
+proxy_redirect http://localhost:8000/two/ http://frontend/one/;会将其重写为：Location: http://frontend/one/some/uri/。
+在重写字段里面可以不使用服务器名：
+
+proxy_redirect http://localhost:8000/two/ /;这样，默认的服务器名和端口将被设置，端口默认80。
+默认的重写可以使用参数default，将使用location和proxy_pass的值。
+下面两个配置是等价的：
+
+
+location /one/ {
+  proxy_pass       http://upstream:port/two/;
+  proxy_redirect   default;
+}
+ 
+location /one/ {
+  proxy_pass       http://upstream:port/two/;
+  proxy_redirect   http://upstream:port/two/   /one/;
+}同样，在重写字段中可以使用变量：
+
+
+proxy_redirect   http://localhost:8000/    http://$host:$server_port/;这个指令可以重复使用：
+
+
+proxy_redirect   default;
+proxy_redirect   http://localhost:8000/    /;
+proxy_redirect   http://www.example.com/   /;参数off在本级中禁用所有的proxy_redirect指令：
+
+
+proxy_redirect   off;
+proxy_redirect   default;
+proxy_redirect   http://localhost:8000/    /;
+proxy_redirect   http://www.example.com/   /;这个指令可以很容易的将被代理服务器的服务器名重写为代理服务器的服务器名：
+
+proxy_redirect   /   /;
+*/ 
+
+//ngx_http_proxy_redirect和ngx_http_proxy_rewrite_redirect配合阅读，他们一起确定重定向后的地址
 static char *
 ngx_http_proxy_redirect(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -4047,7 +4653,7 @@ ngx_http_proxy_redirect(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     }
 
     if (ngx_strcmp(value[1].data, "default") == 0) {
-        if (plcf->proxy_lengths) {
+        if (plcf->proxy_lengths) { //default，则proxy_pass不能携带参数
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                "\"proxy_redirect default\" cannot be used "
                                "with \"proxy_pass\" directive with variables");
@@ -4403,7 +5009,7 @@ ngx_http_proxy_store(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
 
 #if (NGX_HTTP_CACHE)
-
+//proxy_cache abc必须和proxy_cache_path xxx keys_zone=abc:10m;一起，否则在ngx_http_proxy_merge_loc_conf会失败，因为没有为该abc创建ngx_http_file_cache_t
 static char *
 ngx_http_proxy_cache(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -4436,11 +5042,12 @@ ngx_http_proxy_cache(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ccv.value = &value[1];
     ccv.complex_value = &cv;
 
+    //调用正则表达式库解析proxy_cache xxx$ss 中的字符串，解析出的变量length和value存在与cv中
     if (ngx_http_compile_complex_value(&ccv) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
 
-    if (cv.lengths != NULL) {
+    if (cv.lengths != NULL) { //说明proxy_cache配置中存在变量
 
         plcf->upstream.cache_value = ngx_palloc(cf->pool,
                                              sizeof(ngx_http_complex_value_t));
@@ -4632,8 +5239,8 @@ ngx_http_proxy_set_ssl(ngx_conf_t *cf, ngx_http_proxy_loc_conf_t *plcf)
 
 static void
 ngx_http_proxy_set_vars(ngx_url_t *u, ngx_http_proxy_vars_t *v)
-{
-    if (u->family != AF_UNIX) {
+{   //AF_UNIX代表域套接字
+    if (u->family != AF_UNIX) {//ngx_http_upstream_add->ngx_parse_inet_url里面设置为AF_INET 
 
         if (u->no_port || u->port == u->default_port) {
 
@@ -4643,7 +5250,7 @@ ngx_http_proxy_set_vars(ngx_url_t *u, ngx_http_proxy_vars_t *v)
                 ngx_str_set(&v->port, "80");
 
             } else {
-                ngx_str_set(&v->port, "443");
+                ngx_str_set(&v->port, "443"); //https端口443
             }
 
         } else {
@@ -4652,8 +5259,14 @@ ngx_http_proxy_set_vars(ngx_url_t *u, ngx_http_proxy_vars_t *v)
             v->port = u->port_text;
         }
 
-        v->key_start.len += v->host_header.len;
+        v->key_start.len += v->host_header.len;  
 
+        /*
+            proxy_pass  http://10.10.0.103:8080/tttxx; 
+            printf("yang test ....... no_port:%u, port:%u, default_port:%u, host:%s, key:%s\n", 
+                u->no_port, u->port, u->default_port, u->host.data, v->key_start.data);
+            yang test ....... no_port:0, port:8080, default_port:80, host:10.10.0.103:8080/tttxx, key:http://10.10.0.103:8080/tttxx
+         */
     } else {
         ngx_str_set(&v->host_header, "localhost");
         ngx_str_null(&v->port);
@@ -4662,3 +5275,4 @@ ngx_http_proxy_set_vars(ngx_url_t *u, ngx_http_proxy_vars_t *v)
 
     v->uri = u->uri;
 }
+

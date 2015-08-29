@@ -119,7 +119,7 @@ struct ngx_log_s {
     time_t               disk_full_time;
 
     /* 记录日志时的回调方法。当handler已经实现（不为NULL），并且不是DEBUG调试级别时，才会调用handler钩子方法 */
-    ngx_log_handler_pt   handler;
+    ngx_log_handler_pt   handler; //从连接池获取ngx_connection_t后，c->log->handler = ngx_http_log_error;
 
     /*
     每个模块都可以自定义data的使用方法。通常，data参数都是在实现了上面的handler回调方法后
@@ -194,6 +194,9 @@ void ngx_str_t_2buf(char *buf, ngx_str_t *str);
 
 void ngx_log_error_core(ngx_uint_t level, ngx_log_t *log, const char* filename, int lineno, ngx_err_t err,
     const char *fmt, ...);
+    
+void ngx_log_error_coreall(ngx_uint_t level, ngx_log_t *log, const char* filename, int lineno, ngx_err_t err,
+    const char *fmt, ...);
 
 /*
     在使用ngx_log_debug宏时，level的崽义完全不同，它表达的意义不再是级别（已经
@@ -224,6 +227,9 @@ DEBUG调试级别的，这里的level由各子模块定义。level的取值范围参见表4-7。
 #define ngx_log_debug(level, log, ...)                                        \
     if ((log)->log_level & level)                                             \
         ngx_log_error_core(NGX_LOG_DEBUG, log,__FUNCTION__, __LINE__, __VA_ARGS__)
+        
+#define ngx_log_debugall(log, ...)                                        \
+            ngx_log_error_coreall(NGX_LOG_DEBUG, log,__FUNCTION__, __LINE__, __VA_ARGS__)
 
 /*********************************/
 
@@ -236,10 +242,15 @@ DEBUG调试级别的，这里的level由各子模块定义。level的取值范围参见表4-7。
 
 void ngx_log_error_core(ngx_uint_t level, ngx_log_t *log, const char* filename, int lineno, ngx_err_t err,
     const char *fmt, ...);
+    void ngx_log_error_coreall(ngx_uint_t level, ngx_log_t *log, const char* filename, int lineno, ngx_err_t err,
+        const char *fmt, ...);
 
 #define ngx_log_debug(level, log, args...)                                    \
     if ((log)->log_level & level)                                             \
         ngx_log_error_core(NGX_LOG_DEBUG, log,__FUNCTION__, __LINE__, args)
+
+#define ngx_log_debugall(log, args...)                                    \
+            ngx_log_error_coreall(NGX_LOG_DEBUG, log,__FUNCTION__, __LINE__, args)
 
 /*********************************/
 
@@ -251,6 +262,11 @@ void ngx_cdecl ngx_log_error(ngx_uint_t level, ngx_log_t *log, ngx_err_t err,
     const char *fmt, ...);
 void ngx_log_error_core(ngx_uint_t level, ngx_log_t *log, const char* filename, int lineno, ngx_err_t err,
     const char *fmt, va_list args);
+void ngx_log_error_coreall(ngx_uint_t level, ngx_log_t *log, const char* filename, int lineno, ngx_err_t err,
+    const char *fmt, va_list args);
+#define ngx_log_debugall(log, args...)                                    \
+            ngx_log_error_coreall(NGX_LOG_DEBUG, log,__FUNCTION__, __LINE__, args)
+
 void ngx_cdecl ngx_log_debug_core(ngx_log_t *log, ngx_err_t err,
     const char *fmt, ...);
 
@@ -296,6 +312,7 @@ void ngx_cdecl ngx_log_debug_core(ngx_log_t *log, ngx_err_t err,
                        arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)        \
         ngx_log_debug(level, log, err, fmt,                                   \
                        arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
+
 
 
 #else /* no variadic macros */
@@ -369,7 +386,6 @@ ngx_int_t ngx_log_open_default(ngx_cycle_t *cycle);
 ngx_int_t ngx_log_redirect_stderr(ngx_cycle_t *cycle);
 ngx_log_t *ngx_log_get_file_log(ngx_log_t *head);
 char *ngx_log_set_log(ngx_conf_t *cf, ngx_log_t **head);
-
 
 /*
  * ngx_write_stderr() cannot be implemented as macro, since

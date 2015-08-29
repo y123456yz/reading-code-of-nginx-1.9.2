@@ -106,10 +106,66 @@ static ngx_http_module_t  ngx_http_postpone_filter_module_ctx = {
 
 static ngx_http_output_body_filter_pt    ngx_http_next_body_filter;
 
+
+/*
+    好了，子请求创建完毕，一般来说子请求的创建都发生在某个请求的content handler或者某个filter内，从上面的函数可以看到子请求并没有马上被执行，
+只是被挂载在了主请求的posted_requests链表中，那它什么时候可以执行呢？之前说到posted_requests链表是在ngx_http_run_posted_requests函数中
+遍历，那么ngx_http_run_posted_requests函数又是在什么时候调用？它实际上是在某个请求的读（写）事件的handler中，执行完该请求相关的处理后
+被调用，比如主请求在走完一遍PHASE的时候会调用ngx_http_run_posted_requests，这时子请求得以运行。
+
+    这时实际还有1个问题需要解决，由于nginx是多进程，是不能够随意阻塞的（如果一个请求阻塞了当前进程，就相当于阻塞了这个进程accept到的所有
+其他请求，同时该进程也不能accept新请求），一个请求可能由于某些原因需要阻塞（比如访问io），nginx的做法是设置该请求的一些状态并在epoll
+中添加相应的事件，然后转去处理其他请求，等到该事件到来时再继续处理该请求，这样的行为就意味着一个请求可能需要多次执行机会才能完成，对
+于一个请求的多个子请求来说，意味着它们完成的先后顺序可能和它们创建的顺序是不一样的，所以必须有一种机制让提前完成的子请求保存它产生的
+数据，而不是直接输出到out chain，同时也能够让当前能够往out chain输出数据的请求及时的输出产生的数据。作者Igor采用ngx_connection_t中的
+data字段，以及一个body filter，即ngx_http_postpone_filter，还有ngx_http_finalize_request函数中的一些逻辑来解决这个问题。
+
+参考:http://blog.csdn.net/fengmo_q/article/details/6685840
+
+
+
+
+说明:
+root_r为原始最上层的请求r，postponed为该r->postponed指针，
+sbuxy_r中的x代表的是该子请求的父请求时x，y代表该子请求时父请求的第y个子请求。
+datax代表subx_r请求产生的一段数据,它是通过ngx_http_postpone_filter_add添加到r->postponed链中
+
+                                          -----root_r     
+                                          |postponed
+                                          |
+                            -------------sub1_r-------sub2_r-------data_root(属于root_r数据)
+                            |                           |postponed                    
+                            |postponed                  |
+                            |                           sub21_r-----data2(属于sub2_r数据)
+                            |                           |
+                            |                           |
+                            |                           -----data2(属于sub21_r数据)
+                            |
+                          sub11_r--------sub12_r-----data1(属于sub1_r数据)
+                            |               |
+                            |postponed      |postponed
+                            |               |
+                            -----data11     -----data12(属于sub12_r数据)
+
+    图中的root节点即为主请求，它的postponed链表从左至右挂载了3个节点，SUB1是它的第一个子请求，DATA1是它产生的一段数据，SUB2是它的第2个子请求，
+而且这2个子请求分别有它们自己的子请求及数据。ngx_connection_t中的data字段保存的是当前可以往out chain发送数据的请求，文章开头说到发到客户端
+的数据必须按照子请求创建的顺序发送，这里即是按后续遍历的方法（SUB11->DATA11->SUB12->DATA12->(SUB1)->DATA1->SUB21->SUB22->(SUB2)->(ROOT)），
+上图中当前能够往客户端（out chain）发送数据的请求显然就是SUB11，如果SUB12提前执行完成，并产生数据DATA121，只要前面它还有节点未发送完毕，
+DATA121只能先挂载在SUB12的postponed链表下。这里还要注意一下的是c->data的设置，当SUB11执行完并且发送完数据之后，下一个将要发送的节点应该是
+DATA11，但是该节点实际上保存的是数据，而不是子请求，所以c->data这时应该指向的是拥有改数据节点的SUB1请求。
+
+发送数据到客户端优先级:
+1.子请求优先级比父请求高
+2.同级(一个r产生多个子请求)请求，从左到右优先级由高到低(因为先创建的子请求先发送数据到客户端)
+发送数据到客户端顺序控制见ngx_http_postpone_filter
+*/
+
+
+//配合http://blog.csdn.net/fengmo_q/article/details/6685840图形化阅读
 //这里的参数in就是将要发送给客户端的一段包体，
-static ngx_int_t
+static ngx_int_t //subrequest注意ngx_http_run_posted_requests与ngx_http_subrequest ngx_http_postpone_filter ngx_http_finalize_request配合阅读
 ngx_http_postpone_filter(ngx_http_request_t *r, ngx_chain_t *in)
-{
+{//一般子请求接收到后端数据后不会立即发送到客户端，而是通过ngx_http_finalize_request->ngx_http_set_write_handler触发发送后端的数据
     ngx_connection_t              *c;
     ngx_http_postponed_request_t  *pr;
 
@@ -119,15 +175,37 @@ ngx_http_postpone_filter(ngx_http_request_t *r, ngx_chain_t *in)
     ngx_log_debug3(NGX_LOG_DEBUG_HTTP, c->log, 0,
                    "http postpone filter \"%V?%V\" %p", &r->uri, &r->args, in);
 
-    //如果当前请求r是一个子请求（因为c->data指向原始请求）
-    if (r != c->data) {
+    /*
+                          -----root_r     
+                          |postponed
+                          |
+            -------------sub1_r-------sub2_r-------data_root(属于root_r数据)
+            |                           |postponed                    
+            |postponed                  |
+            |                           sub21_r-----data2(属于sub2_r数据)
+            |                           |
+            |                           |
+            |                           -----data2(属于sub21_r数据)
+            |
+          sub11_r--------sub12_r-----data1(属于sub1_r数据)
+            |               |
+            |postponed      |postponed
+            |               |
+            -----data11     -----data12(属于sub12_r数据)
 
+          下面的if判断只有r为sub11_r才满足r == c->data，如果当前r不是sub11_r，则把
+     */
+    //如果当前请求r是一个子请求（因为c->data指向原始请求）
+    //说明r是上级r的第一个子请求，也就是http://blog.csdn.net/fengmo_q/article/details/6685840图里面的SUB1  SUB11 SUB21
+    if (r != c->data) {//参考ngx_http_subrequest中的c->data = sr  ngx_connection_t中的data字段保存的是当前可以往out chain发送数据的请求，也就是优先级最高的请求
+        /* 当前请求不能往out chain发送数据，如果产生了数据，新建一个节点， 
+       将它保存在当前请求的postponed队尾。这样就保证了数据按序发到客户端 */  
         if (in) {
             /*
               如果待发送的in包体不为空，则把in加到postponed链表中属于当前请求的ngx_http_postponed_request_t结构体的out链表中，
               同时返回NGX_OK，这意味着本次不会把in包体发给客户瑞
                */
-            ngx_http_postpone_filter_add(r, in);
+            ngx_http_postpone_filter_add(r, in); //把该子请求r上面读取到的数据挂接到该r->postponed上
             return NGX_OK;
         }
 
@@ -140,6 +218,8 @@ ngx_http_postpone_filter(ngx_http_request_t *r, ngx_chain_t *in)
         return NGX_OK;
     }
 
+    /* 到这里，表示当前请求可以往out chain发送数据，如果它的postponed链表中没有子请求，也没有数据， 
+       则直接发送当前产生的数据in或者继续发送out chain中之前没有发送完成的数据 */  
     //如果postponed为空，表示请求r没有子请求产生的响应需要转发
     if (r->postponed == NULL) {
         //直接调用下一个HTTP过滤模块继续处理in包体即可。如果没有错误的话，就会开始向下游客户端发送响应
@@ -150,17 +230,22 @@ ngx_http_postpone_filter(ngx_http_request_t *r, ngx_chain_t *in)
         return NGX_OK;
     }
 
+    
+
+    /* r->postponed != NULL当前请求的postponed链表中之前就存在需要处理的节点，则新建一个节点，保存当前产生的数据in， 
+       并将它插入到postponed队尾 */  
     //至此，说明postponed链表中是有子请求产生的响应需要转发的，可以先把in包体加到待转发响应
     if (in) {
         ngx_http_postpone_filter_add(r, in);
     }
 
-    //循环处理postponed链表中所有子请求待转发的包
+    //循环处理postponed链表中所有子请求待转发的包  /* 处理postponed链表中的节点 */  
     do {
         pr = r->postponed;
 
+    /* 如果该节点保存的是一个子请求，则将它加到主请求的posted_requests链表中，以便下次调用ngx_http_run_posted_requests函数，处理该子节点 */  
     //如果pr->request是子请求，则加入到原始请求的posted_requests队列中，等待HTTP框架下次调用这个请求时再来处理（参见11.7节）
-        if (pr->request) {
+        if (pr->request) { //说明pr节点代表的是子请求而不是数据
 
             ngx_log_debug2(NGX_LOG_DEBUG_HTTP, c->log, 0,
                            "http postpone filter wake \"%V?%V\"",
@@ -168,11 +253,20 @@ ngx_http_postpone_filter(ngx_http_request_t *r, ngx_chain_t *in)
 
             r->postponed = pr->next;
 
+             /* 按照后续遍历产生的序列，因为当前请求（节点）有未处理的子请求(节点)， 
+               必须先处理完改子请求，才能继续处理后面的子节点。 
+               这里将该子请求设置为可以往out chain发送数据的请求。  */  
+               //配合http://blog.csdn.net/fengmo_q/article/details/6685840图形化阅读
             c->data = pr->request;
 
-            return ngx_http_post_request(pr->request, NULL);
+            //为该子请求创建ngx_http_posted_request_t添加到最上层root所处r的posted_requests中
+            return ngx_http_post_request(pr->request, NULL); /* 将该子请求加入主请求的posted_requests链表 */  
+            //如果优先级低的子请求的数据线到达，则先通过ngx_http_postpone_filter_add缓存到r->postpone，然后r添加到pr->request->posted_requests,最后在高优先级请求后端
+            //数据到来后，会把之前缓存起来的低优先级请求的数据也一起在ngx_http_run_posted_requests中触发发送，从而保证真正发送到客户端数据时按照子请求优先级顺序发送的
         }
 
+        /* 如果该节点保存的是数据，可以直接处理该节点，将它发送到out chain */  
+        
         //调用下一个HTTP过滤模块转发out链表中保存的待转发的包体
         if (pr->out == NULL) {
             ngx_log_error(NGX_LOG_ALERT, c->log, 0,
@@ -195,16 +289,65 @@ ngx_http_postpone_filter(ngx_http_request_t *r, ngx_chain_t *in)
     return NGX_OK;
 }
 
+/*
+    好了，子请求创建完毕，一般来说子请求的创建都发生在某个请求的content handler或者某个filter内，从上面的函数可以看到子请求并没有马上被执行，
+只是被挂载在了主请求的posted_requests链表中，那它什么时候可以执行呢？之前说到posted_requests链表是在ngx_http_run_posted_requests函数中
+遍历，那么ngx_http_run_posted_requests函数又是在什么时候调用？它实际上是在某个请求的读（写）事件的handler中，执行完该请求相关的处理后
+被调用，比如主请求在走完一遍PHASE的时候会调用ngx_http_run_posted_requests，这时子请求得以运行。
 
+    这时实际还有1个问题需要解决，由于nginx是多进程，是不能够随意阻塞的（如果一个请求阻塞了当前进程，就相当于阻塞了这个进程accept到的所有
+其他请求，同时该进程也不能accept新请求），一个请求可能由于某些原因需要阻塞（比如访问io），nginx的做法是设置该请求的一些状态并在epoll
+中添加相应的事件，然后转去处理其他请求，等到该事件到来时再继续处理该请求，这样的行为就意味着一个请求可能需要多次执行机会才能完成，对
+于一个请求的多个子请求来说，意味着它们完成的先后顺序可能和它们创建的顺序是不一样的，所以必须有一种机制让提前完成的子请求保存它产生的
+数据，而不是直接输出到out chain，同时也能够让当前能够往out chain输出数据的请求及时的输出产生的数据。作者Igor采用ngx_connection_t中的
+data字段，以及一个body filter，即ngx_http_postpone_filter，还有ngx_http_finalize_request函数中的一些逻辑来解决这个问题。
+
+参考:http://blog.csdn.net/fengmo_q/article/details/6685840
+
+说明:
+root_r为原始最上层的请求r，postponed为该r->postponed指针，
+sbuxy_r中的x代表的是该子请求的父请求时x，y代表该子请求时父请求的第y个子请求。
+datax代表subx_r请求产生的一段数据,它是通过ngx_http_postpone_filter_add添加到r->postponed链中
+
+                                          -----root_r     
+                                          |postponed
+                                          |
+                            -------------sub1_r-------sub2_r-------data_root(属于root_r数据)
+                            |                           |postponed                    
+                            |postponed                  |
+                            |                           sub21_r-----data2(属于sub2_r数据)
+                            |                           |
+                            |                           |
+                            |                           -----data2(属于sub21_r数据)
+                            |
+                          sub11_r--------sub12_r-----data1(属于sub1_r数据)
+                            |               |
+                            |postponed      |postponed
+                            |               |
+                            -----data11     -----data12(属于sub12_r数据)
+
+    图中的root节点即为主请求，它的postponed链表从左至右挂载了3个节点，SUB1是它的第一个子请求，DATA1是它产生的一段数据，SUB2是它的第2个子请求，
+而且这2个子请求分别有它们自己的子请求及数据。ngx_connection_t中的data字段保存的是当前可以往out chain发送数据的请求，文章开头说到发到客户端
+的数据必须按照子请求创建的顺序发送，这里即是按后续遍历的方法（SUB11->DATA11->SUB12->DATA12->(SUB1)->DATA1->SUB21->SUB22->(SUB2)->(ROOT)），
+上图中当前能够往客户端（out chain）发送数据的请求显然就是SUB11，如果SUB12提前执行完成，并产生数据DATA121，只要前面它还有节点未发送完毕，
+DATA121只能先挂载在SUB12的postponed链表下。这里还要注意一下的是c->data的设置，当SUB11执行完并且发送完数据之后，下一个将要发送的节点应该是
+DATA11，但是该节点实际上保存的是数据，而不是子请求，所以c->data这时应该指向的是拥有改数据节点的SUB1请求。
+
+发送数据到客户端优先级:
+1.子请求优先级比父请求高
+2.同级(一个r产生多个子请求)请求，从左到右优先级由高到低(因为先创建的子请求先发送数据到客户端)
+*/
+
+//参考http://blog.csdn.net/fengmo_q/article/details/6685840中的图形化及其说明
 static ngx_int_t
 ngx_http_postpone_filter_add(ngx_http_request_t *r, ngx_chain_t *in)
-{
+{ //postponed添加在ngx_http_postpone_filter_add ，删除在ngx_http_finalize_request
     ngx_http_postponed_request_t  *pr, **ppr;
 
     if (r->postponed) {
         for (pr = r->postponed; pr->next; pr = pr->next) { /* void */ }
 
-        if (pr->request == NULL) {
+        if (pr->request == NULL) { //说明最后一句ngx_http_postponed_request_t节点只是简单的存储in链数据，则直接使用该结构即可
             goto found;
         }
 
@@ -219,9 +362,9 @@ ngx_http_postpone_filter_add(ngx_http_request_t *r, ngx_chain_t *in)
         return NGX_ERROR;
     }
 
-    *ppr = pr;
+    *ppr = pr; //把新创建的pr添加到r->postponed尾部
 
-    pr->request = NULL;
+    pr->request = NULL; //in数据通过创建新的ngx_http_postponed_request_t添加到r->postponed中，但是这时候新创建的pr节点的request为NULL
     pr->out = NULL;
     pr->next = NULL;
 

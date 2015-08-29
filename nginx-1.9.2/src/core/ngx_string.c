@@ -1200,7 +1200,7 @@ ngx_hextoi(u_char *line, size_t n)
     return value;
 }
 
-
+//字符串转换为16进制地址，例如4个字节字符串"5566"，则转换为16进制地址0X5566两个字节
 u_char *
 ngx_hex_dump(u_char *dst, u_char *src, size_t len)
 {

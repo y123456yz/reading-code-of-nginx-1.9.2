@@ -430,6 +430,36 @@ EPOLLOUT事件只有在连接时触发一次，表示可写，其他时候想要触发，那你要先准备好下面
 
 EPOLLIN事件：
 EPOLLIN事件则只有当对端有数据写入时才会触发，所以触发一次后需要不断读取所有数据直到读完EAGAIN为止。否则剩下的数据只有在下次对端有写入时才能一起取出来了。
+
+
+
+关于epoll边缘触发模式（ET）下的EPOLLOUT触发，
+
+ET模式下，EPOLLOUT触发条件有：
+1.缓冲区满-->缓冲区非满；
+2.同时监听EPOLLOUT和EPOLLIN事件时，当有IN 事件发生，都会顺带一个OUT事件；
+3.一个客户端connect过来，accept成功后会触发一次OUT事件。
+
+其中2最令人费解，内核代码这块有注释，说是一般有IN 时候都能OUT，就顺带一个，多给了个事件。。 (15.11.30验证了下，确实是这样)
+
+
+以上，当只监听IN事件，读完数据后改为监听OUT事件，有时候会发现触发OUT事件并不方便，想要强制触发，可以重新设置一次要监听的events，带上EPOLLOUT即可。
+
+另：
+一道腾讯后台开发的面试题
+使用Linux epoll模型，水平触发模式；当socket可写时，会不停的触发socket
+可写的事件，如何处理？
+
+
+第一种最普遍的方式：
+需要向socket写数据的时候才把socket加入epoll，等待可写事件。接受到可写事件后，调用write或者send发送数据。当所有数据都写完后，把socket移出epoll。
+这种方式的缺点是，即使发送很少的数据，也要把socket加入epoll，写完后在移出epoll，有一定操作代价。
+
+
+一种改进的方式：
+开始不把socket加入epoll，需要向socket写数据的时候，直接调用write或者send发送数据。如果返回EAGAIN，把socket加入epoll，在epoll
+的驱动下写数据，全部数据发送完毕后，再移出epoll。
+这种方式的优点是：数据不多的时候可以避免epoll的事件处理，提高效率。
 */
 ngx_int_t
 ngx_handle_read_event(ngx_event_t *rev, ngx_uint_t flags, const char* func, int line) //recv读取返回NGX_AGAIN后，需要再次ngx_handle_read_event来检测该fd在epoll上面的读事件

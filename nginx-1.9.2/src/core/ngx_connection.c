@@ -452,8 +452,8 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
                 == -1)
             {
                 ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
-                              "setsockopt(SO_REUSEADDR) %V failed",
-                              &ls[i].addr_text);
+                              "setsockopt(SO_REUSEADDR) %V failed, close sock:%d",
+                              &ls[i].addr_text, s);
 
                 if (ngx_close_socket(s) == -1) {
                     ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
@@ -476,8 +476,8 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
                     == -1)
                 {
                     ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
-                                  "setsockopt(SO_REUSEPORT) %V failed, ignored",
-                                  &ls[i].addr_text);
+                                  "setsockopt(SO_REUSEPORT) %V failed, ignored, close sock:%d",
+                                  &ls[i].addr_text, s);
 
                     if (ngx_close_socket(s) == -1) {
                         ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
@@ -512,8 +512,8 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
             if (!(ngx_event_flags & NGX_USE_IOCP_EVENT)) {
                 if (ngx_nonblocking(s) == -1) {
                     ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
-                                  ngx_nonblocking_n " %V failed",
-                                  &ls[i].addr_text);
+                                  ngx_nonblocking_n " %V failed, close sock:%d",
+                                  &ls[i].addr_text,s);
 
                     if (ngx_close_socket(s) == -1) {
                         ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
@@ -536,6 +536,8 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
                                   "bind() to %V failed", &ls[i].addr_text);
                 }
 
+                ngx_log_error(NGX_LOG_EMERG, log, err,
+                                  "close socket:%d", s);
                 if (ngx_close_socket(s) == -1) {
                     ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
                                   ngx_close_socket_n " %V failed",
@@ -581,6 +583,7 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
                               "listen() to %V, backlog %d failed",
                               &ls[i].addr_text, ls[i].backlog);
 
+                ngx_log_error(NGX_LOG_EMERG, log, err, "close socket:%d", s);
                 if (ngx_close_socket(s) == -1) {
                     ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
                                   ngx_close_socket_n " %V failed",
@@ -926,6 +929,7 @@ ngx_close_listening_sockets(ngx_cycle_t *cycle)
         ngx_log_debug2(NGX_LOG_DEBUG_CORE, cycle->log, 0,
                        "close listening %V #%d ", &ls[i].addr_text, ls[i].fd);
 
+        ngx_log_error(NGX_LOG_EMERG, cycle->log, ngx_socket_errno, "close socket:%d", ls[i].fd);
         if (ngx_close_socket(ls[i].fd) == -1) {
             ngx_log_error(NGX_LOG_EMERG, cycle->log, ngx_socket_errno,
                           ngx_close_socket_n " %V failed", &ls[i].addr_text);
@@ -1132,6 +1136,7 @@ ngx_close_connection(ngx_connection_t *c)
 
     fd = c->fd;
     c->fd = (ngx_socket_t) -1;
+    ngx_log_debugall(ngx_cycle->log, 0, "close socket:%d", fd);
     //调用系统提供的close方法关闭这个TCP连接套接字。
     if (ngx_close_socket(fd) == -1) {
 
@@ -1345,7 +1350,7 @@ ngx_connection_error(ngx_connection_t *c, ngx_err_t err, char *text)
         level = NGX_LOG_ALERT;
     }
 
-    ngx_log_error(level, c->log, err, text);
+    ngx_log_error(level, c->log, err, text); //最后实际调用ngx_http_log_error 
 
     return NGX_ERROR;
 }

@@ -8,7 +8,7 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 
-
+//把1转换为1*1024*1024
 ssize_t
 ngx_parse_size(ngx_str_t *line)
 {
@@ -97,7 +97,7 @@ ngx_parse_offset(ngx_str_t *line)
     return offset;
 }
 
-
+//时间字符串转换为s，如1h=60*60*1s
 ngx_int_t
 ngx_parse_time(ngx_str_t *line, ngx_uint_t is_sec)
 {

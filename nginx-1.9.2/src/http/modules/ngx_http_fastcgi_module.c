@@ -55,10 +55,11 @@ typedef struct {
     ngx_array_t                   *fastcgi_lengths; //fastcgiÏà¹Ø²ÎÊıµÄ³¤¶Ècode  Èç¹ûfastcgi_pass xxxÖĞÓĞ±äÁ¿£¬Ôò¸ÃÊı×éÎª¿Õ
     ngx_array_t                   *fastcgi_values; //fastcgiÏà¹Ø²ÎÊıµÄÖµcode
 
-    ngx_flag_t                     keep_conn; //fastcgi_keep_conn  on | off
+    ngx_flag_t                     keep_conn; //fastcgi_keep_conn  on | off  Ä¬ÈÏoff
 
 #if (NGX_HTTP_CACHE)
-    ngx_http_complex_value_t       cache_key;//fastcgi_cache_keyÖ¸ÁîµÄÊ±ºò¼ÆËã³öÀ´µÄ¸´ÔÓ±í´ïÊ½½á¹¹£¬´æ·ÅÔÚflcf->cache_keyÖĞ ngx_http_fastcgi_cache_key
+    ngx_http_complex_value_t       cache_key;
+    //fastcgi_cache_key proxy_cache_keyÖ¸ÁîµÄÊ±ºò¼ÆËã³öÀ´µÄ¸´ÔÓ±í´ïÊ½½á¹¹£¬´æ·ÅÔÚflcf->cache_keyÖĞ ngx_http_fastcgi_cache_key ngx_http_proxy_cache_key
 #endif
 
 #if (NGX_PCRE)
@@ -91,11 +92,12 @@ typedef struct {
 
 //ÔÚ½âÎö´Óºó¶Ë·¢ËÍ¹ıÀ´µÄfastcgiÍ·²¿ĞÅÏ¢µÄÊ±ºòÓÃµ½£¬¼ûngx_http_fastcgi_process_header
 typedef struct { //ngx_http_fastcgi_handler·ÖÅä¿Õ¼ä
+//ÓÃËûÀ´¼ÇÂ¼Ã¿´Î¶ÁÈ¡½âÎö¹ı³ÌÖĞµÄ¸÷¸ö×´Ì¬(Èç¹ûĞèÒª¶à´Îepoll´¥·¢¶ÁÈ¡£¬¾ÍĞèÒª¼ÇÂ¼Ç°Ãæ¶ÁÈ¡½âÎöÊ±ºòµÄ×´Ì¬)f = ngx_http_get_module_ctx(r, ngx_http_fastcgi_module);
     ngx_http_fastcgi_state_e       state; //±êÊ¶½âÎöµ½ÁËfastcgi 8×Ö½ÚÍ·²¿ÖĞµÄÄÇ¸öµØ·½
     u_char                        *pos; //Ö¸ÏòÒª½âÎöÄÚÈİµÄÍ·
     u_char                        *last;//Ö¸ÏòÒª½âÎöÄÚÈİµÄÎ²²¿
     ngx_uint_t                     type; //½»»¥±êÊ¶£¬ÀıÈçNGX_HTTP_FASTCGI_STDOUTµÈ
-    size_t                         length; //¸ÃÌõfastcgiĞÅÏ¢µÄ°üÌåÄÚÈİ³¤¶È °üÀ¨paddingÌî³ä
+    size_t                         length; //¸ÃÌõfastcgiĞÅÏ¢µÄ°üÌåÄÚÈİ³¤¶È ²»°üÀ¨paddingÌî³ä
     size_t                         padding; //Ìî³äÁË¶àÉÙ¸ö×Ö½Ú£¬´Ó¶ø8×Ö½Ú¶ÔÆë
 
     ngx_chain_t                   *free;
@@ -109,7 +111,8 @@ typedef struct { //ngx_http_fastcgi_handler·ÖÅä¿Õ¼ä
 
     ngx_str_t                      script_name;
     ngx_str_t                      path_info;
-} ngx_http_fastcgi_ctx_t;
+} ngx_http_fastcgi_ctx_t; 
+//ÓÃËûÀ´¼ÇÂ¼Ã¿´Î¶ÁÈ¡½âÎö¹ı³ÌÖĞµÄ¸÷¸ö×´Ì¬(Èç¹ûĞèÒª¶à´Îepoll´¥·¢¶ÁÈ¡£¬¾ÍĞèÒª¼ÇÂ¼Ç°Ãæ¶ÁÈ¡½âÎöÊ±ºòµÄ×´Ì¬)f = ngx_http_get_module_ctx(r, ngx_http_fastcgi_module);
 
 #define NGX_HTTP_FASTCGI_KEEP_CONN      1  //NGX_HTTP_FASTCGI_RESPONDER±êÊ¶µÄfastcgi headerÖĞµÄflagÎª¸ÃÖµ±íÊ¾ºÍºó¶ËÊ¹ÓÃ³¤Á¬½Ó
 
@@ -343,7 +346,7 @@ location /fetch {
  
   alias                  /data/www;
 }fastcgi_store²¢²»ÊÇ»º´æ£¬Ä³Ğ©ĞèÇóÏÂËü¸üÏñÊÇÒ»¸ö¾µÏñ¡£
-*/
+*/   //fastcgi_storeºÍfastcgi_cacheÖ»ÄÜÅäÖÃÒ»¸ö
     { ngx_string("fastcgi_store"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_http_fastcgi_store,
@@ -380,7 +383,7 @@ fastcgi_store_access  group:rw  all:r;
       offsetof(ngx_http_fastcgi_loc_conf_t, upstream.buffering),
       NULL },
 
-    //ÉèÖÃÊÇ·ñ»º´æÇëÇóbody µ½´ÅÅÌÊ±  ×¢Òâfastcgi_bufferingºÍfastcgi_request_bufferingµÄÇø±ğ£¬Ò»¸öÊÇ¿Í»§¶Ë°üÌå£¬Ò»¸öÊÇºó¶Ë·şÎñÆ÷Ó¦´ğµÄ°üÌå
+    //ÉèÖÃÊÇ·ñ»º´æÇëÇóbody µ½´ÅÅÌÊ±  ×¢Òâfastcgi_request_bufferingºÍfastcgi_bufferingµÄÇø±ğ£¬Ò»¸öÊÇ¿Í»§¶Ë°üÌå£¬Ò»¸öÊÇºó¶Ë·şÎñÆ÷Ó¦´ğµÄ°üÌå
     { ngx_string("fastcgi_request_buffering"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
       ngx_conf_set_flag_slot,
@@ -413,14 +416,14 @@ fastcgi_store_access  group:rw  all:r;
 Ä¬ÈÏÖµ£ºfastcgi_connect_timeout 60 
 Ê¹ÓÃ×Ö¶Î£ºhttp, server, location 
 Ö¸¶¨Í¬FastCGI·şÎñÆ÷µÄÁ¬½Ó³¬Ê±Ê±¼ä£¬Õâ¸öÖµ²»ÄÜ³¬¹ı75Ãë¡£
-*/
+*/ //acceptºó¶Ë·şÎñÆ÷µÄÊ±ºò£¬ÓĞ¿ÉÄÜconnect·µ»ØNGX_AGAIN£¬±íÊ¾É¢²½ÎÕÊÖµÄack»¹Ã»ÓĞ»ØÀ´¡£Òò´ËÉèÖÃÕâ¸ö³¬Ê±ÊÂ¼ş±íÊ¾Èç¹û60s»¹Ã»ÓĞack¹ıÀ´£¬Ôò×ö³¬Ê±´¦Àí
     { ngx_string("fastcgi_connect_timeout"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_fastcgi_loc_conf_t, upstream.connect_timeout),
       NULL },
-
+    //ÏòFastCGI´«ËÍÇëÇóµÄ³¬Ê±Ê±¼ä£¬Õâ¸öÖµÊÇÖ¸ÒÑ¾­Íê³ÉÁ½´ÎÎÕÊÖºóÏòFastCGI´«ËÍÇëÇóµÄ³¬Ê±Ê±¼ä¡£
     { ngx_string("fastcgi_send_timeout"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
@@ -442,8 +445,9 @@ fastcgi_store_access  group:rw  all:r;
 Õâ¸ö²ÎÊıÖ¸¶¨½«ÓÃ¶à´óµÄ»º³åÇøÀ´¶ÁÈ¡´ÓFastCGI·şÎñÆ÷µ½À´Ó¦´ğµÄµÚÒ»²¿·Ö¡£
 Í¨³£À´ËµÔÚÕâ¸ö²¿·ÖÖĞ°üº¬Ò»¸öĞ¡µÄÓ¦´ğÍ·¡£
 Ä¬ÈÏµÄ»º³åÇø´óĞ¡Îªfastcgi_buffersÖ¸ÁîÖĞµÄÃ¿¿é´óĞ¡£¬¿ÉÒÔ½«Õâ¸öÖµÉèÖÃ¸üĞ¡¡£
-*/
-    { ngx_string("fastcgi_buffer_size"),
+*/ //Í·²¿ĞĞ²¿·Ö(Ò²¾ÍÊÇµÚÒ»¸öfastcgi data±êÊ¶ĞÅÏ¢£¬ÀïÃæÒ²»áĞ¯´øÒ»²¿·ÖÍøÒ³Êı¾İ)µÄfastcgi±êÊ¶ĞÅÏ¢¿ª±ÙµÄ¿Õ¼äÓÃbuffer_sizeÅäÖÃÖ¸¶¨
+//ngx_http_upstream_process_headerÖĞ·ÖÅäfastcgi_buffer_sizeÖ¸¶¨µÄ¿Õ¼ä
+    { ngx_string("fastcgi_buffer_size"),  //×¢ÒâºÍºóÃæµÄfastcgi_buffersµÄÇø±ğ  //Ö¸¶¨µÄ¿Õ¼ä¿ª±ÙÔÚngx_http_upstream_process_header
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_size_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
@@ -485,14 +489,18 @@ fastcgi_store_access  group:rw  all:r;
 Ê¹ÓÃ×Ö¶Î£ºhttp, server, location 
 Ç°¶ËFastCGI·şÎñÆ÷µÄÏìÓ¦³¬Ê±Ê±¼ä£¬Èç¹ûÓĞÒ»Ğ©Ö±µ½ËüÃÇÔËĞĞÍê²ÅÓĞÊä³öµÄ³¤Ê±¼äÔËĞĞµÄFastCGI½ø³Ì£¬»òÕßÔÚ´íÎóÈÕÖ¾ÖĞ³öÏÖÇ°¶Ë·şÎñÆ÷ÏìÓ¦³¬
 Ê±´íÎó£¬¿ÉÄÜĞèÒªµ÷ÕûÕâ¸öÖµ¡£
-*/
-    { ngx_string("fastcgi_read_timeout"),
+*/ //½ÓÊÕFastCGIÓ¦´ğµÄ³¬Ê±Ê±¼ä£¬Õâ¸öÖµÊÇÖ¸ÒÑ¾­Íê³ÉÁ½´ÎÎÕÊÖºó½ÓÊÕFastCGIÓ¦´ğµÄ³¬Ê±Ê±¼ä¡£
+    { ngx_string("fastcgi_read_timeout"), //¶ÁÈ¡ºó¶ËÊı¾İµÄ³¬Ê±Ê±¼ä
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_fastcgi_loc_conf_t, upstream.read_timeout),
       NULL },
 
+    /* ¶ÁÈ¡Íêºó¶ËµÄµÚÒ»¸öfastcgi data±êÊ¶Êı¾İºó(Ò»°ãÊÇÍ·²¿ĞĞºÍ²¿·ÖÊı¾İ£¬¸Ã²¿·Ö¿Õ¼ä´óĞ¡ÓÃfastcgi_buffer_size)Ö¸¶¨£¬Èç¹ûÍøÒ³°üÌå±È½Ï´ó
+        ÔòĞèÒª¿ª±Ù¶à¸öĞÂµÄbuffÀ´´æ´¢°üÌå²¿·Ö£¬·ÖÅäfastcgi_buffers 5 3K£¬±íÊ¾Èç¹ûÕâ²¿·Ö¿Õ¼äÓÃÍê(ÀıÈçºó¶ËËÙ¶È¿ì£¬µ½¿Í»§¶ËËÙ¶ÈÂı)£¬Ôò²»ÔÚ½ÓÊÕ
+        ºó¶ËÊı¾İ£¬µÈ´ı×Å5¸ö3KÖĞµÄ²¿·Ö·¢ËÍ³öÈ¥ºó£¬ÔÚÖØĞÂÓÃ¿ÕÓà³öÀ´µÄ¿Õ¼ä½ÓÊÕºó¶ËÊı¾İ
+     */ //×¢ÒâÕâ¸öÖ»¶Ôbuffing·½Ê½ÓĞĞ§  //¸ÃÅäÖÃÅäÖÃµÄ¿Õ¼äÕæÕı·ÖÅä¿Õ¼äÔÚ//ÔÚngx_event_pipe_read_upstreamÖĞ´´½¨¿Õ¼ä
     { ngx_string("fastcgi_buffers"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE2,
       ngx_conf_set_bufs_slot,
@@ -500,6 +508,9 @@ fastcgi_store_access  group:rw  all:r;
       offsetof(ngx_http_fastcgi_loc_conf_t, upstream.bufs),
       NULL },
 
+    //xxx_buffersÖ¸¶¨Îª½ÓÊÕºó¶Ë·şÎñÆ÷Êı¾İ×î¶à¿ª±ÙÕâÃ´¶à¿Õ¼ä£¬xxx_busy_buffers_sizeÖ¸¶¨Ò»´Î·¢ËÍºóÓĞ¿ÉÄÜÊı¾İÃ»ÓĞÈ«²¿·¢ËÍ³öÈ¥£¬Òò´Ë·ÅÈëbusyÁ´ÖĞ
+    //µ±Ã»ÓĞ·¢ËÍ³öÈ¥µÄbusyÁ´ÖĞµÄbufÖ¸ÏòµÄÊı¾İ(²»ÊÇbufÖ¸ÏòµÄ¿Õ¼äÎ´·¢ËÍµÄÊı¾İ)´ïµ½xxx_busy_buffers_size¾Í²»ÄÜ´Óºó¶Ë¶ÁÈ¡Êı¾İ£¬Ö»ÓĞbusyÁ´ÖĞµÄÊı¾İ·¢ËÍÒ»²¿·Ö³öÈ¥ºóĞ¡Óëxxx_busy_buffers_size²ÅÄÜ¼ÌĞø¶ÁÈ¡
+    //buffring·½Ê½ÏÂÉúĞ§£¬ÉúĞ§µØ·½¿ÉÒÔ²Î¿¼ngx_event_pipe_write_to_downstream
     { ngx_string("fastcgi_busy_buffers_size"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_size_slot,
@@ -523,11 +534,27 @@ fastcgi_store_access  group:rw  all:r;
 
 #if (NGX_HTTP_CACHE)
 /*
+       nginxµÄ´æ´¢ÏµÍ³·ÖÁ½Àà£¬Ò»ÀàÊÇÍ¨¹ıproxy_store¿ªÆôµÄ£¬´æ´¢·½Ê½ÊÇ°´ÕÕurlÖĞµÄÎÄ¼şÂ·¾¶£¬´æ´¢ÔÚ±¾µØ¡£±ÈÈç/file/2013/0001/en/test.html£¬
+     ÄÇÃ´nginx¾Í»áÔÚÖ¸¶¨µÄ´æ´¢Ä¿Â¼ÏÂÒÀ´Î½¨Á¢¸÷¸öÄ¿Â¼ºÍÎÄ¼ş¡£ÁíÒ»ÀàÊÇÍ¨¹ıproxy_cache¿ªÆô£¬ÕâÖÖ·½Ê½´æ´¢µÄÎÄ¼ş²»ÊÇ°´ÕÕurlÂ·¾¶À´×éÖ¯µÄ£¬
+     ¶øÊÇÊ¹ÓÃÒ»Ğ©ÌØÊâ·½Ê½À´¹ÜÀíµÄ(ÕâÀï³ÆÎª×Ô¶¨Òå·½Ê½)£¬×Ô¶¨Òå·½Ê½¾ÍÊÇÎÒÃÇÒªÖØµã·ÖÎöµÄ¡£ÄÇÃ´ÕâÁ½ÖÖ·½Ê½¸÷ÓĞÊ²Ã´ÓÅÊÆÄØ£¿
+
+
+    °´urlÂ·¾¶´æ´¢ÎÄ¼şµÄ·½Ê½£¬³ÌĞò´¦ÀíÆğÀ´±È½Ï¼òµ¥£¬µ«ÊÇĞÔÄÜ²»ĞĞ¡£Ê×ÏÈÓĞµÄurl¾Ş³¤£¬ÎÒÃÇÒªÔÚ±¾µØÎÄ¼şÏµÍ³ÉÏ½¨Á¢Èç´ËÉîµÄÄ¿Â¼£¬ÄÇÃ´ÎÄ¼şµÄ´ò¿ª
+    ºÍ²éÕÒ¶¼ºÜ»áºÜÂı(»ØÏëkernelÖĞÍ¨¹ıÂ·¾¶Ãû²éÕÒinodeµÄ¹ı³Ì°É)¡£Èç¹ûÊ¹ÓÃ×Ô¶¨Òå·½Ê½À´´¦ÀíÄ£Ê½£¬¾¡¹ÜÒ²Àë²»¿ªÎÄ¼şºÍÂ·¾¶£¬µ«ÊÇËü²»»áÒòurl³¤¶È
+    ¶ø²úÉú¸´ÔÓĞÔÔö¼ÓºÍĞÔÄÜµÄ½µµÍ¡£´ÓÄ³ÖÖÒâÒåÉÏËµÕâÊÇÒ»ÖÖÓÃ»§Ì¬ÎÄ¼şÏµÍ³£¬×îµäĞÍµÄÓ¦¸ÃËãÊÇsquidÖĞµÄCFS¡£nginxÊ¹ÓÃµÄ·½Ê½Ïà¶Ô¼òµ¥£¬Ö÷ÒªÒÀ¿¿
+    urlµÄmd5ÖµÀ´¹ÜÀí
+     */
+
+/*
 Óï·¨£ºfastcgi_cache zone|off; 
 Ä¬ÈÏÖµ£ºoff 
 Ê¹ÓÃ×Ö¶Î£ºhttp, server, location 
 Îª»º´æÊµ¼ÊÊ¹ÓÃµÄ¹²ÏíÄÚ´æÖ¸¶¨Ò»¸öÇøÓò£¬ÏàÍ¬µÄÇøÓò¿ÉÒÔÓÃÔÚ²»Í¬µÄµØ·½¡£
-*/
+*/   //fastcgi_storeºÍfastcgi_cacheÖ»ÄÜÅäÖÃÒ»¸ö
+//xxx_cache(proxy_cache fastcgi_cache) abc±ØĞëxxx_cache_path(proxy_cache_path fastcgi_cache_path) xxx keys_zone=abc:10m;Ò»Æğ£¬·ñÔòÔÚngx_http_proxy_merge_loc_conf»áÊ§°Ü£¬ÒòÎªÃ»ÓĞÎª¸Ãabc´´½¨ngx_http_file_cache_t
+//fastcgi_cache Ö¸ÁîÖ¸¶¨ÁËÔÚµ±Ç°×÷ÓÃÓòÖĞÊ¹ÓÃÄÄ¸ö»º´æÎ¬»¤»º´æÌõÄ¿£¬²ÎÊı¶ÔÓ¦µÄ»º´æ±ØĞëÊÂÏÈÓÉ fastcgi_cache_path Ö¸Áî¶¨Òå¡£ 
+//»ñÈ¡¸Ã½á¹¹ngx_http_upstream_cache_get£¬Êµ¼ÊÉÏÊÇÍ¨¹ıproxy_cache xxx»òÕßfastcgi_cache xxxÀ´»ñÈ¡¹²ÏíÄÚ´æ¿éÃûµÄ£¬Òò´Ë±ØĞëÉèÖÃproxy_cache»òÕßfastcgi_cache
+
     { ngx_string("fastcgi_cache"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_http_fastcgi_cache,
@@ -541,7 +568,7 @@ fastcgi_store_access  group:rw  all:r;
 ÉèÖÃ»º´æµÄ¹Ø¼ü×Ö£¬Èç£º
 
 fastcgi_cache_key localhost:9000$request_uri;
-*/
+*/ //proxyºÍfastcgiÇø±ğ:Default:  proxy_cache_key $scheme$proxy_host$request_uri; fastcgi_cache_keyÃ»ÓĞÄ¬ÈÏÖµ
     { ngx_string("fastcgi_cache_key"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_http_fastcgi_cache_key,
@@ -564,7 +591,18 @@ fastcgi_cache_path  /data/nginx/cache  levels=1:2   keys_zone=one:10m;ÄÇÃ´Êı¾İÎÄ
 ÔÚfastcgi_temp_pathºÍfastcgi_cache_pathµÄÖµÖĞÊ¹ÓÃÏàÍ¬µÄÎÄ¼şÏµÍ³¡£
 ÁíÍâ£¬ËùÓĞ»î¶¯µÄ¹Ø¼ü×Ö¼°Êı¾İÏà¹ØĞÅÏ¢¶¼´æ´¢ÓÚ¹²ÏíÄÚ´æ³Ø£¬Õâ¸öÖµµÄÃû³ÆºÍ´óĞ¡Í¨¹ıkey_zone²ÎÊıÖ¸¶¨£¬inactive²ÎÊıÖ¸¶¨ÁËÄÚ´æÖĞµÄÊı¾İ´æ´¢Ê±¼ä£¬Ä¬ÈÏÎª10·ÖÖÓ¡£
 max_size²ÎÊıÉèÖÃ»º´æµÄ×î´óÖµ£¬Ò»¸öÖ¸¶¨µÄcache manager½ø³Ì½«ÖÜÆÚĞÔµÄÉ¾³ı¾ÉµÄ»º´æÊı¾İ¡£
-*/
+*/ //XXX_cache»º´æÊÇÏÈĞ´ÔÚxxx_temp_pathÔÙÒÆµ½xxx_cache_path£¬ËùÒÔÕâÁ½¸öÄ¿Â¼×îºÃÔÚÍ¬Ò»¸ö·ÖÇø
+//xxx_cache(proxy_cache fastcgi_cache) abc±ØĞëxxx_cache_path(proxy_cache_path fastcgi_cache_path) xxx keys_zone=abc:10m;Ò»Æğ£¬·ñÔòÔÚngx_http_proxy_merge_loc_conf»áÊ§°Ü£¬ÒòÎªÃ»ÓĞÎª¸Ãabc´´½¨ngx_http_file_cache_t
+//fastcgi_cache Ö¸ÁîÖ¸¶¨ÁËÔÚµ±Ç°×÷ÓÃÓòÖĞÊ¹ÓÃÄÄ¸ö»º´æÎ¬»¤»º´æÌõÄ¿£¬²ÎÊı¶ÔÓ¦µÄ»º´æ±ØĞëÊÂÏÈÓÉ fastcgi_cache_path Ö¸Áî¶¨Òå¡£ 
+//»ñÈ¡¸Ã½á¹¹ngx_http_upstream_cache_get£¬Êµ¼ÊÉÏÊÇÍ¨¹ıproxy_cache xxx»òÕßfastcgi_cache xxxÀ´»ñÈ¡¹²ÏíÄÚ´æ¿éÃûµÄ£¬Òò´Ë±ØĞëÉèÖÃproxy_cache»òÕßfastcgi_cache
+
+/*
+·Ç»º´æ·½Ê½(p->cacheable=0)p->temp_file->path = u->conf->temp_path; ÓÉngx_http_fastcgi_temp_pathÖ¸¶¨Â·¾¶
+»º´æ·½Ê½(p->cacheable=1) p->temp_file->path = r->cache->file_cache->temp_path;¼ûproxy_cache_path»òÕßfastcgi_cache_path use_temp_path=Ö¸¶¨Â·¾¶ 
+¼ûngx_http_upstream_send_response 
+
+µ±Ç°fastcgi_buffers ºÍfastcgi_buffer_sizeÅäÖÃµÄ¿Õ¼ä¶¼ÒÑ¾­ÓÃÍêÁË£¬ÔòĞèÒª°ÑÊı¾İĞ´µÀÁÙÊ±ÎÄ¼şÖĞÈ¥£¬²Î¿¼ngx_event_pipe_read_upstream
+*/  //´Óngx_http_file_cache_update¿ÉÒÔ¿´³ö£¬ºó¶ËÊı¾İÏÈĞ´µ½ÁÙÊ±ÎÄ¼şºó£¬ÔÚĞ´Èëxxx_cache_pathÖĞ£¬¼ûngx_http_file_cache_update
     { ngx_string("fastcgi_cache_path"),
       NGX_HTTP_MAIN_CONF|NGX_CONF_2MORE,
       ngx_http_file_cache_set_slot,
@@ -572,6 +610,8 @@ max_size²ÎÊıÉèÖÃ»º´æµÄ×î´óÖµ£¬Ò»¸öÖ¸¶¨µÄcache manager½ø³Ì½«ÖÜÆÚĞÔµÄÉ¾³ı¾ÉµÄ»º´æÊ
       offsetof(ngx_http_fastcgi_main_conf_t, caches),
       &ngx_http_fastcgi_module },
 
+    //XXX_cache_bypass  xx1 xx2ÉèÖÃµÄxx2²»Îª¿Õ»òÕß²»Îª0£¬Ôò²»»á´Ó»º´æÖĞÈ¡£¬¶øÊÇÖ±½Ó³åºó¶Ë¶ÁÈ¡  µ«ÊÇÕâĞ©ÇëÇóµÄºó¶ËÏìÓ¦Êı¾İÒÀÈ»¿ÉÒÔ±» upstream Ä£¿é»º´æ¡£ 
+    //XXX_no_cache  xx1 xx2ÉèÖÃµÄxx2²»Îª¿Õ»òÕß²»Îª0£¬Ôòºó¶Ë»ØÀ´µÄÊı¾İ²»»á±»»º´æ
     { ngx_string("fastcgi_cache_bypass"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_1MORE,
       ngx_http_set_predicate_slot,
@@ -589,6 +629,8 @@ fastcgi_no_cache $cookie_nocache  $arg_nocache$arg_comment;
 fastcgi_no_cache $http_pragma     $http_authorization;Èç¹ûÎª¿Õ×Ö·û´®»òÕßµÈÓÚ0£¬±í´ïÊ½µÄÖµµÈÓÚfalse£¬ÀıÈç£¬ÔÚÉÏÊöÀı×ÓÖĞ£¬Èç¹û
 ÔÚÇëÇóÖĞÉèÖÃÁËcookie "nocache"£¬»º´æ½«±»ÈÆ¹ı¡£
 */
+    //XXX_cache_bypass  xx1 xx2ÉèÖÃµÄxx2²»Îª¿Õ»òÕß²»Îª0£¬Ôò²»»á´Ó»º´æÖĞÈ¡£¬¶øÊÇÖ±½Ó³åºó¶Ë¶ÁÈ¡
+    //XXX_no_cache  xx1 xx2ÉèÖÃµÄxx2²»Îª¿Õ»òÕß²»Îª0£¬Ôòºó¶Ë»ØÀ´µÄÊı¾İ²»»á±»»º´æ
     { ngx_string("fastcgi_no_cache"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_1MORE,
       ngx_http_set_predicate_slot,
@@ -651,6 +693,12 @@ fastcgi_cache_methods  POST;
       offsetof(ngx_http_fastcgi_loc_conf_t, upstream.cache_methods),
       &ngx_http_upstream_cache_method_mask },
 
+/*
+Õâ¸öÖ÷Òª½â¾öÒ»¸öÎÊÌâ:
+¼ÙÉèÏÖÔÚÓÖÁ½¸ö¿Í»§¶Ë£¬Ò»¸ö¿Í»§¶ËÕıÔÚ»ñÈ¡ºó¶ËÊı¾İ£¬²¢ÇÒºó¶Ë·µ»ØÁËÒ»²¿·Ö£¬Ôònginx»á»º´æÕâÒ»²¿·Ö£¬²¢ÇÒµÈ´ıËùÓĞºó¶ËÊı¾İ·µ»Ø¼ÌĞø»º´æ¡£
+µ«ÊÇÔÚ»º´æµÄ¹ı³ÌÖĞÈç¹û¿Í»§¶Ë2Ò³À´Ïëºó¶ËÈ¥Í¬ÑùµÄÊı¾İuriµÈ¶¼Ò»Ñù£¬Ôò»áÈ¥µ½¿Í»§¶Ë»º´æÒ»°ëµÄÊı¾İ£¬ÕâÊ±ºò¾Í¿ÉÒÔÍ¨¹ı¸ÃÅäÖÃÀ´½â¾öÕâ¸öÎÊÌâ£¬
+Ò²¾ÍÊÇ¿Í»§¶Ë1»¹Ã»»º´æÍêÈ«²¿Êı¾İµÄ¹ı³ÌÖĞ¿Í»§¶Ë2Ö»ÓĞµÈ¿Í»§¶Ë1»ñÈ¡ÍêÈ«²¿ºó¶ËÊı¾İ£¬»òÕß»ñÈ¡µ½proxy_cache_lock_timeout³¬Ê±£¬Ôò¿Í»§¶Ë2Ö»ÓĞ´Óºó¶Ë»ñÈ¡Êı¾İ
+*/
     { ngx_string("fastcgi_cache_lock"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
       ngx_conf_set_flag_slot,
@@ -680,21 +728,31 @@ fastcgi_cache_methods  POST;
       NULL },
 
 #endif
-
-    { ngx_string("fastcgi_temp_path"),
+        /*
+    Ä¬ÈÏÇé¿öÏÂp->temp_file->path = u->conf->temp_path; Ò²¾ÍÊÇÓÉngx_http_fastcgi_temp_pathÖ¸¶¨Â·¾¶£¬µ«ÊÇÈç¹ûÊÇ»º´æ·½Ê½(p->cacheable=1)²¢ÇÒÅäÖÃ
+    proxy_cache_path(fastcgi_cache_path) /a/bµÄÊ±ºò´øÓĞuse_temp_path=off(±íÊ¾²»Ê¹ÓÃngx_http_fastcgi_temp_pathÅäÖÃµÄpath)£¬
+    Ôòp->temp_file->path = r->cache->file_cache->temp_path; Ò²¾ÍÊÇÁÙÊ±ÎÄ¼ş/a/b/temp¡£use_temp_path=off±íÊ¾²»Ê¹ÓÃngx_http_fastcgi_temp_path
+    ÅäÖÃµÄÂ·¾¶£¬¶øÊ¹ÓÃÖ¸¶¨µÄÁÙÊ±Â·¾¶/a/b/temp   ¼ûngx_http_upstream_send_response 
+    */
+    ////XXX_cache»º´æÊÇÏÈĞ´ÔÚxxx_temp_pathÔÙÒÆµ½xxx_cache_path£¬ËùÒÔÕâÁ½¸öÄ¿Â¼×îºÃÔÚÍ¬Ò»¸ö·ÖÇø
+    { ngx_string("fastcgi_temp_path"), //´Óngx_http_file_cache_update¿ÉÒÔ¿´³ö£¬ºó¶ËÊı¾İÏÈĞ´µ½ÁÙÊ±ÎÄ¼şºó£¬ÔÚĞ´Èëxxx_cache_pathÖĞ£¬¼ûngx_http_file_cache_update
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1234,
       ngx_conf_set_path_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_fastcgi_loc_conf_t, upstream.temp_path),
       NULL },
 
+/*
+ÔÚbuffering±êÖ¾Î»Îª1Ê±£¬Èç¹ûÉÏÓÎËÙ¶È¿ìÓÚÏÂÓÎËÙ¶È£¬½«ÓĞ¿ÉÄÜ°ÑÀ´×ÔÉÏÓÎµÄÏìÓ¦´æ´¢µ½ÁÙÊ±ÎÄ¼şÖĞ£¬¶ømax_temp_file_sizeÖ¸¶¨ÁËÁÙÊ±ÎÄ¼şµÄ
+×î´ó³¤¶È¡£Êµ¼ÊÉÏ£¬Ëü½«ÏŞÖÆngx_event_pipe_t½á¹¹ÌåÖĞµÄtemp_file
+*/
     { ngx_string("fastcgi_max_temp_file_size"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_size_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_fastcgi_loc_conf_t, upstream.max_temp_file_size_conf),
       NULL },
-
+//±íÊ¾½«»º³åÇøÖĞµÄÏìÓ¦Ğ´ÈëÁÙÊ±ÎÄ¼şÊ±Ò»´ÎĞ´Èë×Ö·ûÁ÷µÄ×î´ó³¤¶È
     { ngx_string("fastcgi_temp_file_write_size"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_size_slot,
@@ -784,6 +842,13 @@ fastcgi_param  REDIRECT_STATUS  200;
 Óï·¨£ºfastcgi_ignore_headers name [name...] 
 Ê¹ÓÃ×Ö¶Î£ºhttp, server, location 
 Õâ¸öÖ¸Áî½ûÖ¹´¦ÀíÒ»Ğ©FastCGI·şÎñÆ÷Ó¦´ğµÄÍ·²¿×Ö¶Î£¬±ÈÈç¿ÉÒÔÖ¸¶¨Ïñ"X-Accel-Redirect", "X-Accel-Expires", "Expires"»ò"Cache-Control"µÈ¡£
+If not disabled, processing of these header fields has the following effect:
+
+¡°X-Accel-Expires¡±, ¡°Expires¡±, ¡°Cache-Control¡±, ¡°Set-Cookie¡±, and ¡°Vary¡± set the parameters of response caching;
+¡°X-Accel-Redirect¡± performs an internal redirect to the specified URI;
+¡°X-Accel-Limit-Rate¡± sets the rate limit for transmission of a response to a client;
+¡°X-Accel-Buffering¡± enables or disables buffering of a response;
+¡°X-Accel-Charset¡± sets the desired charset of a response.
 */
     { ngx_string("fastcgi_ignore_headers"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_1MORE,
@@ -986,8 +1051,8 @@ ngx_http_fastcgi_handler(ngx_http_request_t *r)
     r->state = 0;
 
     //ÏÂÃæµÄÊı¾İ½á¹¹ÊÇ¸øevent_pipeÓÃµÄ£¬ÓÃÀ´¶ÔFCGIµÄÊı¾İ½øĞĞbuffering´¦ÀíµÄ¡£
-    u->buffering = flcf->upstream.buffering;
-
+    u->buffering = flcf->upstream.buffering; //Ä¬ÈÏÎª1
+    
     u->pipe = ngx_pcalloc(r->pool, sizeof(ngx_event_pipe_t));
     if (u->pipe == NULL) {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
@@ -1069,7 +1134,8 @@ ngx_http_fastcgi_eval(ngx_http_request_t *r, ngx_http_fastcgi_loc_conf_t *flcf)
 
 #if (NGX_HTTP_CACHE)
 
-static ngx_int_t
+//½âÎöfastcgi_cache_key xxx ²ÎÊıÖµµ½r->cache->keys
+static ngx_int_t //ngx_http_upstream_cacheÖĞÖ´ĞĞ
 ngx_http_fastcgi_create_key(ngx_http_request_t *r)
 {//¸ù¾İÖ®Ç°ÔÚ½âÎöscgi_cache_keyÖ¸ÁîµÄÊ±ºò¼ÆËã³öÀ´µÄ¸´ÔÓ±í´ïÊ½½á¹¹£¬´æ·ÅÔÚflcf->cache_keyÖĞµÄ£¬¼ÆËã³öcache_key¡£
     ngx_str_t                    *key;
@@ -1082,7 +1148,7 @@ ngx_http_fastcgi_create_key(ngx_http_request_t *r)
 
     flcf = ngx_http_get_module_loc_conf(r, ngx_http_fastcgi_module);
 
-    //´Óflcf->cache_key(fastcgi_cache_keyÅäÖÃÏî)ÖĞ½âÎö³ö¶ÔÓ¦codeº¯ÊıµÄÏà¹Ø±äÁ¿×Ö·û´®£¬´æµ½keyÖĞ
+    //´Óflcf->cache_key(fastcgi_cache_keyÅäÖÃÏî)ÖĞ½âÎö³ö¶ÔÓ¦codeº¯ÊıµÄÏà¹Ø±äÁ¿×Ö·û´®£¬´æµ½ r->cache->keys
     if (ngx_http_complex_value(r, &flcf->cache_key, key) != NGX_OK) {
         return NGX_ERROR;
     }
@@ -2004,6 +2070,15 @@ out:
     return rc;
 }
 
+/*
+ºó¶Ë·¢ËÍ¹ıÀ´µÄ°üÌå¸ñÊ½
+1. Í·²¿ĞĞ°üÌå+ÄÚÈİ°üÌåÀàĞÍfastcgi¸ñÊ½:8×Ö½ÚfastcgiÍ·²¿ĞĞ+ Êı¾İ(Í·²¿ĞĞĞÅÏ¢+ ¿ÕĞĞ + Êµ¼ÊĞèÒª·¢ËÍµÄ°üÌåÄÚÈİ) + Ìî³ä×Ö¶Î  
+..... ÖĞ¼ä¿ÉÄÜºó¶Ë°üÌå±È½Ï´ó£¬ÕâÀï»á°üÀ¨¶à¸öNGX_HTTP_FASTCGI_STDOUTÀàĞÍfastcgi±êÊ¶
+2. NGX_HTTP_FASTCGI_END_REQUESTÀàĞÍfastcgi¸ñÊ½:¾ÍÖ»ÓĞ8×Ö½ÚÍ·²¿
+
+×¢Òâ:ÕâÁ½²¿·ÖÄÚÈİÓĞ¿ÉÄÜÔÚÒ»´Îrecv¾ÍÈ«²¿¶ÁÍê£¬Ò²ÓĞ¿ÉÄÜĞèÒª¶ÁÈ¡¶à´Î
+²Î¿¼<ÉîÈëÆÊÎönginx> P270
+*/
 //½âÎö´Óºó¶Ë·şÎñÆ÷¶ÁÈ¡µ½µÄfastcgiÍ·²¿ĞÅÏ¢   //ÔÚngx_http_upstream_process_headerÖĞÖ´ĞĞ¸Ãº¯Êı
 static ngx_int_t //¶ÁÈ¡fastcgiÇëÇóĞĞÍ·²¿ÓÃngx_http_fastcgi_process_header ¶ÁÈ¡fastcgi°üÌåÓÃngx_http_fastcgi_input_filter
 ngx_http_fastcgi_process_header(ngx_http_request_t *r)
@@ -2033,7 +2108,7 @@ ngx_http_fastcgi_process_header(ngx_http_request_t *r)
 
     u = r->upstream;
 
-    for ( ;; ) {
+    for ( ;; ) { //ÆôÓÃcacheµÄÇé¿öÏÂ£¬×¢ÒâÕâÊ±ºòbufµÄÄÚÈİÊµ¼ÊÉÏÒÑ¾­ÔÚngx_http_upstream_process_headerÖĞ³öÈ¥ÁËÎª»º´æÈçÎÄ¼şÖĞÔ¤ÁôµÄÍ·²¿ÄÚ´æ
 
         if (f->state < ngx_http_fastcgi_st_data) {//ÉÏ´ÎµÄ×´Ì¬¶¼Ã»ÓĞ¶ÁÍêÒ»¸öÍ·²¿,ÏÈ½âÎöÕâĞ©Í·²¿¿´¿´ÊÇ²»ÊÇÓĞÎÊÌâ¡£
 
@@ -2072,14 +2147,15 @@ ngx_http_fastcgi_process_header(ngx_http_request_t *r)
             }
         }
 
-        if (f->state == ngx_http_fastcgi_st_padding) { 
-        //Êµ¼ÊÉÏÈç¹ûÓĞpadding£¬Ö»ÓĞÔÚºóÃæµÄSTDOUTÀàĞÍfastcgi Í·²¿ĞĞ½âÎöÍê±Ïºó(Ò²¾ÍÊÇÓöµ½Ò»¸ö¿ÕĞĞ)£¬²Å»áÖ´ĞĞµ½ÕâÀï£¬Èç¹ûÓĞpadding£¬ÕâÀïÊÇ×îºóÖ´ĞĞµÄµØ·½
+        if (f->state == ngx_http_fastcgi_st_padding) { //Õı³£Çé¿öÏÂ×ßµ½ÕâÀï£¬±íÊ¾Í·²¿ĞĞfastcgi±êÊ¶ÖĞÃ»ÓĞ½âÎöµ½ÕæÕıµÄ°üÌå²¿·Ö£¬Òò´ËĞèÒªÔÙ´Î¶ÁÈ¡½âÎö°üÌå
+        //¼û×îºóÃæµÄif (f->length == 0) { //Í·²¿ĞĞ½âÎöÍê±Ïºó£¬ÓÉÓÚÃ»ÓĞ°üÌåÊı¾İ£¬µ¥¿ÉÄÜÓĞÌî³ä×Ö¶Î
+        //Êµ¼ÊÉÏÈç¹ûÓĞpadding£¬Ö»ÓĞÔÚºóÃæµÄSTDOUTÀàĞÍfastcgi Í·²¿ĞĞ½âÎöÍê±Ïºó(Ò²¾ÍÊÇÓöµ½Ò»¸ö¿ÕĞĞ)£¬²¢ÇÒÃ»ÓĞ°üÌå£¬Ò²¾ÍÊÇf=>length=0£¬²Å»áÖ´ĞĞµ½ÕâÀï£¬Èç¹ûÓĞpadding£¬ÕâÀïÊÇ×îºóÖ´ĞĞµÄµØ·½
 
             if (u->buffer.pos + f->padding < u->buffer.last) {  //ËµÃ÷bufferÖĞµÄÄÚÈİÒ²°üÀ¨padding£¬ÔòÖ±½ÓÌø¹ıpadding×Ö¶Î
                 f->state = ngx_http_fastcgi_st_version;
                 u->buffer.pos += f->padding; //
 
-                continue;
+                continue;  //ËµÃ÷Õâ¸öfastcgi±êÊ¶ĞÅÏ¢ºóÃæ»¹ÓĞÆäËûfastcgi±êÊ¶ĞÅÏ¢
             }
 
             if (u->buffer.pos + f->padding == u->buffer.last) {
@@ -2107,7 +2183,7 @@ ngx_http_fastcgi_process_header(ngx_http_request_t *r)
                 msg = u->buffer.pos; //msgÖ¸ÏòÊı¾İ²¿·Öpos´¦
 
                 if (u->buffer.pos + f->length <= u->buffer.last) { //°üÌåÖĞ°üº¬ÍêÕûµÄdata²¿·Ö
-                    u->buffer.pos += f->length; //Ö±½ÓÌø¹ıÒ»Ìõerr fastcgiĞÅÏ¢µÄÊı¾İ²»·û
+                    u->buffer.pos += f->length; //Ö±½ÓÌø¹ıÒ»ÌõpaddingÈ¥´¦Àí£¬°Ñ°üÌåºóÃæµÄÌî³ä×Ö¶ÎÈ¥µô
                     f->length = 0;
                     f->state = ngx_http_fastcgi_st_padding;
 
@@ -2116,7 +2192,7 @@ ngx_http_fastcgi_process_header(ngx_http_request_t *r)
                     u->buffer.pos = u->buffer.last;
                 }
 
-                for (p = u->buffer.pos - 1; msg < p; p--) {
+                for (p = u->buffer.pos - 1; msg < p; p--) {//´Ó´íÎóĞÅÏ¢µÄºóÃæÍùÇ°ÃæÉ¨£¬Ö±µ½ÕÒµ½Ò»¸ö²¿Î»\r,\n . ¿Õ¸ñ µÄ×Ö·ûÎªÖ¹£¬Ò²¾ÍÊÇ¹ıÂËºóÃæµÄÕâĞ©×Ö·û°É¡£
                 //ÔÚ´íÎóSTDERRµÄÊı¾İ²¿·Ö´ÓÎ²²¿ÏòÇ°²éÕÒ \r \n . ¿Õ¸ñ×Ö·ûµÄÎ»ÖÃ£¬ÀıÈçabc.dd\rkkk£¬ÔòpÖ¸Ïò\r×Ö·û´®Î»ÖÃ
                     if (*p != LF && *p != CR && *p != '.' && *p != ' ') {
                         break;
@@ -2416,9 +2492,9 @@ ngx_http_fastcgi_process_header(ngx_http_request_t *r)
             u->buffer.last = last;
         }
 
-        f->length -= u->buffer.pos - start; //°ÑÉÏÃæµÄÍ·²¿ĞĞ°üÌå³¤¶ÈÈ¥µô£¬Ê£ÏÂµÄÓ¦¸Ã¾ÍÊÇpaddingÌî³äÁË
+        f->length -= u->buffer.pos - start; //°ÑÉÏÃæµÄÍ·²¿ĞĞ°üÌå³¤¶ÈÈ¥µô£¬Ê£ÏÂµÄÓ¦¸Ã¾ÍÊÇ °üÌåÊı¾İ + padding Ìî³äÁË
 
-        if (f->length == 0) {
+        if (f->length == 0) { //Í·²¿ĞĞ½âÎöÍê±Ïºó£¬ÓÉÓÚÃ»ÓĞ°üÌåÊı¾İ£¬µ¥¿ÉÄÜÓĞÌî³ä×Ö¶Î
             f->state = ngx_http_fastcgi_st_padding;
         }
 
@@ -2475,9 +2551,19 @@ ngx_http_fastcgi_input_filter_init(void *data)
     return NGX_OK;
 }
 
+/*
+    buffering·½Ê½£¬¶ÁÊı¾İÇ°Ê×ÏÈ¿ª±ÙÒ»¿é´ó¿Õ¼ä£¬ÔÚngx_event_pipe_read_upstream->ngx_readv_chainÖĞ¿ª±ÙÒ»¸öngx_buf_t(buf1)½á¹¹Ö¸Ïò¶Áµ½µÄÊı¾İ£¬
+È»ºóÔÚ¶ÁÈ¡Êı¾İµ½inÁ´±íµÄÊ±ºò£¬ÔÚngx_http_fastcgi_input_filter»áÖØĞÂ´´½¨Ò»¸öngx_buf_t(buf1)£¬ÕâÀïÃæÉèÖÃbuf1->shadow=buf2->shadow
+buf2->shadow=buf1->shadow¡£Í¬Ê±°Ñbuf2Ìí¼Óµ½p->inÖĞ¡£µ±Í¨¹ıngx_http_write_filter·¢ËÍÊı¾İµÄÊ±ºò»á°Ñp->inÖĞµÄÊı¾İÌí¼Óµ½p->out£¬È»ºó·¢ËÍ£¬
+Èç¹ûÒ»´ÎÃ»ÓĞ·¢ËÍÍê³É£¬ÔòÊôÓÚµÄÊı¾İ»áÁôÔÚp->outÖĞ¡£µ±Êı¾İÍ¨¹ıp->output_filter(p->output_ctx, out)·¢ËÍºó£¬buf2»á±»Ìí¼Óµ½p->freeÖĞ£¬
+buf1»á±»Ìí¼Óµ½free_raw_bufsÖĞ£¬¼ûngx_event_pipe_write_to_downstream
+*/
+
+//buffering·½Ê½£¬Îªngx_http_fastcgi_input_filter  ·Çbuffering·½Ê½Îªngx_http_fastcgi_non_buffered_filter    
 //¶ÁÈ¡fastcgiÇëÇóĞĞÍ·²¿ÓÃngx_http_fastcgi_process_header ¶ÁÈ¡fastcgi°üÌåÓÃngx_http_fastcgi_input_filter
-static ngx_int_t
-ngx_http_fastcgi_input_filter(ngx_event_pipe_t *p, ngx_buf_t *buf)
+static ngx_int_t //´Óngx_event_pipe_read_upstreamµôÓÃ¸Ãº¯Êı
+ngx_http_fastcgi_input_filter(ngx_event_pipe_t *p, ngx_buf_t *buf) 
+//Ö÷Òª¹¦ÄÜ¾ÍÊÇ½âÎöfastcgi¸ñÊ½°üÌå£¬½âÎö³ö°üÌåºó£¬°Ñ¶ÔÓ¦µÄbuf¼ÓÈëµ½p->in
 {//µ±½âÎöÍê´øÓĞ\r\n\r\nµÄÍ·²¿µÄFCGI°üºó£¬ºóÃæµÄ°ü½âÎö¶¼ÓÉÕâ¸öº¯Êı½øĞĞ´¦Àí¡£
     u_char                       *m, *msg;
     ngx_int_t                     rc;
@@ -2491,8 +2577,9 @@ ngx_http_fastcgi_input_filter(ngx_event_pipe_t *p, ngx_buf_t *buf)
         return NGX_OK;
     }
 
+    //ngx_http_get_module_ctx´æ´¢ÔËĞĞ¹ı³ÌÖĞµÄ¸÷ÖÖ×´Ì¬(ÀıÈç¶ÁÈ¡ºó¶ËÊı¾İ£¬¿ÉÄÜĞèÒª¶à´Î¶ÁÈ¡)  ngx_http_get_module_loc_conf»ñÈ¡¸ÃÄ£¿éÔÚlocal{}ÖĞµÄÅäÖÃĞÅÏ¢
     r = p->input_ctx;
-    f = ngx_http_get_module_ctx(r, ngx_http_fastcgi_module);
+    f = ngx_http_get_module_ctx(r, ngx_http_fastcgi_module); //»ñÈ¡fastcgiÄ£¿é½âÎöºó¶ËÊı¾İ¹ı³ÌÖĞµÄ¸÷ÖÖ×´Ì¬ĞÅÏ¢£¬ÒòÎª¿ÉÄÜepoll´¥·¢ºÃ¼¸´Î¶Áºó¶ËÊı¾İ
     flcf = ngx_http_get_module_loc_conf(r, ngx_http_fastcgi_module);
 
     b = NULL;
@@ -2502,20 +2589,20 @@ ngx_http_fastcgi_input_filter(ngx_event_pipe_t *p, ngx_buf_t *buf)
     f->last = buf->last;
 
     for ( ;; ) {
-        if (f->state < ngx_http_fastcgi_st_data) {
+        if (f->state < ngx_http_fastcgi_st_data) {//Ğ¡ÓÚngx_http_fastcgi_st_data×´Ì¬µÄ±È½ÏºÃ´¦Àí£¬¶Á£¬½âÎö°É¡£ºóÃæ¾ÍÖ»ÓĞdata,padding 2¸ö×´Ì¬ÁË¡£
 
-            rc = ngx_http_fastcgi_process_record(r, f);
+            rc = ngx_http_fastcgi_process_record(r, f);//ÏÂÃæ¼òµ¥´¦ÀíÒ»ÏÂFCGIµÄÍ·²¿£¬½«ĞÅÏ¢¸³Öµµ½fµÄtype,length,padding³ÉÔ±ÉÏ¡£
 
             if (rc == NGX_AGAIN) {
-                break;
+                break;//Ã»Êı¾İÁË£¬µÈ´ı¶ÁÈ¡
             }
 
             if (rc == NGX_ERROR) {
                 return NGX_ERROR;
             }
 
-            if (f->type == NGX_HTTP_FASTCGI_STDOUT && f->length == 0) {
-                f->state = ngx_http_fastcgi_st_padding;
+            if (f->type == NGX_HTTP_FASTCGI_STDOUT && f->length == 0) {//Èç¹ûĞ­ÒéÍ·±íÊ¾ÊÇ±ê×¼Êä³ö£¬²¢ÇÒ³¤¶ÈÎª0£¬ÄÇ¾ÍÊÇËµÃ÷Ã»ÓĞÄÚÈİ
+                f->state = ngx_http_fastcgi_st_padding; //ÓÖ´ÓÏÂÒ»¸ö°üÍ·¿ªÊ¼£¬Ò²¾ÍÊÇ°æ±¾ºÅ¡£
 
                 if (!flcf->keep_conn) {
                     p->upstream_done = 1;
@@ -2527,31 +2614,32 @@ ngx_http_fastcgi_input_filter(ngx_event_pipe_t *p, ngx_buf_t *buf)
                 continue;
             }
 
-            if (f->type == NGX_HTTP_FASTCGI_END_REQUEST) {
-
-                ngx_log_debug0(NGX_LOG_DEBUG_HTTP, p->log, 0,
-                               "http fastcgi sent end request");
+            if (f->type == NGX_HTTP_FASTCGI_END_REQUEST) {//FCGI·¢ËÍÁË¹Ø±ÕÁ¬½ÓµÄÇëÇó¡£
 
                 if (!flcf->keep_conn) {
                     p->upstream_done = 1;
                     break;
                 }
 
+                ngx_log_debug2(NGX_LOG_DEBUG_HTTP, p->log, 0,
+                               "http fastcgi sent end request, flcf->keep_conn:%d, p->upstream_done:%d", 
+                                flcf->keep_conn, p->upstream_done);
+                
                 continue;
             }
         }
 
 
-        if (f->state == ngx_http_fastcgi_st_padding) {
+        if (f->state == ngx_http_fastcgi_st_padding) { //ÏÂÃæÊÇ¶ÁÈ¡paddingµÄ½×¶Î£¬
 
             if (f->type == NGX_HTTP_FASTCGI_END_REQUEST) {
 
-                if (f->pos + f->padding < f->last) {
+                if (f->pos + f->padding < f->last) {//¶øÕıºÃµ±Ç°»º³åÇøºóÃæÓĞ×ã¹»µÄpadding³¤¶È£¬ÄÇ¾ÍÖ±½ÓÓÃËü£¬È»ºó±ê¼Çµ½ÏÂÒ»¸ö×´Ì¬£¬¼ÌĞø´¦Àí°É
                     p->upstream_done = 1;
                     break;
                 }
 
-                if (f->pos + f->padding == f->last) {
+                if (f->pos + f->padding == f->last) {//¸ÕºÃ½áÊø£¬ÄÇ¾ÍÍË³öÑ­»·£¬Íê³ÉÒ»¿éÊı¾İµÄ½âÎö¡£
                     p->upstream_done = 1;
                     r->upstream->keepalive = 1;
                     break;
@@ -2580,30 +2668,31 @@ ngx_http_fastcgi_input_filter(ngx_event_pipe_t *p, ngx_buf_t *buf)
             break;
         }
 
+        //µ½ÕâÀï£¬¾ÍÖ»ÓĞ¶ÁÈ¡Êı¾İ²¿·ÖÁË¡£
 
         /* f->state == ngx_http_fastcgi_st_data */
 
-        if (f->type == NGX_HTTP_FASTCGI_STDERR) {
+        if (f->type == NGX_HTTP_FASTCGI_STDERR) {//ÕâÊÇ±ê×¼´íÎóÊä³ö£¬nginx»áÔõÃ´´¦ÀíÄØ£¬´òÓ¡Ò»ÌõÈÕÖ¾¾ÍĞĞÁË¡£
 
-            if (f->length) {
+            if (f->length) {//´ú±íÊı¾İ³¤¶È
 
-                if (f->pos == f->last) {
+                if (f->pos == f->last) {//ºóÃæÃ»¶«Î÷ÁË£¬»¹ĞèÒªÏÂ´ÎÔÙ¶ÁÈ¡Ò»µãÊı¾İ²ÅÄÜ¼ÌĞøÁË
                     break;
                 }
 
                 msg = f->pos;
 
-                if (f->pos + f->length <= f->last) {
+                if (f->pos + f->length <= f->last) {//´íÎóĞÅÏ¢ÒÑ¾­È«²¿¶ÁÈ¡µ½ÁË£¬
                     f->pos += f->length;
                     f->length = 0;
-                    f->state = ngx_http_fastcgi_st_padding;
+                    f->state = ngx_http_fastcgi_st_padding;//ÏÂÒ»²½È¥´¦Àípadding
 
                 } else {
                     f->length -= f->last - f->pos;
                     f->pos = f->last;
                 }
 
-                for (m = f->pos - 1; msg < m; m--) {
+                for (m = f->pos - 1; msg < m; m--) {//´Ó´íÎóĞÅÏ¢µÄºóÃæÍùÇ°ÃæÉ¨£¬Ö±µ½ÕÒµ½Ò»¸ö²¿Î»\r,\n . ¿Õ¸ñ µÄ×Ö·ûÎªÖ¹£¬Ò²¾ÍÊÇ¹ıÂËºóÃæµÄÕâĞ©×Ö·û°É¡£
                     if (*m != LF && *m != CR && *m != '.' && *m != ' ') {
                         break;
                     }
@@ -2647,43 +2736,56 @@ ngx_http_fastcgi_input_filter(ngx_event_pipe_t *p, ngx_buf_t *buf)
         }
 
         b = cl->buf;
-
+        //ÓÃÕâ¸öĞÂµÄ»º´æÃèÊö½á¹¹£¬Ö¸ÏòbufÕâ¿éÄÚ´æÀïÃæµÄ±ê×¼Êä³öÊı¾İ²¿·Ö£¬×¢ÒâÕâÀï²¢Ã»ÓĞ¿½±´Êı¾İ£¬¶øÊÇÓÃbÖ¸ÏòÁËf->posÒ²¾ÍÊÇbufµÄÄ³¸öÊı¾İµØ·½¡£
         ngx_memzero(b, sizeof(ngx_buf_t));
 
-        b->pos = f->pos;
-        b->start = buf->start;
-        b->end = buf->end;
+        b->pos = f->pos; //´Óposµ½end  bÖĞµÄÖ¸ÕëºÍbufÖĞµÄÖ¸ÕëÖ¸ÏòÏàÍ¬µÄÄÚ´æ¿Õ¼ä
+        
+        b->start = buf->start; //b ¸úbuf¹²ÏíÒ»¿é¿Í»§¶Ë·¢ËÍ¹ıÀ´µÄÊı¾İ¡£Õâ¾ÍÊÇshadowµÄµØ·½£¬ ÀàËÆÓ°×Ó?
+        b->end = buf->end; //b ¸úbuf¹²ÏíÒ»¿é¿Í»§¶Ë·¢ËÍ¹ıÀ´µÄÊı¾İ¡£Õâ¾ÍÊÇshadowµÄµØ·½£¬ ÀàËÆÓ°×Ó?
         b->tag = p->tag;
         b->temporary = 1;
+        /* 
+        ÉèÖÃÎªĞèÒª»ØÊÕµÄ±êÖ¾£¬ÕâÑùÔÚ·¢ËÍÊı¾İÊ±£¬»á¿¼ÂÇ»ØÊÕÕâ¿éÄÚ´æµÄ¡£ÎªÊ²Ã´ÒªÉèÖÃÎª1ÄØ£¬ÄÇbufferÔÚÄÄÄØÔÚº¯Êı¿ªÊ¼´¦£¬
+        prev = &buf->shadow;ÏÂÃæ¾ÍÓÃbuf->shadowÖ¸ÏòÁËÕâ¿éĞÂ·ÖÅäµÄbÃèÊö½á¹¹£¬ÆäÊµÊı¾İÊÇ·Ö¿ªµÄ£¬Ö»ÊÇ2¸öÃèÊö½á¹¹Ö¸ÏòÍ¬Ò»¸öbuffer 
+        */
         b->recycled = 1;
 
-        *prev = b;
-        prev = &b->shadow;
+        //×¢Òâ:ÔÚºóÃæÒ²»áÈÃb->shadow = buf; Ò²¾ÍÊÇbÊÇbufµÄÓ°×Ó
+        *prev = b; //×¢ÒâÔÚ×îÇ°ÃæÉèÖÃÁË:prev = &buf->shadow; Ò²¾ÍÊÇbuf->shadow=b
+        /* 
+          ÕâÀïÓÃ×î¿ªÊ¼µÄbuf£¬Ò²¾ÍÊÇ¿Í»§¶Ë½ÓÊÕµ½Êı¾İµÄÄÇ¿éÊı¾İbufµÄshadow³ÉÔ±£¬ĞÎ³ÉÒ»¸öÁ´±í£¬ÀïÃæÃ¿¸öÔªËØ¶¼ÊÇFCGIµÄÒ»¸ö°üµÄdata²¿·ÖÊı¾İ¡£
+          */
+        prev = &b->shadow; //Õâ¸ö¸Ğ¾õÃ»ÓÃ????Ã»ÈÎºÎÒâÒå      
 
+        //ÏÂÃæ½«µ±Ç°·ÖÎöµÃµ½µÄFCGIÊı¾İdata²¿·Ö·ÅÈëp->inµÄÁ´±íÀïÃæ(¼ÓÈëµ½Á´±íÄ©Î²´¦)¡£
         if (p->in) {
             *p->last_in = cl;
         } else {
             p->in = cl;
         }
-        p->last_in = &cl->next;
+        p->last_in = &cl->next;//¼Ç×¡×îºóÒ»¿é
 
-
+        //Í¬Ñù£¬¿½±´Ò»ÏÂÊı¾İ¿éĞòºÅ¡£²»¹ıÕâÀï×¢Òâ£¬buf¿ÉÄÜ°üº¬ºÃ¼¸¸öFCGIĞ­ÒéÊı¾İ¿é£¬
+		//ÄÇ¾Í¿ÉÄÜ´æÔÚ¶à¸öinÀïÃæµÄb->numµÈÓÚÒ»¸öÏàÍ¬µÄbuf->num.
         /* STUB */ b->num = buf->num;
 
         ngx_log_debug2(NGX_LOG_DEBUG_EVENT, p->log, 0,
                        "input buf #%d %p", b->num, b->pos);
 
-        if (f->pos + f->length <= f->last) {
+        if (f->pos + f->length <= f->last) {//Èç¹ûÊı¾İ×ã¹»³¤£¬ÄÇĞŞ¸ÄÒ»ÏÂf->pos£¬ºÍf->state´Ó¶ø½øÈëÏÂÒ»¸öÊı¾İ°üµÄ´¦Àí¡£Êı¾İÒÑ¾­·ÅÈëÁËp->inÁËµÄ¡£
             f->state = ngx_http_fastcgi_st_padding;
             f->pos += f->length;
-            b->last = f->pos;
+            b->last = f->pos; //ÒÆ¶¯last
 
-            continue;
+            continue;//½ÓÊÕÕâ¿éÊı¾İ£¬¼ÌĞøÏÂÒ»¿é
         }
 
+        //µ½ÕâÀï£¬±íÊ¾µ±Ç°¶ÁÈ¡µ½µÄÊı¾İ»¹ÉÙÁË£¬²»¹»Ò»¸öÍêÕû°üµÄ£¬ÄÇ¾ÍÓÃÍêÕâÒ»µã£¬È»ºó·µ»Ø£¬
+		//µÈ´ıÏÂ´Îevent_pipeµÄÊ±ºòÔÙ´Îread_upstreamÀ´¶ÁÈ¡Ò»Ğ©Êı¾İÔÙ´¦ÀíÁË¡£
         f->length -= f->last - f->pos;
 
-        b->last = f->last;
+        b->last = f->last;//ÒÆ¶¯b->last
 
         break;
 
@@ -2706,18 +2808,26 @@ ngx_http_fastcgi_input_filter(ngx_event_pipe_t *p, ngx_buf_t *buf)
         }
     }
 
-    if (b) {
-        b->shadow = buf;
+    int upstream_done = p->upstream_done;
+    if(upstream_done)
+        ngx_log_debugall(p->log, 0, "fastcgi input filter upstream_done:%d", upstream_done);
+
+    if (b) { //¸Õ²ÅÒÑ¾­½âÎöµ½ÁËÊı¾İ²¿·Ö¡£
+        b->shadow = buf; //bufÊÇbµÄÓ°×Ó£¬Ç°ÃæÓĞÉèÖÃbuf->shadow=b
         b->last_shadow = 1;
 
         ngx_log_debug2(NGX_LOG_DEBUG_EVENT, p->log, 0,
-                       "input buf %p %z", b->pos, b->last - b->pos);
+                       "input buf %p %z", b->pos, b->last - b->pos); //ÕâÊ±ºòµÄb->last - b->posÒÑ¾­È¥µôÁË8×Ö½ÚÍ·²¿
 
         return NGX_OK;
     }
 
-    /* there is no data record in the buf, add it to free chain */
+    //×ßµ½ÕâÀïÒ»°ãÊÇÍâ²ãÓĞ·ÖÅäbuf¿Õ¼ä£¬µ«ÊÇÈ´·¢ÏÖbufÖĞÃ»ÓĞ¶ÁÈ¡µ½Êµ¼ÊµÄÍøÒ³°üÌåÄÚÈİ£¬Òò´ËĞèÒª°Ñ¸ÃbufÖ¸ÏòÄÚ´æ·ÅÈëfree_raw_bufsÁ´±íÖĞ£¬ÒÔ±¸ÔÚÏÂ´Î
+    //¶ÁÈ¡ºó¶Ë°üÌåµÄÊ±ºòÖ±½Ó´ÓÉÏÃæÈ¡
 
+    /* there is no data record in the buf, add it to free chain */
+    //½«buf¹ÒÈëfree_raw_bufsÍ·²¿»òÕßµÚ¶ş¸öÎ»ÖÃ£¬Èç¹ûµÚÒ»¸öÎ»ÖÃÓĞÊı¾İµÄ»°¡£ 
+    //
     if (ngx_event_pipe_add_free_buf(p, buf) != NGX_OK) {
         return NGX_ERROR;
     }
@@ -2725,9 +2835,19 @@ ngx_http_fastcgi_input_filter(ngx_event_pipe_t *p, ngx_buf_t *buf)
     return NGX_OK;
 }
 
+/*
+ºó¶Ë·¢ËÍ¹ıÀ´µÄ°üÌå¸ñÊ½
+1. Í·²¿ĞĞ°üÌå+ÄÚÈİ°üÌåÀàĞÍfastcgi¸ñÊ½:8×Ö½ÚfastcgiÍ·²¿ĞĞ+ Êı¾İ(Í·²¿ĞĞĞÅÏ¢+ ¿ÕĞĞ + Êµ¼ÊĞèÒª·¢ËÍµÄ°üÌåÄÚÈİ) + Ìî³ä×Ö¶Î  
+..... ÖĞ¼ä¿ÉÄÜºó¶Ë°üÌå±È½Ï´ó£¬ÕâÀï»á°üÀ¨¶à¸öNGX_HTTP_FASTCGI_STDOUTÀàĞÍfastcgi±êÊ¶
+2. NGX_HTTP_FASTCGI_END_REQUESTÀàĞÍfastcgi¸ñÊ½:¾ÍÖ»ÓĞ8×Ö½ÚÍ·²¿
 
-static ngx_int_t
-ngx_http_fastcgi_non_buffered_filter(void *data, ssize_t bytes)
+×¢Òâ:ÕâÁ½²¿·ÖÄÚÈİÓĞ¿ÉÄÜÔÚÒ»´Îrecv¾ÍÈ«²¿¶ÁÍê£¬Ò²ÓĞ¿ÉÄÜĞèÒª¶ÁÈ¡¶à´Î
+²Î¿¼<ÉîÈëÆÊÎönginx> P270
+*/
+//dataÊµ¼ÊÉÏÊÇ¿Í»§¶ËµÄÇëÇóngx_http_request_t *r  
+//buffering·½Ê½£¬Îªngx_http_fastcgi_input_filter  ·Çbuffering·½Ê½Îªngx_http_fastcgi_non_buffered_filter    
+static ngx_int_t //ngx_http_upstream_send_responseÖĞÖ´ĞĞ
+ngx_http_fastcgi_non_buffered_filter(void *data, ssize_t bytes) //°Ñºó¶Ë·µ»ØµÄ°üÌåĞÅÏ¢Ìí¼Óµ½u->out_bufsÄ©Î²
 {
     u_char                  *m, *msg;
     ngx_int_t                rc;
@@ -2743,17 +2863,19 @@ ngx_http_fastcgi_non_buffered_filter(void *data, ssize_t bytes)
     u = r->upstream;
     buf = &u->buffer;
 
+    //Ö´ĞĞÕæÊµµÄ°üÌå²¿·Ö
     buf->pos = buf->last;
     buf->last += bytes;
 
     for (cl = u->out_bufs, ll = &u->out_bufs; cl; cl = cl->next) {
-        ll = &cl->next;
+        ll = &cl->next; //u->out_bufsÖ¸ÏòÄ©Î²´¦
     }
 
     f->pos = buf->pos;
     f->last = buf->last;
 
     for ( ;; ) {
+        //ÔÚ½ÓÊÕÇëÇóĞĞ+°üÌåÊı¾İµÄÊ±ºò£¬ÓĞ¿ÉÄÜNGX_HTTP_FASTCGI_END_REQUESTÀàĞÍfastcgi¸ñÊ½Ò²½ÓÊÕµ½£¬Òò´ËĞèÒª½âÎö
         if (f->state < ngx_http_fastcgi_st_data) {
 
             rc = ngx_http_fastcgi_process_record(r, f);
@@ -2765,7 +2887,7 @@ ngx_http_fastcgi_non_buffered_filter(void *data, ssize_t bytes)
             if (rc == NGX_ERROR) {
                 return NGX_ERROR;
             }
-
+        
             if (f->type == NGX_HTTP_FASTCGI_STDOUT && f->length == 0) {
                 f->state = ngx_http_fastcgi_st_padding;
 
@@ -2776,7 +2898,7 @@ ngx_http_fastcgi_non_buffered_filter(void *data, ssize_t bytes)
             }
         }
 
-        if (f->state == ngx_http_fastcgi_st_padding) {
+        if (f->state == ngx_http_fastcgi_st_padding) { //ÓĞ¿ÉÄÜ´ÓºóÃæµÄif (f->pos + f->length <= f->last) ×ßµ½ÕâÀï
 
             if (f->type == NGX_HTTP_FASTCGI_END_REQUEST) {
 
@@ -2796,7 +2918,7 @@ ngx_http_fastcgi_non_buffered_filter(void *data, ssize_t bytes)
                 break;
             }
 
-            if (f->pos + f->padding < f->last) {
+            if (f->pos + f->padding < f->last) { //ËµÃ÷paddingºóÃæ»¹ÓĞÆäËûĞÂµÄfastcgi±êÊ¶ÀàĞÍĞèÒª½âÎö
                 f->state = ngx_http_fastcgi_st_version;
                 f->pos += f->padding;
 
@@ -2837,12 +2959,12 @@ ngx_http_fastcgi_non_buffered_filter(void *data, ssize_t bytes)
                     f->pos = f->last;
                 }
 
-                for (m = f->pos - 1; msg < m; m--) {
+                for (m = f->pos - 1; msg < m; m--) { //´Ó´íÎóĞÅÏ¢µÄºóÃæÍùÇ°ÃæÉ¨£¬Ö±µ½ÕÒµ½Ò»¸ö²¿Î»\r,\n . ¿Õ¸ñ µÄ×Ö·ûÎªÖ¹£¬Ò²¾ÍÊÇ¹ıÂËºóÃæµÄÕâĞ©×Ö·û°É¡£
                     if (*m != LF && *m != CR && *m != '.' && *m != ' ') {
                         break;
                     }
                 }
-
+                //¾ÍÓÃÀ´´òÓ¡¸öÈÕÖ¾¡£Ã»ÆäËûµÄ¡£
                 ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                               "FastCGI sent in stderr: \"%*s\"",
                               m + 1 - msg, msg);
@@ -2856,7 +2978,7 @@ ngx_http_fastcgi_non_buffered_filter(void *data, ssize_t bytes)
 
         if (f->type == NGX_HTTP_FASTCGI_END_REQUEST) {
 
-            if (f->pos + f->length <= f->last) {
+            if (f->pos + f->length <= f->last) { //ËµÃ÷data + paddingÊı¾İºóÃæ»¹ÓĞĞÂµÄfastcgi¸ñÊ½°üÌå
                 f->state = ngx_http_fastcgi_st_padding;
                 f->pos += f->length;
 
@@ -2870,20 +2992,23 @@ ngx_http_fastcgi_non_buffered_filter(void *data, ssize_t bytes)
 
 
         /* f->type == NGX_HTTP_FASTCGI_STDOUT */
+        //µ½ÕâÀï¾ÍÊÇ±ê×¼µÄÊä³öÀ²£¬Ò²¾ÍÊÇÍøÒ³ÄÚÈİ¡£
 
+        
         if (f->pos == f->last) {
-            break;
+            break;//ÕıºÃÃ»ÓĞÊı¾İ£¬·µ»Ø
         }
 
-        cl = ngx_chain_get_free_buf(r->pool, &u->free_bufs);
+        cl = ngx_chain_get_free_buf(r->pool, &u->free_bufs); //´Ófree¿ÕÏĞngx_buf_t½á¹¹ÖĞÈ¡Ò»¸ö
         if (cl == NULL) {
             return NGX_ERROR;
         }
 
+        //°Ñcl½ÚµãÌí¼Óµ½u->out_bufsµÄÎ²²¿
         *ll = cl;
         ll = &cl->next;
 
-        b = cl->buf;
+        b = cl->buf; //Í¨¹ıºóÃæ¸³Öµ´Ó¶øÖ¸ÏòÊµ¼Êu->bufferÖĞµÄ°üÌå²¿·Ö
 
         b->flush = 1;
         b->memory = 1;
@@ -2894,10 +3019,10 @@ ngx_http_fastcgi_non_buffered_filter(void *data, ssize_t bytes)
         ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                        "http fastcgi output buf %p", b->pos);
 
-        if (f->pos + f->length <= f->last) {
+        if (f->pos + f->length <= f->last) { //°Ñ°üÌå²¿·ÖÈ¡³öÀ´£¬ÓÃbÖ¸Ïò
             f->state = ngx_http_fastcgi_st_padding;
-            f->pos += f->length;
-            b->last = f->pos;
+            f->pos += f->length; //fÈÆ¹ı°üÌå
+            b->last = f->pos; //°üÌåµÄÄ©Î²
 
             continue;
         }
@@ -3264,7 +3389,7 @@ ngx_http_fastcgi_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 
     ngx_conf_merge_size_value(conf->upstream.send_lowat,
                               prev->upstream.send_lowat, 0);
-
+                              
     ngx_conf_merge_size_value(conf->upstream.buffer_size,
                               prev->upstream.buffer_size,
                               (size_t) ngx_pagesize);
@@ -3908,10 +4033,15 @@ ngx_http_fastcgi_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     if (flcf->upstream.upstream || flcf->fastcgi_lengths) {
         return "is duplicate";
     }
-
+    
+    //»ñÈ¡µ±Ç°µÄlocation£¬¼´ÔÚÄÄ¸ölocationÅäÖÃµÄ"fastcgi_pass"Ö¸Áî  
     clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
 
-    /* ÉèÖÃ¾ä±ú£¬»áÔÚngx_http_update_location_configÀïÃæÉèÖÃÎªcontent_handleµÄ£¬´Ó¶øÔÚcontent phaseÖĞ±»µ÷ÓÃ  */
+    /* ÉèÖÃ¾ä±ú£¬»áÔÚngx_http_update_location_configÀïÃæÉèÖÃÎªcontent_handleµÄ£¬´Ó¶øÔÚcontent phaseÖĞ±»µ÷ÓÃ  
+        
+     //ÉèÖÃlocµÄhandler£¬Õâ¸öclcf->handler»áÔÚngx_http_update_location_config()ÀïÃæ¸³Óèr->content_handler£¬´Ó
+     ¶øÔÚNGX_HTTP_CONTENT_PHASEÀïÃæµ÷ÓÃÕâ¸öhandler£¬¼´ngx_http_fastcgi_handler¡£  
+     */
     clcf->handler = ngx_http_fastcgi_handler;
 
     if (clcf->name.data[clcf->name.len - 1] == '/') {
@@ -4070,7 +4200,7 @@ ngx_http_fastcgi_cache(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     value = cf->args->elts;
 
-    if (flcf->upstream.cache != NGX_CONF_UNSET) {
+    if (flcf->upstream.cache != NGX_CONF_UNSET) { //ËµÃ÷ÒÑ¾­ÉèÖÃ¹ıfastcgi_cache xxÁË,ÕâÀï¼ì²âµ½ÓĞÅäÖÃfastcgi_cache£¬±¨´íÖØ¸´
         return "is duplicate";
     }
 

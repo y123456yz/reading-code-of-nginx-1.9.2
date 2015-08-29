@@ -431,6 +431,8 @@ NGX_HTTP_LMT_CONF: 配置项可以出现在limit_except{}块内,该limit_except块必须属于ht
     (r)->main_conf[module.ctx_index]
 //获取该条request对应的自己所处的srv，例如server{} upstream{}的对应模块的配置信息
 #define ngx_http_get_module_srv_conf(r, module)  (r)->srv_conf[module.ctx_index]
+
+//ngx_http_get_module_ctx存储运行过程中的各种状态(例如读取后端数据，可能需要多次读取)  ngx_http_get_module_loc_conf获取该模块在local{}中的配置信息
 //获取该条request对应的自己所处的loc，例如location{} 的对应模块的配置信息
 #define ngx_http_get_module_loc_conf(r, module)  (r)->loc_conf[module.ctx_index]
 

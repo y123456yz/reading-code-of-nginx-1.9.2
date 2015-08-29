@@ -118,8 +118,16 @@ typedef struct {
 
 #endif /* NGX_HAVE_OPENAT */
 
-#define NGX_FILE_DEFAULT_ACCESS  0644
-#define NGX_FILE_OWNER_ACCESS    0600
+/*
+    -rw-rw-r--
+　　一共有10位数
+　　其中： 最前面那个 - 代表的是类型
+　　中间那三个 rw- 代表的是所有者（user）
+　　然后那三个 rw- 代表的是组群（group）
+　　最后那三个 r-- 代表的是其他人（other）
+*/
+#define NGX_FILE_DEFAULT_ACCESS  0644 //-rw-r--r--  所有者有读写权限 组群有读写权限，其他人只有读权限
+#define NGX_FILE_OWNER_ACCESS    0600 //-rw-------
 
 
 #define ngx_close_file           close
@@ -173,7 +181,8 @@ ngx_write_fd(ngx_fd_t fd, void *buf, size_t n)
 #define NGX_LINEFEED_SIZE        1
 #define NGX_LINEFEED             "\x0a"
 
-
+/* rename函数功能是给一个文件重命名，用该函数可以实现文件移动功能，把一个文件的完整路径的盘符改一下就实现了这个文件的移动 */
+//rename和mv命令差不多，只是rename支持批量修改  也就是说，mv也能用于改名，但不能实现批量处理（改名时，不支持*等符号的），而rename可以。
 #define ngx_rename_file(o, n)    rename((const char *) o, (const char *) n)
 #define ngx_rename_file_n        "rename()"
 

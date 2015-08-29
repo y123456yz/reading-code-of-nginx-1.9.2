@@ -335,6 +335,15 @@ r->upstream->peer.free
 在每一次Nginx完成与后端服务器之间的交互后都会调用该函数。
 ngx_http_upstream_free_round_robin_peer
 更新相关数值，比如rrp->current
+
+轮询策略和IP哈希策略对比
+加权轮询策略
+优点：适用性更强，不依赖于客户端的任何信息，完全依靠后端服务器的情况来进行选择。能把客户端请求更合理更均匀地分配到各个后端服务器处理。
+缺点：同一个客户端的多次请求可能会被分配到不同的后端服务器进行处理，无法满足做会话保持的应用的需求。
+
+IP哈希策略
+优点：能较好地把同一个客户端的多次请求分配到同一台服务器处理，避免了加权轮询无法适用会话保持的需求。
+缺点：当某个时刻来自某个IP地址的请求特别多，那么将导致某台后端服务器的压力可能非常大，而其他后端服务器却空闲的不均衡情况、
 */
 //如果没有手动设置访问后端服务器的算法，则默认用robin方式  //轮询负债均衡算法ngx_http_upstream_init_round_robin_peer  iphash负载均衡算法ngx_http_upstream_init_ip_hash_peer
 ngx_int_t //ngx_http_upstream_init_request准备好FCGI数据，buffer后，会调用这里进行一个peer的初始化，此处是轮询peer的初始化。
@@ -561,8 +570,42 @@ r->upstream->peer.free
 在每一次Nginx完成与后端服务器之间的交互后都会调用该函数。
 ngx_http_upstream_free_round_robin_peer
 更新相关数值，比如rrp->current
+
+轮询策略和IP哈希策略对比
+加权轮询策略
+优点：适用性更强，不依赖于客户端的任何信息，完全依靠后端服务器的情况来进行选择。能把客户端请求更合理更均匀地分配到各个后端服务器处理。
+缺点：同一个客户端的多次请求可能会被分配到不同的后端服务器进行处理，无法满足做会话保持的应用的需求。
+
+IP哈希策略
+优点：能较好地把同一个客户端的多次请求分配到同一台服务器处理，避免了加权轮询无法适用会话保持的需求。
+缺点：当某个时刻来自某个IP地址的请求特别多，那么将导致某台后端服务器的压力可能非常大，而其他后端服务器却空闲的不均衡情况、
+
+轮询策略和IP哈希策略对比
+加权轮询策略
+优点：适用性更强，不依赖于客户端的任何信息，完全依靠后端服务器的情况来进行选择。能把客户端请求更合理更均匀地分配到各个后端服务器处理。
+缺点：同一个客户端的多次请求可能会被分配到不同的后端服务器进行处理，无法满足做会话保持的应用的需求。
+
+IP哈希策略
+优点：能较好地把同一个客户端的多次请求分配到同一台服务器处理，避免了加权轮询无法适用会话保持的需求。
+缺点：当某个时刻来自某个IP地址的请求特别多，那么将导致某台后端服务器的压力可能非常大，而其他后端服务器却空闲的不均衡情况、
 */
 
+/*
+ 判断server 是否有效的方法是：
+ 1）如果server的失败次数（peers->peer[i].fails）没有达到了max_fails所设置的最大失败次数，则该server是有效的。
+ 2）如果server已经达到了max_fails所设置的最大失败次数，从这一时刻开始算起，在fail_timeout 所设置的时间段内， server是无效的。
+ 3）当server的失败次数（peers->peer[i].fails）为最大的失败次数，当距离现在的时间超过了fail_timeout 所设置的时间段， 则令peers->peer[i].fails =0，使得该server重新有效。
+
+2.2.2.1
+如果peers中所有的server都是无效的; 就会尝试去backup的数组中找一个有效的server, 如果找到， 跳转到2.2.3; 如果仍然找不到，表示此时
+upstream中无server可以使用。就会清空所有peers数组中所有的失败次数的记录，使所有server都变成了有效。这样做的目的是为了防止下次再
+有请求访问时，仍找不到一个有效的server.
+    for (i = 0; i < peers->number; i++) {
+            peers->peer[i].fails2 = 0;
+    }
+    并返回错误码给nginx,  nginx得到此错误码后，就不再向后台server发请求，而是在nginx的错误日志中输出“no live upstreams while connecting to upstream”
+    的记录（这就是no live产生的真正原因），并直接返回给请求的客户端一个502的错误。
+*/
 ngx_int_t
 ngx_http_upstream_get_round_robin_peer(ngx_peer_connection_t *pc, void *data)
 {
@@ -645,7 +688,10 @@ failed: //选择失败，转向后备服务器
     }
 
     /* all peers failed, mark them as live for quick recovery */
-
+    /*
+         表示此时upstream中无server可以使用。就会清空所有peers数组中所有的失败次数的记录，使所有server都变成了有效。这样
+         做的目的是为了防止下次再有请求访问时，仍找不到一个有效的server.
+     */
     for (peer = peers->peer; peer; peer = peer->next) {
         peer->fails = 0;
     }
@@ -657,6 +703,11 @@ failed: //选择失败，转向后备服务器
     return NGX_BUSY;
 }
 
+/*
+   fail_timeout事件内访问后端出现错误的次数大于等于max_fails，则认为该服务器不可用，那么如果不可用了，后端该服务器有恢复了怎么判断检测呢?
+   答:当这个fail_timeout时间段过了后，会重置peer->checked，那么有可以试探该服务器了，参考ngx_http_upstream_get_peer
+   //checked用来检测时间，例如某个时间段fail_timeout这段时间后端失效了，那么这个fail_timeout过了后，也可以试探使用该服务器
+ */ 
 //get_peer函数返回优先级最大的服务器 //按照当前各服务器权值进行选择
 static ngx_http_upstream_rr_peer_t *
 ngx_http_upstream_get_peer(ngx_http_upstream_rr_peer_data_t *rrp)//ngx_http_upstream_get_peer和ngx_http_upstream_init_round_robin_peer配合阅读
@@ -692,6 +743,10 @@ ngx_http_upstream_get_peer(ngx_http_upstream_rr_peer_data_t *rrp)//ngx_http_upst
             continue;
         }
 
+      /*
+       fail_timeout事件内访问后端出现错误的次数大于等于max_fails，则认为该服务器不可用，那么如果不可用了，后端该服务器有恢复了怎么判断检测呢?
+       答:当这个fail_timeout时间段过了后，会重置peer->checked，那么有可以试探该服务器了
+       */
         if (peer->max_fails
             && peer->fails >= peer->max_fails
             && now - peer->checked <= peer->fail_timeout)//根据指定一段时间内最大失败次数做判断
@@ -749,6 +804,10 @@ ngx_http_upstream_get_peer(ngx_http_upstream_rr_peer_data_t *rrp)//ngx_http_upst
 
     best->current_weight -= total;
 
+    /*
+       fail_timeout事件内访问后端出现错误的次数大于等于max_fails，则认为该服务器不可用，那么如果不可用了，后端该服务器有恢复了怎么判断检测呢?
+       答:当这个fail_timeout时间段过了后，会重置peer->checked，那么有可以试探该服务器了
+     */
     if (now - best->checked > best->fail_timeout) {
         best->checked = now;
     }
@@ -802,6 +861,16 @@ r->upstream->peer.free
 在每一次Nginx完成与后端服务器之间的交互后都会调用该函数。
 ngx_http_upstream_free_round_robin_peer
 更新相关数值，比如rrp->current
+
+轮询策略和IP哈希策略对比
+加权轮询策略
+优点：适用性更强，不依赖于客户端的任何信息，完全依靠后端服务器的情况来进行选择。能把客户端请求更合理更均匀地分配到各个后端服务器处理。
+缺点：同一个客户端的多次请求可能会被分配到不同的后端服务器进行处理，无法满足做会话保持的应用的需求。
+
+IP哈希策略
+优点：能较好地把同一个客户端的多次请求分配到同一台服务器处理，避免了加权轮询无法适用会话保持的需求。
+缺点：当某个时刻来自某个IP地址的请求特别多，那么将导致某台后端服务器的压力可能非常大，而其他后端服务器却空闲的不均衡情况、
+
 */
 
 //ngx_http_upstream_free_round_robin_peer函数将服务器的标志字段都恢复到初始状态，以便后续使用
@@ -835,17 +904,17 @@ ngx_http_upstream_free_round_robin_peer(ngx_peer_connection_t *pc, void *data,
         return;
     }
 
-    if (state & NGX_PEER_FAILED) {
+    if (state & NGX_PEER_FAILED) { //从ngx_http_upstream_next走到这里
         now = ngx_time();
 
         peer->fails++;
-        peer->accessed = now;
+        peer->accessed = now; //选取的后端服务器异常则跟新accessed时间为当前选取后端服务器的时候检测到异常的时间
         peer->checked = now;
 
         if (peer->max_fails) {//服务发生异常时，调低effective_weight
             peer->effective_weight -= peer->weight / peer->max_fails;//服务发生异常时，调低effective_weight
 
-            if (peer->fails >= peer->max_fails) {
+            if (peer->fails >= peer->max_fails) { //超过允许的最大失败次数
                 ngx_log_error(NGX_LOG_WARN, pc->log, 0,
                               "upstream server temporarily disabled");
             }
@@ -862,8 +931,10 @@ ngx_http_upstream_free_round_robin_peer(ngx_peer_connection_t *pc, void *data,
     } else {
 
         /* mark peer live if check passed */
-
-        if (peer->accessed < peer->checked) {
+        //一个fail_timeout时间段到了，则跟新checeked为当前时间
+        if (peer->accessed < peer->checked) { 
+        //从获取后端失败并且判断达到最大上限失败次数，则会复活该后端服务器，同时再次选择该服务器，如果该服务器又有效了，则会设置checked为当前时间
+        //这时候peer->accessed < peer->checked满足条件，把fails清0
             peer->fails = 0;
         }
     }
@@ -877,7 +948,6 @@ ngx_http_upstream_free_round_robin_peer(ngx_peer_connection_t *pc, void *data,
         pc->tries--;
     }
 }
-
 
 #if (NGX_HTTP_SSL)
 

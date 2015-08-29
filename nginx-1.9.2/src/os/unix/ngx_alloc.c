@@ -8,9 +8,10 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 
-
-ngx_uint_t  ngx_pagesize;//见ngx_os_init  返回一个分页的大小，单位为字节(Byte)。该值为系统的分页大小，不一定会和硬件分页大小相同。 
-ngx_uint_t  ngx_pagesize_shift;
+//getconf PAGE_SIZE 命令可以查看
+ngx_uint_t  ngx_pagesize;//见ngx_os_init  返回一个分页的大小，单位为字节(Byte)。该值为系统的分页大小，不一定会和硬件分页大小相同。
+//ngx_pagesize为4M，ngx_pagesize_shift应该为12
+ngx_uint_t  ngx_pagesize_shift; //ngx_pagesize进行移位的次数，见for (n = ngx_pagesize; n >>= 1; ngx_pagesize_shift++) { /* void */ }
 
 /*
 如果能知道CPU cache行的大小，那么就可以有针对性地设置内存的对齐值，这样可以提高程序的效率。

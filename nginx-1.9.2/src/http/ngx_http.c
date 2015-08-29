@@ -86,7 +86,7 @@ ngx_uint_t   ngx_http_max_module; //二级模块类型http模块个数，见ngx_http_block  
 //ngx_http_write_filter_module是最后一个包体writer模块(ngx_http_top_body_filter = ngx_http_write_filter;),他是最后放包体的地方
 //调用ngx_http_output_filter方法即可向客户端发送HTTP响应包体，ngx_http_send_header发送响应行和响应头部
 ngx_http_output_header_filter_pt  ngx_http_top_header_filter;//所有的HTTP头部过滤模块都添加到该指针上 ngx_http_send_header中调用链表中所有处理方法
-//该函数中的所有filter通过ngx_http_output_filter执行
+//该函数中的所有filter通过ngx_http_output_filter开始执行
 ngx_http_output_body_filter_pt    ngx_http_top_body_filter;//所有的HTTP包体部分都是添加到该指针中,在ngx_http_output_filter中一次调用链表中的各个函数
 
 ngx_http_request_body_filter_pt   ngx_http_top_request_body_filter; //赋值未ngx_http_request_body_save_filter

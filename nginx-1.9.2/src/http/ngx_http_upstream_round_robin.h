@@ -43,16 +43,32 @@ struct ngx_http_upstream_rr_peer_s {
     ngx_int_t                       effective_weight; //rr算法权重 //初始赋值见ngx_http_upstream_init_round_robin
     ngx_int_t                       weight;//配置的权重
 
-    ngx_uint_t                      conns;
-
-    ngx_uint_t                      fails;//已尝试失败次数
+    ngx_uint_t                      conns; //该后端peer上面的成功连接数
+    /*
+        当fails达到最大上限次数max_fails，则当fail_timeout时间过后会再次选择该后端服务器，
+        选择后端服务器成功后ngx_http_upstream_free_round_robin_peer会把fails置0
+     */
+    ngx_uint_t                      fails;//已尝试失败次数  赋值见ngx_http_upstream_free_XXX_peer(ngx_http_upstream_free_round_robin_peer)
+    //选取的后端服务器异常则跟新accessed时间为当前选取后端服务器的时候检测到异常的时间，见ngx_http_upstream_free_round_robin_peer
     time_t                          accessed;//检测失败时间，用于计算超时
-    time_t                          checked;
+
+    /*
+       fail_timeout事件内访问后端出现错误的次数大于等于max_fails，则认为该服务器不可用，那么如果不可用了，后端该服务器有恢复了怎么判断检测呢?
+       答:当这个fail_timeout时间段过了后，会重置peer->checked，那么有可以试探该服务器了，参考ngx_http_upstream_get_peer
+       //checked用来检测时间，例如某个时间段fail_timeout这段时间后端失效了，那么这个fail_timeout过了后，也可以试探使用该服务器
+
+       1）如果server的失败次数（peers->peer[i].fails）没有达到了max_fails所设置的最大失败次数，则该server是有效的。
+      2）如果server已经达到了max_fails所设置的最大失败次数，从这一时刻开始算起，在fail_timeout 所设置的时间段内， server是无效的。
+      3）当server的失败次数（peers->peer[i].fails）为最大的失败次数，当距离现在的时间(最近一次选举该服务器失败)超过了fail_timeout 所设置的时间段， 则令peers->peer[i].fails =0，使得该server重新有效。
+    */ 
+    //checked用来检测时间，例如某个时间段fail_timeout这段时间后端失效了，那么这个fail_timeout过了后，也可以试探使用该服务器
+    time_t                          checked;//和fail_timeout配合阅读  一个fail_timeout时间段到了，则跟新checeked为当前时间
 
     ngx_uint_t                      max_fails;//最大失败次数
-    time_t                          fail_timeout;//多长时间内出现max_fails次失败便认为后端down掉了
+    time_t                          fail_timeout;//多长时间内出现max_fails次失败便认为后端down掉了  参考上面的checked
 
-    //是否处于离线不可用状态 赋值见ngx_http_upstream_init_round_robin
+    //是否处于离线不可用状态 赋值见ngx_http_upstream_init_round_robin   
+    //只有在server xxxx down;加上down配置，该服务器才不会被轮询到。一般都是人为指定后端某个服务器挂了，则修改配置文件加上down，然后重新reload nginx进程
     ngx_uint_t                      down;          /* unsigned  down:1; *///指定某后端是否挂了
 
 #if (NGX_HTTP_SSL)

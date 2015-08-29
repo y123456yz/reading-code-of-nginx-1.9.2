@@ -44,7 +44,7 @@ ngx_pool_cleanup_tÓëngx_http_cleanup_ptÊÇ²»Í¬µÄ£¬ngx_pool_cleanup_t½öÔÚËùÓÃµÄÄÚ´
 */
 //ÄÚ´æ³ØpoolÖĞÇåÀíÊı¾İµÄÓÃµÄ£¬¼ûngx_pool_s  ngx_destroy_pool
 struct ngx_pool_cleanup_s { //Õâ¸öÊÇÌí¼Óµ½ngx_pool_sÖĞµÄcleanupÉÏµÄ£¬¼ûngx_pool_cleanup_add
-    ngx_pool_cleanup_pt   handler;// µ±Ç° cleanup Êı¾İµÄ»Øµ÷º¯Êı
+    ngx_pool_cleanup_pt   handler;// µ±Ç° cleanup Êı¾İµÄ»Øµ÷º¯Êı  ngx_destroy_poolÖĞÖ´ĞĞ
     void                 *data;// ÄÚ´æµÄÕæÕıµØÖ·     »Øµ÷Ê±£¬½«´ËÊı¾İ´«Èë»Øµ÷º¯Êı£»
     
     ngx_pool_cleanup_t   *next;// Ö¸ÏòÏÂÒ»¿é cleanup ÄÚ´æµÄÖ¸Õë

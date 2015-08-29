@@ -16,7 +16,7 @@
 
 #define NGX_PEER_KEEPALIVE           1
 #define NGX_PEER_NEXT                2
-#define NGX_PEER_FAILED              4
+#define NGX_PEER_FAILED              4 //使用赋值地方在ngx_http_upstream_next
 
 
 typedef struct ngx_peer_connection_s  ngx_peer_connection_t;
@@ -54,15 +54,20 @@ struct ngx_peer_connection_s {
     ngx_uint_t                       tries; //赋值见ngx_http_upstream_init_xxx_peer(例如ngx_http_upstream_init_round_robin_peer)
     ngx_msec_t                       start_time;//向后端服务器发起连接的时间ngx_http_upstream_init_request
 
+    /*
+       fail_timeout事件内访问后端出现错误的次数大于等于max_fails，则认为该服务器不可用，那么如果不可用了，后端该服务器有恢复了怎么判断检测呢?
+       答:当这个fail_timeout时间段过了后，会重置peer->checked，那么有可以试探该服务器了，参考ngx_http_upstream_get_peer
+       //checked用来检测时间，例如某个时间段fail_timeout这段时间后端失效了，那么这个fail_timeout过了后，也可以试探使用该服务器
+     */ 
     //ngx_event_connect_peer中执行
     //获取连接的方法，如果使用长连接构成的连接池，那么必须要实现get方法
     ngx_event_get_peer_pt            get; //赋值见ngx_http_upstream_init_xxx_peer(例如ngx_http_upstream_init_round_robin_peer)
-    ngx_event_free_peer_pt           free; //与get方法对应的释放连接的方法
+    ngx_event_free_peer_pt           free; //与get方法对应的释放连接的方法 ngx_http_upstream_next或者ngx_http_upstream_finalize_request中执行
 
     /*
      这个data指针仅用于和上面的get、free方法配合传递参数，它的具体含义与实现get方法、free
      方法的模块相关，可参照ngx_event_get_peer_pt和ngx_event_free_pee r_pt方法原型中的data参数
-     */
+     */ //如果采用iphash，则data=ngx_http_upstream_ip_hash_peer_data_t->rrp,见ngx_http_upstream_init_ip_hash_peer
     void                            *data; //例如rr算法,对应结构ngx_http_upstream_rr_peer_data_t，创建空间在ngx_http_upstream_create_round_robin_peer
 
 #if (NGX_SSL)
@@ -70,7 +75,7 @@ struct ngx_peer_connection_s {
     ngx_event_save_peer_session_pt   save_session;
 #endif
 
-    ngx_addr_t                      *local; //本机地址信息
+    ngx_addr_t                      *local; //本机地址信息 //proxy_bind  fastcgi_bind 设置的本地IP端口地址，有可能设备有好几个eth，只用其中一个
 
     int                              rcvbuf; //套接字的接收缓冲区大小
 

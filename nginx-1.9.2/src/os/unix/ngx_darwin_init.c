@@ -15,7 +15,7 @@ int     ngx_darwin_hw_ncpu;
 int     ngx_darwin_kern_ipc_somaxconn;
 u_long  ngx_darwin_net_inet_tcp_sendspace;
 
-ngx_uint_t  ngx_debug_malloc;
+ngx_uint_t  ngx_debug_malloc; //configure的时候加上NGX_DEBUG_MALLOC并设置了MALLOC_OPTIONS为J才会置1
 
 
 static ngx_os_io_t ngx_darwin_io = {

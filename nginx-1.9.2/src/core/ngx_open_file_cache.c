@@ -84,7 +84,7 @@ ngx_open_file_cache_init(ngx_pool_t *pool, ngx_uint_t max, time_t inactive)
     return cache;
 }
 
-
+//依次去清理红黑和队列的信息，依次进行ngx_close_cached_file的调用来关闭文件。
 static void
 ngx_open_file_cache_cleanup(void *data)
 {
@@ -139,7 +139,7 @@ ngx_open_file_cache_cleanup(void *data)
     }
 }
 
-
+//对缓存KEY的访问主要是判断缓存的key是否有变化或者过期。如果有要update然后再转入found。否则直接转入found。
 ngx_int_t
 ngx_open_cached_file(ngx_open_file_cache_t *cache, ngx_str_t *name,
     ngx_open_file_info_t *of, ngx_pool_t *pool)
@@ -156,11 +156,11 @@ ngx_open_cached_file(ngx_open_file_cache_t *cache, ngx_str_t *name,
     of->fd = NGX_INVALID_FILE;
     of->err = 0;
 
-    if (cache == NULL) {
+    if (cache == NULL) { //如果cache结构没有被初始化
 
-        if (of->test_only) {
+        if (of->test_only) {//如果只是测试用
 
-            if (ngx_file_info_wrapper(name, of, &fi, pool->log)
+            if (ngx_file_info_wrapper(name, of, &fi, pool->log) //对该文件的文件信息进行查询就返回，并不实际打开它
                 == NGX_FILE_ERROR)
             {
                 return NGX_ERROR;
@@ -177,7 +177,7 @@ ngx_open_cached_file(ngx_open_file_cache_t *cache, ngx_str_t *name,
 
             return NGX_OK;
         }
-
+        //直接打开这个文件并且设置回调，当内存池释放时关闭该文件
         cln = ngx_pool_cleanup_add(pool, sizeof(ngx_pool_cleanup_file_t));
         if (cln == NULL) {
             return NGX_ERROR;
@@ -208,25 +208,36 @@ ngx_open_cached_file(ngx_open_file_cache_t *cache, ngx_str_t *name,
 
     file = ngx_open_file_lookup(cache, name, hash);
 
-    if (file) {
+    if (file) { //找到
+        //找到红黑树的文件名
 
         file->uses++;
-
+        //队列中删除这个文件名，最终会重新插入队列，保持最近访问的在队列头
         ngx_queue_remove(&file->queue);
 
         if (file->fd == NGX_INVALID_FILE && file->err == 0 && !file->is_dir) {
 
             /* file was not used often enough to keep open */
-
-            rc = ngx_open_and_stat_file(name, of, pool->log);
+            
+            //描述符不常用所以被关闭了
+            rc = ngx_open_and_stat_file(name, of, pool->log); //打开该文件，保存信息
 
             if (rc != NGX_OK && (of->err == 0 || !of->errors)) {
                 goto failed;
             }
-
+            
+            //加入事件监听文件描述符变化
             goto add_event;
         }
 
+
+        /*
+          这里使用了两种机制，这两种机制是互斥的。一个是文件事件检查机制，是kqueue下才有的。
+          一个是定时检查机制（now - file->created < of->valid）
+          如果定时检查没有问题，如果of没有uniq值那么就算检查通过了，否则对比uniq值
+          这个值就是文件属性中的st_ino(同一个设备中的每个文件，这个值都是不同的）。
+          这个值主要用于判断文件是否被修改(不过这个修改是覆盖这类的，如果你用open打开，然后写入的话，这个值还是一样的)
+          */
         if (file->use_event
             || (file->event == NULL
                 && (of->uniq == 0 || of->uniq == file->uniq)
@@ -238,6 +249,7 @@ ngx_open_cached_file(ngx_open_file_cache_t *cache, ngx_str_t *name,
             ))
         {
             if (file->err == 0) {
+                //没问题就直接到found标记做找到的操作了
 
                 of->fd = file->fd;
                 of->uniq = file->uniq;
@@ -251,6 +263,7 @@ ngx_open_cached_file(ngx_open_file_cache_t *cache, ngx_str_t *name,
                 of->is_directio = file->is_directio;
 
                 if (!file->is_dir) {
+                    //重新添加文件事件检查
                     file->count++;
                     ngx_open_file_add_event(cache, file, of, pool->log);
                 }
@@ -273,6 +286,7 @@ ngx_open_cached_file(ngx_open_file_cache_t *cache, ngx_str_t *name,
                        file->name, file->fd, file->count, file->err);
 
         if (file->is_dir) {
+            //文件被改变了，或者是到期了
 
             /*
              * chances that directory became file are very small
@@ -282,7 +296,8 @@ ngx_open_cached_file(ngx_open_file_cache_t *cache, ngx_str_t *name,
 
             of->test_dir = 1;
         }
-
+        
+        //重新打开加入of信息
         of->fd = file->fd;
         of->uniq = file->uniq;
 
@@ -293,19 +308,22 @@ ngx_open_cached_file(ngx_open_file_cache_t *cache, ngx_str_t *name,
         }
 
         if (of->is_dir) {
+            //对文件前后状态对比的检查
 
             if (file->is_dir || file->err) {
+                //目录还是目录，直接update,found
                 goto update;
             }
+            //文件变成目录，检查不通过
 
             /* file became directory */
 
         } else if (of->err == 0) {  /* file */
-
+            //文件变成目录，重新添加事件进行检查，而后update,found 
             if (file->is_dir || file->err) {
                 goto add_event;
             }
-
+            //文件的uniq值未发生变化，进行update,found
             if (of->uniq == file->uniq) {
 
                 if (file->event) {
@@ -316,17 +334,20 @@ ngx_open_cached_file(ngx_open_file_cache_t *cache, ngx_str_t *name,
 
                 goto update;
             }
-
+            //文件变化了，检查不通过
             /* file was changed */
 
         } else { /* error to cache */
-
+            //文件发生了错误，如果以前也是错误，那么update,found
             if (file->err || file->is_dir) {
                 goto update;
             }
+            //文件以前没有错误，说明文件被删除了，那么检查不通过
 
             /* file was removed, etc. */
         }
+        
+        //检查不通过并且引用计数为0，那么关闭文件并且加入事件监听，然后update,found
 
         if (file->count == 0) {
 
@@ -339,7 +360,8 @@ ngx_open_cached_file(ngx_open_file_cache_t *cache, ngx_str_t *name,
 
             goto add_event;
         }
-
+        
+//引用技术不为0，那么在红黑树上删除这个节点，把cache到的数目减一，给文件设置close标记，然后当作前文的no found处理（会重新添加到文件cache中）
         ngx_rbtree_delete(&cache->rbtree, &file->node);
 
         cache->current--;
@@ -381,9 +403,9 @@ create:
 
     file->node.key = hash;
 
-    ngx_rbtree_insert(&cache->rbtree, &file->node);
+    ngx_rbtree_insert(&cache->rbtree, &file->node); //文件信息插入红黑树
 
-    cache->current++;
+    cache->current++; //文件总数增加
 
     file->uses = 1;
     file->count = 0;
@@ -396,13 +418,13 @@ add_event:
 
 update:
 
-    file->fd = of->fd;
+    file->fd = of->fd; //更新文件信息
     file->err = of->err;
 #if (NGX_HAVE_OPENAT)
     file->disable_symlinks = of->disable_symlinks;
     file->disable_symlinks_from = of->disable_symlinks_from;
 #endif
-
+    //成功打开就进行信息更新
     if (of->err == 0) {
         file->uniq = of->uniq;
         file->mtime = of->mtime;
@@ -420,13 +442,15 @@ update:
             file->count++;
         }
     }
-
+    
+    //更新创建时间
     file->created = now;
 
 found:
-
+    //更新访问时间
     file->accessed = now;
-
+    
+    //插入过期队列
     ngx_queue_insert_head(&cache->expire_queue, &file->queue);
 
     ngx_log_debug5(NGX_LOG_DEBUG_CORE, pool->log, 0,
@@ -434,7 +458,8 @@ found:
                    file->name, file->fd, file->count, file->err, file->uses);
 
     if (of->err == 0) {
-
+        
+        //设定过期销毁回调
         if (!of->is_dir) {
             cln->handler = ngx_open_file_cleanup;
             ofcln = cln->data;
@@ -949,7 +974,9 @@ done:
  * we ignore any possible event setting error and
  * fallback to usual periodic file retests
  */
-
+/*
+这里的event指的就是openfilecache_events，只有在kqueue里面才有用。是unfinished code。作用是监控文件描述符的变化。
+*/
 static void
 ngx_open_file_add_event(ngx_open_file_cache_t *cache,
     ngx_cached_open_file_t *file, ngx_open_file_info_t *of, ngx_log_t *log)
@@ -1022,7 +1049,8 @@ static void
 ngx_open_file_cleanup(void *data)
 {
     ngx_open_file_cache_cleanup_t  *c = data;
-
+    
+    //将文件的引用计数count减一后，ngxclosecached_file会尝试去关闭这个文件。
     c->file->count--;
 
     ngx_close_cached_file(c->cache, c->file, c->min_uses, c->log);
@@ -1040,26 +1068,28 @@ ngx_close_cached_file(ngx_open_file_cache_t *cache,
                    "close cached open file: %s, fd:%d, c:%d, u:%d, %d",
                    file->name, file->fd, file->count, file->uses, file->close);
 
-    if (!file->close) {
+    if (!file->close) { //文件不需要被关闭
 
         file->accessed = ngx_time();
 
-        ngx_queue_remove(&file->queue);
+        ngx_queue_remove(&file->queue);  //把节点从队列删除后插入文件头
 
         ngx_queue_insert_head(&cache->expire_queue, &file->queue);
 
         if (file->uses >= min_uses || file->count) {
+            //文件的使用次数大于最低值或者文件存在其他引用就直接返回，此时不需要被关闭
             return;
         }
     }
 
     ngx_open_file_del_event(file);
-
+    
+    //文件需要被关闭，但是文件存在引用就直接返回
     if (file->count) {
         return;
     }
 
-    if (file->fd != NGX_INVALID_FILE) {
+    if (file->fd != NGX_INVALID_FILE) {//这里才是文件需要被关闭
 
         if (ngx_close_file(file->fd) == NGX_FILE_ERROR) {
             ngx_log_error(NGX_LOG_ALERT, log, ngx_errno,
@@ -1073,6 +1103,8 @@ ngx_close_cached_file(ngx_open_file_cache_t *cache,
         return;
     }
 
+    
+    //需要被关闭，并且真的关闭了，那么释放内存
     ngx_free(file->name);
     ngx_free(file);
 }
@@ -1097,7 +1129,8 @@ ngx_open_file_del_event(ngx_cached_open_file_t *file)
 
 static void
 ngx_expire_old_cached_files(ngx_open_file_cache_t *cache, ngx_uint_t n,
-    ngx_log_t *log)
+    ngx_log_t *log) //参数n说明是强制删除还是非强制删除
+    
 {
     time_t                   now;
     ngx_queue_t             *q;
@@ -1114,17 +1147,31 @@ ngx_expire_old_cached_files(ngx_open_file_cache_t *cache, ngx_uint_t n,
     while (n < 3) {
 
         if (ngx_queue_empty(&cache->expire_queue)) {
+            //空队列直接返回
             return;
         }
-
+        
+        //取出最后一个文件，是最有可能超时的文件
         q = ngx_queue_last(&cache->expire_queue);
 
         file = ngx_queue_data(q, ngx_cached_open_file_t, queue);
 
+
+        /*
+          满足这个条件的会直接退出超时处理,不满足这个条件有两种情况
+          n = 0，然后不判断后面的表达式强制删除
+          n = 1,2 判断时间来进行删除
+          
+          所以当强制删除传入时，会强制释放一个，然后删除1到2个文件。 常规检测时会删除1到2个文件
+          当文件占用最差情况的时候肯定会释放一个才去建立一个，因此不会出现泄漏的情况
+          */
+        
+        //如果n不为0而且这个文件没有过期，那么直接返回
         if (n++ != 0 && now - file->accessed <= cache->inactive) {
             return;
         }
-
+        
+        //文件缓存删除
         ngx_queue_remove(q);
 
         ngx_rbtree_delete(&cache->rbtree, &file->node);

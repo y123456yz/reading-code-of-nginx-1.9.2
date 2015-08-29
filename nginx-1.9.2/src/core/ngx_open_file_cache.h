@@ -22,7 +22,8 @@ typedef struct {
     time_t                   mtime;
     off_t                    size;
     off_t                    fs_size;
-    off_t                    directio;
+    //取值是从ngx_http_core_loc_conf_s->directio
+    off_t                    directio; //生效见ngx_open_and_stat_file  if (of->directio <= ngx_file_size(&fi)) { ngx_directio_on }
     size_t                   read_ahead;
 
     ngx_err_t                err;

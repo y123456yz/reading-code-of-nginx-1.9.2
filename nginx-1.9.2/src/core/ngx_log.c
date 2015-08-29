@@ -253,7 +253,7 @@ ngx_log_error_core(ngx_uint_t level, ngx_log_t *log, const char* filename, int l
     }
 
     if (level != NGX_LOG_DEBUG && log->handler) {
-        p = log->handler(log, p, last - p);
+        p = log->handler(log, p, last - p); //非NGX_LOG_DEBUG的情况执行handler,里面会添加新的信息到打印的信息buf中一起打印
     }
 
     if (p > last - NGX_LINEFEED_SIZE) {
@@ -316,6 +316,126 @@ ngx_log_error_core(ngx_uint_t level, ngx_log_t *log, const char* filename, int l
 }
 
 
+#if (NGX_HAVE_VARIADIC_MACROS)
+void
+ngx_log_error_coreall(ngx_uint_t level, ngx_log_t *log, const char* filename, int lineno, ngx_err_t err,
+    const char *fmt, ...) 
+//这里打印一定要注意，例如位标记用%d %u打印就会出现段错误，例如用%d打印ngx_event_t->write;
+//例如打印ngx_log_debug2(NGX_LOG_DEBUG_HTTP, c->log, 0, "http upstream request(ev->write:%u %u)  %V", ngx_event_t->write, ngx_event_t->write); 段错误
+#else
+
+void
+ngx_log_error_coreall(ngx_uint_t level, ngx_log_t *log, const char* filename, int lineno, ngx_err_t err,
+    const char *fmt, va_list args)
+
+#endif
+
+{
+#if (NGX_HAVE_VARIADIC_MACROS)
+    va_list      args;
+#endif
+    u_char      *p, *last, *msg;
+    ssize_t      n;
+    ngx_uint_t   wrote_stderr, debug_connection;
+    u_char       errstr[NGX_MAX_ERROR_STR];
+    char filebuf[52];
+
+    last = errstr + NGX_MAX_ERROR_STR;
+    
+    p = ngx_cpymem(errstr, ngx_cached_err_log_time.data,
+                   ngx_cached_err_log_time.len);
+
+    snprintf(filebuf, sizeof(filebuf), "[%35s, %5d]", filename, lineno);
+
+    p = ngx_slprintf(p, last, "%s ", filebuf);  
+    
+    p = ngx_slprintf(p, last, " [%V] ", &err_levels[level]);
+
+    /* pid#tid */
+    p = ngx_slprintf(p, last, "%P#" NGX_TID_T_FMT ": ", ngx_log_pid, ngx_log_tid);
+    
+    if (log->connection) {
+        p = ngx_slprintf(p, last, "*%uA ", log->connection);
+    }
+
+    msg = p;
+
+#if (NGX_HAVE_VARIADIC_MACROS)
+
+    va_start(args, fmt);
+    p = ngx_vslprintf(p, last, fmt, args);
+    va_end(args);
+
+#else
+
+    p = ngx_vslprintf(p, last, fmt, args);
+
+#endif
+
+    if (err) {
+        p = ngx_log_errno(p, last, err);
+    }
+
+    if (level != NGX_LOG_DEBUG && log->handler) {
+        p = log->handler(log, p, last - p);
+    }
+
+    if (p > last - NGX_LINEFEED_SIZE) {
+        p = last - NGX_LINEFEED_SIZE;
+    }
+
+    ngx_linefeed(p);
+
+    wrote_stderr = 0;
+    debug_connection = (log->log_level & NGX_LOG_DEBUG_CONNECTION) != 0;
+
+    while (log) {
+
+        if (log->writer) {
+            log->writer(log, level, errstr, p - errstr);
+            goto next;
+        }
+
+        if (ngx_time() == log->disk_full_time) {
+
+            /*
+             * on FreeBSD writing to a full filesystem with enabled softupdates
+             * may block process for much longer time than writing to non-full
+             * filesystem, so we skip writing to a log for one second
+             */
+
+            goto next;
+        }
+
+        n = ngx_write_fd(log->file->fd, errstr, p - errstr); //写到log文件中
+
+        if (n == -1 && ngx_errno == NGX_ENOSPC) {
+            log->disk_full_time = ngx_time();
+        }
+
+        if (log->file->fd == ngx_stderr) {
+            wrote_stderr = 1;
+        }
+
+    next:
+
+        log = log->next;
+    }
+
+    if (!ngx_use_stderr
+        || level > NGX_LOG_WARN
+        || wrote_stderr) /* 如果满足这些条件，则不会输出打印到前台，只会写到errlog文件中 */
+    {
+        return;
+    }
+
+    msg -= (7 + err_levels[level].len + 3);
+
+    (void) ngx_sprintf(msg, "nginx: [%V] ", &err_levels[level]);
+    (void) ngx_write_console(ngx_stderr, msg, p - msg);
+}
+
+
 #if !(NGX_HAVE_VARIADIC_MACROS)
 
 void ngx_cdecl
@@ -330,6 +450,18 @@ ngx_log_error(ngx_uint_t level, ngx_log_t *log, ngx_err_t err,
         va_end(args);
     }
 }
+
+void ngx_cdecl
+ngx_log_errorall(ngx_uint_t level, ngx_log_t *log, ngx_err_t err,
+    const char *fmt, ...)
+{
+    va_list  args;
+
+    va_start(args, fmt);
+    ngx_log_error_core(level, log,__FUNCTION__, __LINE__, err, fmt, args);
+    va_end(args);
+}
+
 
 
 void ngx_cdecl

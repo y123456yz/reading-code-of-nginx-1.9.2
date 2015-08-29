@@ -26,11 +26,14 @@ typedef struct ngx_shm_zone_s  ngx_shm_zone_t;
 
 typedef ngx_int_t (*ngx_shm_zone_init_pt) (ngx_shm_zone_t *zone, void *data);
 
-struct ngx_shm_zone_s {
-    void                     *data;
-    ngx_shm_t                 shm;
-    ngx_shm_zone_init_pt      init;
-    void                     *tag;
+//在ngx_http_upstream_cache_get中获取zone的时候获取的是fastcgi_cache proxy_cache设置的zone，因此必须配置fastcgi_cache (proxy_cache) abc;中的xxx和xxx_cache_path(proxy_cache_path fastcgi_cache_path) xxx keys_zone=abc:10m;一致
+//所有的共享内存都通过ngx_http_file_cache_s->shpool进行管理   每个共享内存对应一个ngx_slab_pool_t来管理，见ngx_init_zone_pool
+struct ngx_shm_zone_s { //初始化见ngx_shared_memory_add，真正的共享内存创建在ngx_init_cycle->ngx_init_cycle
+    void                     *data;//指向ngx_http_file_cache_t，赋值见ngx_http_file_cache_set_slot
+    ngx_shm_t                 shm; //ngx_init_cycle->ngx_shm_alloc->ngx_shm_alloc中创建相应的共享内存空间
+    //ngx_init_cycle中执行
+    ngx_shm_zone_init_pt      init; // "zone" proxy_cache_path fastcgi_cache_path等配置中设置为ngx_http_file_cache_init   ngx_http_upstream_init_zone   
+    void                     *tag; //创建的这个共享内存属于哪个模块
     ngx_uint_t                noreuse;  /* unsigned  noreuse:1; */
 };
 
@@ -222,13 +225,15 @@ create_loc_conf方法建立的结构体，当然，如果相应的回调方法没有实现，该指针就为NUL
 
     /*    动态数组容器，它保存着nginx所有要操作的目录。如果有目录不存在，就会试图创建，而创建目录失败就会导致nginx启动失败。    */
     //通过解析配置文件获取到的路径添加到该数组，例如nginx.conf中的client_body_temp_path proxy_temp_path，参考ngx_conf_set_path_slot
-    ngx_array_t               paths; 
+    //这些配置可能设置重复的路径，因此不需要重复创建，通过ngx_add_path检测添加的路径是否重复，不重复则添加到paths中
+    ngx_array_t               paths;//数组成员 nginx_path_t ，
     ngx_array_t               config_dump;
 
     /*    单链表容器，元素类型是ngx_open_file_t 结构体，它表示nginx已经打开的所有文件。事实上，nginx框架不会向open_files链表中添加文件。    
     而是由对此感兴趣的模块向其中添加文件路径名，nginx框架会在ngx_init_cycle 方法中打开这些文件    */
     //该链表中所包含的文件的打开在ngx_init_cycle中打开
     ngx_list_t                open_files; //如nginx.conf配置文件中的access_log参数的文件就保存在该链表中，参考ngx_conf_open_file
+    //创建ngx_shm_zone_t在ngx_init_cycle，在ngx_shared_memory_add也可能创建新的ngx_shm_zone_t，为每个ngx_shm_zone_t真正分配共享内存空间在ngx_init_cycle
     ngx_list_t                shared_memory;// 单链表容器，元素类型是ngx_shm_zone_t结构体，每个元素表示一块共享内存
 
     ngx_uint_t                connection_n;// 当前进程中所有链接对象的总数，与connections成员配合使用

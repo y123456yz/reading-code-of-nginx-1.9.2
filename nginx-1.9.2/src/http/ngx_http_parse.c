@@ -2147,7 +2147,16 @@ ngx_http_split_args(ngx_http_request_t *r, ngx_str_t *uri, ngx_str_t *args)
     }
 }
 
+/*
+格式:
 
+十六进制ea5表明这个暑假块有3749字节
+          这个块为3749字节，块数结束后\r\n表明这个块已经结束               这个块为3752字节，块数结束后\r\n表明这个块已经结束 
+                                                                                                                                 0表示最后一个块，最后跟两个\r\n
+ea5\r\n........................................................\r\n ea8\r\n..................................................\r\n 0\r\n\r\n
+
+参考:http://blog.csdn.net/zhangboyj/article/details/6236780
+*/
 ngx_int_t
 ngx_http_parse_chunked(ngx_http_request_t *r, ngx_buf_t *b,
     ngx_http_chunked_t *ctx)

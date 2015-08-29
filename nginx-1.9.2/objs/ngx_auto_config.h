@@ -1,4 +1,4 @@
-#define NGX_CONFIGURE " --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads"
+#define NGX_CONFIGURE " --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads --add-module=/var/yyz/nginx-1.9.2/src/echo-nginx-module-master"
 
 #ifndef NGX_DEBUG
 #define NGX_DEBUG  1

@@ -157,7 +157,7 @@ mytest_upstream_create_request(ngx_http_request_t *r)
 //以/search?q=…的URL来发起搜索请求。backendQueryLine中的%V等转化
 //格式的用法，请参见4.4节中的表4-7
     static ngx_str_t backendQueryLine =
-        ngx_string("GET /search?q=%V HTTP/1.1\r\nHost: 10.10.0.2:80\r\nConnection: close\r\n\r\n");
+        ngx_string("GET /search?q=%V HTTP/1.1\r\nHost: www.sina.com\r\nConnection: close\r\n\r\n");
     ngx_int_t queryLineLen = backendQueryLine.len + r->args.len - 2;
     //必须由内存池中申请内存，这有两点好处：在网络情况不佳的情况下，向上游
 //服务器发送请求时，可能需要epoll多次调度send发送才能完成，
@@ -212,7 +212,9 @@ mytest_process_status_line(ngx_http_request_t *r)
     }
 
     u = r->upstream;
-
+    
+    ngx_log_debugall(r->connection->log, 0,
+                       "%*s", (size_t) (u->buffer.last - u->buffer.pos), u->buffer.pos);
     //http框架提供的ngx_http_parse_status_line方法可以解析http响应行，它的输入就是收到的字符流和上下文中的ngx_http_status_t结构
     rc = ngx_http_parse_status_line(r, &u->buffer, &ctx->status);
 
@@ -468,11 +470,10 @@ ngx_http_mytest_upstream_handler(ngx_http_request_t *r)
     if (pHost == NULL) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "gethostbyname fail. %s", strerror(errno));
         
-        printf("yang test:xxxxxxxxx <%s, %u>\n",  __FUNCTION__, __LINE__);
+        ngx_log_debugall(r->connection->log, 0, "yang test ############################MYTEST upstream gethostbyname error\n");
         return NGX_ERROR;
     }
-    printf("yang test:xxxxxxxxx <%s, %u>\n",  __FUNCTION__, __LINE__);
-
+    
     //访问上游服务器的80端口
     backendSockAddr.sin_family = AF_INET;
     backendSockAddr.sin_port = htons((in_port_t) 80);
@@ -481,6 +482,7 @@ ngx_http_mytest_upstream_handler(ngx_http_request_t *r)
     backendSockAddr.sin_addr.s_addr = inet_addr(pDmsIP);
     myctx->backendServer.data = (u_char*)pDmsIP;
     myctx->backendServer.len = strlen(pDmsIP);
+    ngx_log_debugall(r->connection->log, 0, "yang test ############################MYTEST upstream gethostbyname OK, addr:%s\n", pDmsIP);
 
     //将地址设置到resolved成员中
     u->resolved->sockaddr = (struct sockaddr *)&backendSockAddr;

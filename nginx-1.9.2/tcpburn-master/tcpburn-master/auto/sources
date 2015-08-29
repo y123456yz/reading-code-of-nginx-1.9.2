@@ -1,0 +1,66 @@
+
+# Copyright (C) bin wang
+# Copyright (C) NetEase, Inc.
+
+CORE_INCS="src/core"
+
+CORE_DEPS="src/core/xcopy.h \
+           src/core/tc_config.h \
+           src/core/tc_alloc.h \
+           src/core/tc_link_list.h \
+           src/core/tc_palloc.h \
+           src/core/tc_rbtree.h \
+           src/core/tc_log.h \
+           src/core/tc_time.h \
+           src/core/tc_signal.h"
+
+
+CORE_SRCS="src/core/tc_alloc.c \
+           src/core/tc_log.c \
+           src/core/tc_palloc.c \
+           src/core/tc_link_list.c \
+           src/core/tc_signal.c \
+           src/core/tc_common.c \
+           src/core/tc_time.c \
+           src/core/tc_rbtree.c \
+           src/core/tc_daemon.c"
+
+EVENT_INCS="src/event"
+
+EVENT_DEPS="src/event/tc_event.h \
+            src/event/tc_event_timer.h \
+            src/event/tc_select_module.h"
+
+EVENT_SRCS="src/event/tc_event.c \
+            src/event/tc_event_timer.c \
+            src/event/tc_select_module.c"
+
+
+COMMUNICATION_INCS="src/communication"
+
+COMMUNICATION_DEPS="src/communication/tc_socket.h" 
+
+COMMUNICATION_SRCS="src/communication/tc_socket.c" 
+
+
+UTIL_INCS="src/util"
+
+UTIL_DEPS="src/util/tc_util.h" 
+
+UTIL_SRCS="src/util/tc_util.c" 
+
+
+BURN_INCS="src/burn"
+
+BURN_DEPS="src/burn/burn.h \
+              src/burn/tc_manager.h \
+              src/burn/tc_message_module.h \
+              src/burn/tc_packets_module.h \
+              src/burn/tc_user.h"
+
+BURN_SRCS="src/burn/tc_manager.c \
+              src/burn/tc_packets_module.c \
+              src/burn/tc_message_module.c \
+              src/burn/tc_user.c \
+              src/burn/main.c"
+

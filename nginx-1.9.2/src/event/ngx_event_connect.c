@@ -10,7 +10,6 @@
 #include <ngx_event.h>
 #include <ngx_event_connect.h>
 
-
 ngx_int_t
 ngx_event_connect_peer(ngx_peer_connection_t *pc)
 {
@@ -83,6 +82,11 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
     c->recv_chain = ngx_recv_chain;
     c->send_chain = ngx_send_chain;
 
+    /*
+       和后端的ngx_connection_t在ngx_event_connect_peer这里置为1，但在ngx_http_upstream_connect中c->sendfile &= r->connection->sendfile;，
+       和客户端浏览器的ngx_connextion_t的sendfile需要在ngx_http_update_location_config中判断，因此最终是由是否在configure的时候是否有加
+       sendfile选项来决定是置1还是置0
+    */
     c->sendfile = 1;
 
     c->log_error = pc->log_error;

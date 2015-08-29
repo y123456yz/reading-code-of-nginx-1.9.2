@@ -237,7 +237,7 @@ struct ngx_connection_s {  //cycle->read_events和cycle->write_events这两个数组存
 
  当接收到客户端的第一个请求数据的时候，在ngx_http_wait_request_handler中会重新让data指向新创建的ngx_http_request_t结构，之前data指向的
  ngx_http_connection_t结构，从新用ngx_http_request_t->connection指向该ngx_http_connection_t
- */  
+ */  //上层父请求r的data指向第一个r下层的子请求，例如第二层的r->connection->data指向其第三层的第一个创建的子请求r，c->data = sr见ngx_http_subrequest
     void               *data;//listen过程中，指向原始请求ngx_http_connection_t(ngx_http_init_connection)  
 //如果是文件异步i/o中的ngx_event_aio_t，则它来自ngx_event_aio_t->ngx_event_t(只有读),如果是网络事件中的event,则为ngx_connection_s中的event(包括读和写)
     ngx_event_t        *read;//连接对应的读事件   赋值在ngx_event_process_init
@@ -354,6 +354,11 @@ struct ngx_connection_s {  //cycle->read_events和cycle->write_events这两个数组存
     unsigned            idle:1; //为1时表示连接处于空闲状态，如keepalive请求中丽次请求之间的状态
     unsigned            reusable:1; //为1时表示连接可重用，它与上面的queue字段是对应使用的
     unsigned            close:1; //为1时表示连接关闭
+    /*
+        和后端的ngx_connection_t在ngx_event_connect_peer这里置为1，但在ngx_http_upstream_connect中c->sendfile &= r->connection->sendfile;，
+        和客户端浏览器的ngx_connextion_t的sendfile需要在ngx_http_update_location_config中判断，因此最终是由是否在configure的时候是否有加
+        sendfile选项来决定是置1还是置0
+     */
     //赋值见ngx_http_update_location_config
     unsigned            sendfile:1; //标志位，为1时表示正在将文件中的数据发往连接的另一端
 

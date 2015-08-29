@@ -131,11 +131,31 @@ Cookie: Ì¹°×µÄËµ£¬Ò»¸öcookie¾ÍÊÇ´æ´¢ÔÚÓÃ»§Ö÷»úä¯ÀÀÆ÷ÖĞµÄÒ»Ğ¡¶ÎÎÄ±¾ÎÄ¼ş¡£CookiesÊ
         ÕâĞ©ĞÅÏ¢À´±êÊ¶ÓÃ»§¡£¶àÊıĞèÒªµÇÂ¼µÄÕ¾µãÍ¨³£»áÔÚÄãµÄÈÏÖ¤ĞÅÏ¢Í¨¹ıºóÀ´ÉèÖÃÒ»¸öcookie£¬Ö®ºóÖ»ÒªÕâ¸öcookie´æÔÚ²¢ÇÒºÏ·¨£¬Äã¾Í¿ÉÒÔ
         ×ÔÓÉµÄä¯ÀÀÕâ¸öÕ¾µãµÄËùÓĞ²¿·Ö¡£ÔÙ´Î£¬cookieÖ»ÊÇ°üº¬ÁËÊı¾İ£¬¾ÍÆä±¾Éí¶øÑÔ²¢²»ÓĞº¦¡£
 
+Date: Í·Óò±íÊ¾ÏûÏ¢·¢ËÍµÄÊ±¼ä£¬Ê±¼äµÄÃèÊö¸ñÊ½ÓÉrfc822¶¨Òå¡£ÀıÈç£¬Date:Mon,31Dec200104:25:57GMT¡£DateÃèÊöµÄÊ±¼ä±íÊ¾ÊÀ½ç±ê×¼Ê±£¬»»Ëã³É±¾µØÊ±¼ä£¬ĞèÒªÖªµÀÓÃ»§ËùÔÚµÄÊ±Çø¡£
 
-°ÑÖ®Ç°µÄ¶ÁÈ¡¿Í»§¶Ë°üÌå½øĞĞÁËÖØĞÂ·ÖÎö£¬²¢×öÁËÏêÏ¸½âÊÍ£¬ÅäºÏÍ¼ĞÎËµÃ÷
-ÉÏÓÎ·şÎñÆ÷Á¬½ÓÏ¸»¯·ÖÎö£¬Ï¸»¯upstreamºÍfastcgiÅäºÏ¹ı³ÌÏ¸½Ú£¬output_chain´úÂëÏêÏ¸·ÖÎö ¸ºÔØ¾ùºâËã·¨(ÂÖÑ¯ºÍiphash)·ÖÎöÒÔ¼°
-ºÍupstream¡¢fastcgiÅäºÏµ÷ÓÃÕûÌåÁ÷³Ì·ÖÎö
-fastacgiĞ­ÒéÏ¸»¯£¬fastcgi¸ñÊ½×é°ü¹ı³Ì·ÖÎö¡£ writev_chain·ÖÎö   ±äÁ¿ÖĞµÄÎ»ÓÃ%d %uÖ®Àà´òÓ¡£¬ÈİÒ×ÒıÆğ¶Î´íÎó  fastcgiÓ¦´ğÍ·²¿ĞĞ½âÎö¹ı³ÌÒÔ¼°¸³Öµ¸ørequestµÄheaders_out¹ı³Ì
-ĞÂÔöÃ¿ĞĞÈÕÖ¾´òÓ¡º¯ÊıÃûºÍĞĞºÅ¹¦ÄÜ£¬ÓĞÀûÓÚ·ÖÎö³ÌĞòÖ´ĞĞÁ÷³Ì¡£
+#define NGX_CONFIGURE " --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads"
+#define NGX_CONFIGURE " --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads --add-module=/var/yyz/nginx-1.9.2/src/echo-nginx-module-master"
+
+I/O²âÊÔ¹¤¾ß£¬iostat  ÍøÂç½Ó¿ÚÁ÷Á¿²âÊÔ¹¤¾ßifstat
+
+3865.81
+·ÀµÁÁ´ »º´æ·ÖÎö sendfile  ÈÕÖ¾Ä£¿é
+Ïß³Ì³Ø
+
+    buffering·½Ê½ºÍ·Çbuffering·½Ê½´¦Àíºó¶ËÊı¾İµÄÁ÷³ÌÏêÏ¸·ÖÎö¡£
+    buffering·½Ê½pipe´¦ÀíÁ÷³ÌÏêÏ¸·ÖÎö
+    keepaliveÄ£¿é´úÂëÀí½â£¬ºó¶ËÁ¬½Ó»º´æÔ­Àí·ÖÎö¡£
+    ·ÖÎöºó¶Ë·şÎñÆ÷Ê§Ğ§ÅĞ¶Ï·½·¨,ÒÑ¾­ÔÙ´Î»Ö¸´Ê¹ÓÃ¼ì²â·½·¨·ÖÎö
+    ·´Ïò´úÀíproxy-moduleÏêÏ¸·ÖÎö£¬proxy_passÏà¹Ø½ÓÊÕ·½Ê½¸ñÊ½×é°ü½âÎö·ÖÎö£¬proxyÄ£¿é·Ç×èÈû·¢ËÍ½ÓÊÕÔ­Àí·ÖÎö
+    chunk±àÂë·½Ê½·ÖÎö£¬´¥·¢°´ÕÕchunk·½Ê½·¢ËÍ°üÌåµ½ºó¶ËÌõ¼ş£¬ÒÔ¼°×é°ü¹ı³Ì·ÖÎö
+    keepalive-moduleºó¶Ë·şÎñÆ÷Á¬½Ó»º´æ½øÒ»²½·ÖÎö
+    ×ÓÁ¬½Ósubrequest¼°ÆäÏàÓ¦µÄpostpone·ÖÎö
+    ¶à¼¶subrequestÈçºÎ±£Ö¤Êı¾İ°´ÕÕÖ¸¶¨ÏÈºóË³Ğò·¢ËÍµÄ¿Í»§¶Ëä¯ÀÀÆ÷´úÂë·ÖÎö¡£
+    ÁÙÊ±ÎÄ¼ş´´½¨¹ÜÀí»º´æ¹ı³Ì·ÖÎö£¬ÒÔ¼°Ïà¹ØÅäÖÃÏêÏ¸·ÖÎö¡£
+    Ö¸¶¨µÄ»º´æ²»¹»µÄÇé¿öÏÂ£¬ºó¶ËÊı¾İĞ´ÈëÁÙÊ±ÎÄ¼ş¹ı³Ì·ÖÎö
+    proxy_cacheÔ­Àí·ÖÎö£¬°üÀ¨¹²ÏíÄÚ´æ´´½¨£¬¹ÜÀí£¬²ÎÊı½âÎöµÈ
+    slabÔ­Àí·ÖÎö£¬ÒÔ¼°slab¹ÜÀí¹²ÏíÄÚ´æ¹ı³Ì·ÖÎö
+
+    http://blog.csdn.net/weiyuefei/article/details/35782523  http://www.tuicool.com/articles/QnMNr23
 */
 

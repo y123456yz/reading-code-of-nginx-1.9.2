@@ -10,8 +10,8 @@
 #include <ngx_http.h>
 
 
-typedef struct {
-    ngx_bufs_t  bufs;
+typedef struct {//真正判断生效在ngx_output_chain
+    ngx_bufs_t  bufs;  //output_buffers  5   3K  默认值output_buffers 1 32768
 } ngx_http_copy_filter_conf_t;
 
 
@@ -38,7 +38,7 @@ static ngx_int_t ngx_http_copy_filter_init(ngx_conf_t *cf);
 
 static ngx_command_t  ngx_http_copy_filter_commands[] = {
 
-    { ngx_string("output_buffers"),
+    { ngx_string("output_buffers"), //真正判断生效在ngx_output_chain
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE2,
       ngx_conf_set_bufs_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
@@ -141,7 +141,7 @@ ngx_module_t  ngx_http_copy_filter_module = {
 
 static ngx_http_output_body_filter_pt    ngx_http_next_body_filter;
 
-
+//in为需要发送的chain链，上面存储的是实际要发送的数据
 static ngx_int_t
 ngx_http_copy_filter(ngx_http_request_t *r, ngx_chain_t *in)
 {
@@ -150,11 +150,12 @@ ngx_http_copy_filter(ngx_http_request_t *r, ngx_chain_t *in)
     ngx_output_chain_ctx_t       *ctx;
     ngx_http_core_loc_conf_t     *clcf;
     ngx_http_copy_filter_conf_t  *conf;
+    int aio = r->aio;
 
     c = r->connection;
 
-    ngx_log_debug2(NGX_LOG_DEBUG_HTTP, c->log, 0,
-                   "http copy filter: \"%V?%V\"", &r->uri, &r->args);
+    ngx_log_debug3(NGX_LOG_DEBUG_HTTP, c->log, 0,
+                   "http copy filter: \"%V?%V\", r->aio:%d", &r->uri, &r->args, aio);
 
     ctx = ngx_http_get_module_ctx(r, ngx_http_copy_filter_module);
 
@@ -169,6 +170,11 @@ ngx_http_copy_filter(ngx_http_request_t *r, ngx_chain_t *in)
         conf = ngx_http_get_module_loc_conf(r, ngx_http_copy_filter_module);
         clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
 
+    /*
+        和后端的ngx_connection_t在ngx_event_connect_peer这里置为1，但在ngx_http_upstream_connect中c->sendfile &= r->connection->sendfile;，
+        和客户端浏览器的ngx_connextion_t的sendfile需要在ngx_http_update_location_config中判断，因此最终是由是否在configure的时候是否有加
+        sendfile选项来决定是置1还是置0
+     */
         ctx->sendfile = c->sendfile;
         ctx->need_in_memory = r->main_filter_need_in_memory
                               || r->filter_need_in_memory;
@@ -177,7 +183,7 @@ ngx_http_copy_filter(ngx_http_request_t *r, ngx_chain_t *in)
         ctx->alignment = clcf->directio_alignment;
 
         ctx->pool = r->pool;
-        ctx->bufs = conf->bufs;
+        ctx->bufs = conf->bufs; // 默认值output_buffers 1 32768
         ctx->tag = (ngx_buf_tag_t) &ngx_http_copy_filter_module;
 
         ctx->output_filter = (ngx_output_chain_filter_pt)
@@ -185,9 +191,9 @@ ngx_http_copy_filter(ngx_http_request_t *r, ngx_chain_t *in)
         ctx->filter_ctx = r;
 
 #if (NGX_HAVE_FILE_AIO)
-        if (ngx_file_aio && clcf->aio == NGX_HTTP_AIO_ON) {
+        if (ngx_file_aio && clcf->aio == NGX_HTTP_AIO_ON) { //./configure的时候加上--with-file-aio并且配置文件中aio on的时候才有效
             ctx->aio_handler = ngx_http_copy_aio_handler;
-#if (NGX_HAVE_AIO_SENDFILE)
+#if (NGX_HAVE_AIO_SENDFILE) //只有freebsd系统才有效 auto/os/freebsd:        have=NGX_HAVE_AIO_SENDFILE . auto/have
             ctx->aio_preload = ngx_http_copy_aio_sendfile_preload;
 #endif
         }
@@ -199,7 +205,7 @@ ngx_http_copy_filter(ngx_http_request_t *r, ngx_chain_t *in)
         }
 #endif
 
-        if (in && in->buf && ngx_buf_size(in->buf)) {
+        if (in && in->buf && ngx_buf_size(in->buf)) { //判断in链中是否有数据
             r->request_output = 1;
         }
     }
@@ -225,7 +231,7 @@ ngx_http_copy_filter(ngx_http_request_t *r, ngx_chain_t *in)
 
 
 #if (NGX_HAVE_FILE_AIO)
-
+//执行在ngx_output_chain_copy_buf->ngx_http_copy_aio_handler
 static void
 ngx_http_copy_aio_handler(ngx_output_chain_ctx_t *ctx, ngx_file_t *file)
 {
@@ -241,7 +247,7 @@ ngx_http_copy_aio_handler(ngx_output_chain_ctx_t *ctx, ngx_file_t *file)
     ctx->aio = 1;
 }
 
-
+//ngx_file_aio_event_handler中执行
 static void
 ngx_http_copy_aio_event_handler(ngx_event_t *ev)
 {
@@ -254,7 +260,8 @@ ngx_http_copy_aio_event_handler(ngx_event_t *ev)
     r->main->blocked--;
     r->aio = 0;
 
-    r->connection->write->handler(r->connection->write);
+    //ngx_http_request_handler->ngx_http_upstream_process_non_buffered_downstream
+    r->connection->write->handler(r->connection->write); //触发一次write->handler，从而可以把从ngx_file_aio_read读到的数据发送出去
 }
 
 

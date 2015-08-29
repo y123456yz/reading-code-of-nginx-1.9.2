@@ -1023,8 +1023,10 @@ location @fallback {
     ngx_hash_t    types_hash;
     ngx_str_t     default_type;
 
-    off_t         client_max_body_size;    /* client_max_body_size */
-    off_t         directio;                /* directio */
+    off_t         client_max_body_size;    /* client_max_body_size */ //默认1M 1 * 1024 * 1024
+    //生效见ngx_open_and_stat_file  if (of->directio <= ngx_file_size(&fi)) { ngx_directio_on }
+    off_t         directio;                /* directio */ //默认NGX_OPEN_FILE_DIRECTIO_OFF 可以directio 512配置
+    //默认512
     off_t         directio_alignment;      /* directio_alignment */ //directio_alignment 512;  它与directio配合使用，指定以directio方式读取文件时的对齐方式
     //实际上是client_body_buffer_size + client_body_buffer_size >> 2
     size_t        client_body_buffer_size; /* client_body_buffer_size */ 
@@ -1086,7 +1088,8 @@ lingering_close
                                            /* client_body_in_singe_buffer */
     ngx_flag_t    internal;                /* internal */ //见"internal"配置，ngx_http_core_internal置1
     ngx_flag_t    sendfile;                /* sendfile */ //sendfile on | off
-    ngx_flag_t    aio;                     /* aio */
+    //aio解析赋值见ngx_http_core_set_aio
+    ngx_flag_t    aio;                     /* aio */ //aio on | off;默认off  aio on | off | threads[=pool];
     ngx_flag_t    tcp_nopush;              /* tcp_nopush */
     ngx_flag_t    tcp_nodelay;             /* tcp_nodelay */
     ngx_flag_t    reset_timedout_connection; /* reset_timedout_connection */
@@ -1098,7 +1101,7 @@ lingering_close
     ngx_flag_t    log_subrequest;          /* log_subrequest */
     ngx_flag_t    recursive_error_pages;   /* recursive_error_pages */
     ngx_flag_t    server_tokens;           /* server_tokens */
-    ngx_flag_t    chunked_transfer_encoding; /* chunked_transfer_encoding */
+    ngx_flag_t    chunked_transfer_encoding; /* chunked_transfer_encoding */ //默认1
     ngx_flag_t    etag;                    /* etag */
 
 #if (NGX_HTTP_GZIP)

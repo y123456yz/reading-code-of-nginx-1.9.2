@@ -14,7 +14,7 @@ static ngx_int_t ngx_test_full_name(ngx_str_t *name);
 
 static ngx_atomic_t   temp_number = 0;
 ngx_atomic_t         *ngx_temp_number = &temp_number;
-ngx_atomic_int_t      ngx_random_number = 123456;
+ngx_atomic_int_t      ngx_random_number = 123456; // ngx_random_number = (tp->msec << 16) + ngx_pid;
 
 
 ngx_int_t
@@ -105,6 +105,7 @@ ngx_test_full_name(ngx_str_t *name)
 }
 
 //创建temp_file临时文件，并把chain链表中的数据写入文件，返回值为写入到文件中的字节数
+//如果配置xxx_buffers  XXX_buffer_size指定的空间都用完了，则会把缓存中的数据写入临时文件，然后继续读，读到后写入临时文件，直到read返回NGX_AGAIN
 ssize_t
 ngx_write_chain_to_temp_file(ngx_temp_file_t *tf, ngx_chain_t *chain)
 {
@@ -112,7 +113,7 @@ ngx_write_chain_to_temp_file(ngx_temp_file_t *tf, ngx_chain_t *chain)
 
     if (tf->file.fd == NGX_INVALID_FILE) {
         rc = ngx_create_temp_file(&tf->file, tf->path, tf->pool,
-                                  tf->persistent, tf->clean, tf->access);
+                                  tf->persistent, tf->clean, tf->access); //创建临时文件
 
         if (rc != NGX_OK) {
             return rc;
@@ -124,10 +125,21 @@ ngx_write_chain_to_temp_file(ngx_temp_file_t *tf, ngx_chain_t *chain)
         }
     }
 
+    //写临时文件的时候更新tf->file->offset  tf->file->sys_offset(也就是ngx_file_t中的成员)  tf->offset(这里是ngx_temp_file_t->offset)在该函数外层更新
     return ngx_write_chain_to_file(&tf->file, chain, tf->offset, tf->pool);
 }
 
 
+/*
+配置fastcgi_cache_path /var/yyz/cache_xxx levels=1:2 keys_zone=fcgi:1m inactive=30m max_size=64 use_temp_path=off;打印如下:
+
+2015/12/16 04:25:19[               ngx_create_temp_file,   169]  [debug] 19348#19348: *3 hashed path: /var/yyz/cache_xxx/temp/2/00/0000000002
+2015/12/16 04:25:19[               ngx_create_temp_file,   174]  [debug] 19348#19348: *3 temp fd:-1
+2015/12/16 04:25:19[                    ngx_create_path,   260]  [debug] 19348#19348: *3 temp file: "/var/yyz/cache_xxx/temp/2"
+2015/12/16 04:25:19[                    ngx_create_path,   260]  [debug] 19348#19348: *3 temp file: "/var/yyz/cache_xxx/temp/2/00"
+2015/12/16 04:25:19[               ngx_create_temp_file,   169]  [debug] 19348#19348: *3 hashed path: /var/yyz/cache_xxx/temp/2/00/0000000002
+2015/12/16 04:25:19[               ngx_create_temp_file,   174]  [debug] 19348#19348: *3 temp fd:15
+*/
 ngx_int_t
 ngx_create_temp_file(ngx_file_t *file, ngx_path_t *path, ngx_pool_t *pool,
     ngx_uint_t persistent, ngx_uint_t clean, ngx_uint_t access)
@@ -150,7 +162,7 @@ ngx_create_temp_file(ngx_file_t *file, ngx_path_t *path, ngx_pool_t *pool,
     }
 #endif
 
-    ngx_memcpy(file->name.data, path->name.data, path->name.len);
+    ngx_memcpy(file->name.data, path->name.data, path->name.len);  //把path->name拷贝到file->name
 
     n = (uint32_t) ngx_next_temp_number(0);
 
@@ -161,19 +173,21 @@ ngx_create_temp_file(ngx_file_t *file, ngx_path_t *path, ngx_pool_t *pool,
 
     for ( ;; ) {
         (void) ngx_sprintf(file->name.data + path->name.len + 1 + path->len,
-                           "%010uD%Z", n);
+                           "%010uD%Z", n); //这里保证每次创建的临时文件不一样
 
+        //注意前面已经把path->name拷贝到file->name
         ngx_create_hashed_filename(path, file->name.data, file->name.len);
 
-        ngx_log_debug1(NGX_LOG_DEBUG_CORE, file->log, 0,
-                       "hashed path: %s", file->name.data);
+        ngx_log_debug3(NGX_LOG_DEBUG_CORE, file->log, 0,
+                       "hashed path: %s, persistent:%u, access:%u", 
+                       file->name.data, persistent, access);
 
         file->fd = ngx_open_tempfile(file->name.data, persistent, access);
 
         ngx_log_debug1(NGX_LOG_DEBUG_CORE, file->log, 0,
                        "temp fd:%d", file->fd);
 
-        if (file->fd != NGX_INVALID_FILE) {
+        if (file->fd != NGX_INVALID_FILE) { //说明已经存在该文件,如果没有则继续后面的创建，然后从这里退出
 
             cln->handler = clean ? ngx_pool_delete_file : ngx_pool_cleanup_file;
             clnf = cln->data;
@@ -187,7 +201,7 @@ ngx_create_temp_file(ngx_file_t *file, ngx_path_t *path, ngx_pool_t *pool,
 
         err = ngx_errno;
 
-        if (err == NGX_EEXIST) {
+        if (err == NGX_EEXIST) { //说明该文件已经存在，则重新获取一个数字
             n = (uint32_t) ngx_next_temp_number(1);
             continue;
         }
@@ -199,13 +213,15 @@ ngx_create_temp_file(ngx_file_t *file, ngx_path_t *path, ngx_pool_t *pool,
             return NGX_ERROR;
         }
 
-        if (ngx_create_path(file, path) == NGX_ERROR) {
+        if (ngx_create_path(file, path) == NGX_ERROR) { //创建对应的文件
             return NGX_ERROR;
         }
     }
 }
 
-
+/*
+ngx_create_hashed_filename 是通过level设置对应的文件夹路径，是根据md5值过来的后面的位数定义的文件夹。
+*/
 void
 ngx_create_hashed_filename(ngx_path_t *path, u_char *file, size_t len)
 {
@@ -216,7 +232,13 @@ ngx_create_hashed_filename(ngx_path_t *path, u_char *file, size_t len)
 
     file[path->name.len + path->len]  = '/';
 
-    for (n = 0; n < 3; n++) {
+    /*
+     levels=1:2，意思是说使用两级目录，第一级目录名是一个字符，第二级用两个字符。但是nginx最大支持3级目录，即levels=xxx:xxx:xxx。
+     那么构成目录名字的字符哪来的呢？假设我们的存储目录为/cache，levels=1:2，那么对于上面的文件 就是这样存储的：
+     /cache/0/8d/8ef9229f02c5672c747dc7a324d658d0  注意后面的8d0和cache后面的/0/8d一致
+    */
+
+    for (n = 0; n < 3; n++) { //拷贝最后面的MD5值字符串中的最后level[i]个字节到level所处位置
         level = path->level[n];
 
         if (level == 0) {
@@ -230,7 +252,12 @@ ngx_create_hashed_filename(ngx_path_t *path, u_char *file, size_t len)
     }
 }
 
+/*
+配置fastcgi_cache_path /var/yyz/cache_xxx levels=1:2 keys_zone=fcgi:1m inactive=30m max_size=64 use_temp_path=off;打印如下:
 
+2015/12/16 04:25:19[                    ngx_create_path,   260]  [debug] 19348#19348: *3 temp file: "/var/yyz/cache_xxx/temp/2"
+2015/12/16 04:25:19[                    ngx_create_path,   260]  [debug] 19348#19348: *3 temp file: "/var/yyz/cache_xxx/temp/2/00"
+*/
 ngx_int_t
 ngx_create_path(ngx_file_t *file, ngx_path_t *path)
 {
@@ -312,9 +339,9 @@ ngx_create_full_path(u_char *dir, ngx_uint_t access)
     return err;
 }
 
-
+//相当于获取一个随机数
 ngx_atomic_uint_t
-ngx_next_temp_number(ngx_uint_t collision)
+ngx_next_temp_number(ngx_uint_t collision) //collision置1，则
 {
     ngx_atomic_uint_t  n, add;
 
@@ -731,7 +758,10 @@ invalid:
     return NGX_CONF_ERROR;
 }
 
-
+/*
+检查slot是否已经存在  如果不存在，则添加到cf->cycle->pathes  
+检查cache->path是否已经存在 如果不存在，则添加到cf->cycle->pathes  
+*/
 ngx_int_t
 ngx_add_path(ngx_conf_t *cf, ngx_path_t **slot)
 {
@@ -745,7 +775,7 @@ ngx_add_path(ngx_conf_t *cf, ngx_path_t **slot)
         if (p[i]->name.len == path->name.len
             && ngx_strcmp(p[i]->name.data, path->name.data) == 0)
         {
-            if (p[i]->data != path->data) {
+            if (p[i]->data != path->data) { //指向同一块内存的name
                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                    "the same path name \"%V\" "
                                    "used in %s:%ui and",
@@ -753,8 +783,8 @@ ngx_add_path(ngx_conf_t *cf, ngx_path_t **slot)
                 return NGX_ERROR;
             }
 
-            for (n = 0; n < 3; n++) {
-                if (p[i]->level[n] != path->level[n]) {
+            for (n = 0; n < 3; n++) { 
+                if (p[i]->level[n] != path->level[n]) {//name相同，但是level不同，说明有冲突，会以第一个为准
                     if (path->conf_file == NULL) {
                         if (p[i]->conf_file == NULL) {
                             ngx_log_error(NGX_LOG_EMERG, cf->log, 0,
@@ -798,7 +828,7 @@ ngx_add_path(ngx_conf_t *cf, ngx_path_t **slot)
         return NGX_ERROR;
     }
 
-    *p = path;
+    *p = path; //把新来的slot添加到cf->cycle->paths
 
     return NGX_OK;
 }
@@ -878,7 +908,7 @@ ngx_ext_rename_file(ngx_str_t *src, ngx_str_t *to, ngx_ext_rename_file_t *ext)
 #if !(NGX_WIN32)
 
     if (ext->access) {
-        if (ngx_change_file_access(src->data, ext->access) == NGX_FILE_ERROR) {
+        if (ngx_change_file_access(src->data, ext->access) == NGX_FILE_ERROR) { //按照ext->access修改文件权限
             ngx_log_error(NGX_LOG_CRIT, ext->log, ngx_errno,
                           ngx_change_file_access_n " \"%s\" failed", src->data);
             err = 0;
@@ -897,13 +927,13 @@ ngx_ext_rename_file(ngx_str_t *src, ngx_str_t *to, ngx_ext_rename_file_t *ext)
         }
     }
 
-    if (ngx_rename_file(src->data, to->data) != NGX_FILE_ERROR) {
+    if (ngx_rename_file(src->data, to->data) != NGX_FILE_ERROR) { //成功直接返回
         return NGX_OK;
     }
 
     err = ngx_errno;
 
-    if (err == NGX_ENOPATH) {
+    if (err == NGX_ENOPATH) { //说明to目录文件不存在，则创建，然后重新rename
 
         if (!ext->create_path) {
             goto failed;
@@ -919,7 +949,7 @@ ngx_ext_rename_file(ngx_str_t *src, ngx_str_t *to, ngx_ext_rename_file_t *ext)
         }
 
         if (ngx_rename_file(src->data, to->data) != NGX_FILE_ERROR) {
-            return NGX_OK;
+            return NGX_OK;//成功直接返回
         }
 
         err = ngx_errno;
@@ -1151,6 +1181,8 @@ failed:
  * on fatal (memory) error handler must return NGX_ABORT to stop walking tree
  */
 
+//使用 ngx_walk_tree 递归遍历缓存目录，并对不同类型的文件根据回调函数做不同的处理。
+//ngx_walk_tree这个函数主要是遍历所有的cache目录，然后对于每一个cache文件调用file_handler回调。
 ngx_int_t
 ngx_walk_tree(ngx_tree_ctx_t *ctx, ngx_str_t *tree)
 {

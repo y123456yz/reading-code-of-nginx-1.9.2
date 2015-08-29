@@ -134,7 +134,7 @@ io_submit(aio_context_t ctx, long n, struct iocb **paiocb) //相当于epoll中的epol
     return syscall(SYS_io_submit, ctx, n, paiocb);
 }
 
-
+//file为要读取的file文件信息
 ngx_int_t
 ngx_file_aio_init(ngx_file_t *file, ngx_pool_t *pool)
 {
@@ -155,6 +155,66 @@ ngx_file_aio_init(ngx_file_t *file, ngx_pool_t *pool)
 
     return NGX_OK;
 }
+
+/*
+而io_cancel则相当于从异步I/O中移除事件。io_submit中用到了一个结构体iocb，下面简单地看一下它的定义。
+    struct iocb  f
+    ／t存储着业务需要的指针。例如，在Nginx中，这个字段通常存储着对应的ngx_event_t亭件的指
+针。它实际上与io_getevents方法中返回的io event结构体的data成员是完全一致的+／
+    u int64 t aio data;
+7 7不需要设置
+u  int32七PADDED (aio_key,  aio_raservedl)j
+／／操作码，其取值范围是io_iocb_cmd_t中的枚举命令
+u int16 t aio lio_opcode;
+／／请求的优先级
+int16 t aio_reqprio,
+，／i41-描述符
+u int32 t aio fildes;
+／／读／写操作对应的用户态缓冲区
+u int64 t aio buf;
+／／读／写操作的字节长度
+u int64 t aio_nbytes;
+／／读／写操作对应于文件中的偏移量
+int64 t aio offset;
+7 7保售手段
+u int64七aio reserved2;
+    ／+表示可以设置为IOCB FLAG RESFD，它会告诉内核当有异步I/O请求处理完成时使用eventfd进
+行通知，可与epoll配合使用，其在Nginx中的使用方法可参见9.9.2节+／
+    u int32七aio_flags；
+／／表示当使用IOCB FLAG RESFD标志位时，用于进行事件通知的句柄
+U int32 t aio resfd;
+    因此，在设置好iocb结构体后，就可以向异步I/O提交事件了。aio_lio_opcode操作码
+指定了这个事件的操作类型，它的取值范围如下。
+    typedef enum io_iocb_cmd_t{
+    ／／异步读操作
+    IO_CMD_PREAD=O，
+    ／／异步写操作
+    IO_CMD_PWRITE=1，
+    ／／强制同步
+    IO_CMD_FSYNC=2，
+    ／／目前采使用
+    IO_CMD_FDSYNC=3，
+    ／／目前未使用
+    IO_CMD_POLL=5，
+    ／／不做任何事情
+    IO_CMD_NOOP=6，
+    )  io_iocb_cmd_t
+    在Nginx中，仅使用了IO_CMD_PREAD命令，这是因为目前仅支持文件的异步I/O读取，不支持异步I/O的写入。这其中一个重要的原因是文件的
+异步I/O无法利用缓存，而写文件操作通常是落到缓存中的，Linux存在统一将缓存中“脏”数据刷新到磁盘的机制。
+    这样，使用io submit向内核提交了文件异步I/O操作的事件后，再使用io_cancel则可以将已经提交的事件取消。
+    如何获取已经完成的异步I/O事件呢？io_getevents方法可以做到，它相当于epoll中的epoll_wait方法，这里用到了io_event结构体，下面看一下它的定义。
+struct io event  {
+    ／／与提交事件时对应的iocb结构体中的aio_data是一致的
+    uint64 t  data;
+    ／／指向提交事件时对应的iocb结构体
+    uint64_t   obj；
+    ／／异步I/O请求的结构。res大于或等于0时表示成功，小于0时表示失败
+    int64一t    res；
+    ／7保留卑段
+    int64一七    res2 j
+)；
+
+*/
 
 /*
 怎样向异步I/O上下文中提交异步I/O操作呢？ngx_linux_aio read.c文件中的ngx_file_aio read方法，在打开文件异步I/O后，这个方法将会负责磁盘文件的读取
@@ -211,8 +271,8 @@ ngx_file_aio_read(ngx_file_t *file, u_char *buf, size_t size, off_t offset,
     /*
     注意，aio_data已经设置为这个ngx_event_t事件的指针，这样，从io_getevents方法获取的io_event对象中的data也是这个指针
      */
-    aio->aiocb.aio_data = (uint64_t) (uintptr_t) ev;
-    aio->aiocb.aio_lio_opcode = IOCB_CMD_PREAD;  //只对文件异步I/O进行读操作
+    aio->aiocb.aio_data = (uint64_t) (uintptr_t) ev; //在ngx_epoll_eventfd_handler中会获取该ev
+    aio->aiocb.aio_lio_opcode = IOCB_CMD_PREAD;  //只对文件异步I/O进行读操作  目前NGINX仅支持异步读取，不支持异步AIO写入
     aio->aiocb.aio_fildes = file->fd; //文件句柄
     aio->aiocb.aio_buf = (uint64_t) (uintptr_t) buf; //读/写操作对应的用户态缓冲区
     aio->aiocb.aio_nbytes = size; //读/写操作的字节长度
@@ -225,7 +285,7 @@ ngx_file_aio_read(ngx_file_t *file, u_char *buf, size_t size, off_t offset,
 异步文件i/o设置事件的回调方法为ngx_file_aio_event_handler，它的调用关系类似这样：epoll_wait中调用ngx_epoll_eventfd_handler方法将当前事件
 放入到ngx_posted_events队列中，在延后执行的队列中调用ngx_file_aio_event_handler方法
 */
-    ev->handler = ngx_file_aio_event_handler;
+    ev->handler = ngx_file_aio_event_handler; //在ngx_epoll_eventfd_handler中会获取该ev，然后会执行该handler
 
     piocb[0] = &aio->aiocb;
     //调用io_submit向ngx_aio_ctx异步1/0上下文中添加1个事件，返回1表示成功
@@ -268,6 +328,9 @@ ngx_file_aio_event_handler(ngx_event_t *ev)
     ngx_log_debug2(NGX_LOG_DEBUG_CORE, ev->log, 0,
                    "aio event handler fd:%d %V", aio->fd, &aio->file->name);
 
-    aio->handler(ev);
+    /* 这里调用了ngx_event_aio_t结构体的handler回调方法，这个回调方法是由真正的业务
+模块实现的，也就是说，任一个业务模块想使用文件异步I/O，就可以实现handler穷法，这
+样，在文件异步操作完成后，该方法就会被回调。 */
+    aio->handler(ev);//例如ngx_output_chain_copy_buf->ngx_http_copy_aio_handler
 }
 

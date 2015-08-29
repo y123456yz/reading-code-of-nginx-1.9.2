@@ -57,7 +57,16 @@ struct ngx_http_log_ctx_s { //在ngx_http_init_connection中创建空间
     ngx_http_request_t  *current_request; //赋值见ngx_http_create_request
 };
 
+/*
+格式:
 
+十六进制ea5表明这个暑假块有3749字节
+          这个块为3749字节，块数结束后\r\n表明这个块已经结束               这个块为3752字节，块数结束后\r\n表明这个块已经结束 
+                                                                                                                                 0表示最后一个块，最后跟两个\r\n
+ea5\r\n........................................................\r\n ea8\r\n..................................................\r\n 0\r\n\r\n
+
+参考:http://blog.csdn.net/zhangboyj/article/details/6236780
+*/
 struct ngx_http_chunked_s {
     ngx_uint_t           state;
     off_t                size;
@@ -86,7 +95,9 @@ ngx_http_get_module ctx接受两个参数，其中第1个参数是ngx_http_request_t指针，
 就是某个HTTP模块的上下文结构体指针，如果这个HTTP模块没有设置过上下文，那么将
 会返回NULL空指针。因此，在任何一个HTTP模块中，都可以使用ngx_http_get_module_
 ctx获取所有HTTP模块为该请求创建的上下文结构体。
-*/ //注意ngx_http_get_module_main_conf ngx_http_get_module_loc_conf和ngx_http_get_module_ctx的区别
+*/ 
+//ngx_http_get_module_ctx存储运行过程中的各种状态(例如读取后端数据，可能需要多次读取)  ngx_http_get_module_loc_conf获取该模块在local{}中的配置信息
+//注意ngx_http_get_module_main_conf ngx_http_get_module_loc_conf和ngx_http_get_module_ctx的区别
 #define ngx_http_get_module_ctx(r, module)  (r)->ctx[module.ctx_index]  //主要是http upstream上下文
 
 /*

@@ -61,7 +61,7 @@ ngx_module_t  ngx_http_upstream_zone_module = {
     NGX_MODULE_V1_PADDING
 };
 
-
+//配置zone的时候走到这里
 static char *
 ngx_http_upstream_zone(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {

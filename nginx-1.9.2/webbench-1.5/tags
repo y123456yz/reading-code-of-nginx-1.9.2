@@ -1,0 +1,37 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.7	//
+METHOD_GET	webbench.c	36;"	d	file:
+METHOD_HEAD	webbench.c	37;"	d	file:
+METHOD_OPTIONS	webbench.c	38;"	d	file:
+METHOD_TRACE	webbench.c	39;"	d	file:
+PROGRAM_VERSION	webbench.c	40;"	d	file:
+REQUEST_SIZE	webbench.c	52;"	d	file:
+Socket	socket.c	/^int Socket(const char *host, int clientPort)$/;"	f
+alarm_handler	webbench.c	/^static void alarm_handler(int signal)$/;"	f	file:
+bench	webbench.c	/^static int bench(void) \/\/所有的压测都在bench函数实现$/;"	f	file:
+benchcore	webbench.c	/^void benchcore(const char *host,const int port,const char *req)$/;"	f
+benchtime	webbench.c	/^int benchtime=30;\/\/压测时间，默认30秒，通过-t参数设置$/;"	v
+build_request	webbench.c	/^void build_request(const char *url)$/;"	f
+bytes	webbench.c	/^int bytes=0; \/\/记录进程成功读取的字节数  通过读取服务端的回应来计算$/;"	v
+clients	webbench.c	/^int clients=1;\/\/并发数目，默认只有1个进程发请求，通过-c参数设置$/;"	v
+failed	webbench.c	/^int failed=0;\/\/记录失败的数量（speed表示成功数，failed表示失败数）  一次连接失败 或者读写失败都+1$/;"	v
+force	webbench.c	/^int force=0;\/\/是否需要等待读取从server返回的数据，0表示要等待读取$/;"	v
+force_reload	webbench.c	/^int force_reload=0;\/\/是否使用缓存，1表示不缓存，0表示可以缓存页面$/;"	v
+host	webbench.c	/^char host[MAXHOSTNAMELEN];\/\/服务器端ip$/;"	v
+http10	webbench.c	/^int http10=1; \/* 0 - http\/0.9, 1 - http\/1.0, 2 - http\/1.1 *\/ \/\/http版本，0表示http0.9，1表示http1.0，2表示http1.1$/;"	v
+keepalive	webbench.c	/^int keepalive = 1;$/;"	v
+long_options	webbench.c	/^static const struct option long_options[]=$/;"	v	typeref:struct:option	file:
+main	webbench.c	/^int main(int argc, char *argv[])$/;"	f
+max_request	webbench.c	/^int max_request = 0;$/;"	v
+method	webbench.c	/^int method=METHOD_GET;\/\/默认请求方式为GET，也支持HEAD、OPTIONS、TRACE$/;"	v
+mypipe	webbench.c	/^int mypipe[2];\/\/使用管道进行父进程和子进程的通信$/;"	v
+proxyhost	webbench.c	/^char *proxyhost=NULL;\/\/代理服务器的ip$/;"	v
+proxyport	webbench.c	/^int proxyport=80;\/\/代理服务器的端口$/;"	v
+request	webbench.c	/^char request[REQUEST_SIZE];\/\/所要发送的http请求$/;"	v
+speed	webbench.c	/^int speed=0;\/\/记录进程成功得到服务器响应的数量  成功建立连接并发送数据(如果不带-f则还必须read服务端数据成功才能加1)$/;"	v
+timerexpired	webbench.c	/^volatile int timerexpired=0;\/\/判断压测时长是否已经到达设定的时间  时间到后进程就会退出$/;"	v
+usage	webbench.c	/^static void usage(void)$/;"	f	file:

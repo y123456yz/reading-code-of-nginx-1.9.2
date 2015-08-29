@@ -17,7 +17,59 @@ static void ngx_thread_read_handler(void *data, ngx_log_t *log);
 
 #if (NGX_HAVE_FILE_AIO)
 
-ngx_uint_t  ngx_file_aio = 1;
+/*
+文件异步IO
+    事件驱动模块都是在处理网络事件，而没有涉及磁盘上文件的操作。本
+节将讨论Linux内核2.6.2x之后版本中支持的文件异步I/O，以及ngx_epoll_module模块是
+如何与文件异步I/O配合提供服务的。这里提到的文件异步I/O并不是glibc库提供的文件异
+步I/O。glibc库提供的异步I/O是基于多线程实现的，它不是真正意义上的异步I/O。而本节
+说明的异步I/O是由Linux内核实现，只有在内核中成功地完成了磁盘操作，内核才会通知
+进程，进而使得磁盘文件的处理与网络事件的处理同样高效。
+    使用这种方式的前提是Linux内核版本中必须支持文件异步I/O。当然，它带来的好处
+也非常明显，Nginx把读取文件的操作异步地提交给内核后，内核会通知I/O设备独立地执
+行操作，这样，Nginx进程可以继续充分地占用CPU。而且，当大量读事件堆积到I/O设备
+的队列中时，将会发挥出内核中“电梯算法”的优势，从而降低随机读取磁盘扇区的成本。
+
+    注意Linux内核级别的文件异步I/O是不支持缓存操作的，也就是说，即使需要操作
+的文件块在Linux文件缓存中存在，也不会通过读取、更改缓存中的文件块来代替实际对磁
+盘的操作，虽然从阻塞worker进程的角度上来说有了很大好转，但是对单个请求来说，还是
+有可能降低实际处理的速度，因为原先可以从内存中快速获取的文件块在使用了异步I/O后
+则一定会从磁盘上读取。异步文件I/O是把“双刃剑”，关键要看使用场景，如果大部分用户
+请求对文件的操作都会落到文件缓存中，那么不要使用异步I/O，反之则可以试着使用文件
+异步I/O，看一下是否会为服务带来并发能力上的提升。
+    目前，Nginx仅支持在读取文件时使用异步I/O，因为正常写入文件时往往是写入内存
+中就立刻返回，效率很高，而使用异步I/O写入时速度会明显下降。
+
+
+
+
+文件异步AIO优点:
+        异步I/O是由Linux内核实现，只有在内核中成功地完成了磁盘操作，内核才会通知
+    进程，进而使得磁盘文件的处理与网络事件的处理同样高效。这样就不会阻塞worker进程。
+
+缺点:
+        不支持缓存操作的，也就是说，即使需要操作的文件块在Linux文件缓存中存在，也不会通过读取、
+    更改缓存中的文件块来代替实际对磁盘的操作。有可能降低实际处理的速度，因为原先可以从内存中快速
+    获取的文件块在使用了异步I/O后则一定会从磁盘上读取
+
+究竟是选择异步I/O还是普通I/O操作呢?
+        异步文件I/O是把“双刃剑”，关键要看使用场景，如果大部分用户
+    请求对文件的操作都会落到文件缓存中，那么不要使用异步I/O，反之则可以试着使用文件
+    异步I/O，看一下是否会为服务带来并发能力上的提升。
+
+        目前，Nginx仅支持在读取文件时使用异步I/O，因为正常写入文件时往往是写入内存
+    中就立刻返回，效率很高，而使用异步I/O写入时速度会明显下降。异步I/O不支持写操作，因为
+    异步I/O无法利用缓存，而写操作通常是落到缓存上，linux会自动将文件中缓存中的数据写到磁盘
+    
+    普通文件读写过程:
+    正常的系统调用read/write的流程是怎样的呢？
+    - 读取：内核缓存有需要的文件数据:内核缓冲区->用户缓冲区;没有:硬盘->内核缓冲区->用户缓冲区;
+    - 写回：数据会从用户地址空间拷贝到操作系统内核地址空间的页缓存中去，这是write就会直接返回，操作系统会在恰当的时机写入磁盘，这就是传说中的
+
+*/
+//direct AIO可以参考http://blog.csdn.net/bengda/article/details/21871413
+
+ngx_uint_t  ngx_file_aio = 1; //如果创建ngx_eventfd失败，置0，表示不支持AIO
 
 #endif
 
@@ -178,8 +230,8 @@ ngx_write_file(ngx_file_t *file, u_char *buf, size_t size, off_t offset)
 {
     ssize_t  n, written;
 
-    ngx_log_debug4(NGX_LOG_DEBUG_CORE, file->log, 0,
-                   "write: %d, %p, %uz, %O", file->fd, buf, size, offset);
+    ngx_log_debug5(NGX_LOG_DEBUG_CORE, file->log, 0,
+                   "write to filename:%V,fd: %d, buf:%p, size:%uz, offset:%O", &file->name, file->fd, buf, size, offset);
 
     written = 0;
 
@@ -249,7 +301,11 @@ ngx_open_tempfile(u_char *name, ngx_uint_t persistent, ngx_uint_t access)
               access ? access : 0600);
 
     if (fd != -1 && !persistent) {
-        (void) unlink((const char *) name);
+        /*
+        unlink函数使文件引用数减一，当引用数为零时，操作系统就删除文件。但若有进程已经打开文件，则只有最后一个引用该文件的文件
+        描述符关闭，该文件才会被删除。
+          */
+        (void) unlink((const char *) name); //如果一个文件名有unlink，则当关闭fd的时候，会删除该文件
     }
 
     return fd;
@@ -276,7 +332,7 @@ ngx_write_chain_to_file(ngx_file_t *file, ngx_chain_t *cl, off_t offset,
                               offset);
     }
 
-    total = 0;
+    total = 0; //本次总共写道文件中的字节数，和cl中所有buf指向的内存空间大小相等
 
     vec.elts = iovs;
     vec.size = sizeof(struct iovec);
@@ -292,8 +348,8 @@ ngx_write_chain_to_file(ngx_file_t *file, ngx_chain_t *cl, off_t offset,
 
         /* create the iovec and coalesce the neighbouring bufs */
 
-        while (cl && vec.nelts < IOV_MAX) {
-            if (prev == cl->buf->pos) {
+        while (cl && vec.nelts < IOV_MAX) { //把cl链中的所有每一个chain节点连接到一个iov中
+            if (prev == cl->buf->pos) { //把一个chain链中的所有buf放到一个iov中
                 iov->iov_len += cl->buf->last - cl->buf->pos;
 
             } else {
@@ -306,10 +362,10 @@ ngx_write_chain_to_file(ngx_file_t *file, ngx_chain_t *cl, off_t offset,
                 iov->iov_len = cl->buf->last - cl->buf->pos;
             }
 
-            size += cl->buf->last - cl->buf->pos;
+            size += cl->buf->last - cl->buf->pos; //cl为所有数据的长度和
             prev = cl->buf->last;
             cl = cl->next;
-        }
+        } //如果cl链中的所有chain个数超过了IOV_MAX个，则需要下次继续在后面while (cl);回过来处理
 
         /* use pwrite() if there is the only iovec buffer */
 
@@ -351,15 +407,15 @@ ngx_write_chain_to_file(ngx_file_t *file, ngx_chain_t *cl, off_t offset,
             return NGX_ERROR;
         }
 
-        ngx_log_debug2(NGX_LOG_DEBUG_CORE, file->log, 0,
-                       "writev: %d, %z", file->fd, n);
+        ngx_log_debug3(NGX_LOG_DEBUG_CORE, file->log, 0,
+                       "writev to filename:%V,fd: %d, readsize: %z", &file->name, file->fd, n);
 
         file->sys_offset += n;
         file->offset += n;
         offset += n;
         total += n;
 
-    } while (cl);
+    } while (cl);//如果cl链中的所有chain个数超过了IOV_MAX个，则需要下次继续在后面while (cl);回过来处理
 
     return total;
 }
@@ -1212,7 +1268,57 @@ ngx_read_ahead(ngx_fd_t fd, size_t n)
 
 
 #if (NGX_HAVE_O_DIRECT)
+/*
+文件异步IO
+    事件驱动模块都是在处理网络事件，而没有涉及磁盘上文件的操作。本
+节将讨论Linux内核2.6.2x之后版本中支持的文件异步I/O，以及ngx_epoll_module模块是
+如何与文件异步I/O配合提供服务的。这里提到的文件异步I/O并不是glibc库提供的文件异
+步I/O。glibc库提供的异步I/O是基于多线程实现的，它不是真正意义上的异步I/O。而本节
+说明的异步I/O是由Linux内核实现，只有在内核中成功地完成了磁盘操作，内核才会通知
+进程，进而使得磁盘文件的处理与网络事件的处理同样高效。
+    使用这种方式的前提是Linux内核版本中必须支持文件异步I/O。当然，它带来的好处
+也非常明显，Nginx把读取文件的操作异步地提交给内核后，内核会通知I/O设备独立地执
+行操作，这样，Nginx进程可以继续充分地占用CPU。而且，当大量读事件堆积到I/O设备
+的队列中时，将会发挥出内核中“电梯算法”的优势，从而降低随机读取磁盘扇区的成本。
 
+    注意Linux内核级别的文件异步I/O是不支持缓存操作的，也就是说，即使需要操作
+的文件块在Linux文件缓存中存在，也不会通过读取、更改缓存中的文件块来代替实际对磁
+盘的操作，虽然从阻塞worker进程的角度上来说有了很大好转，但是对单个请求来说，还是
+有可能降低实际处理的速度，因为原先可以从内存中快速获取的文件块在使用了异步I/O后
+则一定会从磁盘上读取。异步文件I/O是把“双刃剑”，关键要看使用场景，如果大部分用户
+请求对文件的操作都会落到文件缓存中，那么不要使用异步I/O，反之则可以试着使用文件
+异步I/O，看一下是否会为服务带来并发能力上的提升。
+    目前，Nginx仅支持在读取文件时使用异步I/O，因为正常写入文件时往往是写入内存
+中就立刻返回，效率很高，而使用异步I/O写入时速度会明显下降。
+
+
+
+
+文件异步AIO优点:
+        异步I/O是由Linux内核实现，只有在内核中成功地完成了磁盘操作，内核才会通知
+    进程，进而使得磁盘文件的处理与网络事件的处理同样高效。这样就不会阻塞worker进程。
+
+缺点:
+        不支持缓存操作的，也就是说，即使需要操作的文件块在Linux文件缓存中存在，也不会通过读取、
+    更改缓存中的文件块来代替实际对磁盘的操作。有可能降低实际处理的速度，因为原先可以从内存中快速
+    获取的文件块在使用了异步I/O后则一定会从磁盘上读取
+
+究竟是选择异步I/O还是普通I/O操作呢?
+        异步文件I/O是把“双刃剑”，关键要看使用场景，如果大部分用户
+    请求对文件的操作都会落到文件缓存中，那么不要使用异步I/O，反之则可以试着使用文件
+    异步I/O，看一下是否会为服务带来并发能力上的提升。
+
+    目前，Nginx仅支持在读取文件时使用异步I/O，因为正常写入文件时往往是写入内存
+中就立刻返回，效率很高，而使用异步I/O写入时速度会明显下降。异步I/O不支持写操作，因为
+异步I/O无法利用缓存，而写操作通常是落到缓存上，linux会自动将文件中缓存中的数据写到磁盘
+
+普通文件读写过程:
+正常的系统调用read/write的流程是怎样的呢？
+- 读取：内核缓存有需要的文件数据:内核缓冲区->用户缓冲区;没有:硬盘->内核缓冲区->用户缓冲区;
+- 写回：数据会从用户地址空间拷贝到操作系统内核地址空间的页缓存中去，这是write就会直接返回，操作系统会在恰当的时机写入磁盘，这就是传说中的
+*/
+
+//direct AIO可以参考http://blog.csdn.net/bengda/article/details/21871413
 ngx_int_t
 ngx_directio_on(ngx_fd_t fd)
 {
@@ -1224,6 +1330,12 @@ ngx_directio_on(ngx_fd_t fd)
         return NGX_FILE_ERROR;
     }
 
+    /* 
+    普通缓存I/O: 硬盘->内核缓冲区->用户缓冲区 写数据写道缓冲区中就返回，一般由内核定期写道磁盘(或者直接调用API指定要写入磁盘)，
+    读操作首先检查缓冲区是否有所需的文件内容，没有就冲磁盘读到内核缓冲区，在从内核缓冲区到用户缓冲区
+    O_DIRECT为直接I/O方式，硬盘->用户缓冲区，少了内核缓冲区操作，但是直接磁盘操作很费时,所以直接I/O一般借助AIO和EPOLL实现
+    参考:http://blog.csdn.net/bengda/article/details/21871413  http://www.ibm.com/developerworks/cn/linux/l-cn-directio/index.html
+    */
     return fcntl(fd, F_SETFL, flags | O_DIRECT);
 }
 
@@ -1247,6 +1359,73 @@ ngx_directio_off(ngx_fd_t fd)
 
 #if (NGX_HAVE_STATFS)
 
+/*
+功能描述：   
+查询文件系统相关的信息。 
+    
+用法：   
+#include <sys/vfs.h>    / * 或者 <sys/statfs.h> * / 
+
+int statfs(const char *path, struct statfs *buf); 
+int fstatfs(int fd, struct statfs *buf); 
+  
+  参数：   
+path: 位于需要查询信息的文件系统的文件路径名。     
+fd： 位于需要查询信息的文件系统的文件描述词。 
+buf：以下结构体的指针变量，用于储存文件系统相关的信息 
+
+struct statfs { 
+    long    f_type;     / * 文件系统类型  * / 
+   long    f_bsize;    / * 经过优化的传输块大小  * / 
+   long    f_blocks;   / * 文件系统数据块总数 * / 
+   long    f_bfree;    / * 可用块数 * / 
+     long    f_bavail;   / * 非超级用户可获取的块数 * / 
+   long    f_files;    / * 文件结点总数 * / 
+   long    f_ffree;    / * 可用文件结点数 * / 
+   fsid_t  f_fsid;     / * 文件系统标识 * / 
+   long    f_namelen;  / * 文件名的最大长度 * / 
+}; 
+
+ 
+返回说明：   
+成功执行时，返回0。失败返回-1，errno被设为以下的某个值   
+  
+EACCES： (statfs())文件或路径名中包含的目录不可访问 
+EBADF ： (fstatfs()) 文件描述词无效 
+EFAULT： 内存地址无效 
+EINTR ： 操作由信号中断 
+EIO    ： 读写出错 
+ELOOP ： (statfs())解释路径名过程中存在太多的符号连接 
+ENAMETOOLONG：(statfs()) 路径名太长 
+ENOENT：(statfs()) 文件不存在 
+ENOMEM： 核心内存不足 
+ENOSYS： 文件系统不支持调用 
+ENOTDIR：(statfs())路径名中当作目录的组件并非目录 
+EOVERFLOW：信息溢出
+
+ 
+
+一个简单的例子：
+
+#include <sys/vfs.h>
+#include <stdio.h>
+
+int main()
+{
+    struct statfs diskInfo;
+    statfs("/",&diskInfo);
+    unsigned long long blocksize = diskInfo.f_bsize;// 每个block里面包含的字节数
+    unsigned long long totalsize = blocksize * diskInfo.f_blocks;//总的字节数
+    printf("TOTAL_SIZE == %lu MB/n",totalsize>>20); // 1024*1024 =1MB  换算成MB单位
+
+    unsigned long long freeDisk = diskInfo.f_bfree*blocksize; //再计算下剩余的空间大小
+    printf("DISK_FREE == %ld MB/n",freeDisk>>20);
+
+ return 0;
+}
+*/
+
+//获取文件系统的block size  
 size_t
 ngx_fs_bsize(u_char *name)
 {
@@ -1260,7 +1439,7 @@ ngx_fs_bsize(u_char *name)
         return 512;
     }
 
-    return (size_t) fs.f_bsize;
+    return (size_t) fs.f_bsize; // 每个block里面包含的字节数
 }
 
 #elif (NGX_HAVE_STATVFS)

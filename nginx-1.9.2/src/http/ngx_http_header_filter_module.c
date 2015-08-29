@@ -226,7 +226,8 @@ ngx_http_header_filter(ngx_http_request_t *r)
     u_char                     addr[NGX_SOCKADDR_STRLEN];
 
 /*
- 检查请求ngx_http_request_t结构体的header_sent标志位，如果header_sent为1，则表示这个请求的响应头部已经发送过了，不需要再向下执行，直接返回NGX_OK即可。
+ 检查请求ngx_http_request_t结构体的header_sent标志位，如果header_sent为1，则表示这个请求的响应头部已经发送过了，
+ 不需要再向下执行，直接返回NGX_OK即可。
  */
     if (r->header_sent) {
         return NGX_OK;
