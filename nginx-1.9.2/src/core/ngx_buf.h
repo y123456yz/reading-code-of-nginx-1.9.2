@@ -104,8 +104,8 @@ struct ngx_buf_s { //可以参考ngx_create_temp_buf         函数空间在ngx_create_te
     如果接受包体接收完成，则存储最后一个包体内容的buf的last_buf置1，见ngx_http_request_body_length_filter  
     如果发送包体的时候只有头部，这里会置1，见ngx_http_header_filter
     如果各个模块在发送包体内容的时候，如果送入ngx_http_write_filter函数的in参数chain表中的某个buf为该包体的最后一段内容，则该buf中的last_buf会置1
-     */ //chunk传送方式的时候，会发送ngx_http_send_special来表示chunk包结束，该函数中会置1
-    unsigned         last_buf:1;  //数据被以多个chain传递给了过滤器，此字段为1表明这是最后一个buf。
+     */ // ngx_http_send_special中会置1
+    unsigned         last_buf:1;  //数据被以多个chain传递给了过滤器，此字段为1表明这是最后一个chain。
     //在当前的chain里面，此buf是最后一个。特别要注意的是last_in_chain的buf不一定是last_buf，但是last_buf的buf一定是last_in_chain的。这是因为数据会被以多个chain传递给某个filter模块。
     unsigned         last_in_chain:1;//标志位，表示是否是ngx_chain_t中的最后一块缓冲区
 
@@ -157,7 +157,7 @@ struct ngx_output_chain_ctx_s {//ngx_http_copy_filter中创建空间和赋值
     /* 保存临时的buf */ //实际buf指向的内存空间在ngx_output_chain_align_file_buf或者ngx_output_chain_get_buf 开辟的
     ngx_buf_t                   *buf;
     
-    /* 保存了将要发送的chain */  
+    /* 保存了将要发送的chain */  //实际in是在ngx_output_chain->ngx_output_chain_add_copy(ctx->pool, &ctx->in, in)让ctx->in是输入参数in的直接拷贝赋值
     ngx_chain_t                 *in;//in是待发送的数据，busy是已经调用ngx_chain_writer但还没有发送完毕。
     ngx_chain_t                 *free;/* 保存了已经发送完毕的chain，以便于重复利用 */  
     ngx_chain_t                 *busy; /* 保存了还未发送的chain */  
@@ -238,6 +238,7 @@ typedef struct {
 //返回这个buf里面的内容是否仅仅在内存里，并且没有在文件里。
 #define ngx_buf_in_memory_only(b)   (ngx_buf_in_memory(b) && !b->in_file)
 
+//如果是special的buf，应该是从ngx_http_send_special过来的
 //返回该buf是否是一个特殊的buf，只含有特殊的标志和没有包含真正的数据。
 #define ngx_buf_special(b)                                                   \
     ((b->flush || b->last_buf || b->sync)                                    \

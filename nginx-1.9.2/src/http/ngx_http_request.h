@@ -1099,10 +1099,12 @@ struct ngx_http_request_s { //µ±½ÓÊÕµ½¿Í»§¶ËÇëÇóÊı¾İºó£¬µ÷ÓÃngx_http_create_requ
        µ±·¢ËÍÏìÓ¦µÄÊ±ºò£¬Èç¹ûÒ»´ÎÃ»ÓĞ·¢ËÍÍê£¬ÔòÉèÔÚÎªngx_http_writer
      */ //×¢Òângx_http_upstream_tºÍngx_http_request_t¶¼ÓĞ¸Ã³ÉÔ± ·Ö±ğÔÚngx_http_request_handlerºÍngx_http_upstream_handlerÖĞÖ´ĞĞ
      //Èç¹û²ÉÓÃbuffer·½Ê½»º´æºó¶Ë°üÌå£¬ÔòÔÚ·¢ËÍ°üÌå¸ø¿Í»§¶Ëä¯ÀÀÆ÷µÄÊ±ºò£¬»á°Ñ¿Í»§¶ËÁ¬½ÓµÄwrite_e_handÖÃÎªngx_http_upstream_process_downstream
+     //ÔÚ´¥·¢epoll_inµÄÍ¬Ê±Ò²»á´¥·¢epoll_out£¬´Ó¶ø»áÖ´ĞĞ¸Ãº¯Êı
     ngx_http_event_handler_pt         write_event_handler;//¸¸ÇëÇóÖØĞÂ¼¤»îºóµÄ»Øµ÷·½·¨
 
 #if (NGX_HTTP_CACHE)
-    ngx_http_cache_t                 *cache;//ngx_http_file_cache_newÖĞ¸³Öµr->caceh = ngx_http_cache_t
+//Í¨¹ıngx_http_upstream_cache_get»ñÈ¡
+    ngx_http_cache_t                 *cache;//ÔÚ¿Í»§¶ËÇëÇó¹ıÀ´ºó£¬ÔÚngx_http_upstream_cache->ngx_http_file_cache_newÖĞ¸³Öµr->caceh = ngx_http_cache_t
 #endif
 
     /* 
@@ -1206,11 +1208,6 @@ URL×Ö·û×ªÒå
     ngx_str_t                         unparsed_uri;//²Î¿¼:ÎªÊ²Ã´Òª¶ÔURI½øĞĞ±àÂë:
     ngx_str_t                         method_name;//¼ûmethod   GET  POSTµÈ
     ngx_str_t                         http_protocol;//GET /sample.jsp HTTP/1.1  ÖĞµÄHTTP/1.1
-
-
-
-
-
 
 
 /* µ±ngx_http_header_filter·½·¨ÎŞ·¨Ò»´ÎĞÔ·¢ËÍHTTPÍ·²¿Ê±£¬½«»áÓĞÒÔÏÂÁ½¸öÏÖÏóÍ¬Ê±·¢Éú:ÇëÇóµÄout³ÉÔ±ÖĞ½«»á±£´æÊ£ÓàµÄÏìÓ¦Í·²¿,¼ûngx_http_header_filter */    
@@ -1344,7 +1341,7 @@ ngx_http_finalize_request·½·¨Ò»´Î£¬ÕâÊÇÕıÈ·µÄ¡£¶ÔÓÚmytestÄ£¿éÒ²Ò»Ñù£¬Îñ±ØÒª±£Ö¤¶
     //ngx_http_copy_aio_handlerÖĞÖÃ1£¬handler ngx_http_copy_aio_event_handlerÖ´ĞĞºó£¬»áÖÃ»Øµ½0
     unsigned                          aio:1;  //±êÖ¾Î»£¬Îª1Ê±±íÊ¾µ±Ç°ÇëÇóÕıÔÚÊ¹ÓÃÒì²½ÎÄ¼şIO
 
-    unsigned                          http_state:4;
+    unsigned                          http_state:4; //¸³Öµ¼ûngx_http_state_eÖĞµÄ³ÉÔ±
 
     /* URI with "/." and on Win32 with "//" */
     unsigned                          complex_uri:1;
@@ -1398,7 +1395,7 @@ ngx_http_finalize_request·½·¨Ò»´Î£¬ÕâÊÇÕıÈ·µÄ¡£¶ÔÓÚmytestÄ£¿éÒ²Ò»Ñù£¬Îñ±ØÒª±£Ö¤¶
     unsigned                          waited:1; //ngx_http_subrequestÖĞ¸³Öµ NGX_HTTP_SUBREQUEST_WAITED
 
 #if (NGX_HTTP_CACHE)
-    unsigned                          cached:1;
+    unsigned                          cached:1;//Èç¹û¿Í»§¶ËÇëÇó¹ıÀ´ÓĞ¶Áµ½»º´æÎÄ¼ş£¬ÔòÖÃ1£¬¼ûngx_http_file_cache_read  ngx_http_upstream_cache_send
 #endif
 
 #if (NGX_HTTP_GZIP)
@@ -1444,7 +1441,7 @@ ngx_http_finalize_request·½·¨Ò»´Î£¬ÕâÊÇÕıÈ·µÄ¡£¶ÔÓÚmytestÄ£¿éÒ²Ò»Ñù£¬Îñ±ØÒª±£Ö¤¶
     unsigned                          internal:1;//t±êÖ¾Î»£¬Îª1Ê±±íÊ¾ÇëÇóµÄµ±Ç°×´Ì¬ÊÇÔÚ×öÄÚ²¿Ìø×ª£¬ÔòÖ±½Ó
     unsigned                          error_page:1;
     unsigned                          filter_finalize:1;
-    unsigned                          post_action:1;
+    unsigned                          post_action:1;//ngx_http_post_actionÖĞÖÃ1 Ä¬ÈÏÎª0£¬³ı·Çpost_action XXXÅäÖÃ
     unsigned                          request_complete:1;
     unsigned                          request_output:1;//±íÊ¾ÓĞÊı¾İĞèÒªÍù¿Í»§¶Ë·¢ËÍ£¬ngx_http_copy_filterÖĞÖÃ1
     //ÎªIÊ±±íÊ¾·¢ËÍ¸ø¿Í»§¶ËµÄHTTPÏìÓ¦Í·²¿ÒÑ¾­·¢ËÍ¡£ÔÚµ÷ÓÃngx_http_send_header·½·¨ºó£¬ÈôÒÑ¾­³É¹¦µØÆô¶¯ÏìÓ¦Í·²¿·¢ËÍÁ÷³Ì£¬
@@ -1455,7 +1452,7 @@ ngx_http_finalize_request·½·¨Ò»´Î£¬ÕâÊÇÕıÈ·µÄ¡£¶ÔÓÚmytestÄ£¿éÒ²Ò»Ñù£¬Îñ±ØÒª±£Ö¤¶
     unsigned                          done:1;
     unsigned                          logged:1;
 
-    unsigned                          buffered:4;//±íÊ¾»º³åÖĞÊÇ·ñÓĞ´ı·¢ËÍÄÚÈİµÄ±êÖ¾Î»
+    unsigned                          buffered:4;//±íÊ¾»º³åÖĞÊÇ·ñÓĞ´ı·¢ËÍÄÚÈİµÄ±êÖ¾Î»£¬²Î¿¼ngx_http_copy_filter
 
     unsigned                          main_filter_need_in_memory:1;
     unsigned                          filter_need_in_memory:1;

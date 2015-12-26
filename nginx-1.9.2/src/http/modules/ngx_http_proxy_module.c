@@ -994,6 +994,7 @@ not empty and is not equal to “0” then the response will not be saved(注意是no
 使用字段：http, server, location 
 多少次的查询后应答将被缓存，默认1。
 */ //Proxy_cache_min_uses number 默认为1，当客户端发送相同请求达到规定次数后，nginx才对响应数据进行缓存；
+////例如配置Proxy_cache_min_uses 5，则需要客户端请求5才才能从缓存中取，如果现在只有4次，则都需要从后端获取数据,如果没有达到5次，函数ngx_http_upstream_cache会把 u->cacheable = 0;
     { ngx_string("proxy_cache_min_uses"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_num_slot,
@@ -1008,6 +1009,10 @@ not empty and is not equal to “0” then the response will not be saved(注意是no
 这个指令告诉nginx何时从代理缓存中提供一个过期的响应，参数类似于proxy_next_upstream指令。
 为了防止缓存失效（在多个线程同时更新本地缓存时），你可以指定'updating'参数，它将保证只有一个线程去更新缓存，并且在这个线程更
 新缓存的过程中其他的线程只会响应当前缓存中的过期版本。
+*/
+/*
+例如如果设置了fastcgi_cache_use_stale updating，表示说虽然该缓存文件失效了，已经有其他客户端请求在获取后端数据，但是该客户端请求现在还没有获取完整，
+这时候就可以把以前过期的缓存发送给当前请求的客户端 //可以配合ngx_http_upstream_cache阅读
 */
     { ngx_string("proxy_cache_use_stale"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_1MORE,
@@ -1087,7 +1092,13 @@ more request may be passed to the proxied server.
 proxy_cache_path(fastcgi_cache_path) /a/b的时候带有use_temp_path=off(表示不使用ngx_http_fastcgi_temp_path配置的path)，
 则p->temp_file->path = r->cache->file_cache->temp_path; 也就是临时文件/a/b/temp。use_temp_path=off表示不使用ngx_http_fastcgi_temp_path
 配置的路径，而使用指定的临时路径/a/b/temp   见ngx_http_upstream_send_response 
-*/ //从ngx_http_file_cache_update可以看出，后端数据先写到临时文件后，在写入xxx_cache_path中，见ngx_http_file_cache_update
+*/ 
+    /*后端数据读取完毕，并且全部写入临时文件后才会执行rename过程，为什么需要临时文件的原因是:例如之前的缓存过期了，现在有个请求正在从后端
+    获取数据写入临时文件，如果是直接写入缓存文件，则在获取后端数据过程中，如果在来一个客户端请求，如果允许proxy_cache_use_stale updating，则
+    后面的请求可以直接获取之前老旧的过期缓存，从而可以避免冲突(前面的请求写文件，后面的请求获取文件内容) 
+    */
+
+//从ngx_http_file_cache_update可以看出，后端数据先写到临时文件后，在写入xxx_cache_path中，见ngx_http_file_cache_update
     { ngx_string("proxy_temp_path"), //从ngx_http_file_cache_update可以看出，后端数据先写到临时文件后，在写入xxx_cache_path中，见ngx_http_file_cache_update
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1234,
       ngx_conf_set_path_slot,
@@ -1129,7 +1140,7 @@ proxy_cache_path(fastcgi_cache_path) /a/b的时候带有use_temp_path=off(表示不使用n
 
 配置块：http、server、location
 
-此配置项表示当向一台上游服务器转发请求出现错误时，继续换一台上游服务器处理这个请求。前面已经说过，上游服务器一旦开始发送应答，
+此配置项表示当向一台上游服务器转发请求出现错误时，继续换一台上游服务器处理这个请求。上游服务器一旦开始发送应答，
 Nginx反向代理服务器会立刻把应答包转发给客户端。因此，一旦Nginx开始向客户端发送响应包，之后的过程中若出现错误也是不允许换下一台
 上游服务器继续处理的。这很好理解，这样才可以更好地保证客户端只收到来自一个上游服务器的应答。proxy_next_upstream的参数用来说明
 在哪些情况下会继续选择下一台上游服务器转发请求。

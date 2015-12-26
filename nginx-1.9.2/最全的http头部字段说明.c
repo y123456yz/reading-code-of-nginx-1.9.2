@@ -133,29 +133,95 @@ Cookie: Ì¹°×µÄËµ£¬Ò»¸öcookie¾ÍÊÇ´æ´¢ÔÚÓÃ»§Ö÷»úä¯ÀÀÆ÷ÖĞµÄÒ»Ğ¡¶ÎÎÄ±¾ÎÄ¼ş¡£CookiesÊ
 
 Date: Í·Óò±íÊ¾ÏûÏ¢·¢ËÍµÄÊ±¼ä£¬Ê±¼äµÄÃèÊö¸ñÊ½ÓÉrfc822¶¨Òå¡£ÀıÈç£¬Date:Mon,31Dec200104:25:57GMT¡£DateÃèÊöµÄÊ±¼ä±íÊ¾ÊÀ½ç±ê×¼Ê±£¬»»Ëã³É±¾µØÊ±¼ä£¬ĞèÒªÖªµÀÓÃ»§ËùÔÚµÄÊ±Çø¡£
 
+
+
+
+
+
+
+
+http://kb.cnblogs.com/page/92320/
+
+HTTP Header Ïê½â·¢²¼Ê±¼ä: 2011-02-27 21:07  ÔÄ¶Á: 71790 ´Î  ÍÆ¼ö: 23   Ô­ÎÄÁ´½Ó   [ÊÕ²Ø]   
+HTTP£¨HyperTextTransferProtocol£©¼´³¬ÎÄ±¾´«ÊäĞ­Òé£¬Ä¿Ç°ÍøÒ³´«ÊäµÄµÄÍ¨ÓÃĞ­Òé¡£HTTPĞ­Òé²ÉÓÃÁËÇëÇó/ÏìÓ¦Ä£ĞÍ£¬ä¯ÀÀÆ÷»òÆäËû¿Í»§¶Ë·¢³öÇëÇó£¬·şÎñÆ÷¸øÓëÏìÓ¦¡£¾ÍÕû¸öÍøÂç×ÊÔ´´«Êä¶øÑÔ£¬°üÀ¨message-headerºÍmessage-bodyÁ½²¿·Ö¡£Ê×ÏÈ´«µİmessage- header£¬¼´http headerÏûÏ¢ ¡£http header ÏûÏ¢Í¨³£±»·ÖÎª4¸ö²¿·Ö£ºgeneral  header, request header, response header, entity header¡£µ«ÊÇÕâÖÖ·Ö·¨¾ÍÀí½â¶øÑÔ£¬¸Ğ¾õ½çÏŞ²»Ì«Ã÷È·¡£¸ù¾İÎ¬»ù°Ù¿Æ¶Ôhttp headerÄÚÈİµÄ×éÖ¯ĞÎÊ½£¬´óÌå·ÖÎªRequestºÍResponseÁ½²¿·Ö¡£
+
+Requests²¿·Ö
+Header ½âÊÍ Ê¾Àı 
+Accept Ö¸¶¨¿Í»§¶ËÄÜ¹»½ÓÊÕµÄÄÚÈİÀàĞÍ Accept: text/plain, text/html 
+Accept-Charset ä¯ÀÀÆ÷¿ÉÒÔ½ÓÊÜµÄ×Ö·û±àÂë¼¯¡£ Accept-Charset: iso-8859-5 
+Accept-Encoding Ö¸¶¨ä¯ÀÀÆ÷¿ÉÒÔÖ§³ÖµÄweb·şÎñÆ÷·µ»ØÄÚÈİÑ¹Ëõ±àÂëÀàĞÍ¡£ Accept-Encoding: compress, gzip 
+Accept-Language ä¯ÀÀÆ÷¿É½ÓÊÜµÄÓïÑÔ Accept-Language: en,zh 
+Accept-Ranges ¿ÉÒÔÇëÇóÍøÒ³ÊµÌåµÄÒ»¸ö»òÕß¶à¸ö×Ó·¶Î§×Ö¶Î Accept-Ranges: bytes 
+Authorization HTTPÊÚÈ¨µÄÊÚÈ¨Ö¤Êé Authorization: Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ== 
+Cache-Control Ö¸¶¨ÇëÇóºÍÏìÓ¦×ñÑ­µÄ»º´æ»úÖÆ Cache-Control: no-cache 
+Connection ±íÊ¾ÊÇ·ñĞèÒª³Ö¾ÃÁ¬½Ó¡££¨HTTP 1.1Ä¬ÈÏ½øĞĞ³Ö¾ÃÁ¬½Ó£© Connection: close 
+Cookie HTTPÇëÇó·¢ËÍÊ±£¬»á°Ñ±£´æÔÚ¸ÃÇëÇóÓòÃûÏÂµÄËùÓĞcookieÖµÒ»Æğ·¢ËÍ¸øweb·şÎñÆ÷¡£ Cookie: $Version=1; Skin=new; 
+Content-Length ÇëÇóµÄÄÚÈİ³¤¶È Content-Length: 348 
+Content-Type ÇëÇóµÄÓëÊµÌå¶ÔÓ¦µÄMIMEĞÅÏ¢ Content-Type: application/x-www-form-urlencoded 
+Date ÇëÇó·¢ËÍµÄÈÕÆÚºÍÊ±¼ä Date: Tue, 15 Nov 2010 08:12:31 GMT 
+Expect ÇëÇóµÄÌØ¶¨µÄ·şÎñÆ÷ĞĞÎª Expect: 100-continue 
+From ·¢³öÇëÇóµÄÓÃ»§µÄEmail From: user@email.com 
+Host Ö¸¶¨ÇëÇóµÄ·şÎñÆ÷µÄÓòÃûºÍ¶Ë¿ÚºÅ Host: www.zcmhi.com 
+If-Match Ö»ÓĞÇëÇóÄÚÈİÓëÊµÌåÏàÆ¥Åä²ÅÓĞĞ§ If-Match: ¡°737060cd8c284d8af7ad3082f209582d¡± 
+If-Modified-Since Èç¹ûÇëÇóµÄ²¿·ÖÔÚÖ¸¶¨Ê±¼äÖ®ºó±»ĞŞ¸ÄÔòÇëÇó³É¹¦£¬Î´±»ĞŞ¸ÄÔò·µ»Ø304´úÂë If-Modified-Since: Sat, 29 Oct 2010 19:43:31 GMT 
+If-None-Match Èç¹ûÄÚÈİÎ´¸Ä±ä·µ»Ø304´úÂë£¬²ÎÊıÎª·şÎñÆ÷ÏÈÇ°·¢ËÍµÄEtag£¬Óë·şÎñÆ÷»ØÓ¦µÄEtag±È½ÏÅĞ¶ÏÊÇ·ñ¸Ä±ä If-None-Match: ¡°737060cd8c284d8af7ad3082f209582d¡± 
+If-Range Èç¹ûÊµÌåÎ´¸Ä±ä£¬·şÎñÆ÷·¢ËÍ¿Í»§¶Ë¶ªÊ§µÄ²¿·Ö£¬·ñÔò·¢ËÍÕû¸öÊµÌå¡£²ÎÊıÒ²ÎªEtag If-Range: ¡°737060cd8c284d8af7ad3082f209582d¡± 
+If-Unmodified-Since Ö»ÔÚÊµÌåÔÚÖ¸¶¨Ê±¼äÖ®ºóÎ´±»ĞŞ¸Ä²ÅÇëÇó³É¹¦ If-Unmodified-Since: Sat, 29 Oct 2010 19:43:31 GMT 
+Max-Forwards ÏŞÖÆĞÅÏ¢Í¨¹ı´úÀíºÍÍø¹Ø´«ËÍµÄÊ±¼ä Max-Forwards: 10 
+Pragma ÓÃÀ´°üº¬ÊµÏÖÌØ¶¨µÄÖ¸Áî Pragma: no-cache 
+Proxy-Authorization Á¬½Óµ½´úÀíµÄÊÚÈ¨Ö¤Êé Proxy-Authorization: Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ== 
+Range Ö»ÇëÇóÊµÌåµÄÒ»²¿·Ö£¬Ö¸¶¨·¶Î§ Range: bytes=500-999 
+Referer ÏÈÇ°ÍøÒ³µÄµØÖ·£¬µ±Ç°ÇëÇóÍøÒ³½ôËæÆäºó,¼´À´Â· Referer: http://www.zcmhi.com/archives/71.html 
+TE ¿Í»§¶ËÔ¸Òâ½ÓÊÜµÄ´«Êä±àÂë£¬²¢Í¨Öª·şÎñÆ÷½ÓÊÜ½ÓÊÜÎ²¼ÓÍ·ĞÅÏ¢ TE: trailers,deflate;q=0.5 
+Upgrade Ïò·şÎñÆ÷Ö¸¶¨Ä³ÖÖ´«ÊäĞ­ÒéÒÔ±ã·şÎñÆ÷½øĞĞ×ª»»£¨Èç¹ûÖ§³Ö£© Upgrade: HTTP/2.0, SHTTP/1.3, IRC/6.9, RTA/x11 
+User-Agent User-AgentµÄÄÚÈİ°üº¬·¢³öÇëÇóµÄÓÃ»§ĞÅÏ¢ User-Agent: Mozilla/5.0 (Linux; X11) 
+Via Í¨ÖªÖĞ¼äÍø¹Ø»ò´úÀí·şÎñÆ÷µØÖ·£¬Í¨ĞÅĞ­Òé Via: 1.0 fred, 1.1 nowhere.com (Apache/1.1) 
+Warning ¹ØÓÚÏûÏ¢ÊµÌåµÄ¾¯¸æĞÅÏ¢ Warn: 199 Miscellaneous warning 
+
+Responses ²¿·Ö 
+
+Header ½âÊÍ Ê¾Àı 
+Accept-Ranges ±íÃ÷·şÎñÆ÷ÊÇ·ñÖ§³ÖÖ¸¶¨·¶Î§ÇëÇó¼°ÄÄÖÖÀàĞÍµÄ·Ö¶ÎÇëÇó Accept-Ranges: bytes 
+Age ´ÓÔ­Ê¼·şÎñÆ÷µ½´úÀí»º´æĞÎ³ÉµÄ¹ÀËãÊ±¼ä£¨ÒÔÃë¼Æ£¬·Ç¸º£© Age: 12 
+Allow ¶ÔÄ³ÍøÂç×ÊÔ´µÄÓĞĞ§µÄÇëÇóĞĞÎª£¬²»ÔÊĞíÔò·µ»Ø405 Allow: GET, HEAD 
+Cache-Control ¸æËßËùÓĞµÄ»º´æ»úÖÆÊÇ·ñ¿ÉÒÔ»º´æ¼°ÄÄÖÖÀàĞÍ Cache-Control: no-cache 
+Content-Encoding web·şÎñÆ÷Ö§³ÖµÄ·µ»ØÄÚÈİÑ¹Ëõ±àÂëÀàĞÍ¡£ Content-Encoding: gzip 
+Content-Language ÏìÓ¦ÌåµÄÓïÑÔ Content-Language: en,zh 
+Content-Length ÏìÓ¦ÌåµÄ³¤¶È Content-Length: 348 
+Content-Location ÇëÇó×ÊÔ´¿ÉÌæ´úµÄ±¸ÓÃµÄÁíÒ»µØÖ· Content-Location: /index.htm 
+Content-MD5 ·µ»Ø×ÊÔ´µÄMD5Ğ£ÑéÖµ Content-MD5: Q2hlY2sgSW50ZWdyaXR5IQ== 
+Content-Range ÔÚÕû¸ö·µ»ØÌåÖĞ±¾²¿·ÖµÄ×Ö½ÚÎ»ÖÃ Content-Range: bytes 21010-47021/47022 
+Content-Type ·µ»ØÄÚÈİµÄMIMEÀàĞÍ Content-Type: text/html; charset=utf-8 
+Date Ô­Ê¼·şÎñÆ÷ÏûÏ¢·¢³öµÄÊ±¼ä Date: Tue, 15 Nov 2010 08:12:31 GMT 
+ETag ÇëÇó±äÁ¿µÄÊµÌå±êÇ©µÄµ±Ç°Öµ ETag: ¡°737060cd8c284d8af7ad3082f209582d¡± 
+Expires ÏìÓ¦¹ıÆÚµÄÈÕÆÚºÍÊ±¼ä Expires: Thu, 01 Dec 2010 16:00:00 GMT 
+Last-Modified ÇëÇó×ÊÔ´µÄ×îºóĞŞ¸ÄÊ±¼ä Last-Modified: Tue, 15 Nov 2010 12:45:26 GMT 
+Location ÓÃÀ´ÖØ¶¨Ïò½ÓÊÕ·½µ½·ÇÇëÇóURLµÄÎ»ÖÃÀ´Íê³ÉÇëÇó»ò±êÊ¶ĞÂµÄ×ÊÔ´ Location: http://www.zcmhi.com/archives/94.html 
+Pragma °üÀ¨ÊµÏÖÌØ¶¨µÄÖ¸Áî£¬Ëü¿ÉÓ¦ÓÃµ½ÏìÓ¦Á´ÉÏµÄÈÎºÎ½ÓÊÕ·½ Pragma: no-cache 
+Proxy-Authenticate ËüÖ¸³öÈÏÖ¤·½°¸ºÍ¿ÉÓ¦ÓÃµ½´úÀíµÄ¸ÃURLÉÏµÄ²ÎÊı Proxy-Authenticate: Basic 
+refresh Ó¦ÓÃÓÚÖØ¶¨Ïò»òÒ»¸öĞÂµÄ×ÊÔ´±»´´Ôì£¬ÔÚ5ÃëÖ®ºóÖØ¶¨Ïò£¨ÓÉÍø¾°Ìá³ö£¬±»´ó²¿·Öä¯ÀÀÆ÷Ö§³Ö£©  
+Refresh: 5; url=http://www.zcmhi.com/archives/94.html 
+Retry-After Èç¹ûÊµÌåÔİÊ±²»¿ÉÈ¡£¬Í¨Öª¿Í»§¶ËÔÚÖ¸¶¨Ê±¼äÖ®ºóÔÙ´Î³¢ÊÔ Retry-After: 120 
+Server web·şÎñÆ÷Èí¼şÃû³Æ Server: Apache/1.3.27 (Unix) (Red-Hat/Linux) 
+Set-Cookie ÉèÖÃHttp Cookie Set-Cookie: UserID=JohnDoe; Max-Age=3600; Version=1 
+Trailer Ö¸³öÍ·ÓòÔÚ·Ö¿é´«Êä±àÂëµÄÎ²²¿´æÔÚ Trailer: Max-Forwards 
+Transfer-Encoding ÎÄ¼ş´«Êä±àÂë Transfer-Encoding:chunked 
+Vary ¸æËßÏÂÓÎ´úÀíÊÇÊ¹ÓÃ»º´æÏìÓ¦»¹ÊÇ´ÓÔ­Ê¼·şÎñÆ÷ÇëÇó Vary: * 
+Via ¸æÖª´úÀí¿Í»§¶ËÏìÓ¦ÊÇÍ¨¹ıÄÄÀï·¢ËÍµÄ Via: 1.0 fred, 1.1 nowhere.com (Apache/1.1) 
+Warning ¾¯¸æÊµÌå¿ÉÄÜ´æÔÚµÄÎÊÌâ Warning: 199 Miscellaneous warning 
+WWW-Authenticate ±íÃ÷¿Í»§¶ËÇëÇóÊµÌåÓ¦¸ÃÊ¹ÓÃµÄÊÚÈ¨·½°¸ WWW-Authenticate: Basic 
+
+
+
+
+
+
+
+
 #define NGX_CONFIGURE " --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads"
 #define NGX_CONFIGURE " --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads --add-module=/var/yyz/nginx-1.9.2/src/echo-nginx-module-master"
 
 I/O²âÊÔ¹¤¾ß£¬iostat  ÍøÂç½Ó¿ÚÁ÷Á¿²âÊÔ¹¤¾ßifstat
 
-3865.81
-·ÀµÁÁ´ »º´æ·ÖÎö sendfile  ÈÕÖ¾Ä£¿é
-Ïß³Ì³Ø
-
-    buffering·½Ê½ºÍ·Çbuffering·½Ê½´¦Àíºó¶ËÊı¾İµÄÁ÷³ÌÏêÏ¸·ÖÎö¡£
-    buffering·½Ê½pipe´¦ÀíÁ÷³ÌÏêÏ¸·ÖÎö
-    keepaliveÄ£¿é´úÂëÀí½â£¬ºó¶ËÁ¬½Ó»º´æÔ­Àí·ÖÎö¡£
-    ·ÖÎöºó¶Ë·şÎñÆ÷Ê§Ğ§ÅĞ¶Ï·½·¨,ÒÑ¾­ÔÙ´Î»Ö¸´Ê¹ÓÃ¼ì²â·½·¨·ÖÎö
-    ·´Ïò´úÀíproxy-moduleÏêÏ¸·ÖÎö£¬proxy_passÏà¹Ø½ÓÊÕ·½Ê½¸ñÊ½×é°ü½âÎö·ÖÎö£¬proxyÄ£¿é·Ç×èÈû·¢ËÍ½ÓÊÕÔ­Àí·ÖÎö
-    chunk±àÂë·½Ê½·ÖÎö£¬´¥·¢°´ÕÕchunk·½Ê½·¢ËÍ°üÌåµ½ºó¶ËÌõ¼ş£¬ÒÔ¼°×é°ü¹ı³Ì·ÖÎö
-    keepalive-moduleºó¶Ë·şÎñÆ÷Á¬½Ó»º´æ½øÒ»²½·ÖÎö
-    ×ÓÁ¬½Ósubrequest¼°ÆäÏàÓ¦µÄpostpone·ÖÎö
-    ¶à¼¶subrequestÈçºÎ±£Ö¤Êı¾İ°´ÕÕÖ¸¶¨ÏÈºóË³Ğò·¢ËÍµÄ¿Í»§¶Ëä¯ÀÀÆ÷´úÂë·ÖÎö¡£
-    ÁÙÊ±ÎÄ¼ş´´½¨¹ÜÀí»º´æ¹ı³Ì·ÖÎö£¬ÒÔ¼°Ïà¹ØÅäÖÃÏêÏ¸·ÖÎö¡£
-    Ö¸¶¨µÄ»º´æ²»¹»µÄÇé¿öÏÂ£¬ºó¶ËÊı¾İĞ´ÈëÁÙÊ±ÎÄ¼ş¹ı³Ì·ÖÎö
-    proxy_cacheÔ­Àí·ÖÎö£¬°üÀ¨¹²ÏíÄÚ´æ´´½¨£¬¹ÜÀí£¬²ÎÊı½âÎöµÈ
-    slabÔ­Àí·ÖÎö£¬ÒÔ¼°slab¹ÜÀí¹²ÏíÄÚ´æ¹ı³Ì·ÖÎö
-
-    http://blog.csdn.net/weiyuefei/article/details/35782523  http://www.tuicool.com/articles/QnMNr23
 */
 

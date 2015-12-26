@@ -1623,10 +1623,8 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
     
     /* NGX_TIMER_INFINITE == INFTIM */
 
-    ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
-                   "begin to epoll_wait, epoll timer: %M ", timer);
+    //ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0, "begin to epoll_wait, epoll timer: %M ", timer);
 
-    timer = NGX_TIMER_INFINITE;
     /*
      调用epoll_wait获取事件。注意，timer参数是在process_events调用时传入的，在9.7和9.8节中会提到这个参数
      */

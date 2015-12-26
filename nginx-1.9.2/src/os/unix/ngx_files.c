@@ -79,8 +79,8 @@ ngx_read_file(ngx_file_t *file, u_char *buf, size_t size, off_t offset)
 {
     ssize_t  n;
 
-    ngx_log_debug4(NGX_LOG_DEBUG_CORE, file->log, 0,
-                   "read: %d, %p, %uz, %O", file->fd, buf, size, offset);
+    ngx_log_debug5(NGX_LOG_DEBUG_CORE, file->log, 0,
+                   "read file %V: %d, %p, %uz, %O", &file->name, file->fd, buf, size, offset);
 
 #if (NGX_HAVE_PREAD)  //在配置脚本中赋值auto/unix:ngx_feature_name="NGX_HAVE_PREAD"
 
@@ -313,6 +313,17 @@ ngx_open_tempfile(u_char *name, ngx_uint_t persistent, ngx_uint_t access)
 
 
 #define NGX_IOVS  8
+/*
+如果配置xxx_buffers  XXX_buffer_size指定的空间都用完了，则会把缓存中的数据写入临时文件，然后继续读，读到ngx_event_pipe_write_chain_to_temp_file
+后写入临时文件，直到read返回NGX_AGAIN,然后在ngx_event_pipe_write_to_downstream->ngx_output_chain->ngx_output_chain_copy_buf中读取临时文件内容
+发送到后端，当数据继续到来，通过epoll read继续循环该流程
+*/
+
+/*ngx_http_upstream_init_request->ngx_http_upstream_cache 客户端获取缓存 后端应答回来数据后在ngx_http_upstream_send_response->ngx_http_file_cache_create
+中创建临时文件，然后在ngx_event_pipe_write_chain_to_temp_file把读取的后端数据写入临时文件，最后在
+ngx_http_upstream_send_response->ngx_http_upstream_process_request->ngx_http_file_cache_update中把临时文件内容rename(相当于mv)到proxy_cache_path指定
+的cache目录下面
+*/
 
 ssize_t
 ngx_write_chain_to_file(ngx_file_t *file, ngx_chain_t *cl, off_t offset,

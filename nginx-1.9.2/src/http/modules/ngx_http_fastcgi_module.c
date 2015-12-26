@@ -653,6 +653,13 @@ fastcgi_cache_valid  200 302 10m;
 fastcgi_cache_valid  301 1h;
 fastcgi_cache_valid  any 1m;
 */
+    /*
+       注意open_file_cache inactive=20s和fastcgi_cache_valid 20s的区别，前者指的是如果客户端在20s内没有请求到来，则会把该缓存文件对应的stat属性信息
+       从ngx_open_file_cache_t->rbtree(expire_queue)中删除(客户端第一次请求该uri对应的缓存文件的时候会把该文件对应的stat信息节点ngx_cached_open_file_s添加到
+       ngx_open_file_cache_t->rbtree(expire_queue)中)，从而提高获取缓存文件的效率
+       fastcgi_cache_valid指的是何时缓存文件过期，过期则删除，定时执行ngx_cache_manager_process_handler->ngx_http_file_cache_manager
+    */ //进程退出后缓存文件会被全部清楚，即使没有到期
+ 
     { ngx_string("fastcgi_cache_valid"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_1MORE,
       ngx_http_file_cache_valid_set_slot,
@@ -672,6 +679,18 @@ fastcgi_cache_valid  any 1m;
       offsetof(ngx_http_fastcgi_loc_conf_t, upstream.cache_min_uses),
       NULL },
 
+/*
+语法：proxy_cache_use_stale [error|timeout|updating|invalid_header|http_500|http_502|http_503|http_504|http_404|off] […]; 
+默认值：proxy_cache_use_stale off; 
+使用字段：http, server, location 
+这个指令告诉nginx何时从代理缓存中提供一个过期的响应，参数类似于proxy_next_upstream指令。
+为了防止缓存失效（在多个线程同时更新本地缓存时），你可以指定'updating'参数，它将保证只有一个线程去更新缓存，并且在这个
+线程更新缓存的过程中其他的线程只会响应当前缓存中的过期版本。
+*/ 
+/*
+例如如果设置了fastcgi_cache_use_stale updating，表示说虽然该缓存文件失效了，已经有其他客户端请求在获取后端数据，但是该客户端请求现在还没有获取完整，
+这时候就可以把以前过期的缓存发送给当前请求的客户端 //可以配合ngx_http_upstream_cache阅读
+*/
     { ngx_string("fastcgi_cache_use_stale"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_1MORE,
       ngx_conf_set_bitmask_slot,
@@ -734,6 +753,10 @@ fastcgi_cache_methods  POST;
     则p->temp_file->path = r->cache->file_cache->temp_path; 也就是临时文件/a/b/temp。use_temp_path=off表示不使用ngx_http_fastcgi_temp_path
     配置的路径，而使用指定的临时路径/a/b/temp   见ngx_http_upstream_send_response 
     */
+/*后端数据读取完毕，并且全部写入临时文件后才会执行rename过程，为什么需要临时文件的原因是:例如之前的缓存过期了，现在有个请求正在从后端
+获取数据写入临时文件，如果是直接写入缓存文件，则在获取后端数据过程中，如果在来一个客户端请求，如果允许proxy_cache_use_stale updating，则
+后面的请求可以直接获取之前老旧的过期缓存，从而可以避免冲突(前面的请求写文件，后面的请求获取文件内容) 
+*/
     ////XXX_cache缓存是先写在xxx_temp_path再移到xxx_cache_path，所以这两个目录最好在同一个分区
     { ngx_string("fastcgi_temp_path"), //从ngx_http_file_cache_update可以看出，后端数据先写到临时文件后，在写入xxx_cache_path中，见ngx_http_file_cache_update
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1234,
@@ -2079,7 +2102,8 @@ out:
 注意:这两部分内容有可能在一次recv就全部读完，也有可能需要读取多次
 参考<深入剖析nginx> P270
 */
-//解析从后端服务器读取到的fastcgi头部信息   //在ngx_http_upstream_process_header中执行该函数
+//解析从后端服务器读取到的fastcgi头部信息，去掉8字节头部ngx_http_fastcgi_header_t以及头部行数据后面的填充字段后，把实际数据通过u->buffer指向   
+//在ngx_http_upstream_process_header中执行该函数
 static ngx_int_t //读取fastcgi请求行头部用ngx_http_fastcgi_process_header 读取fastcgi包体用ngx_http_fastcgi_input_filter
 ngx_http_fastcgi_process_header(ngx_http_request_t *r)
 {//解析FCGI的请求返回记录，如果是返回标准输出，则解析其请求的HTTP头部并回调其头部数据的回调。数据部分还没有解析。

@@ -1623,4 +1623,7 @@ $proxy_add_x_forwarded_for
 Original Documentation
 Nginx Http Proxy Module
 前进->URL重写模块（Rewrite）
+
+
+完整的中文配置翻译网站参考:http://www.pythonfan.org/docs/webserver/nginx/manual/cn/docs/
 */

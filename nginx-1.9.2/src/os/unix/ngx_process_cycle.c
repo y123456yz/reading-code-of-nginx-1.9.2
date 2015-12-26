@@ -229,7 +229,7 @@ static ngx_cache_manager_ctx_t  ngx_cache_manager_ctx = {
     ngx_cache_manager_process_handler, "cache manager process", 0
 };
 static ngx_cache_manager_ctx_t  ngx_cache_loader_ctx = {
-    ngx_cache_loader_process_handler, "cache loader process", 60000  //½ø³Ì´´½¨ºó60000mÃëÖ´ĞĞngx_cache_loader_process_handler
+    ngx_cache_loader_process_handler, "cache loader process", 60000  //½ø³Ì´´½¨ºó60000mÃëÖ´ĞĞngx_cache_loader_process_handler,ÔÚngx_cache_manager_process_cycleÖĞÌí¼ÓµÄ¶¨Ê±Æ÷
 };
 
 
@@ -1138,7 +1138,7 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
             }
         }
 
-        ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0, "worker(%P) cycle again", ngx_pid);
+        //ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0, "worker(%P) cycle again", ngx_pid);
 
         ngx_process_events_and_timers(cycle);
 
@@ -1556,7 +1556,7 @@ ngx_channel_handler(ngx_event_t *ev)
 */ //ºó¶ËÓ¦´ğÊı¾İÔÚngx_http_upstream_process_request->ngx_http_file_cache_updateÖĞ½øĞĞ»º´æ
 static void  
 ngx_cache_manager_process_cycle(ngx_cycle_t *cycle, void *data)
-{
+{ //nginx: cache loader process½ø³ÌºÍnginx: cache manager process¶¼»áÖ´ĞĞ¸Ãº¯Êı
     ngx_cache_manager_ctx_t *ctx = data;
 
     void         *ident[4];
@@ -1576,7 +1576,7 @@ ngx_cache_manager_process_cycle(ngx_cycle_t *cycle, void *data)
     ngx_worker_process_init(cycle, -1);
 
     ngx_memzero(&ev, sizeof(ngx_event_t));
-    ev.handler = ctx->handler;
+    ev.handler = ctx->handler; //ngx_cache_manager_process_handler  ngx_cache_loader_process_handler
     ev.data = ident;
     ev.log = cycle->log;
     ident[3] = (void *) -1;
@@ -1586,7 +1586,7 @@ ngx_cache_manager_process_cycle(ngx_cycle_t *cycle, void *data)
     ngx_setproctitle(ctx->name);
 
     ngx_add_timer(&ev, ctx->delay, NGX_FUNC_LINE); //ctx->dealyÃëÖ´ĞĞctx->handler;
-
+    
     for ( ;; ) {
 
         if (ngx_terminate || ngx_quit) {
@@ -1616,7 +1616,7 @@ ngx_cache_manager_process_cycle(ngx_cycle_t *cycle, void *data)
 
 //Õâ¸öº¯Êıµ÷ÓÃÁËÃ¿¸ö´ÅÅÌ»º´æÂ·¾¶¶ÔÓ¦µÄmanager()º¯Êı£¬¼´ngx_http_file_cache_manager()º¯Êı¡£Õâ¸öº¯ÊıºÜ¼òµ¥£¬¾ÍÊÇ¼ì²é»º´æ¶ÓÁĞ£¬¿´
 //ÀïÃæµÄË÷ÒıĞÅÏ¢ÓĞÃ»ÓĞ¹ıÆÚ£¬Èç¹û¹ıÆÚ£¬¾Í°Ñ»º´æµÄÎÄ¼ş´Ó´ÅÅÌÉ¾µô£¬²¢°ÑË÷Òı´ÓÄÚ´æÖĞÊÍ·Å¡£
-static void  
+static void   //ngx_cache_manager_ctx
 //cache manager ¸ºÔğÎ¬»¤»º´æÎÄ¼ş£¬¶¨ÆÚÇåÀí¹ıÆÚµÄ»º´æÌõ Ä¿¡£Í¬Ê±£¬ËüÒ²»á¼ì²é»º´æÄ¿Â¼×Ü´óĞ¡£¬Èç¹û³¬³öÅäÖÃÏŞÖÆµÄ»°£¬Ç¿ÖÆÇåÀíµô×îÀÏµÄ»º´æ ÌõÄ¿¡£ 
 ngx_cache_manager_process_handler(ngx_event_t *ev)
 {
@@ -1624,7 +1624,7 @@ ngx_cache_manager_process_handler(ngx_event_t *ev)
     ngx_uint_t    i;
     ngx_path_t  **path;
 
-    next = 60 * 60;
+    next = 60 * 60; //60S
 
     path = ngx_cycle->paths.elts;
     for (i = 0; i < ngx_cycle->paths.nelts; i++) { //±éÀúËùÓĞµÄcacheÄ¿Â¼
@@ -1632,7 +1632,7 @@ ngx_cache_manager_process_handler(ngx_event_t *ev)
         if (path[i]->manager) {
             n = path[i]->manager(path[i]->data);//manager »Øµ÷º¯ÊıĞèÒª·µ»ØËüÀïÃæ×î½ü½«Òª¹ıÆÚµÄ»º´æÌõÄ¿¾àµ±Ç°Ê±¼äµãµÄ¼ä¸ôÊ±³¤¡£
             //È¡µÃÏÂÒ»´ÎµÄ¶¨Ê±Æ÷µÄÊ±¼ä£¬¿ÉÒÔ¿´µ½ÊÇÈ¡nºÍnextµÄ×îĞ¡Öµ
-            next = (n <= next) ? n : next;
+            next = (n <= next) ? n : next; //ÏÂÒ»¸ö»º´æ¹ıÆÚµÄÊ±¼ä£¬Í¨¹ıºóÃæµÄngx_add_timer´Ó¶ø¿ÉÒÔÔÙnextÊ±¼äµ½ºóÇå³ı»º´æ
 
             ngx_time_update();
         }
@@ -1643,7 +1643,7 @@ ngx_cache_manager_process_handler(ngx_event_t *ev)
         next = 1;
     }
 
-    ngx_add_timer(ev, next * 1000, NGX_FUNC_LINE);
+    ngx_add_timer(ev, next * 1000, NGX_FUNC_LINE); //¶¨Ê±Ö´ĞĞngx_cache_manager_process_handler->ngx_http_file_cache_manager
 }
 
 /*
@@ -1658,11 +1658,12 @@ Nginx ½ø³ÌÆô¶¯Ê±£¬»áÊÔÍ¼´Ó»º´æ¶ÔÓ¦µÄÎÄ¼şÏµÍ³Â·¾¶ÏÂµÄÎÄ¼ş¶ÁÈ¡±ØÒªÊı¾İ£¬È»ºóÖØ½¨ »
 
 ¾ßÌåµÄ£¬ÔÚÕâÁ½¸ö½ø³ÌµÄngx_process_events_and_timers()º¯ÊıÖĞ£¬»áµ÷ÓÃngx_event_expire_timers()¡£NginxµÄngx_event_timer_rbtree(ºìºÚÊ÷)Àï
 Ãæ°´ÕÕÖ´ĞĞµÄÊ±¼äµÄÏÈºó´æ·Å×ÅÒ»ÏµÁĞµÄÊÂ¼ş¡£Ã¿´ÎÈ¡Ö´ĞĞÊ±¼ä×îÔçµÄÊÂ¼ş£¬Èç¹ûµ±Ç°Ê±¼äÒÑ¾­µ½ÁËÓ¦¸ÃÖ´ĞĞ¸ÃÊÂ¼ş£¬¾Í»áµ÷ÓÃÊÂ¼şµÄhandler¡£Á½¸ö
-½ø³ÌµÄhandler·Ö±ğÊÇngx_cache_manager_process_handlerºÍngx_cache_loader_process_handler //ºó¶ËÓ¦´ğÊı¾İÔÚngx_http_upstream_process_request->ngx_http_file_cache_updateÖĞ½øĞĞ»º´æ
+½ø³ÌµÄhandler·Ö±ğÊÇngx_cache_manager_process_handlerºÍngx_cache_loader_process_handler 
+//ºó¶ËÓ¦´ğÊı¾İÔÚngx_http_upstream_process_request->ngx_http_file_cache_updateÖĞ½øĞĞ»º´æ
 */
-static void
+static void //ngx_cache_loader_ctx
 ngx_cache_loader_process_handler(ngx_event_t *ev) //´Ó»º´æ¶ÔÓ¦µÄÎÄ¼şÏµÍ³Â·¾¶ÏÂµÄÎÄ¼ş¶ÁÈ¡±ØÒªÊı¾İ£¬È»ºóÖØ½¨ »º´æµÄÄÚ´æ½á¹¹
-{
+{//ngx_cache_manager_process_cycleÖĞÖ´ĞĞ£¬½ø³ÌÆğÀ´60sºó²Å¿ªÊ¼Ö¸Ïò¸Ãº¯Êı£¬Í¨¹ıÔÚngx_cache_manager_process_cycleÌí¼Ó60s¶¨Ê±Æ÷£¬È»ºó³ö·¢Ö´ĞĞ¸Ãº¯Êı
     ngx_uint_t     i;
     ngx_path_t   **path;
     ngx_cycle_t   *cycle;
@@ -1677,7 +1678,7 @@ ngx_cache_loader_process_handler(ngx_event_t *ev) //´Ó»º´æ¶ÔÓ¦µÄÎÄ¼şÏµÍ³Â·¾¶ÏÂµÄ
         }
 
         if (path[i]->loader) {
-            path[i]->loader(path[i]->data);
+            path[i]->loader(path[i]->data); //ngx_http_file_cache_loader
             ngx_time_update();
         }
     }

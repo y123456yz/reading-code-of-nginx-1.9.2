@@ -141,6 +141,8 @@ ngx_module_t  ngx_http_copy_filter_module = {
 
 static ngx_http_output_body_filter_pt    ngx_http_next_body_filter;
 
+/* 注意:到这里的in实际上是已经指向数据内容部分，或者如果发送的数据需要从文件中读取，in中也会指定文件file_pos和file_last已经文件fd等,
+   可以参考ngx_http_cache_send ngx_http_send_header ngx_http_output_filter */
 //in为需要发送的chain链，上面存储的是实际要发送的数据
 static ngx_int_t
 ngx_http_copy_filter(ngx_http_request_t *r, ngx_chain_t *in)
@@ -205,6 +207,7 @@ ngx_http_copy_filter(ngx_http_request_t *r, ngx_chain_t *in)
         }
 #endif
 
+        //一般在调用filter函数的源头，会在in中指定需要发送的数据长度，可以参考ngx_http_cache_send
         if (in && in->buf && ngx_buf_size(in->buf)) { //判断in链中是否有数据
             r->request_output = 1;
         }
@@ -219,8 +222,9 @@ ngx_http_copy_filter(ngx_http_request_t *r, ngx_chain_t *in)
     if (ctx->in == NULL) {
         r->buffered &= ~NGX_HTTP_COPY_BUFFERED;
 
-    } else {
-        r->buffered |= NGX_HTTP_COPY_BUFFERED;
+    } else {//说明还有数据未发送到客户端r
+    //ngx_http_finalize_request->ngx_http_set_write_handler->ngx_http_writer通过这种方式把未发送完毕的响应报文发送出去
+        r->buffered |= NGX_HTTP_COPY_BUFFERED; //说明ctx->in上还有未发送的数据，函数参数in中指向在ngx_output_chain中已经赋值给了ctx->in
     }
 
     ngx_log_debug3(NGX_LOG_DEBUG_HTTP, c->log, 0,

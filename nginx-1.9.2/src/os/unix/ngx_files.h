@@ -133,7 +133,7 @@ typedef struct {
 #define ngx_close_file           close
 #define ngx_close_file_n         "close()"
 
-
+//unlink 只能删除文件，不能删除目录
 #define ngx_delete_file(name)    unlink((const char *) name)
 #define ngx_delete_file_n        "unlink()"
 
@@ -194,6 +194,21 @@ ngx_write_fd(ngx_fd_t fd, void *buf, size_t n)
 ngx_int_t ngx_set_file_time(u_char *name, ngx_fd_t fd, time_t s);
 #define ngx_set_file_time_n      "utimes()"
 
+/*
+stat系统调用系列包括了fstat、stat和lstat，它们都是用来返回“相关文件状态信息”的，三者的不同之处在于设定源文件的方式不同。
+
+我们已经学习完了struct stat和各种st_mode相关宏，现在就可以拿它们和stat系统调用相互配合工作了！
+
+int fstat(int filedes, struct stat *buf);
+int stat(const char *path, struct stat *buf);
+int lstat(const char *path, struct stat *buf);
+聪明人一眼就能看出来fstat的第一个参数是和另外两个不一样的，对！fstat区别于另外两个系统调用的地方在于，fstat系统调用接受的是 一个“文件描述符”，
+而另外两个则直接接受“文件全路径”。文件描述符是需要我们用open系统调用后才能得到的，而文件全路经直接写就可以了。
+
+stat和lstat的区别：当文件是一个符号链接时，lstat返回的是该符号链接本身的信息；而stat返回的是该链接指向的文件的信息。（似乎有些晕吧，这
+样记，lstat比stat多了一个l，因此它是有本事处理符号链接文件的，因此当遇到符号链接文件时，lstat当然不会放过。而 stat系统调用没有这个本事，
+它只能对符号链接文件睁一只眼闭一只眼，直接去处理链接所指文件喽） 
+*/
 
 #define ngx_file_info(file, sb)  stat((const char *) file, sb)
 #define ngx_file_info_n          "stat()"
@@ -205,6 +220,38 @@ ngx_int_t ngx_set_file_time(u_char *name, ngx_fd_t fd, time_t s);
 #define ngx_link_info(file, sb)  lstat((const char *) file, sb)
 #define ngx_link_info_n          "lstat()"
 
+/*
+struct stat  
+10.{  
+11.  
+12.    dev_t       st_dev;     / * ID of device containing file -文件所在设备的ID* /  
+13.  
+14.    ino_t       st_ino;     / * inode number -inode节点号* /  
+15.  
+16.    mode_t      st_mode;    / * protection -保护模式?* /  
+17.  
+18.    nlink_t     st_nlink;   / * number of hard links -链向此文件的连接数(硬连接)* /  
+19.  
+20.    uid_t       st_uid;     / * user ID of owner -user id* /  
+21.  
+22.    gid_t       st_gid;     / * group ID of owner - group id* /  
+23.  
+24.    dev_t       st_rdev;    / * device ID (if special file) -设备号，针对设备文件* /  
+25.  
+26.    off_t       st_size;    / * total size, in bytes -文件大小，字节为单位* /  
+27.  
+28.    blksize_t   st_blksize; / * blocksize for filesystem I/O -系统块的大小* /  
+29.  
+30.    blkcnt_t    st_blocks;  / * number of blocks allocated -文件所占块数* /  
+31.  
+32.    time_t      st_atime;   / * time of last access -最近存取时间* /  
+33.  
+34.    time_t      st_mtime;   / * time of last modification -最近修改时间* /  
+35.  
+36.    time_t      st_ctime;   / * time of last status change - * /  
+37.  
+38.};  
+*/
 #define ngx_is_dir(sb)           (S_ISDIR((sb)->st_mode))
 #define ngx_is_file(sb)          (S_ISREG((sb)->st_mode))
 #define ngx_is_link(sb)          (S_ISLNK((sb)->st_mode))
@@ -213,7 +260,9 @@ ngx_int_t ngx_set_file_time(u_char *name, ngx_fd_t fd, time_t s);
 #define ngx_file_size(sb)        (sb)->st_size
 #define ngx_file_fs_size(sb)     ngx_max((sb)->st_size, (sb)->st_blocks * 512)
 #define ngx_file_mtime(sb)       (sb)->st_mtime
-#define ngx_file_uniq(sb)        (sb)->st_ino
+/* inode number -inode节点号*/  
+//同一个设备中的每个文件，这个值都是不同的
+#define ngx_file_uniq(sb)        (sb)->st_ino  
 
 
 ngx_int_t ngx_create_file_mapping(ngx_file_mapping_t *fm);

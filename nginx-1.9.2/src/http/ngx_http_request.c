@@ -2792,9 +2792,9 @@ ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
        
     //ngx_http_request_t->out÷–ªπ”–Œ¥∑¢ÀÕµƒ∞¸ÃÂ£¨
     //ngx_http_finalize_request->ngx_http_set_write_handler->ngx_http_writerÕ®π˝’‚÷÷∑Ω Ω∞—Œ¥∑¢ÀÕÕÍ±œµƒœÏ”¶±®Œƒ∑¢ÀÕ≥ˆ»•
-    if (r->buffered || c->buffered || r->postponed || r->blocked) {
+    if (r->buffered || c->buffered || r->postponed || r->blocked) { //¿˝»Áªπ”–Œ¥∑¢ÀÕµƒ ˝æ›£¨º˚ngx_http_copy_filter£¨‘Úbuffered≤ªŒ™0
 
-        if (ngx_http_set_write_handler(r) != NGX_OK) {
+        if (ngx_http_set_write_handler(r) != NGX_OK) { 
             ngx_http_terminate_request(r, 0);
         }
 
@@ -2978,7 +2978,7 @@ discard_bodyŒ™l£¨‘Ú±Ì æ’˝‘⁄∂™∆˙∞¸ÃÂ£¨’‚ ±ª·‘Ÿ“ª¥Œ∞—«Î«Ûµƒread_event_handler≥…‘±…
     ngx_http_close_request(r, 0);
 }
 
-
+//µ˜”√ngx_http_write_filter–¥ ˝æ›£¨»Áπ˚∑µªÿNGX_AGAIN,‘Ú“‘∫Ûµƒ–¥ ˝æ›¥•∑¢Õ®π˝‘⁄ngx_http_set_write_handler->ngx_http_writerÃÌº”epoll write ¬º˛¿¥¥•∑¢
 static ngx_int_t
 ngx_http_set_write_handler(ngx_http_request_t *r)
 {
@@ -3005,7 +3005,11 @@ ngx_http_set_write_handler(ngx_http_request_t *r)
     }
 
     clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
-    if (!wev->delayed) {
+    if (!wev->delayed) { //±æ¥Œngx_http_write_filter√ª”–∞— ˝æ›∑¢ÀÕÕÍ±œ£¨‘Ú–Ë“™ÃÌº”–¥ ¬º˛∂® ±∆˜
+    /*
+    “ÚŒ™≥¨ ±µƒ‘≠“Ú÷¥––¡À∏√write_event_handler(¿˝»Á‘⁄œÚøÕªß∂À∑¢ÀÕ ˝æ›µƒπ˝≥Ã÷–£¨øÕªß∂À“ª÷±≤ªrecv£¨æÕª·‘Ï≥…ƒ⁄∫Àª∫¥Ê«¯¬˙£¨
+     ˝æ›”¿‘∂∑¢ÀÕ≤ª≥ˆ»•£¨”⁄ «æÕ‘⁄ngx_http_set_write_handler÷–ÃÌº”¡À–¥ ¬º˛∂® ±∆˜)£¨¥”∂¯ø…“‘ºÏ≤È «∑Ò–¥≥¨ ±£¨¥”∂¯ø…“‘πÿ±’¡¨Ω”
+     */
         ngx_add_timer(wev, clcf->send_timeout, NGX_FUNC_LINE);
     }
 
@@ -3022,7 +3026,7 @@ ngx_http_set_write_handler(ngx_http_request_t *r)
 ngx_http_writer∑Ω∑®∂‘∏˜∏ˆHTTPƒ£øÈ∂¯—‘ «≤ªø…º˚µƒ£¨µ´ µº …œÀ¸∑«≥£÷ÿ“™£¨“ÚŒ™Œﬁ¬€ «ngx_http_send_headerªπ «
 ngx_http_output_filter∑Ω∑®£¨À¸√«‘⁄µ˜”√ ±“ª∞„∂ºŒﬁ∑®∑¢ÀÕ»´≤øµƒœÏ”¶£¨ £œ¬µƒœÏ”¶ƒ⁄»›∂ºµ√øøngx_http_writer∑Ω∑®¿¥∑¢ÀÕ
 */ //ngx_http_writer∑Ω∑®Ωˆ”√”⁄‘⁄∫ÛÃ®∑¢ÀÕœÏ”¶µΩøÕªß∂À°£
-//µ˜”√ngx_http_write_filter–¥ ˝æ›£¨»Áπ˚∑µªÿNGX_AGAIN,‘Ú“‘∫Ûµƒ–¥ ˝æ›¥•∑¢Õ®π˝‘⁄ngx_http_writerÃÌº”epoll write ¬º˛¿¥¥•∑¢
+//µ˜”√ngx_http_write_filter–¥ ˝æ›£¨»Áπ˚∑µªÿNGX_AGAIN,‘Ú“‘∫Ûµƒ–¥ ˝æ›¥•∑¢Õ®π˝‘⁄ngx_http_set_write_handler->ngx_http_writerÃÌº”epoll write ¬º˛¿¥¥•∑¢
 static void
 ngx_http_writer(ngx_http_request_t *r)
 {
@@ -3048,7 +3052,11 @@ ngx_http_writer(ngx_http_request_t *r)
 “™ø¥ ¬º˛µƒdelayed±Í÷æŒª°£»Áπ˚ «œﬁÀŸ∞—–¥ ¬º˛º”»Î∂® ±∆˜£¨“ª∂®ª·∞—delayed±Í÷æŒª÷√Œ™1£¨»Áπ˚–¥ ¬º˛µƒdelayed±Í÷æŒªŒ™0£¨ƒ«æÕ «’Êµƒ≥¨ ±
 ¡À£¨’‚ ±µ˜”√ngx_http_finalize_request∑Ω∑®Ω· ¯«Î«Û£¨¥´»Àµƒ≤Œ ˝ «NGX_HTTP_REQUEST_TIME_OUT£¨±Ì æ–Ë“™œÚøÕªß∂À∑¢ÀÕ408¥ÌŒÛ¬Î£ª
  */
-    if (wev->timedout) {
+    if (wev->timedout) { 
+    /*
+    “ÚŒ™≥¨ ±µƒ‘≠“Ú÷¥––¡À∏√write_event_handler(¿˝»Á‘⁄œÚøÕªß∂À∑¢ÀÕ ˝æ›µƒπ˝≥Ã÷–£¨øÕªß∂À“ª÷±≤ªrecv£¨æÕª·‘Ï≥…ƒ⁄∫Àª∫¥Ê«¯¬˙£¨
+     ˝æ›”¿‘∂∑¢ÀÕ≤ª≥ˆ»•£¨”⁄ «æÕ‘⁄ngx_http_set_write_handler÷–ÃÌº”¡À–¥ ¬º˛∂® ±∆˜)£¨¥”∂¯ø…“‘ºÏ≤È «∑Ò–¥≥¨ ±£¨¥”∂¯ø…“‘πÿ±’¡¨Ω”
+     */
         if (!wev->delayed) { //”…”⁄Õ¯¬Á“Ï≥£ªÚ’ﬂøÕªß∂À≥§ ±º‰≤ªΩ” ’œÏ”¶£¨µº÷¬’Ê µµƒ∑¢ÀÕœÏ”¶≥¨ ±£ª
             ngx_log_error(NGX_LOG_INFO, c->log, NGX_ETIMEDOUT,
                           "client timed out");
@@ -3168,9 +3176,8 @@ ngx_http_block_reading(ngx_http_request_t *r)
     }
 }
 
-
-void
-ngx_http_test_reading(ngx_http_request_t *r)
+//œÛ’˜–‘µƒ∂¡1∏ˆ◊÷Ω⁄£¨∆‰ µ…∂“≤√ª∏…
+void ngx_http_test_reading(ngx_http_request_t *r)
 {
     int                n;
     char               buf[1];
@@ -3802,6 +3809,8 @@ ngx_http_request_empty_handler(ngx_http_request_t *r)
 }
 
 //‘⁄∑¢ÀÕ∫Û∂Àµƒ∑µªÿµƒ ˝æ›µΩøÕªß∂À≥…π¶∫Û£¨ª·µ˜”√∏√∫Ø ˝£¨“ª∞„‘⁄chunk¥´ÀÕ∑Ω Ωµƒ ±∫Ú”––ß£¨µ˜”√ngx_http_chunked_body_filter±Í ∂∏√chunk¥´ÀÕ∑Ω Ωµƒ∞¸ÃÂ¥´ÀÕΩ” ’
+
+//Õ¯“≥∞¸ÃÂ“ª∞„Ω¯π˝∏√∫Ø ˝¥•∑¢Ω¯––∑¢ÀÕ£¨Õ∑≤ø––‘⁄∏√∫Ø ˝Õ‚“—æ≠∑¢ÀÕ≥ˆ»•¡À£¨¿˝»Ángx_http_upstream_send_response->ngx_http_send_header
 ngx_int_t
 ngx_http_send_special(ngx_http_request_t *r, ngx_uint_t flags)
 {
@@ -3815,8 +3824,8 @@ ngx_http_send_special(ngx_http_request_t *r, ngx_uint_t flags)
 
     if (flags & NGX_HTTP_LAST) {
 
-        if (r == r->main && !r->post_action) {
-            b->last_buf = 1;
+        if (r == r->main && !r->post_action) {//“ª∞„Ω¯»Î’‚∏ˆif¿Ô√Ê
+            b->last_buf = 1; 
 
         } else {
             b->sync = 1;
@@ -3831,10 +3840,11 @@ ngx_http_send_special(ngx_http_request_t *r, ngx_uint_t flags)
     out.buf = b;
     out.next = NULL;
 
+    ngx_log_debugall(r->connection->log, 0, "ngx http send special, flags:%ui", flags);
     return ngx_http_output_filter(r, &out);
 }
 
-
+//
 static ngx_int_t
 ngx_http_post_action(ngx_http_request_t *r)
 {
@@ -3842,7 +3852,7 @@ ngx_http_post_action(ngx_http_request_t *r)
 
     clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
 
-    if (clcf->post_action.data == NULL) {
+    if (clcf->post_action.data == NULL) {//post_action XXX√ª”–≈‰÷√÷±Ω”∑µªÿ
         return NGX_DECLINED;
     }
 

@@ -89,10 +89,61 @@ static ngx_http_set_header_t  ngx_http_set_headers[] = {
     { ngx_null_string, 0, NULL }
 };
 
+/*
+ngx_http_headers_module模块提供了两个重要的指令add_header和expires，来添加 “Expires” 和 “Cache-Control” 头字段，对响应头添
+加任何域字段。add_header可以用来标示请求访问到哪台服务器上，这个也可以通过nginx模块nginx-http-footer-filter研究使用来实现。
+expires指令用来对浏览器本地缓存的控制。
+*/
 
 static ngx_command_t  ngx_http_headers_filter_commands[] = {
+/*
+对于站点中不经常修改的静态内容（如图片，js，css），可以在服务器中设置expires过期时间，控制浏览器缓存，达到有效减小带宽流量，降低服务器压力的目的。 
 
-    { ngx_string("expires"),
+以nginx服务器为例：
+
+location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$ 
+{ 
+#过期时间为30天， #图片文件不怎么更新，过期可以设大一点， #如果频繁更新，则可以设置得小一点。 
+expires 30d; } 
+
+location ~ .*\.(js|css)$ 
+{ expires 10d; }【背景】：expires是web服务器响应消息头字段，在响应http请求时告诉浏览器在过期时间前浏览器可以直接从浏览器缓存取数据，
+而无需再次请求。 
+
+【相关资料】1、cache-control策略cache-control与expires的作用一致，都是指明当前资源的有效期，控制浏览器是否直接从浏览器缓存取数据还是
+重新发请求到服务器取数据。只不过cache-control的选择更多，设置更细致，如果同时设置的话，其优先级高于expires。 
+
+
+语法: expires [modified] time;
+expires epoch | max | off;
+默认值: expires off;
+配置段: http, server, location, if in location
+在对响应代码为200，201，204，206，301，302，303，304，或307头部中是否开启对“Expires”和“Cache-Control”的增加和修改操作。
+可以指定一个正或负的时间值，Expires头中的时间根据目前时间和指令中指定的时间的和来获得。
+
+epoch表示自1970年一月一日00:00:01 GMT的绝对时间，max指定Expires的值为2037年12月31日23:59:59，Cache-Control的值为10 years。
+Cache-Control头的内容随预设的时间标识指定：
+·设置为负数的时间值:Cache-Control: no-cache。
+·设置为正数或0的时间值：Cache-Control: max-age = #，这里#的单位为秒，在指令中指定。
+参数off禁止修改应答头中的"Expires"和"Cache-Control"。
+
+实例一：对图片，flash文件在浏览器本地缓存30天
+
+location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+ {
+           expires 30d;
+ }
+
+实例二：对js，css文件在浏览器本地缓存1小时
+
+location ~ .*\.(js|css)$
+ {
+            expires 1h;
+ }
+*/  //该配置会修改应答头中的Cache-Control头部行，从而浏览器可以获取到该文件的缓存时间，如果在这段时间内浏览器再次获取该文件，
+//则不会发送请求到nginx，浏览器使用本地缓存。也就是浏览器根据该时间段内直接获取本地浏览器缓存，而不是从nginx从新获取，从而提高效率 
+//如果浏览器携带请求过来，我们可以直接回应304 Not Modified，表示没变动。这样浏览器就判断直接使用浏览器本地缓存
+    { ngx_string("expires"), //也就是在响应中是否携带头部行:Expires: Thu, 01 Dec 2010 16:00:00 GMT等信息
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_HTTP_LIF_CONF
                         |NGX_CONF_TAKE12,
       ngx_http_headers_expires,
@@ -100,6 +151,14 @@ static ngx_command_t  ngx_http_headers_filter_commands[] = {
       0,
       NULL},
 
+/*
+add_header指令
+语法: add_header name value;
+默认值: —
+配置段: http, server, location, if in location
+对响应代码为200，201，204，206，301，302，303，304，或307的响应报文头字段添加任意域。如：
+add_header From ttlsa.com
+*/
     { ngx_string("add_header"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_HTTP_LIF_CONF
                         |NGX_CONF_TAKE23,
@@ -186,6 +245,11 @@ static ngx_http_module_t  ngx_http_headers_filter_module_ctx = {
 
 */
 
+/*
+ngx_http_headers_module模块提供了两个重要的指令add_header和expires，来添加 “Expires” 和 “Cache-Control” 头字段，对响应头添
+加任何域字段。add_header可以用来标示请求访问到哪台服务器上，这个也可以通过nginx模块nginx-http-footer-filter研究使用来实现。
+expires指令用来对浏览器本地缓存的控制。
+*/
 ngx_module_t  ngx_http_headers_filter_module = {
     NGX_MODULE_V1,
     &ngx_http_headers_filter_module_ctx,   /* module context */

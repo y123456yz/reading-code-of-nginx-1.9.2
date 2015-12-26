@@ -25,7 +25,8 @@ ngx_event_pipe将upstream响应发送回客户端。do_write代表是否要往客户端发送，写数据
 */ //ngx_event_pipe->ngx_event_pipe_write_to_downstream
 ngx_int_t
 ngx_event_pipe(ngx_event_pipe_t *p, ngx_int_t do_write)
-{
+{//注意走到这里的时候，后端发送的头部行信息已经在前面的ngx_http_upstream_send_response->ngx_http_send_header已经把头部行部分发送给客户端了
+//该函数处理的只是后端放回过来的网页包体部分
     ngx_int_t     rc;
     ngx_uint_t    flags;
     ngx_event_t  *rev, *wev;
@@ -145,7 +146,7 @@ ngx_event_pipe_read_upstream(ngx_event_pipe_t *p)
     }
 
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, p->log, 0,
-                   "pipe read upstream: %d", p->upstream->read->ready);
+                   "pipe read upstream, read ready: %d", p->upstream->read->ready);
 
     for ( ;; ) {
         //数据读取完毕，或者出错，直接退出循环
@@ -154,7 +155,7 @@ ngx_event_pipe_read_upstream(ngx_event_pipe_t *p)
         }
 
         //如果没有预读数据，并且跟upstream的连接还没有read，那就可以退出了，因为没数据可读。
-        if (p->preread_bufs == NULL && !p->upstream->read->ready) {
+        if (p->preread_bufs == NULL && !p->upstream->read->ready) { //如果后端协议栈数据读取完毕，返回NGX_AGAIN，则ready会置0
             break;
         }
 
@@ -968,6 +969,16 @@ X-Powered-By: PHP/5.2.13
 如果配置xxx_buffers  XXX_buffer_size指定的空间都用完了，则会把缓存中的数据写入临时文件，然后继续读，读到ngx_event_pipe_write_chain_to_temp_file
 后写入临时文件，直到read返回NGX_AGAIN,然后在ngx_event_pipe_write_to_downstream->ngx_output_chain->ngx_output_chain_copy_buf中读取临时文件内容
 发送到后端，当数据继续到来，通过epoll read继续循环该流程
+*/
+
+/*ngx_http_upstream_init_request->ngx_http_upstream_cache 客户端获取缓存 后端应答回来数据后在ngx_http_upstream_send_response->ngx_http_file_cache_create
+中创建临时文件，然后在ngx_event_pipe_write_chain_to_temp_file把读取的后端数据写入临时文件，最后在
+ngx_http_upstream_send_response->ngx_http_upstream_process_request->ngx_http_file_cache_update中把临时文件内容rename(相当于mv)到proxy_cache_path指定
+的cache目录下面
+*/
+/*后端数据读取完毕，并且全部写入临时文件后才会执行rename过程，为什么需要临时文件的原因是:例如之前的缓存过期了，现在有个请求正在从后端
+获取数据写入临时文件，如果是直接写入缓存文件，则在获取后端数据过程中，如果在来一个客户端请求，如果允许proxy_cache_use_stale updating，则
+后面的请求可以直接获取之前老旧的过期缓存，从而可以避免冲突(前面的请求写文件，后面的请求获取文件内容) 
 */
 static ngx_int_t
 ngx_event_pipe_write_chain_to_temp_file(ngx_event_pipe_t *p)

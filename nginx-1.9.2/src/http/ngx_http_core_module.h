@@ -1014,7 +1014,7 @@ location @fallback {
     /* location name length for inclusive location with inherited alias */
     size_t        alias;
     ngx_str_t     root;                    /* root, alias */ //默认一般会是/usr/local/nginx/html
-    ngx_str_t     post_action;
+    ngx_str_t     post_action;//post_action XXXX配置 默认为空
 
     ngx_array_t  *root_lengths;
     ngx_array_t  *root_values;
@@ -1033,10 +1033,10 @@ location @fallback {
     
     size_t        send_lowat;              /* send_lowat */ //配置该选项后，会启用ngx_send_lowat
    /* 
-   clcf->postpone_output：由于处理postpone_output指令，用于设置延时输出的阈值。比如指令“postpone s”，当输出内容的size小于s，
-   并且不是最后一个buffer，也不需要flush，那么就延时输出。见ngx_http_write_filter
+   clcf->postpone_output：由于处理postpone_output指令，用于设置延时输出的阈值。比如指令“postpone s”，当输出内容的size小于s， 默认1460
+   并且不是最后一个buffer，也不需要flush，那么就延时输出。见ngx_http_write_filter  
     */
-    size_t        postpone_output;         /* postpone_output */
+    size_t        postpone_output;         /* postpone_output */ //默认1460
     size_t        limit_rate;              /* limit_rate */
     //在…后再限制速率为,所以实际的速率应该比limit_rate稍微大一点，可以参考ngx_http_write_filter
     size_t        limit_rate_after;        /* limit_rate_after */ 
@@ -1050,7 +1050,7 @@ location @fallback {
      limit, one fast connection may seize the worker process entirely. 如果不设置该参数，可能会阻塞http框架，因为可能发送的包体很大
      */ //如果没有配置该值，则发送的时候默认一次最多发送NGX_MAX_SIZE_T_VALUE - ngx_pagesize;  见ngx_linux_sendfile_chain
     size_t        sendfile_max_chunk;      /* sendfile_max_chunk */ //最大一次发送给客户端的数据大小
-    size_t        read_ahead;              /* read_ahead */
+    size_t        read_ahead;              /* read_ahead配置，默认0 */
     
     //如果数据包包体很大，对方可能会多次发送才能发送完成，本端需要多次读取，等待读取客户端数据到来的最大超时事件为该变量，见ngx_http_do_read_client_request_body
     ngx_msec_t    client_body_timeout;     /* client_body_timeout */ 
@@ -1122,17 +1122,23 @@ lingering_close
 
 #if (NGX_HAVE_OPENAT)
     ngx_uint_t    disable_symlinks;        /* disable_symlinks */
-    ngx_http_complex_value_t  *disable_symlinks_from;
+    ngx_http_complex_value_t  *disable_symlinks_from; //disable_symlinks on | if_not_owner [from=part];中from携带的参数part
 #endif
 
     ngx_array_t  *error_pages;             /* error_page */
     ngx_http_try_file_t    *try_files;     /* try_files */ //创建空间和赋值见ngx_http_core_try_files，相当于一个数组，用来存取try_files aaa bbb ccc中的 aaa bbb ccc
 
     ngx_path_t   *client_body_temp_path;   /* client_body_temp_path */ //"client_body_temp_path"设置
-
-    ngx_open_file_cache_t  *open_file_cache;
-    time_t        open_file_cache_valid;
-    ngx_uint_t    open_file_cache_min_uses;
+    //ngx_http_core_open_file_cache中创建空间和赋值  
+    ngx_open_file_cache_t  *open_file_cache; //如果不配置open_file_cache max=1000 inactive=20s;则默认指向NULL
+//多久检测一次缓存有效性  赋值可以参考ngx_http_file_cache_open
+    time_t        open_file_cache_valid; //默认为每60秒检查一次缓存中的元素是否仍有效。 open_file_cache_valid可以配置  实际该配置在ngx_open_cached_file
+/*
+例如open_file_cache max=102400 inactive=20s;则在20s内如果至少有open_file_cache_min_uses次请求，则缓存中的文件更改信息不变,
+这时候的情况是:请求带有If-Modified-Since，得到的是304且Last-Modified时间没变
+*/
+    ngx_uint_t    open_file_cache_min_uses; //一般赋值给ngx_open_file_info_t->min_uses   赋值可以参考ngx_http_file_cache_open
+    //此配置项表示是否在文件缓存中缓存打开文件时出现的找不到路径、没有权限等错误信息。 默认off
     ngx_flag_t    open_file_cache_errors;
     ngx_flag_t    open_file_cache_events;
 

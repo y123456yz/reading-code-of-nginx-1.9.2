@@ -800,6 +800,9 @@ When both AIO and sendfile are enabled on Linux, AIO is used for files that are 
 directio directive, while sendfile is used for files of smaller sizes or when directio is disabled. 
 如果aio on; sendfile都配置了，则当文件大小大于等于directio指定size(默认512)的时候使用aio,当小于size或者directio off的时候使用sendfile
 生效见ngx_open_and_stat_file  if (of->directio <= ngx_file_size(&fi)) { ngx_directio_on }
+
+当读入长度大于等于指定size的文件时，开启DirectIO功能。具体的做法是，在FreeBSD或Linux系统开启使用O_DIRECT标志，在MacOS X系统开启
+使用F_NOCACHE标志，在Solaris系统开启使用directio()功能。这条指令自动关闭sendfile(0.7.15版)。它在处理大文件时 
 */ //ngx_output_chain_as_is  ngx_output_chain_copy_buf是aio和sendfile和普通文件读写的分支点
     { ngx_string("directio"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
@@ -962,7 +965,10 @@ tcp_nopush
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_core_loc_conf_t, send_lowat),
       &ngx_http_core_lowat_post },
-
+/* 
+clcf->postpone_output：由于处理postpone_output指令，用于设置延时输出的阈值。比如指令“postpone s”，当输出内容的size小于s， 默认1460
+并且不是最后一个buffer，也不需要flush，那么就延时输出。见ngx_http_write_filter  
+*/
     { ngx_string("postpone_output"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_size_slot,
@@ -1379,9 +1385,27 @@ max：表示在内存中存储元素的最大个数。当达到最大限制数量后，将采用LRU（Least Rece
 inactive：表示在inactive指定的时间段内没有被访问过的元素将会被淘汰。默认时间为60秒。
 off：关闭缓存功能。
 例如：
-open_file_cache max=1000 inactive=20s;
+open_file_cache max=1000 inactive=20s; //如果20s内有请求到该缓存，则该缓存继续生效，如果20s内都没有请求该缓存，则20s外请求，会重新获取原文件并生成缓存
 */
-    { ngx_string("open_file_cache"),
+
+/*
+   注意open_file_cache inactive=20s和fastcgi_cache_valid 20s的区别，前者指的是如果客户端在20s内没有请求到来，则会把该缓存文件对应的stat属性信息
+   从ngx_open_file_cache_t->rbtree(expire_queue)中删除(客户端第一次请求该uri对应的缓存文件的时候会把该文件对应的stat信息节点ngx_cached_open_file_s添加到
+   ngx_open_file_cache_t->rbtree(expire_queue)中)，从而提高获取缓存文件的效率
+   fastcgi_cache_valid指的是何时缓存文件过期，过期则删除，定时执行ngx_cache_manager_process_handler->ngx_http_file_cache_manager
+*/
+
+/* 
+   如果没有配置open_file_cache max=1000 inactive=20s;，也就是说没有缓存cache缓存文件对应的文件stat信息，则每次都要从新打开文件获取文件stat信息，
+   如果有配置open_file_cache，则会把打开的cache缓存文件stat信息按照ngx_crc32_long做hash后添加到ngx_cached_open_file_t->rbtree中，这样下次在请求该
+   uri，则就不用再次open文件后在stat获取文件属性了，这样可以提高效率,参考ngx_open_cached_file 
+
+   创建缓存文件stat节点node后，每次新来请求的时候都会更新accessed时间，因此只要inactive时间内有请求，就不会删除缓存stat节点，见ngx_expire_old_cached_files
+   inactive时间内没有新的请求则会从红黑树中删除该节点，同时关闭该文件见ngx_open_file_cleanup  ngx_close_cached_file  ngx_expire_old_cached_files
+   */ //可以参考ngx_open_file_cache_t  参考ngx_open_cached_file 
+   
+    { ngx_string("open_file_cache"), 
+//open_file_cache inactive 30主要用于是否在30s内有新请求，没有则删除缓存，而open_file_cache_min_uses表示只要缓存在红黑树中，并且遍历该文件次数达到指定次数，则不会close文件，也就不会从新获取stat信息
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE12,
       ngx_http_core_open_file_cache,
       NGX_HTTP_LOC_CONF_OFFSET,
@@ -1393,9 +1417,12 @@ open_file_cache max=1000 inactive=20s;
 语法：open_file_cache_valid time;
 默认：open_file_cache_valid 60s;
 配置块：http、server、location
-默认为每60秒检查一次缓存中的元素是否仍有效。
-*/
-    { ngx_string("open_file_cache_valid"),
+设置检查open_file_cache缓存stat信息的元素的时间间隔。 
+*/ 
+//表示60s后来的第一个请求要对文件stat信息做一次检查，检查是否发送变化，如果发送变化则从新获取文件stat信息或者从新创建该阶段，
+    //生效在ngx_open_cached_file中的(&& now - file->created < of->valid ) 
+    { ngx_string("open_file_cache_valid"), 
+    //open_file_cache_min_uses后者是判断是否需要close描述符，然后重新打开获取fd和stat信息，open_file_cache_valid只是定期对stat(超过该配置时间后，在来一个的时候会进行判断)进行更新
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_sec_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
@@ -1407,9 +1434,20 @@ open_file_cache max=1000 inactive=20s;
 语法：open_file_cache_min_uses number;
 默认：open_file_cache_min_uses 1;
 配置块：http、server、location
-它与open_file_cache中的inactive参数配合使用。如果在inactive指定的时间段内，访问次数超过了open_file_cache_min_uses指定的最小次数，那么将不会被淘汰出缓存。
-*/
-    { ngx_string("open_file_cache_min_uses"),
+ 
+设置在由open_file_cache指令的inactive参数配置的超时时间内，文件应该被访问的最小number(次数)。如果访问次数大于等于此值，文件描
+述符会保留在缓存中，否则从缓存中删除。 
+*/  //例如open_file_cache max=102400 inactive=20s; 只要该缓存文件被遍历次数超过open_file_cache_min_uses次请求，则缓存中的文件更改信息不变,不会close文件
+    //这时候的情况是:请求带有If-Modified-Since，得到的是304且Last-Modified时间没变
+/*
+file->uses >= min_uses表示只要在inactive时间内该ngx_cached_open_file_s file节点被遍历到的次数达到min_uses次，则永远不会关闭文件(也就是不用重新获取文件stat信息)，
+除非该cache node失效，缓存超时inactive后会从红黑树中删除该file node节点，同时关闭文件等见ngx_open_file_cleanup  ngx_close_cached_file  ngx_expire_old_cached_files
+*/    { ngx_string("open_file_cache_min_uses"), 
+//只要缓存匹配次数达到这么多次，就不会重新关闭close该文件缓存，下次也就不会从新打开文件获取文件描述符，除非缓存时间inactive内都没有新请求，则会删除节点并关闭文件
+//open_file_cache inactive 30主要用于是否在30s内有新请求，没有则删除缓存，而open_file_cache_min_uses表示只要缓存在红黑树中，并且遍历该文件次数达到指定次数，则不会close文件，也就不会从新获取stat信息
+
+//open_file_cache_min_uses后者是判断是否需要close描述符，然后重新打开获取fd和stat信息，open_file_cache_valid只是定期对stat(超过该配置时间后，在来一个的时候会进行判断)进行更新
+
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_num_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
@@ -1499,6 +1537,32 @@ DNS解析的超时时间
 
 #if (NGX_HAVE_OPENAT)
 
+/*
+语法:  disable_symlinks off;
+disable_symlinks on | if_not_owner [from=part];
+ 
+默认值:  disable_symlinks off; 
+上下文:  http, server, location
+ 
+决定nginx打开文件时如何处理符号链接： 
+
+off
+默认行为，允许路径中出现符号链接，不做检查。 
+on
+如果文件路径中任何组成部分中含有符号链接，拒绝访问该文件。 
+if_not_owner
+如果文件路径中任何组成部分中含有符号链接，且符号链接和链接目标的所有者不同，拒绝访问该文件。 
+from=part
+当nginx进行符号链接检查时(参数on和参数if_not_owner)，路径中所有部分默认都会被检查。而使用from=part参数可以避免对路径开始部分进行符号链接检查，
+而只检查后面的部分路径。如果某路径不是以指定值开始，整个路径将被检查，就如同没有指定这个参数一样。如果某路径与指定值完全匹配，将不做检查。这
+个参数的值可以包含变量。 
+
+比如： 
+disable_symlinks on from=$document_root;
+这条指令只在有openat()和fstatat()接口的系统上可用。当然，现在的FreeBSD、Linux和Solaris都支持这些接口。 
+参数on和if_not_owner会带来处理开销。 
+只在那些不支持打开目录查找文件的系统中，使用这些参数需要工作进程有这些被检查目录的读权限。 
+*/
     { ngx_string("disable_symlinks"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE12,
       ngx_http_disable_symlinks,
@@ -3257,6 +3321,9 @@ Nginx是一个全异步的事件驱动架构，那么仅仅调用ngx_http_send_header方法和ngx_http_
 然不是，当响应过大无法一次发送完时（TCP的滑动窗口也是有限的，一次非阻塞的发送多半是无法发送完整的HTTP响应的），就需要向epoll以及定时
 器中添加写事件了，当连接再次可写时，就调用ngx_http_writer方法继续发送响应，直到全部的响应都发送到客户端为止。
 */
+
+/* 注意:到这里的in实际上是已经指向数据内容部分，或者如果发送的数据需要从文件中读取，in中也会指定文件file_pos和file_last已经文件fd等,
+   可以参考ngx_http_cache_send ngx_http_send_header ngx_http_output_filter */
 
 //调用ngx_http_output_filter方法即可向客户端发送HTTP响应包体，ngx_http_send_header发送响应行和响应头部
 ngx_int_t
@@ -7013,7 +7080,7 @@ ngx_http_core_try_files(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_OK;
 }
 
-
+//open_file_cache max=1000 inactive=20s; 执行该函数
 static char *
 ngx_http_core_open_file_cache(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -7031,9 +7098,9 @@ ngx_http_core_open_file_cache(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     value = cf->args->elts;
 
     max = 0;
-    inactive = 60;
+    inactive = 60; //默认60
 
-    for (i = 1; i < cf->args->nelts; i++) {
+    for (i = 1; i < cf->args->nelts; i++) { //赋值给ngx_open_file_cache_t中的成员
 
         if (ngx_strncmp(value[i].data, "max=", 4) == 0) {
 
@@ -7058,7 +7125,7 @@ ngx_http_core_open_file_cache(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             continue;
         }
 
-        if (ngx_strcmp(value[i].data, "off") == 0) {
+        if (ngx_strcmp(value[i].data, "off") == 0) { //off则直接置为NULL
 
             clcf->open_file_cache = NULL;
 
@@ -7077,7 +7144,7 @@ ngx_http_core_open_file_cache(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_OK;
     }
 
-    if (max == 0) {
+    if (max == 0) { //必须携带max参数
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                         "\"open_file_cache\" must have the \"max\" parameter");
         return NGX_CONF_ERROR;
@@ -7326,6 +7393,7 @@ ngx_http_disable_symlinks(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
                 return NGX_CONF_ERROR;
             }
 
+            //disable_symlinks on | if_not_owner [from=part];中from携带的参数part
             clcf->disable_symlinks_from = ccv.complex_value;
 
             continue;

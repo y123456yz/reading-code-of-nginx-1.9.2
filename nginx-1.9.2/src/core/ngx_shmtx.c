@@ -361,7 +361,7 @@ ngx_shmtx_destroy(ngx_shmtx_t *mtx)
 
 //ngx_shmtx_trylock方法试图使用非阻塞的方式获得锁，返回1时表示获取锁成功，返回0表示获取锁失败
 ngx_uint_t
-ngx_shmtx_trylock(ngx_shmtx_t *mtx)
+ngx_shmtx_trylock(ngx_shmtx_t *mtx)  //ngx_shmtx_unlock和ngx_shmtx_lock对应
 {
     ngx_err_t  err;
 
@@ -394,7 +394,7 @@ ngx_shmtx_lock方法将会在获取锁失败时阻塞代码的继续执行，它会使当前进程处于睡眠状
 可见，它是通过14.7节介绍的ngx_lock_fd方法实现的，如下所示。
 */
 void
-ngx_shmtx_lock(ngx_shmtx_t *mtx)
+ngx_shmtx_lock(ngx_shmtx_t *mtx) //ngx_shmtx_unlock和ngx_shmtx_lock对应
 {
     ngx_err_t  err;
 

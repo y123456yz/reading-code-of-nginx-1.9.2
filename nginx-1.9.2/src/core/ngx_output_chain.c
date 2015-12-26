@@ -48,6 +48,9 @@ static ngx_int_t ngx_output_chain_copy_buf(ngx_output_chain_ctx_t *ctx);
 */
 //结合ngx_http_xxx_create_request(ngx_http_fastcgi_create_request)阅读，ctx->in中的数据实际上是从ngx_http_xxx_create_request组成ngx_chain_t来的，数据来源在ngx_http_xxx_create_request
 ngx_int_t //向后端发送请求的调用过程ngx_http_upstream_send_request_body->ngx_output_chain->ngx_chain_writer
+
+/* 注意:到这里的in实际上是已经指向数据内容部分，或者如果发送的数据需要从文件中读取，in中也会指定文件file_pos和file_last已经文件fd等,
+   可以参考ngx_http_cache_send ngx_http_send_header ngx_http_output_filter */
 ngx_output_chain(ngx_output_chain_ctx_t *ctx, ngx_chain_t *in)  //in为需要发送的chain链，上面存储的是实际要发送的数据
 {//ctx为&u->output， in为u->request_bufs这里nginx filter的主要逻辑都在这个函数里面,将in参数链表的缓冲块拷贝到
 //ctx->in,然后将ctx->in的数据拷贝到out,然后调用output_filter发送出去。
@@ -119,7 +122,7 @@ ngx_output_chain(ngx_output_chain_ctx_t *ctx, ngx_chain_t *in)  //in为需要发送的
              */
 
             bsize = ngx_buf_size(ctx->in->buf);
-            //这块内存大小为0，然后又不是special 可能有问题。 
+            //这块内存大小为0，然后又不是special 可能有问题。 如果是special的buf，应该是从ngx_http_send_special过来的
             if (bsize == 0 && !ngx_buf_special(ctx->in->buf)) {
 
                 ngx_log_error(NGX_LOG_ALERT, ctx->pool->log, 0,

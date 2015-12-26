@@ -399,7 +399,7 @@ ngx_event_accept(ngx_event_t *ev) //ÔÚngx_process_events_and_timersÖÐÖ´ÐÐ
 ngx_int_t
 ngx_trylock_accept_mutex(ngx_cycle_t *cycle)
 {
-    if (ngx_shmtx_trylock(&ngx_accept_mutex)) {
+    if (ngx_shmtx_trylock(&ngx_accept_mutex)) {//
 
         ngx_log_debug0(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
                        "accept mutex locked");

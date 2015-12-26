@@ -28,6 +28,16 @@ typedef struct {
 
 //cycle->read_events和cycle->write_events这两个数组存放的是ngx_event_s,他们是对应的，见ngx_event_process_init  ngx_event_t事件和ngx_connection_t连接是一一对应的
 //ngx_event_t事件和ngx_connection_t连接是处理TCP连接的基础数据结构, 在Nginx中，每一个事件都由ngx_event_t结构体来表示
+
+/*
+1.ngx_event_s可以是普通的epoll读写事件(参考ngx_event_connect_peer->ngx_add_conn或者ngx_add_event)，通过读写事件触发
+
+2.也可以是普通定时器事件(参考ngx_cache_manager_process_handler->ngx_add_timer(ngx_event_add_timer))，通过ngx_process_events_and_timers中的
+epoll_wait返回，可以是读写事件触发返回，也可能是因为没获取到共享锁，从而等待0.5s返回重新获取锁来跟新事件并执行超时事件来跟新事件并且判断定
+时器链表中的超时事件，超时则执行从而指向event的handler，然后进一步指向对应r或者u的->write_event_handler  read_event_handler
+
+3.也可以是利用定时器expirt实现的读写事件(参考ngx_http_set_write_handler->ngx_add_timer(ngx_event_add_timer)),触发过程见2，只是在handler中不会执行write_event_handler  read_event_handler
+*/
 struct ngx_event_s {
     /*
     事件相关的对象。通常data都是指向ngx_connection_t连接对象,见ngx_get_connection。开启文件异步I/O时，它可能会指向ngx_event_aio_t(ngx_file_aio_init)结构体
@@ -122,7 +132,8 @@ struct ngx_event_s {
 
     /* the pending eof reported by kqueue, epoll or in aio chain operation */
     //标志位，为1时表示等待字符流结束，它只与kqueue和aio事件驱动机制有关
-    unsigned         pending_eof:1;
+    //一般在触发EPOLLRDHUP(当对端已经关闭，本端写数据，会引起该事件)的时候，会置1，见ngx_epoll_process_events
+    unsigned         pending_eof:1; 
 
     /*
     if (c->read->posted) { //删除post队列的时候需要检查
@@ -175,6 +186,17 @@ struct ngx_event_s {
     /*
     每一个事件最核心的部分是handler回调方法，它将由每一个事件消费模块实现，以此决定这个事件究竟如何“消费”
      */
+
+    /*
+    1.event可以是普通的epoll读写事件(参考ngx_event_connect_peer->ngx_add_conn或者ngx_add_event)，通过读写事件触发
+    
+    2.也可以是普通定时器事件(参考ngx_cache_manager_process_handler->ngx_add_timer(ngx_event_add_timer))，通过ngx_process_events_and_timers中的
+    epoll_wait返回，可以是读写事件触发返回，也可能是因为没获取到共享锁，从而等待0.5s返回重新获取锁来跟新事件并执行超时事件来跟新事件并且判断定
+    时器链表中的超时事件，超时则执行从而指向event的handler，然后进一步指向对应r或者u的->write_event_handler  read_event_handler
+    
+    3.也可以是利用定时器expirt实现的读写事件(参考ngx_http_set_write_handler->ngx_add_timer(ngx_event_add_timer)),触发过程见2，只是在handler中不会执行write_event_handler  read_event_handler
+    */
+     
     //这个事件发生时的处理方法，每个事件消费模块都会重新实现它
     //ngx_epoll_process_events中执行accept
     /*
@@ -183,7 +205,7 @@ struct ngx_event_s {
      在解析完客户端发送来的请求的请求行和头部行后，设置handler为ngx_http_request_handler
      */ //一般与客户端的数据读写是 ngx_http_request_handler;  与后端服务器读写为ngx_http_upstream_handler(如fastcgi proxy memcache gwgi等)
     
-    //监听sock:ngx_event_accept，ngx_http_request_handler,ngx_http_upstream_handler
+    //监听sock:ngx_event_accept，ngx_http_request_handler,ngx_http_upstream_handler ngx_file_aio_event_handler
     ngx_event_handler_pt  handler; //由epoll读写事件在ngx_epoll_process_events触发
    
 
@@ -567,8 +589,8 @@ typedef struct {
 
     /*
     负载均衡锁会使有些worker进程在拿不到锁时延迟建立新连接，accept_mutex_delay就是这段延迟时间的长度。关于它如何影响负载均衡的内容，可参见9.8.5节
-     */
-    ngx_msec_t    accept_mutex_delay;
+     */ //默认500ms，也就是0.5s
+    ngx_msec_t    accept_mutex_delay; //单位ms  如果没获取到mutex锁，则延迟这么多毫秒重新获取
 
     u_char       *name;//所选用事件模块的名字，它与use成员是匹配的  epoll select
 

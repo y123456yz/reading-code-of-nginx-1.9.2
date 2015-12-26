@@ -112,6 +112,9 @@ ngx_int_t
 ngx_http_write_filter(ngx_http_request_t *r, ngx_chain_t *in)
 //ngx_http_write_filter°ÑinÖĞµÄÊı¾İÆ´½Óµ½outºóÃæ£¬È»ºóµ÷ÓÃwritev·¢ËÍ£¬Ã»ÓĞ·¢ËÍÍêµÄÊı¾İ×îºóÁôÔÚoutÖĞ
 {//½«r->outÀïÃæµÄÊı¾İ£¬ºÍ²ÎÊıÀïÃæµÄÊı¾İÒ»²¢ÒÔwritevµÄ»úÖÆ·¢ËÍ¸ø¿Í»§¶Ë£¬Èç¹ûÃ»ÓĞ·¢ËÍÍêËùÓĞµÄ£¬Ôò½«Ê£ÏÂµÄ·ÅÔÚr->out
+
+//µ÷ÓÃngx_http_write_filterĞ´Êı¾İ£¬Èç¹û·µ»ØNGX_AGAIN,ÔòÒÔºóµÄĞ´Êı¾İ´¥·¢Í¨¹ıÔÚngx_http_set_write_handler->ngx_http_writerÌí¼Óepoll writeÊÂ¼şÀ´´¥·¢
+
     off_t                      size, sent, nsent, limit;
     ngx_uint_t                 last, flush, sync;
     ngx_msec_t                 delay;
@@ -294,7 +297,8 @@ Connection: keep-alive
     if (c->write->delayed) { //ÔÚºóÃæµÄÏŞËÙÖĞÖÃ1
 //½«¿Í»§¶Ë¶ÔÓ¦µÄbuffered±êÖ¾Î»·ÅÉÏNGX_HTTP_WRITE_BUFFEREDºê£¬Í¬Ê±·µ»ØNGX AGAIN£¬ÕâÊÇÔÚ¸æËßHTTP¿ò¼Üout»º³åÇøÖĞ»¹ÓĞÏìÓ¦µÈ´ı·¢ËÍ¡£
         c->buffered |= NGX_HTTP_WRITE_BUFFERED;
-        return NGX_AGAIN;
+        return NGX_AGAIN; 
+        //µ÷ÓÃngx_http_write_filterĞ´Êı¾İ£¬Èç¹û·µ»ØNGX_AGAIN,ÔòÒÔºóµÄĞ´Êı¾İ´¥·¢Í¨¹ıÔÚngx_http_set_write_handler->ngx_http_writerÌí¼Óepoll writeÊÂ¼şÀ´´¥·¢
     }
 
     if (size == 0
@@ -349,6 +353,7 @@ Connection: keep-alive
             c->buffered |= NGX_HTTP_WRITE_BUFFERED;
 
             return NGX_AGAIN;
+            //µ÷ÓÃngx_http_write_filterĞ´Êı¾İ£¬Èç¹û·µ»ØNGX_AGAIN,ÔòÒÔºóµÄĞ´Êı¾İ´¥·¢Í¨¹ıÔÚngx_http_set_write_handler->ngx_http_writerÌí¼Óepoll writeÊÂ¼şÀ´´¥·¢
         }
 
     /*
@@ -443,7 +448,8 @@ ngx_http_write_filterÖĞ»á°ÑĞÂÀ´µÄÊı¾İ¼Óµ½r->outºóÃæ£¬Ò²¾ÍÊÇÎ´·¢ËÍµÄÊı¾İÔÚr->outÇ
 
     if (chain) { //»¹Ã»ÓĞ·¢ËÍÍê³É£¬ĞèÒª¼ÌĞø·¢ËÍ
         c->buffered |= NGX_HTTP_WRITE_BUFFERED;
-        return NGX_AGAIN;  
+        return NGX_AGAIN; 
+        //µ÷ÓÃngx_http_write_filterĞ´Êı¾İ£¬Èç¹û·µ»ØNGX_AGAIN,ÔòÒÔºóµÄĞ´Êı¾İ´¥·¢Í¨¹ıÔÚngx_http_set_write_handler->ngx_http_writerÌí¼Óepoll writeÊÂ¼şÀ´´¥·¢
     }
 
     c->buffered &= ~NGX_HTTP_WRITE_BUFFERED;
@@ -451,6 +457,7 @@ ngx_http_write_filterÖĞ»á°ÑĞÂÀ´µÄÊı¾İ¼Óµ½r->outºóÃæ£¬Ò²¾ÍÊÇÎ´·¢ËÍµÄÊı¾İÔÚr->outÇ
     /* Èç¹ûÆäËûfilterÄ£¿ébufferÁËchain²¢ÇÒpostponedÎªNULL£¬ÄÇÃ´·µ»ØNGX_AGAIN£¬ĞèÒª¼ÌĞø´¦Àíbuf */  
     if ((c->buffered & NGX_LOWLEVEL_BUFFERED) && r->postponed == NULL) {
         return NGX_AGAIN;
+        //µ÷ÓÃngx_http_write_filterĞ´Êı¾İ£¬Èç¹û·µ»ØNGX_AGAIN,ÔòÒÔºóµÄĞ´Êı¾İ´¥·¢Í¨¹ıÔÚngx_http_set_write_handler->ngx_http_writerÌí¼Óepoll writeÊÂ¼şÀ´´¥·¢
     }
 
     return NGX_OK;

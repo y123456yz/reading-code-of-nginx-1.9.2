@@ -48,6 +48,18 @@ ngx_event_del_timer(ngx_event_t *ev, const char *func, unsigned int line)
 
     ev->timer_set = 0;
 }
+
+/*
+1.ngx_event_s可以是普通的epoll读写事件(参考ngx_event_connect_peer->ngx_add_conn或者ngx_add_event)，通过读写事件触发
+
+2.也可以是普通定时器事件(参考ngx_cache_manager_process_handler->ngx_add_timer(ngx_event_add_timer))，通过ngx_process_events_and_timers中的
+epoll_wait返回，可以是读写事件触发返回，也可能是因为没获取到共享锁，从而等待0.5s返回重新获取锁来跟新事件并执行超时事件来跟新事件并且判断定
+时器链表中的超时事件，超时则执行从而指向event的handler，然后进一步指向对应r或者u的->write_event_handler  read_event_handler
+
+3.也可以是利用定时器expirt实现的读写事件(参考ngx_http_set_write_handler->ngx_add_timer(ngx_event_add_timer)),触发过程见2，只是在handler中不会执行write_event_handler  read_event_handler
+*/
+
+
 //ngx_event_expire_timers中执行ev->handler
 //在ngx_process_events_and_timers中，当有事件使epoll_wait返回，则会执行超时的定时器
 //注意定时器的超时处理，不一定就是timer时间超时，超时误差可能为timer_resolution，如果没有设置timer_resolution则定时器可能永远不超时，因为epoll_wait不返回，无法更新时间
@@ -84,8 +96,8 @@ ngx_event_add_timer(ngx_event_t *ev, ngx_msec_t timer, const char *func, unsigne
     ev->timer.key = key;
     snprintf(tmpbuf, sizeof(tmpbuf), "<%25s, %5d> ", func, line);
     ngx_log_debug4(NGX_LOG_DEBUG_EVENT, ev->log, 0,
-                   "%s event timer add: %d: %M:%M", tmpbuf,
-                    ngx_event_ident(ev->data), timer, ev->timer.key);
+                   "%s event timer add fd:%d, expire-time:%M s, timer.key:%M", tmpbuf,
+                    ngx_event_ident(ev->data), timer / 1000, ev->timer.key);
 
     ngx_rbtree_insert(&ngx_event_timer_rbtree, &ev->timer);
 

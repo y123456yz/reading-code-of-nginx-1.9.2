@@ -58,12 +58,18 @@ static ngx_atomic_t   connection_counter = 1;
 
 //原子变量类型的ngx_connection_counter将统计所有建立过的连接数（包括主动发起的连接） 是总的连接数，不是某个进程的，是所有进程的，因为他们是共享内存的
 ngx_atomic_t         *ngx_connection_counter = &connection_counter;
-
-
 ngx_atomic_t         *ngx_accept_mutex_ptr; //指向共享的内存空间，见ngx_event_module_init
-
 //ngx_accept_mutex为共享内存互斥锁  //获取到该锁的进程才会接受客户端的accept请求
 ngx_shmtx_t           ngx_accept_mutex; //共享内存的空间  在建连接的时候，为了避免惊群，在accept的时候，只有获取到该原子锁，才把accept添加到epoll事件中，见ngx_trylock_accept_mutex
+
+
+/*
+注意:上面的ngx_accept_mutex_ptr和下面的其他全局变量ngx_use_accept_mutex等的区别?
+ngx_accept_mutex_ptr是共享内存空间，所有进程共享，而下面的ngx_use_accept_mutex等全局变量是本进程可见的，其他进程不能使用该空间，不可见。
+*/
+
+
+
 //ngx_use_accept_mutex表示是否需要通过对accept加锁来解决惊群问题。当nginx worker进程数>1时且配置文件中打开accept_mutex时，这个标志置为1   
 //具体实现:在创建子线程的时候，在执行ngx_event_process_init时并没有添加到epoll读事件中，worker抢到accept互斥体后，再放入epoll
 //ccf->master && ccf->worker_processes > 1 && ecf->accept_mutex 条件满足才会置该标记为1
@@ -72,7 +78,8 @@ ngx_uint_t            ngx_accept_events;
 /* ngx_accept_mutex_held是当前进程的一个全局变量，如果为l，则表示这个进程已经获取到了ngx_accept_mutex锁；如果为0，则表示没有获取到锁 */
 //见ngx_process_events_and_timers会置位该位  如果flag置为该位，则ngx_epoll_process_events会延后处理epoll事件ngx_post_event
 ngx_uint_t            ngx_accept_mutex_held; //1表示当前获取了ngx_accept_mutex锁   0表示当前并没有获取到ngx_accept_mutex锁   
-ngx_msec_t            ngx_accept_mutex_delay;
+//默认0.5s，可以由accept_mutex_delay进行配置
+ngx_msec_t            ngx_accept_mutex_delay; //如果没获取到mutex锁，则延迟这么多毫秒重新获取。accept_mutex_delay配置，单位500ms
 
 /*
 ngx_accept_disabled表示此时满负荷，没必要再处理新连接了，我们在nginx.conf曾经配置了每一个nginx worker进程能够处理的最大连接数，
@@ -292,6 +299,7 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
 
     } else { //
         //如果没有设置timer_resolution定时器，则每次epoll_wait后跟新时间，否则每隔timer_resolution配置跟新一次时间，见ngx_epoll_process_events
+        //获取离现在最近的超时定时器时间
         timer = ngx_event_find_timer();//例如如果一次accept的时候失败，则在ngx_event_accept中会把ngx_event_conf_t->accept_mutex_delay加入到红黑树定时器中
         flags = NGX_UPDATE_TIME; 
         
@@ -331,10 +339,10 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
                获得accept锁，多个worker仅有一个可以得到这把锁。获得锁不是阻塞过程，都是立刻返回，获取成功的话ngx_accept_mutex_held被置为1。
                拿到锁，意味着监听句柄被放到本进程的epoll中了，如果没有拿到锁，则监听句柄会被从epoll中取出。 
               */
-            /*
-               //如果ngx_use_accept_mutex为0也就是未开启accept_mutex锁，则在ngx_worker_process_init->ngx_event_process_init 中把accept连接读事件统计到epoll中
-               //否则在ngx_process_events_and_timers->ngx_process_events_and_timers->ngx_trylock_accept_mutex中把accept连接读事件统计到epoll中
-               */
+        /*
+           如果ngx_use_accept_mutex为0也就是未开启accept_mutex锁，则在ngx_worker_process_init->ngx_event_process_init 中把accept连接读事件统计到epoll中
+           否则在ngx_process_events_and_timers->ngx_process_events_and_timers->ngx_trylock_accept_mutex中把accept连接读事件统计到epoll中
+           */
             if (ngx_trylock_accept_mutex(cycle) == NGX_ERROR) { //不管是获取到锁还是没获取到锁都是返回NGX_OK
                 return;
             }
@@ -353,7 +361,7 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
                     */
                 if (timer == NGX_TIMER_INFINITE
                     || timer > ngx_accept_mutex_delay)
-                {
+                {   //如果没获取到锁，则延迟这么多ms重新获取说，继续循环，也就是技术锁被其他进程获得，本进程最多在epoll_wait中睡眠0.5s,然后返回
                     timer = ngx_accept_mutex_delay; //保证这么多时间超时的时候出发epoll_wait返回，从而可以更新内存时间
                 }
             }
@@ -362,13 +370,29 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
 
     delta = ngx_current_msec;
 
+    /*
+    1.如果进程获的锁，并获取到锁，则该进程在epoll事件发生后会触发返回，然后得到对应的事件handler，加入延迟队列中，然后释放锁，然
+    后在执行对应handler，同时更新时间，判断该进程对应的红黑树中是否有定时器超时，
+    2.如果没有获取到锁，则默认传给epoll_wait的超时时间是0.5s，表示过0.5s继续获取锁，0.5s超时后，会跟新当前时间，同时判断是否有过期的
+      定时器，有则指向对应的定时器函数
+    */
+
+    /*
+1.ngx_event_s可以是普通的epoll读写事件(参考ngx_event_connect_peer->ngx_add_conn或者ngx_add_event)，通过读写事件触发
+
+2.也可以是普通定时器事件(参考ngx_cache_manager_process_handler->ngx_add_timer(ngx_event_add_timer))，通过ngx_process_events_and_timers中的
+epoll_wait返回，可以是读写事件触发返回，也可能是因为没获取到共享锁，从而等待0.5s返回重新获取锁来跟新事件并执行超时事件来跟新事件并且判断定
+时器链表中的超时事件，超时则执行从而指向event的handler，然后进一步指向对应r或者u的->write_event_handler  read_event_handler
+
+3.也可以是利用定时器expirt实现的读写事件(参考ngx_http_set_write_handler->ngx_add_timer(ngx_event_add_timer)),触发过程见2，只是在handler中不会执行write_event_handler  read_event_handler
+*/
+    
     //linux下，普通网络套接字调用ngx_epoll_process_events函数开始处理，异步文件i/o设置事件的回调方法为ngx_epoll_eventfd_handler
     (void) ngx_process_events(cycle, timer, flags);
 
     delta = ngx_current_msec - delta; //(void) ngx_process_events(cycle, timer, flags)中epoll等待事件触发过程花费的时间
 
-    ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
-                   "epoll_wait timer range(delta): %M", delta);
+    //ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0, "epoll_wait timer range(delta): %M", delta);
                    
     //来自于客户端的accept事件立epoll_wait返回后马执行，之行为accpet事件后，立马释放ngx_accept_mutex锁，这样其他进程就可以立马获得锁accept客户端连接
     ngx_event_process_posted(cycle, &ngx_posted_accept_events); 

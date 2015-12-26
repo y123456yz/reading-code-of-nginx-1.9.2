@@ -104,6 +104,19 @@ ngx_test_full_name(ngx_str_t *name)
 #endif
 }
 
+/*
+如果配置xxx_buffers  XXX_buffer_size指定的空间都用完了，则会把缓存中的数据写入临时文件，然后继续读，读到ngx_event_pipe_write_chain_to_temp_file
+后写入临时文件，直到read返回NGX_AGAIN,然后在ngx_event_pipe_write_to_downstream->ngx_output_chain->ngx_output_chain_copy_buf中读取临时文件内容
+发送到后端，当数据继续到来，通过epoll read继续循环该流程
+*/
+
+/*ngx_http_upstream_init_request->ngx_http_upstream_cache 客户端获取缓存 后端应答回来数据后在ngx_http_upstream_send_response->ngx_http_file_cache_create
+中创建临时文件，然后在ngx_event_pipe_write_chain_to_temp_file把读取的后端数据写入临时文件，最后在
+ngx_http_upstream_send_response->ngx_http_upstream_process_request->ngx_http_file_cache_update中把临时文件内容rename(相当于mv)到proxy_cache_path指定
+的cache目录下面
+*/
+
+
 //创建temp_file临时文件，并把chain链表中的数据写入文件，返回值为写入到文件中的字节数
 //如果配置xxx_buffers  XXX_buffer_size指定的空间都用完了，则会把缓存中的数据写入临时文件，然后继续读，读到后写入临时文件，直到read返回NGX_AGAIN
 ssize_t
@@ -179,7 +192,7 @@ ngx_create_temp_file(ngx_file_t *file, ngx_path_t *path, ngx_pool_t *pool,
         ngx_create_hashed_filename(path, file->name.data, file->name.len);
 
         ngx_log_debug3(NGX_LOG_DEBUG_CORE, file->log, 0,
-                       "hashed path: %s, persistent:%u, access:%u", 
+                       "hashed path: %s, persistent:%U, access:%U", 
                        file->name.data, persistent, access);
 
         file->fd = ngx_open_tempfile(file->name.data, persistent, access);
@@ -1181,6 +1194,18 @@ failed:
  * on fatal (memory) error handler must return NGX_ABORT to stop walking tree
  */
 
+/*
+ngx_walk_tree是递归函数，打开每层路径(dir)直到每个文件(file)，根据其路径和文件名得到key，在缓存的rbtree(红黑树)里面找这个key(部分)，
+ 如果没有找到的话，就在内存中分配一个映射这个文件的node(但是不会把文件的内容进行缓存)，然后插入到红黑树中和加入队列。  
+*/
+
+/*
+ctx->file_handler=>  
+ngx_http_file_cache_manage_file=>  
+ngx_http_file_cache_add_file=>  
+ngx_http_file_cache_add  
+*/
+
 //使用 ngx_walk_tree 递归遍历缓存目录，并对不同类型的文件根据回调函数做不同的处理。
 //ngx_walk_tree这个函数主要是遍历所有的cache目录，然后对于每一个cache文件调用file_handler回调。
 ngx_int_t
@@ -1367,3 +1392,4 @@ done:
 
     return rc;
 }
+

@@ -180,6 +180,16 @@ ngx_event_pipe_write_chain_to_temp_file->ngx_write_chain_to_temp_fileÖĞ´´½¨²¢Ğ´È
 ·¢ËÍµ½ºó¶Ë£¬µ±Êı¾İ¼ÌĞøµ½À´£¬Í¨¹ıepoll read¼ÌĞøÑ­»·¸ÃÁ÷³Ì
 */ //temp_fileÄ¬ÈÏÔÚÎÄ¼şÄÚÈİ·¢ËÍµ½¿Í»§¶Ëºó£¬»áÉ¾³ıÎÄ¼ş£¬¼ûngx_create_temp_file->ngx_pool_delete_file
 //´Óngx_http_file_cache_update¿ÉÒÔ¿´³ö£¬ºó¶ËÊı¾İÏÈĞ´µ½ÁÙÊ±ÎÄ¼şºó£¬ÔÚĞ´Èëxxx_cache_pathÖĞ£¬¼ûngx_http_file_cache_update
+
+    /*ngx_http_upstream_init_request->ngx_http_upstream_cache ¿Í»§¶Ë»ñÈ¡»º´æ ºó¶ËÓ¦´ğ»ØÀ´Êı¾İºóÔÚngx_http_upstream_send_response->ngx_http_file_cache_create
+    ÖĞ´´½¨ÁÙÊ±ÎÄ¼ş£¬È»ºóÔÚngx_event_pipe_write_chain_to_temp_file°Ñ¶ÁÈ¡µÄºó¶ËÊı¾İĞ´ÈëÁÙÊ±ÎÄ¼ş£¬×îºóÔÚ
+    ngx_http_upstream_send_response->ngx_http_upstream_process_request->ngx_http_file_cache_updateÖĞ°ÑÁÙÊ±ÎÄ¼şÄÚÈİrename(Ïàµ±ÓÚmv)µ½proxy_cache_pathÖ¸¶¨
+    µÄcacheÄ¿Â¼ÏÂÃæ
+    */
+    /*ºó¶ËÊı¾İ¶ÁÈ¡Íê±Ï£¬²¢ÇÒÈ«²¿Ğ´ÈëÁÙÊ±ÎÄ¼şºó²Å»áÖ´ĞĞrename¹ı³Ì£¬ÎªÊ²Ã´ĞèÒªÁÙÊ±ÎÄ¼şµÄÔ­ÒòÊÇ:ÀıÈçÖ®Ç°µÄ»º´æ¹ıÆÚÁË£¬ÏÖÔÚÓĞ¸öÇëÇóÕıÔÚ´Óºó¶Ë
+    »ñÈ¡Êı¾İĞ´ÈëÁÙÊ±ÎÄ¼ş£¬Èç¹ûÊÇÖ±½ÓĞ´Èë»º´æÎÄ¼ş£¬ÔòÔÚ»ñÈ¡ºó¶ËÊı¾İ¹ı³ÌÖĞ£¬Èç¹ûÔÚÀ´Ò»¸ö¿Í»§¶ËÇëÇó£¬Èç¹ûÔÊĞíproxy_cache_use_stale updating£¬Ôò
+    ºóÃæµÄÇëÇó¿ÉÒÔÖ±½Ó»ñÈ¡Ö®Ç°ÀÏ¾ÉµÄ¹ıÆÚ»º´æ£¬´Ó¶ø¿ÉÒÔ±ÜÃâ³åÍ»(Ç°ÃæµÄÇëÇóĞ´ÎÄ¼ş£¬ºóÃæµÄÇëÇó»ñÈ¡ÎÄ¼şÄÚÈİ) 
+    */
     ngx_temp_file_t   *temp_file;  //tempfile´´½¨¼ûngx_create_temp_file  ×îÖÕ»áÍ¨¹ıngx_create_hashed_filename°ÑpathºÍlevel=N:N×éÖ¯µ½Ò»Æğ
 
 

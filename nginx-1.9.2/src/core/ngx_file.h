@@ -120,14 +120,15 @@ typedef struct {
  那么构成目录名字的字符哪来的呢？假设我们的存储目录为/cache，levels=1:2，那么对于上面的文件 就是这样存储的：
  /cache/0/8d/8ef9229f02c5672c747dc7a324d658d0  注意后面的8d0和cache后面的/0/8d一致  参考ngx_create_hashed_filename
 */ //fastcgi_cache_path /tmp/nginx/fcgi/cache levels=1:2 keys_zone=fcgi:10m inactive=30m max_size=128m;中的levels=1:2中的1:2
-//目录创建见ngx_create_path
+//目录创建见ngx_create_path  
+    //一个对应的缓存文件的目录f/27/46492fbf0d9d35d3753c66851e81627f中的46492fbf0d9d35d3753c66851e81627f，注意f/27就是最尾部的字节,这个由levle=1:2，就是最后面的1个字节+2个字节
     size_t                     level[3];  //把levels=x:y;中的x和y分别存储在level[0]和level[1] level[3]始终为0
     //ngx_http_file_cache_set_slot中设置为ngx_http_file_cache_manager
     //一般只有涉及到共享内存分配管理的才有该pt，例如fastcgi_cache_path xxx keys_zone=fcgi:10m xxx
     ngx_path_manager_pt        manager; //ngx_cache_manager_process_handler中执行  
     //manger和loader。是cache管理回调函数
     
-    //ngx_http_file_cache_set_slot中设置为ngx_http_file_cache_loader
+    //ngx_http_file_cache_set_slot中设置为ngx_http_file_cache_loader   ngx_cache_loader_process_handler中执行
     ngx_path_loader_pt         loader; //决定是否启用cache loader进程  参考ngx_start_cache_manager_processes
     void                      *data; //ngx_http_file_cache_set_slot中设置为ngx_http_file_cache_t
 

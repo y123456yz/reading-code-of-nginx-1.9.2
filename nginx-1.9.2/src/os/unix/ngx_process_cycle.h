@@ -30,11 +30,18 @@
 #define NGX_PROCESS_WORKER     3
 #define NGX_PROCESS_HELPER     4
 
-
-typedef struct {
-    ngx_event_handler_pt       handler;
-    char                      *name;
-    ngx_msec_t                 delay;
+/*
+static ngx_cache_manager_ctx_t  ngx_cache_manager_ctx = {
+    ngx_cache_manager_process_handler, "cache manager process", 0
+};
+static ngx_cache_manager_ctx_t  ngx_cache_loader_ctx = {
+    ngx_cache_loader_process_handler, "cache loader process", 60000  //进程创建后60000m秒执行ngx_cache_loader_process_handler,在ngx_cache_manager_process_cycle中添加的定时器
+};
+*/
+typedef struct { //ngx_cache_manager_process_cycle
+    ngx_event_handler_pt       handler; //ngx_cache_manager_process_handler  ngx_cache_loader_process_handler
+    char                      *name; //进程名
+    ngx_msec_t                 delay; //延迟多长时间执行上面的handler，通过定时器实现，见ngx_cache_manager_process_cycle
 } ngx_cache_manager_ctx_t;
 
 
