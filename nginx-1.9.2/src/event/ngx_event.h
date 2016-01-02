@@ -252,9 +252,9 @@ struct ngx_event_s {
 #if (NGX_HAVE_FILE_AIO)
 
 struct ngx_event_aio_s { //ngx_file_aio_init中初始化,创建空间和赋值
-    void                      *data; //指向ngx_http_request_t
+    void                      *data; //指向ngx_http_request_t  赋值见ngx_http_copy_aio_handler
 
-    //执行地方在ngx_file_aio_event_handler，赋值地方在
+    //执行地方在ngx_file_aio_event_handler，赋值地方在ngx_http_copy_aio_handler
     ngx_event_handler_pt       handler;//这是真正由业务模块实现的方法，在异步I/O事件完成后被调用
     ngx_file_t                *file;//file为要读取的file文件信息
 
@@ -537,6 +537,8 @@ ngx_event_actions = ngx_select_module_ctx.actions;
 #define ngx_add_conn         ngx_event_actions.add_conn //connect和accept返回的时候用到  已经channel读的时候用
 #define ngx_del_conn         ngx_event_actions.del_conn
 
+//ngx_notify为事件模块的通知函数，主要是使用该通知函数触发某任务已经执行完成；
+//ngx_notify通告主线程，该任务处理完毕，ngx_thread_pool_handler由主线程执行，也就是进程cycle{}通过epoll_wait返回执行，而不是由线程池中的线程执行
 #define ngx_notify           ngx_event_actions.notify
 
 #define ngx_add_timer        ngx_event_add_timer //在ngx_process_events_and_timers中，当有事件使epoll_wait返回，则会执行超时的定时器
@@ -549,7 +551,7 @@ extern ngx_os_io_t  ngx_io;
 #define ngx_recv_chain       ngx_io.recv_chain
 #define ngx_udp_recv         ngx_io.udp_recv
 #define ngx_send             ngx_io.send
-#define ngx_send_chain       ngx_io.send_chain //epoll方式ngx_io = ngx_os_io;
+#define ngx_send_chain       ngx_io.send_chain //epoll方式ngx_io = ngx_linux_io;
 
 
 //所有的核心模块NGX_CORE_MODULE对应的上下文ctx为ngx_core_module_t，子模块，例如http{} NGX_HTTP_MODULE模块对应的为上下文为ngx_http_module_t

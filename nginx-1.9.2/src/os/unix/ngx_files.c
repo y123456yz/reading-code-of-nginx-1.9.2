@@ -125,14 +125,14 @@ ngx_read_file(ngx_file_t *file, u_char *buf, size_t size, off_t offset)
 #if (NGX_THREADS)
 
 typedef struct {
-    ngx_fd_t     fd;
-    u_char      *buf;
-    size_t       size;
-    off_t        offset;
+    ngx_fd_t     fd; //文件fd
+    u_char      *buf; //读取文件内容到该buf中
+    size_t       size; //读取文件内容大小
+    off_t        offset; //从文件offset开始处读取size字节到buf中
 
-    size_t       read;
-    ngx_err_t    err;
-} ngx_thread_read_ctx_t;
+    size_t       read; //通过ngx_thread_read_handler读取到的字节数
+    ngx_err_t    err; //ngx_thread_read_handler读取返回后的错误信息
+} ngx_thread_read_ctx_t; //见ngx_thread_read，该结构由ngx_thread_task_t->ctx指向
 
 
 ssize_t
@@ -143,7 +143,7 @@ ngx_thread_read(ngx_thread_task_t **taskp, ngx_file_t *file, u_char *buf,
     ngx_thread_read_ctx_t  *ctx;
 
     ngx_log_debug4(NGX_LOG_DEBUG_CORE, file->log, 0,
-                   "thread read: %d, %p, %uz, %O",
+                   "thread read: fd:%d, buf:%p, size:%uz, offset:%O",
                    file->fd, buf, size, offset);
 
     task = *taskp;
@@ -178,6 +178,9 @@ ngx_thread_read(ngx_thread_task_t **taskp, ngx_file_t *file, u_char *buf,
     ctx->size = size;
     ctx->offset = offset;
 
+    //这里添加task->event信息到task中，当task->handler指向完后，通过nginx_notify可以继续通过epoll_wait返回执行task->event
+    //客户端过来后如果有缓存存在，则ngx_http_file_cache_aio_read中赋值为ngx_http_cache_thread_handler;  
+    //如果是从后端获取的数据，然后发送给客户端，则ngx_output_chain_as_is中赋值未ngx_http_copy_thread_handler
     if (file->thread_handler(task, file) != NGX_OK) {
         return NGX_ERROR;
     }
@@ -187,10 +190,10 @@ ngx_thread_read(ngx_thread_task_t **taskp, ngx_file_t *file, u_char *buf,
 
 
 #if (NGX_HAVE_PREAD)
-
-static void
+//在ngx_thread_read把该handler添加到线程池中
+static void //ngx_thread_read->ngx_thread_read_handler
 ngx_thread_read_handler(void *data, ngx_log_t *log)
-{
+{//该函数执行后，会通过ngx_notify执行event.handler = ngx_http_cache_thread_event_handler;
     ngx_thread_read_ctx_t *ctx = data;
 
     ssize_t  n;
@@ -1342,6 +1345,22 @@ ngx_directio_on(ngx_fd_t fd)
     }
 
     /* 
+    普通缓存I/O优点: 缓存 I/O 使用了操作系统内核缓冲区，在一定程度上分离了应用程序空间和实际的物理设备。缓存 I/O 可以减少读盘的次数，从而提高性能。
+    缺点：在缓存 I/O 机制中，DMA 方式可以将数据直接从磁盘读到页缓存中，或者将数据从页缓存直接写回到磁盘上，而不能直接在应用程序地址空间和磁盘之间
+        进行数据传输，这样的话，数据在传输过程中需要在应用程序地址空间和页缓存之间进行多次数据拷贝操作，这些数据拷贝操作所带来的 CPU 以及内存开销是非常大的。
+
+    direct I/O优点:直接 I/O 最主要的优点就是通过减少操作系统内核缓冲区和应用程序地址空间的数据拷贝次数，降低了对文件读取和写入时所带来的 CPU 
+        的使用以及内存带宽的占用。这对于某些特殊的应用程序，比如自缓存应用程序来说，不失为一种好的选择。如果要传输的数据量很大，使用直接 I/O 
+        的方式进行数据传输，而不需要操作系统内核地址空间拷贝数据操作的参与，这将会大大提高性能。
+    direct I/O缺点: 设置直接 I/O 的开销非常大，而直接 I/O 又不能提供缓存 I/O 的优势。缓存 I/O 的读操作可以从高速缓冲存储器中获取数据，而直接 
+        I/O 的读数据操作会造成磁盘的同步读，这会带来性能上的差异 , 并且导致进程需要较长的时间才能执行完
+
+    总结:
+    Linux 中的直接 I/O 访问文件方式可以减少 CPU 的使用率以及内存带宽的占用，但是直接 I/O 有时候也会对性能产生负面影响。所以在使用
+    直接 I/O 之前一定要对应用程序有一个很清醒的认识，只有在确定了设置缓冲 I/O 的开销非常巨大的情况下，才考虑使用直接 I/O。直接 I/O 
+    经常需要跟异步 I/O 结合起来使用
+
+    
     普通缓存I/O: 硬盘->内核缓冲区->用户缓冲区 写数据写道缓冲区中就返回，一般由内核定期写道磁盘(或者直接调用API指定要写入磁盘)，
     读操作首先检查缓冲区是否有所需的文件内容，没有就冲磁盘读到内核缓冲区，在从内核缓冲区到用户缓冲区
     O_DIRECT为直接I/O方式，硬盘->用户缓冲区，少了内核缓冲区操作，但是直接磁盘操作很费时,所以直接I/O一般借助AIO和EPOLL实现

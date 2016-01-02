@@ -149,7 +149,10 @@ ngx_module_t  ngx_http_index_module = {
 */
 static ngx_int_t
 ngx_http_index_handler(ngx_http_request_t *r)
-{
+{//注意:ngx_http_static_handler如果uri不是以/结尾返回，ngx_http_index_handler不以/结尾返回
+//循环遍历index index.html index_large.html  gmime-gmime-cipher-context.html;配置的文件，存在则返回，找到一个不在遍历后面的文件
+//ngx_http_static_handler ngx_http_index_handler每次都要获取缓存信息stat信息，因此每次获取很可能是上一次stat执行的时候获取的信息，除非缓存过期
+
     u_char                       *p, *name;
     size_t                        len, root, reserve, allocated;
     ngx_int_t                     rc;
@@ -194,7 +197,7 @@ ngx_http_index_handler(ngx_http_request_t *r)
      2015/10/16 12:08:03[             ngx_http_index_handler,   283]  [debug] 12610#12610: *2 stat() "/var/yyz/www/ABC/index.html" failed (2: No such file or directory)
      2015/10/16 12:08:03[            ngx_http_index_test_dir,   364]  [debug] 12610#12610: *2 http index check dir: "/var/yyz/www/ABC"
 
-     */
+     */ //默认http://10.2.13.167的时候，浏览器都会转换为http://10.2.13.167/发送到nginx服务器
     if (r->uri.data[r->uri.len - 1] != '/') { //末尾不是/，直接跳转到下一阶段
         return NGX_DECLINED;
     }

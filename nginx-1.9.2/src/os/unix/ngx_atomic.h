@@ -282,6 +282,20 @@ typedef volatile ngx_atomic_uint_t  ngx_atomic_t;
 
 typedef int32_t                     ngx_atomic_int_t;
 typedef uint32_t                    ngx_atomic_uint_t;
+/*
+所谓原子操作，就是该操作绝不会在执行完毕前被任何其他任务或事件打断，也就说，它的最小的执行单位，不可能有比它更小的执行单位，因此
+这里的原子实际是使用了物理学里的物质微粒的概念。
+
+　　原子操作需要硬件的支持，因此是架构相关的，其API和原子类型的定义都定义在内核源码树的include/asm/atomic.h文件中，它们都使用
+汇编语言实现，因为C语言并不能实现这样的操作。
+　　原子操作主要用于实现资源计数，很多引用计数(refcnt)就是通过原子操作实现的。原子类型定义如下：
+typedef struct
+ {
+ volatile int counter;
+ } atomic_t; 
+
+　　volatile修饰字段告诉gcc不要对该类型的数据做优化处理，对它的访问都是对内存的访问，而不是对寄存器的访问。
+*/
 typedef volatile ngx_atomic_uint_t  ngx_atomic_t;
 #define NGX_ATOMIC_T_LEN            (sizeof("-2147483648") - 1)
 

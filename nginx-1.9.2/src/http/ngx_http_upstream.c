@@ -1099,6 +1099,7 @@ ngx_http_upstream_cache(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
         break;
 
+    //如果返回这个，会把cached置0，返回出去后只有从后端从新获取数据
     case NGX_DECLINED: //表示缓存文件存在，获取缓存文件中前面的头部部分检查有问题，没有通过检查。或者缓存文件不存在(第一次请求该uri或者没有达到开始缓存的请求次数)
 
         if ((size_t) (u->buffer.end - u->buffer.start) < u->conf->buffer_size) {
@@ -2281,7 +2282,13 @@ ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u,
         return;
     }
 
-    //这回数据已经发送了，可以准备接收了，设置接收后端应答的超时定时器。
+    //这回数据已经发送了，可以准备接收了，设置接收后端应答的超时定时器。 
+    /* 
+        该定时器在收到后端应答数据后删除，见ngx_event_pipe 
+        if (rev->timer_set) {
+            ngx_del_timer(rev, NGX_FUNC_LINE);
+        }
+     */
     ngx_add_timer(c->read, u->conf->read_timeout, NGX_FUNC_LINE); //如果超时在该函数检测ngx_http_upstream_process_header
 
     if (c->read->ready) {
@@ -3369,9 +3376,13 @@ ngx_http_upstream_send_response(ngx_http_request_t *r, ngx_http_upstream_t *u)
     }
 
     now = ngx_time();
-    ngx_log_debug3(NGX_LOG_DEBUG_HTTP, c->log, 0,
+    if(r->cache) {
+        ngx_log_debug3(NGX_LOG_DEBUG_HTTP, c->log, 0,
                    "http cacheable: %d, r->cache->valid_sec:%T, now:%T", u->cacheable, r->cache->valid_sec, now);
-
+    } else {
+        ngx_log_debug1(NGX_LOG_DEBUG_HTTP, c->log, 0,
+                   "http cacheable: %d", u->cacheable);
+    }               
     if (u->cacheable == 0 && r->cache) {
         ngx_http_file_cache_free(r->cache, u->pipe->temp_file);
     }
@@ -3407,10 +3418,13 @@ ngx_http_upstream_send_response(ngx_http_request_t *r, ngx_http_upstream_t *u)
     p->temp_file->path = u->conf->temp_path;
     p->temp_file->pool = r->pool;
 
-    int cacheable = p->cacheable;
+    ngx_int_t cacheable = p->cacheable;
 
-    ngx_log_debugall(p->log, 0, "ngx_http_upstream_send_response, "
-        "p->cacheable:%d, tempfile:%V, pathfile:%V", cacheable, &r->cache->file_cache->temp_path->name, &r->cache->file_cache->path->name);
+   if (r->cache && r->cache->file_cache->temp_path && r->cache->file_cache->path) {
+        ngx_log_debugall(p->log, 0, "ngx_http_upstream_send_response, "
+            "p->cacheable:%i, tempfile:%V, pathfile:%V", cacheable, &r->cache->file_cache->temp_path->name, &r->cache->file_cache->path->name);
+    }
+    
     if (p->cacheable) {
         p->temp_file->persistent = 1;
         /*
@@ -4135,7 +4149,7 @@ ngx_http_upstream_process_upstream(ngx_http_request_t *r,
             rev->timedout = 0;
             rev->delayed = 0;
 
-            if (!rev->ready) {
+            if (!rev->ready) { 
                 ngx_add_timer(rev, p->read_timeout, NGX_FUNC_LINE);
 
                 if (ngx_handle_read_event(rev, 0, NGX_FUNC_LINE) != NGX_OK) {
@@ -4211,6 +4225,18 @@ ngx_http_upstream_process_request(ngx_http_request_t *r,
         }
 
 #if (NGX_HTTP_CACHE)
+        tf = p->temp_file;
+
+        if(r->cache) {
+        ngx_log_debugall(r->connection->log, 0, "ngx http cache, p->length:%O, u->headers_in.content_length_n:%O, "
+            "tf->offset:%O, r->cache->body_start:%ui", p->length, u->headers_in.content_length_n,
+                tf->offset, r->cache->body_start);
+        } else {
+            ngx_log_debugall(r->connection->log, 0, "ngx http cache, p->length:%O, u->headers_in.content_length_n:%O, "
+            "tf->offset:%O", p->length, u->headers_in.content_length_n,
+                tf->offset);
+        }
+        
         /*
           在Nginx收到后端服务器的响应之后，会把这个响应发回给用户。而如果缓存功能启用的话，Nginx就会把响应存入磁盘里。
           */ //后端应答数据在ngx_http_upstream_process_request->ngx_http_file_cache_update中进行缓存
@@ -4219,13 +4245,7 @@ ngx_http_upstream_process_request(ngx_http_request_t *r,
             if (p->upstream_done) { //后端数据已经读取完毕,写入缓存
                 ngx_http_file_cache_update(r, p->temp_file);
 
-            } else if (p->upstream_eof) { //本次已经把内核缓冲区数据读取完毕
-
-                tf = p->temp_file;
-
-                ngx_log_debugall(r->connection->log, 0, "ngx http cache, p->length:%O, u->headers_in.content_length_n:%O, "
-                    "tf->offset:%O, r->cache->body_start:%O", p->length, u->headers_in.content_length_n,
-                        tf->offset, r->cache->body_start);
+            } else if (p->upstream_eof) { //p->upstream->recv_chain(p->upstream, chain, limit);返回0的时候置1
                         
                 if (p->length == -1
                     && (u->headers_in.content_length_n == -1

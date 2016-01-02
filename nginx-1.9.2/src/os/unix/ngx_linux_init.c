@@ -38,7 +38,7 @@ ngx_int_t
 ngx_os_specific_init(ngx_log_t *log)
 {
     struct utsname  u;
-
+    
     if (uname(&u) == -1) {
         ngx_log_error(NGX_LOG_ALERT, log, ngx_errno, "uname() failed");
         return NGX_ERROR;

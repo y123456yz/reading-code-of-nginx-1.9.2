@@ -1230,6 +1230,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
                           "setrlimit(RLIMIT_CORE, %O) failed",
                           ccf->rlimit_core);
         }
+        ngx_log_debugall(cycle->log, 0, "setrlimit(RLIMIT_CORE, &rlmt) OK,rlimit_core:%O",ccf->rlimit_core);
     }
 
     if (geteuid() == 0) {
@@ -1280,6 +1281,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
             /* fatal */
             exit(2);
         }
+        ngx_log_debugall(cycle->log, 0, "chdir %V OK", &ccf->working_directory);
     }
 
     sigemptyset(&set);

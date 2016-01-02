@@ -223,7 +223,7 @@ struct io event  {
 ssize_t
 ngx_file_aio_read(ngx_file_t *file, u_char *buf, size_t size, off_t offset,
     ngx_pool_t *pool)
-{
+{//注意aio内核读取完毕后，是放在ngx_output_chain_ctx_t->buf中的，见ngx_output_chain_copy_buf->ngx_file_aio_read
     ngx_err_t         err;
     struct iocb      *piocb[1];
     ngx_event_t      *ev; //如果是文件异步i/o中的ngx_event_aio_t，则它来自ngx_event_aio_t->ngx_event_t(只有读),如果是网络事件中的event,则为ngx_connection_s中的event(包括读和写)
@@ -250,6 +250,8 @@ ngx_file_aio_read(ngx_file_t *file, u_char *buf, size_t size, off_t offset,
                    "aio complete:%d @%O:%z %V",
                    ev->complete, offset, size, &file->name);
 
+    //在向客户端发送后端包体的时候，会两次执行该函数，一次是ngx_event_pipe_write_to_downstream-> p->output_filter(),另一次是aio读事件
+    //通知内核读取完毕，从ngx_file_aio_event_handler走到这里，第一次到这里的时候complete为0，第二次的时候为1
     if (ev->complete) { //ngx_epoll_eventfd_handler中置1
         ev->active = 0;
         ev->complete = 0;

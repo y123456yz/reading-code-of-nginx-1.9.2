@@ -87,6 +87,10 @@ ngx_thread_mutex_create(ngx_thread_mutex_t *mtx, ngx_log_t *log)
         return NGX_ERROR;
     }
 
+    /*
+    如果mutex类型是 PTHREAD_MUTEX_ERRORCHECK，那么将进行错误检查。如果一个线程企图对一个已经锁住的mutex进行relock，将返回一
+    个错误。如果一个线程对未加锁的或已经unlock的mutex对象进行unlock操作，将返回一个错误。 
+     */
     err = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
     if (err != 0) {
         ngx_log_error(NGX_LOG_EMERG, log, err,

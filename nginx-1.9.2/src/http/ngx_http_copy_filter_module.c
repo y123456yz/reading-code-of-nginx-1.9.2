@@ -141,12 +141,58 @@ ngx_module_t  ngx_http_copy_filter_module = {
 
 static ngx_http_output_body_filter_pt    ngx_http_next_body_filter;
 
+
+/*
+2015/12/31 06:36:20[ ngx_event_pipe_write_to_downstream,   600]  [debug] 21359#21359: *1 pipe write downstream, write ready: 1
+2015/12/31 06:36:20[ ngx_event_pipe_write_to_downstream,   620]  [debug] 21359#21359: *1 pipe write downstream flush out
+2015/12/31 06:36:20[             ngx_http_output_filter,  3338]  [debug] 21359#21359: *1 http output filter "/test2.php?"
+2015/12/31 06:36:20[               ngx_http_copy_filter,   160]  [debug] 21359#21359: *1 http copy filter: "/test2.php?", r->aio:0
+2015/12/31 06:36:20[                   ngx_output_chain,    67][yangya  [debug] 21359#21359: *1 ctx->sendfile:0, ctx->aio:0, ctx->directio:0
+2015/12/31 06:36:20[                  ngx_file_aio_read,   251]  [debug] 21359#21359: *1 aio complete:0 @206:215 /var/yyz/cache_xxx/temp/1/00/0000000001
+2015/12/31 06:36:20[               ngx_http_copy_filter,   231]  [debug] 21359#21359: *1 http copy filter: -2 "/test2.php?"
+2015/12/31 06:36:20[ ngx_event_pipe_write_to_downstream,   658]  [debug] 21359#21359: *1 pipe write downstream done
+2015/12/31 06:36:20[                ngx_event_del_timer,    39]  [debug] 21359#21359: *1 <           ngx_event_pipe,    87>  event timer del: 14: 4111061275
+2015/12/31 06:36:20[         ngx_http_file_cache_update,  1508]  [debug] 21359#21359: *1 http file cache update, c->body_start:206
+2015/12/31 06:36:20[         ngx_http_file_cache_update,  1521]  [debug] 21359#21359: *1 http file cache rename: "/var/yyz/cache_xxx/temp/1/00/0000000001" to "/var/yyz/cache_xxx/f/27/46492fbf0d9d35d3753c66851e81627f", expire time:1800
+2015/12/31 06:36:20[                     ngx_shmtx_lock,   168]  [debug] 21359#21359: shmtx lock
+2015/12/31 06:36:20[                   ngx_shmtx_unlock,   249]  [debug] 21359#21359: shmtx unlock
+2015/12/31 06:36:20[  ngx_http_upstream_process_request,  4250]  [debug] 21359#21359: *1 http upstream exit: 00000000
+2015/12/31 06:36:20[ ngx_http_upstream_finalize_request,  4521]  [debug] 21359#21359: *1 finalize http upstream request rc: 0
+2015/12/31 06:36:20[  ngx_http_fastcgi_finalize_request,  3215]  [debug] 21359#21359: *1 finalize http fastcgi request
+2015/12/31 06:36:20[ngx_http_upstream_free_round_robin_peer,   887]  [debug] 21359#21359: *1 free rr peer 1 0
+2015/12/31 06:36:20[ ngx_http_upstream_finalize_request,  4574]  [debug] 21359#21359: *1 close http upstream connection: 14
+2015/12/31 06:36:20[               ngx_close_connection,  1120]  [debug] 21359#21359: *1 delete posted event AE8FD098
+2015/12/31 06:36:20[            ngx_reusable_connection,  1177]  [debug] 21359#21359: *1 reusable connection: 0
+2015/12/31 06:36:20[               ngx_close_connection,  1139][yangya  [debug] 21359#21359: close socket:14
+2015/12/31 06:36:20[ ngx_http_upstream_finalize_request,  4588]  [debug] 21359#21359: *1 http upstream temp fd: 15
+2015/12/31 06:36:20[              ngx_http_send_special,  3843][yangya  [debug] 21359#21359: *1 ngx http send special, flags:1
+2015/12/31 06:36:20[             ngx_http_output_filter,  3338]  [debug] 21359#21359: *1 http output filter "/test2.php?"
+2015/12/31 06:36:20[               ngx_http_copy_filter,   160]  [debug] 21359#21359: *1 http copy filter: "/test2.php?", r->aio:1
+2015/12/31 06:36:20[                   ngx_output_chain,    67][yangya  [debug] 21359#21359: *1 ctx->sendfile:0, ctx->aio:1, ctx->directio:0
+2015/12/31 06:36:20[               ngx_http_copy_filter,   231]  [debug] 21359#21359: *1 http copy filter: -2 "/test2.php?"
+2015/12/31 06:36:20[          ngx_http_finalize_request,  2592]  [debug] 21359#21359: *1 http finalize request rc: -2, "/test2.php?" a:1, c:1
+2015/12/31 06:36:20[                ngx_event_add_timer,   100]  [debug] 21359#21359: *1 <ngx_http_set_write_handler,  3013>  event timer add fd:13, expire-time:60 s, timer.key:4111061277
+2015/12/31 06:36:20[           ngx_trylock_accept_mutex,   405]  [debug] 21359#21359: accept mutex locked
+2015/12/31 06:36:20[           ngx_epoll_process_events,  1713]  [debug] 21359#21359: epoll: fd:10 EPOLLIN  (ev:0001) d:080E2520
+2015/12/31 06:36:20[           ngx_epoll_process_events,  1759]  [debug] 21359#21359: post event 080E24E0
+2015/12/31 06:36:20[           ngx_event_process_posted,    65]  [debug] 21359#21359: begin to run befor posted event 080E24E0
+
+*/
+
+/*
+通过这里发送触发在ngx_http_write_filter->ngx_linux_sendfile_chain(如果文件通过sendfile发送)，
+如果是普通写发送，则在ngx_http_write_filter->ngx_writev(一般chain->buf在内存中的情况下用该方式)，
+或者ngx_http_copy_filter->ngx_output_chain中的if (ctx->aio) { return NGX_AGAIN;}(如果文件通过aio发送)，然后由aio异步事件epoll触发
+读取文件内容超过，然后在继续发送文件
+*/
+
 /* 注意:到这里的in实际上是已经指向数据内容部分，或者如果发送的数据需要从文件中读取，in中也会指定文件file_pos和file_last已经文件fd等,
    可以参考ngx_http_cache_send ngx_http_send_header ngx_http_output_filter */
 //in为需要发送的chain链，上面存储的是实际要发送的数据
 static ngx_int_t
 ngx_http_copy_filter(ngx_http_request_t *r, ngx_chain_t *in)
-{
+{ //实际上在接受完后端数据后，在想客户端发送包体部分的时候，会两次调用该函数，一次是ngx_event_pipe_write_to_downstream-> p->output_filter(),
+//另一次是ngx_http_upstream_finalize_request->ngx_http_send_special,可以参考上面的日志打印注释
     ngx_int_t                     rc;
     ngx_connection_t             *c;
     ngx_output_chain_ctx_t       *ctx;
@@ -201,8 +247,9 @@ ngx_http_copy_filter(ngx_http_request_t *r, ngx_chain_t *in)
         }
 #endif
 
-#if (NGX_THREADS)
+#if (NGX_THREADS) 
         if (clcf->aio == NGX_HTTP_AIO_THREADS) {
+            //ngx_output_chain_as_is中赋值给buf->file->thread_handler 
             ctx->thread_handler = ngx_http_copy_thread_handler;
         }
 #endif
@@ -214,7 +261,12 @@ ngx_http_copy_filter(ngx_http_request_t *r, ngx_chain_t *in)
     }
 
 #if (NGX_HAVE_FILE_AIO || NGX_THREADS)
-    ctx->aio = r->aio;
+    //实际上在接受完后端数据后，在想客户端发送包体部分的时候，会两次调用该函数，一次是ngx_event_pipe_write_to_downstream-> p->output_filter(),
+    //另一次是ngx_http_upstream_finalize_request->ngx_http_send_special,
+    //如果是aio方式，则第一次该值为0，但是第二次从ngx_http_send_special走到这里的时候已经在ngx_output_chain->ngx_file_aio_read->ngx_http_copy_aio_handler置1
+    //aio方式，当aio读事件完成，会通过ngx_http_copy_aio_event_handler->ngx_http_writer再次走到这里，这时候ngx_http_copy_aio_event_handler已经把r->aio置0
+    //可以参考上面的日志备注信息
+    ctx->aio = r->aio; 
 #endif
 
     rc = ngx_output_chain(ctx, in);
@@ -227,8 +279,9 @@ ngx_http_copy_filter(ngx_http_request_t *r, ngx_chain_t *in)
         r->buffered |= NGX_HTTP_COPY_BUFFERED; //说明ctx->in上还有未发送的数据，函数参数in中指向在ngx_output_chain中已经赋值给了ctx->in
     }
 
-    ngx_log_debug3(NGX_LOG_DEBUG_HTTP, c->log, 0,
-                   "http copy filter: %i \"%V?%V\"", rc, &r->uri, &r->args);
+    ngx_int_t buffered = r->buffered;
+    ngx_log_debug4(NGX_LOG_DEBUG_HTTP, c->log, 0,
+                   "http copy filter rc: %i, buffered:%i \"%V?%V\"", rc, buffered, &r->uri, &r->args);
 
     return rc;
 }
@@ -238,7 +291,7 @@ ngx_http_copy_filter(ngx_http_request_t *r, ngx_chain_t *in)
 //执行在ngx_output_chain_copy_buf->ngx_http_copy_aio_handler
 static void
 ngx_http_copy_aio_handler(ngx_output_chain_ctx_t *ctx, ngx_file_t *file)
-{
+{ //注意aio内核读取完毕后，是放在ngx_output_chain_ctx_t->buf中的，见ngx_output_chain_copy_buf->ngx_file_aio_read
     ngx_http_request_t *r;
 
     r = ctx->filter_ctx;
@@ -251,6 +304,8 @@ ngx_http_copy_aio_handler(ngx_output_chain_ctx_t *ctx, ngx_file_t *file)
     ctx->aio = 1;
 }
 
+//注意aio内核读取完毕后，是放在ngx_output_chain_ctx_t->buf中的，见ngx_output_chain_copy_buf->ngx_file_aio_read
+
 //ngx_file_aio_event_handler中执行
 static void
 ngx_http_copy_aio_event_handler(ngx_event_t *ev)
@@ -261,10 +316,10 @@ ngx_http_copy_aio_event_handler(ngx_event_t *ev)
     aio = ev->data;
     r = aio->data;
 
-    r->main->blocked--;
+    r->main->blocked--;  
     r->aio = 0;
 
-    //ngx_http_request_handler->ngx_http_upstream_process_non_buffered_downstream
+    //ngx_http_request_handler -> ngx_http_writer   ngx_http_set_write_handler中设置为ngx_http_writer
     r->connection->write->handler(r->connection->write); //触发一次write->handler，从而可以把从ngx_file_aio_read读到的数据发送出去
 }
 
@@ -369,6 +424,7 @@ ngx_http_copy_thread_event_handler(ngx_event_t *ev)
     r->main->blocked--;
     r->aio = 0;
 
+    //ngx_http_request_handler -> ngx_http_writer
     r->connection->write->handler(r->connection->write);
 }
 

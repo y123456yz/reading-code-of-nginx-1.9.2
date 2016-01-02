@@ -214,6 +214,7 @@ objs/nginx:	objs/src/core/nginx.o \
 	objs/src/http/modules/ngx_http_memcached_module.o \
 	objs/src/http/modules/ngx_http_empty_gif_module.o \
 	objs/src/http/modules/ngx_http_browser_module.o \
+	objs/src/http/modules/ngx_http_secure_link_module.o \
 	objs/src/http/modules/ngx_http_upstream_hash_module.o \
 	objs/src/http/modules/ngx_http_upstream_ip_hash_module.o \
 	objs/src/http/modules/ngx_http_upstream_least_conn_module.o \
@@ -237,6 +238,7 @@ objs/nginx:	objs/src/core/nginx.o \
 	objs/addon/src/ngx_http_echo_request_info.o \
 	objs/addon/src/ngx_http_echo_subrequest.o \
 	objs/addon/src/ngx_http_echo_foreach.o \
+	objs/addon/nginx-requestkey-module-master/ngx_http_accesskey_module.o \
 	objs/ngx_modules.o
 
 	$(LINK) -o objs/nginx \
@@ -350,6 +352,7 @@ objs/nginx:	objs/src/core/nginx.o \
 	objs/src/http/modules/ngx_http_memcached_module.o \
 	objs/src/http/modules/ngx_http_empty_gif_module.o \
 	objs/src/http/modules/ngx_http_browser_module.o \
+	objs/src/http/modules/ngx_http_secure_link_module.o \
 	objs/src/http/modules/ngx_http_upstream_hash_module.o \
 	objs/src/http/modules/ngx_http_upstream_ip_hash_module.o \
 	objs/src/http/modules/ngx_http_upstream_least_conn_module.o \
@@ -373,6 +376,7 @@ objs/nginx:	objs/src/core/nginx.o \
 	objs/addon/src/ngx_http_echo_request_info.o \
 	objs/addon/src/ngx_http_echo_subrequest.o \
 	objs/addon/src/ngx_http_echo_foreach.o \
+	objs/addon/nginx-requestkey-module-master/ngx_http_accesskey_module.o \
 	objs/ngx_modules.o \
 	-lpthread -lpthread -lcrypt -lpcre -lcrypto -lcrypto -lz
 	
@@ -1155,6 +1159,13 @@ objs/src/http/modules/ngx_http_browser_module.o:	$(CORE_DEPS) $(HTTP_DEPS) \
 		src/http/modules/ngx_http_browser_module.c
 
 
+objs/src/http/modules/ngx_http_secure_link_module.o:	$(CORE_DEPS) $(HTTP_DEPS) \
+	src/http/modules/ngx_http_secure_link_module.c
+	$(CC) -c -g $(CFLAGS) $(CORE_INCS) $(HTTP_INCS) \
+		-o objs/src/http/modules/ngx_http_secure_link_module.o \
+		src/http/modules/ngx_http_secure_link_module.c
+
+
 objs/src/http/modules/ngx_http_upstream_hash_module.o:	$(CORE_DEPS) $(HTTP_DEPS) \
 	src/http/modules/ngx_http_upstream_hash_module.c
 	$(CC) -c -g $(CFLAGS) $(CORE_INCS) $(HTTP_INCS) \
@@ -1314,6 +1325,13 @@ objs/addon/src/ngx_http_echo_foreach.o:	$(ADDON_DEPS) \
 	$(CC) -c -g $(CFLAGS)  $(ALL_INCS) \
 		-o objs/addon/src/ngx_http_echo_foreach.o \
 		/var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_foreach.c
+
+
+objs/addon/nginx-requestkey-module-master/ngx_http_accesskey_module.o:	$(ADDON_DEPS) \
+	./src/nginx-requestkey-module-master//ngx_http_accesskey_module.c
+	$(CC) -c -g $(CFLAGS)  $(ALL_INCS) \
+		-o objs/addon/nginx-requestkey-module-master/ngx_http_accesskey_module.o \
+		./src/nginx-requestkey-module-master//ngx_http_accesskey_module.c
 
 
 manpage:	objs/nginx.8

@@ -793,6 +793,8 @@ static struct epoll_event  *event_list; //epoll_events个sizeof(struct epoll_even
 static ngx_uint_t           nevents; //nerents也是配置项epoll_events的参数
 
 #if (NGX_HAVE_EVENTFD)
+//执行ngx_epoll_notify后会通过epoll_wait返回执行该函数ngx_epoll_notify_handler
+//ngx_epoll_notify_handler  ngx_epoll_notify_init  ngx_epoll_notify(ngx_notify)配合阅读
 static int                  notify_fd = -1; //初始化见ngx_epoll_notify_init
 static ngx_event_t          notify_event;
 static ngx_connection_t     notify_conn;
@@ -1163,7 +1165,8 @@ ngx_epoll_init(ngx_cycle_t *cycle, ngx_msec_t timer)
 
 
 #if (NGX_HAVE_EVENTFD)
-
+//执行ngx_epoll_notify后会通过epoll_wait返回执行该函数ngx_epoll_notify_handler
+//ngx_epoll_notify_handler  ngx_epoll_notify_init  ngx_epoll_notify(ngx_notify)配合阅读
 static ngx_int_t
 ngx_epoll_notify_init(ngx_log_t *log)
 {
@@ -1209,8 +1212,10 @@ ngx_epoll_notify_init(ngx_log_t *log)
     return NGX_OK;
 }
 
+//执行ngx_epoll_notify后会通过epoll_wait返回执行该函数ngx_epoll_notify_handler
+//ngx_epoll_notify_handler  ngx_epoll_notify_init  ngx_epoll_notify(ngx_notify)配合阅读
 
-static void
+static void //ngx_epoll_notify_handler  ngx_epoll_notify_init  ngx_epoll_notify(ngx_notify)配合阅读
 ngx_epoll_notify_handler(ngx_event_t *ev)
 {
     ssize_t               n;
@@ -1551,6 +1556,8 @@ ngx_epoll_del_connection(ngx_connection_t *c, ngx_uint_t flags)
 
 
 #if (NGX_HAVE_EVENTFD)
+//执行ngx_epoll_notify后会通过epoll_wait返回执行该函数ngx_epoll_notify_handler
+//ngx_epoll_notify_handler  ngx_epoll_notify_init  ngx_epoll_notify(ngx_notify)配合阅读
 
 static ngx_int_t
 ngx_epoll_notify(ngx_event_handler_pt handler)
@@ -1876,7 +1883,8 @@ ngx_epoll_eventfd_handler(ngx_event_t *ev) //从epoll_wait中检测到aio读成功事件，
                 aio = e->data;
                 aio->res = event[i].res;
 
-                ngx_post_event(e, &ngx_posted_events); //将该事件放到ngx_posted_events队列中延后执行,执行该队列的handle地方见ngx_process_events_and_timers
+                ngx_post_event(e, &ngx_posted_events); 
+                //将该事件放到ngx_posted_events队列中延后执行,执行该队列的handle地方见ngx_process_events_and_timers
             }
 
             continue;

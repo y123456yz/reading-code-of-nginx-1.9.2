@@ -36,7 +36,7 @@ ngx_chain_t out;
 out.buf = b;
 out.next = NULL;
 return ngx_http_output_filter(r, &out);
-*/ //参考http://blog.chinaunix.net/uid-26335251-id-3483044.html
+*/ //参考http://blog.chinaunix.net/uid-26335251-id-3483044.html    
 struct ngx_buf_s { //可以参考ngx_create_temp_buf         函数空间在ngx_create_temp_buf创建，让指针指向这些空间
 /*pos通常是用来告诉使用者本次应该从pos这个位置开始处理内存中的数据，这样设置是因为同一个ngx_buf_t可能被多次反复处理。
 当然，pos的含义是由使用它的模块定义的*/
@@ -45,9 +45,9 @@ struct ngx_buf_s { //可以参考ngx_create_temp_buf         函数空间在ngx_create_te
     u_char          *last;/*last通常表示有效的内容到此为止，注意，pos与last之间的内存是希望nginx处理的内容*/
 
     /* 处理文件时，file_pos与file_last的含义与处理内存时的pos与last相同，file_pos表示将要处理的文件位置，file_last表示截止的文件位置 */
-    off_t            file_pos;  //可以结合ngx_output_chain_copy_buf阅读更好理解
+    off_t            file_pos;  //可以结合ngx_output_chain_copy_buf阅读更好理解    输出数据的打印可以在ngx_http_write_filter中查看调试信息
     //也就是实际存到临时文件中的字节数,见ngx_event_pipe_write_chain_to_temp_file
-    off_t            file_last; //写入文件内容的最尾处的长度赋值见ngx_http_read_client_request_body 
+    off_t            file_last; //写入文件内容的最尾处的长度赋值见ngx_http_read_client_request_body     输出数据的打印可以在ngx_http_write_filter中查看调试信息
 
     //如果ngx_buf_t缓冲区用于内存，那么start指向这段内存的起始地址
     u_char          *start;         /* start of buffer */ //创建空间见ngx_http_upstream_process_header
@@ -85,16 +85,18 @@ struct ngx_buf_s { //可以参考ngx_create_temp_buf         函数空间在ngx_create_te
 
     //可以回收的。也就是这个buf是可以被释放的。这个字段通常是配合shadow字段一起使用的，对于使用ngx_create_temp_buf 函数创建的buf，
     //并且是另外一个buf的shadow，那么可以使用这个字段来标示这个buf是可以被释放的。
+    //置1了表示该buf需要马上发送出去，参考ngx_http_write_filter -> if (!last && !flush && in && size < (off_t) clcf->postpone_output) {
     unsigned         recycled:1; //标志位，为1时表示可回收利用，当该buf被新的buf指针指向的时候，就置1，见ngx_http_upstream_send_response
 
     /*
     ngx_buf_t有一个标志位in_file，将in_file置为1就表示这次ngx_buf_t缓冲区发送的是文件而不是内存。
 调用ngx_http_output_filter后，若Nginx检测到in_file为1，将会从ngx_buf_t缓冲区中的file成员处获取实际的文件。file的类型是ngx_file_t
-    */ //为1时表示该buf所包含的内容是在文件中。
+    */ //为1时表示该buf所包含的内容是在文件中。   输出数据的打印可以在ngx_http_write_filter中查看调试信息
     unsigned         in_file:1;//标志位，为1时表示这段缓冲区处理的是文件而不是内存，说明包体全部存入文件中，需要配置"client_body_in_file_only" on | clean 
 
     //遇到有flush字段被设置为1的的buf的chain，则该chain的数据即便不是最后结束的数据（last_buf被设置，标志所有要输出的内容都完了），
     //也会进行输出，不会受postpone_output配置的限制，但是会受到发送速率等其他条件的限制。
+    ////置1了表示该buf需要马上发送出去，参考ngx_http_write_filter -> if (!last && !flush && in && size < (off_t) clcf->postpone_output) {
     unsigned         flush:1;//标志位，为1时表示需要执行flush操作  标示需要立即发送缓冲的所有数据；
     /*标志位，对于操作这块缓冲区时是否使用同步方式，需谨慎考虑，这可能会阻塞Nginx进程，Nginx中所有操作几乎都是异步的，这是
     它支持高并发的关键。有些框架代码在sync为1时可能会有阻塞的方式进行I/O操作，它的意义视使用它的Nginx模块而定*/
@@ -104,7 +106,8 @@ struct ngx_buf_s { //可以参考ngx_create_temp_buf         函数空间在ngx_create_te
     如果接受包体接收完成，则存储最后一个包体内容的buf的last_buf置1，见ngx_http_request_body_length_filter  
     如果发送包体的时候只有头部，这里会置1，见ngx_http_header_filter
     如果各个模块在发送包体内容的时候，如果送入ngx_http_write_filter函数的in参数chain表中的某个buf为该包体的最后一段内容，则该buf中的last_buf会置1
-     */ // ngx_http_send_special中会置1
+     */ // ngx_http_send_special中会置1  见ngx_http_write_filter -> if (!last && !flush && in && size < (off_t) clcf->postpone_output) {
+    //置1了表示该buf需要马上发送出去，参考ngx_http_write_filter -> if (!last && !flush && in && size < (off_t) clcf->postpone_output) {
     unsigned         last_buf:1;  //数据被以多个chain传递给了过滤器，此字段为1表明这是最后一个chain。
     //在当前的chain里面，此buf是最后一个。特别要注意的是last_in_chain的buf不一定是last_buf，但是last_buf的buf一定是last_in_chain的。这是因为数据会被以多个chain传递给某个filter模块。
     unsigned         last_in_chain:1;//标志位，表示是否是ngx_chain_t中的最后一块缓冲区
@@ -154,10 +157,17 @@ typedef void (*ngx_output_chain_aio_pt)(ngx_output_chain_ctx_t *ctx,
 #endif
 
 struct ngx_output_chain_ctx_s {//ngx_http_copy_filter中创建空间和赋值
+    /*ngx_output_chain_copy_bufc中tx->in中的内存数据或者缓存文件数据会拷贝到dst中，也就是ctx->buf,然后在ngx_output_chain_copy_buf函数
+    外层会重新把ctx->buf赋值给新的chain，然后write出去*/
+
     /* 保存临时的buf */ //实际buf指向的内存空间在ngx_output_chain_align_file_buf或者ngx_output_chain_get_buf 开辟的
     ngx_buf_t                   *buf;
+
+/*ngx_output_chain_copy_bufc中tx->in中的内存数据或者缓存文件数据会拷贝到dst中，也就是ctx->buf,然后在ngx_output_chain_copy_buf函数
+外层会重新把ctx->buf赋值给新的chain，然后write出去*/
     
     /* 保存了将要发送的chain */  //实际in是在ngx_output_chain->ngx_output_chain_add_copy(ctx->pool, &ctx->in, in)让ctx->in是输入参数in的直接拷贝赋值
+    //如果是aio thread方式，则在ngx_output_chain_copy_buf->ngx_thread_read->ngx_thread_read_handler中读取到in->buf中
     ngx_chain_t                 *in;//in是待发送的数据，busy是已经调用ngx_chain_writer但还没有发送完毕。
     ngx_chain_t                 *free;/* 保存了已经发送完毕的chain，以便于重复利用 */  
     ngx_chain_t                 *busy; /* 保存了还未发送的chain */  
@@ -170,9 +180,22 @@ struct ngx_output_chain_ctx_s {//ngx_http_copy_filter中创建空间和赋值
     unsigned                     sendfile:1;/* sendfile标记 */  
 //direct实际上有几方面的优势，不使用系统缓存一方面，另一方面是使用dma直接由dma控制从内存输入到用户空间的buffer中不经过cpu做mov操作，不消耗cpu。
 //表示在获取空间的时候是否需要ctx->alignment字节对齐，见ngx_output_chain_get_buf
-//在ngx_output_chain_copy_buf中会对sendfile有影响
+//在ngx_output_chain_copy_buf中会对sendfile有影响  //调值置1的前提是ngx_output_chain_as_is返回0
+    /*
+         Ngx_http_echo_subrequest.c (src\echo-nginx-module-master\src):        b->file->directio = of.is_directio;
+         Ngx_http_flv_module.c (src\http\modules):    b->file->directio = of.is_directio;
+         Ngx_http_gzip_static_module.c (src\http\modules):    b->file->directio = of.is_directio;
+         Ngx_http_mp4_module.c (src\http\modules):    b->file->directio = of.is_directio;
+         Ngx_http_static_module.c (src\http\modules):    b->file->directio = of.is_directio;
+        只会在上面这几个模块中才有可能置1，因为of.is_directio只有在文件大小大于directio 512配置的大小时才会置1，见ngx_open_and_stat_file中会置1
+        
+     */ 
+     /* 数据在文件里面，并且程序有走到了 b->file->directio = of.is_directio(并且of.is_directio要为1)这几个模块，
+        并且文件大小大于directio xxx中的大小才可能置1，见ngx_output_chain_align_file_buf  ngx_output_chain_as_is */
     unsigned                     directio:1;/* directio标记 */ //如果没有启用direction的情况下，ngx_output_chain_align_file_buf 中置1
 #if (NGX_HAVE_ALIGNED_DIRECTIO)
+    /* 数据在文件里面，并且程序有走到了 b->file->directio = of.is_directio;这几个模块，
+        并且文件大小大于directio xxx中的大小 */
     unsigned                     unaligned:1;//如果没有启用direction的情况下，则在ngx_output_chain_align_file_buf中置1
 #endif
 /* 是否需要在内存中保存一份(使用sendfile的话，内存中没有文件的拷贝的，而我们有时需要处理文件，此时就需要设置这个标记) */ 
@@ -198,7 +221,7 @@ struct ngx_output_chain_ctx_s {//ngx_http_copy_filter中创建空间和赋值
                                                  ngx_file_t *file);
     ngx_thread_task_t           *thread_task;
 #endif
-    //赋值见ngx_http_upstream_init_request  默认512
+    //赋值见ngx_http_upstream_init_request  默认512   在ngx_output_chain_get_buf生效，表示分配空间的时候，空间起始地址需要按照这个值对齐
     off_t                        alignment;//directio_alignment 512;  它与directio配合使用，指定以directio方式读取文件时的对齐方式
 
     ngx_pool_t                  *pool;
@@ -215,6 +238,7 @@ struct ngx_output_chain_ctx_s {//ngx_http_copy_filter中创建空间和赋值
 其他情况默认在ngx_http_upstream_init_request设置为ngx_chain_writer
 */ //copy_filter模块的outpu_filter=ngx_http_next_body_filter
     ngx_output_chain_filter_pt   output_filter; //ngx_output_chain 赋值见ngx_http_upstream_init_request 一般是ngx_http_next_filter,也就是继续调用filter链
+    //一般执行客户端请求r
     void                        *filter_ctx;// 赋值见ngx_http_upstream_init_request /* 当前filter的上下文，这里是由于upstream也会调用output_chain */  
 };
 

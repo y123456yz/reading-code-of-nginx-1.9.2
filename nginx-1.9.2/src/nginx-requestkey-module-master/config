@@ -1,0 +1,5 @@
+USE_MD5=YES
+USE_SHA1=YES
+ngx_addon_name=ngx_http_accesskey_module
+HTTP_MODULES="$HTTP_MODULES $HTTP_ACCESSKEY_MODULE"
+NGX_ADDON_SRCS="$NGX_ADDON_SRCS $ngx_addon_dir/ngx_http_accesskey_module.c"

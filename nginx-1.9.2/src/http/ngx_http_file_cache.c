@@ -268,10 +268,17 @@ ngx_http_file_cache_create_key(ngx_http_request_t *r)
     ngx_memcpy(c->main, c->key, NGX_HTTP_CACHE_KEY_LEN);
 }
 
+/*
+ ngx_http_file_cache_open->ngx_http_file_cache_read->ngx_http_file_cache_aio_read这个流程获取文件中前面的头部信息相关内容，并获取整个
+ 文件stat信息，例如文件大小等。
+ 头部部分在ngx_http_cache_send->ngx_http_send_header发送，
+ 缓存文件后面的包体部分在ngx_http_cache_send后半部代码中触发在filter模块中发送
+ */
+
 //调用 ngx_http_file_cache_open 函数查找是否有对应的有效缓存数据 ngx_http_file_cache_open 函数负责缓存文件定位、缓存文件打开和校验等操作
 ngx_int_t
 ngx_http_file_cache_open(ngx_http_request_t *r)
-{
+{//读取缓存文件前面的头部信息数据到r->cache->buf，同时获取文件的相关属性到r->cache的相关字段
     ngx_int_t                  rc, rv;
     ngx_uint_t                 test;
     ngx_http_cache_t          *c;
@@ -334,7 +341,7 @@ ngx_http_file_cache_open(ngx_http_request_t *r)
 
         c->temp_file = 1;
         test = c->exists ? 1 : 0; //是否有达到Proxy_cache_min_uses 5配置的开始缓存文件的请求次数，达到为1，没达到为0
-        rv = NGX_DECLINED;
+        rv = NGX_DECLINED;//如果返回这个，会把cached置0，返回出去后只有从后端从新获取数据
 
     } else { /* rc == NGX_DECLINED */ //表示在ngx_http_file_cache_exists中没找到该key对应的node节点，因此按照key重新创建了一个node节点(第一次请求该uri)
         //ngx_http_file_cache_exists没找到对应的ngx_http_file_cache_node_t节点，或者该节点对应缓存过期，返回NGX_DECLINED (第一次请求该uri)
@@ -350,7 +357,7 @@ ngx_http_file_cache_open(ngx_http_request_t *r)
 
         } else {
             c->temp_file = 1;
-            rv = NGX_DECLINED;
+            rv = NGX_DECLINED; //如果返回这个，会把cached置0，返回出去后只有从后端从新获取数据
         }
     }
 
@@ -402,7 +409,7 @@ ngx_http_file_cache_open(ngx_http_request_t *r)
     c->file.log = r->connection->log;
     c->uniq = of.uniq;
     c->length = of.size;
-    c->fs_size = (of.fs_size + cache->bsize - 1) / cache->bsize;
+    c->fs_size = (of.fs_size + cache->bsize - 1) / cache->bsize; //bsize对齐
 
     /*
     root@root:/var/yyz# cat cache_xxx/f/27/46492fbf0d9d35d3753c66851e81627f   封包过程见ngx_http_file_cache_set_header
@@ -431,7 +438,9 @@ ngx_http_file_cache_open(ngx_http_request_t *r)
         return NGX_ERROR;
     }
 
-    return ngx_http_file_cache_read(r, c);
+//注意这里读取缓存文件中的头部部分的时候，只有aio读取或者缓存方式读取，和sendfile没有关系，因为头部读出来需要重新组装发往客户端的头部行信息，必须从文件读到内存中
+    //如果返回这个NGX_DECLINED，会把cached置0，返回出去后只有从后端从新获取数据
+    return ngx_http_file_cache_read(r, c);  
 
 done:
     //还没达到Proxy_cache_min_uses 5配置的开始缓存文件的请求次数
@@ -588,18 +597,33 @@ wakeup:
      </body> 
      </html>
 */ 
+
+/*
+     ngx_http_file_cache_open->ngx_http_file_cache_read->ngx_http_file_cache_aio_read这个流程获取文件中前面的头部信息相关内容，并获取整个
+     文件stat信息，例如文件大小等。
+     头部部分在ngx_http_cache_send->ngx_http_send_header发送，
+     缓存文件后面的包体部分在ngx_http_cache_send后半部代码中触发在filter模块中发送
+ */
+
 //读取缓存文件中前面[ngx_http_file_cache_header_t]["\nKEY: "][fastcgi_cache_key中的KEY]["\n"][header]部分的内容长度空间,也就是
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@前面的内容
 static ngx_int_t
 ngx_http_file_cache_read(ngx_http_request_t *r, ngx_http_cache_t *c)
 {
+//注意这里读取缓存文件中的头部部分的时候，只有aio读取或者缓存方式读取，和sendfile没有关系，因为头部读出来需要重新组装发往客户端的头部行信息，必须从文件读到内存中
     time_t                         now;
     ssize_t                        n;
     ngx_int_t                      rc;
     ngx_http_file_cache_t         *cache;
     ngx_http_file_cache_header_t  *h;
 
-    n = ngx_http_file_cache_aio_read(r, c);
+    /*
+     ngx_http_file_cache_open->ngx_http_file_cache_read->ngx_http_file_cache_aio_read这个流程获取文件中前面的头部信息相关内容，并获取整个
+     文件stat信息，例如文件大小等。
+     头部部分在ngx_http_cache_send->ngx_http_send_header发送，
+     缓存文件后面的包体部分在ngx_http_cache_send后半部代码中触发在filter模块中发送
+     */
+    n = ngx_http_file_cache_aio_read(r, c);//读取缓存文件中的前面头部相关信息部分数据
 
     if (n < 0) {
         return n;
@@ -612,7 +636,7 @@ ngx_http_file_cache_read(ngx_http_request_t *r, ngx_http_cache_t *c)
     if ((size_t) n < c->header_start) {
         ngx_log_error(NGX_LOG_CRIT, r->connection->log, 0,
                       "cache file \"%s\" is too small", c->file.name.data);
-        return NGX_DECLINED;
+        return NGX_DECLINED; //如果返回这个NGX_DECLINED，会把cached置0，返回出去后只有从后端从新获取数据
     }
 
     //[ngx_http_file_cache_header_t]["\nKEY: "][orig_key]["\n"][header]
@@ -621,27 +645,27 @@ ngx_http_file_cache_read(ngx_http_request_t *r, ngx_http_cache_t *c)
     if (h->version != NGX_HTTP_CACHE_VERSION) {
         ngx_log_error(NGX_LOG_INFO, r->connection->log, 0,
                       "cache file \"%s\" version mismatch", c->file.name.data);
-        return NGX_DECLINED;
+        return NGX_DECLINED; //如果返回这个NGX_DECLINED，会把cached置0，返回出去后只有从后端从新获取数据
     }
 
     if (h->crc32 != c->crc32) {
         ngx_log_error(NGX_LOG_CRIT, r->connection->log, 0,
                       "cache file \"%s\" has md5 collision", c->file.name.data);
-        return NGX_DECLINED;
+        return NGX_DECLINED; //如果返回这个NGX_DECLINED，会把cached置0，返回出去后只有从后端从新获取数据
     }
 
     if ((size_t) h->body_start > c->body_start) {
         ngx_log_error(NGX_LOG_CRIT, r->connection->log, 0,
                       "cache file \"%s\" has too long header",
                       c->file.name.data);
-        return NGX_DECLINED;
+        return NGX_DECLINED; //如果返回这个NGX_DECLINED，会把cached置0，返回出去后只有从后端从新获取数据
     }
 
     if (h->vary_len > NGX_HTTP_CACHE_VARY_LEN) {
         ngx_log_error(NGX_LOG_CRIT, r->connection->log, 0,
                       "cache file \"%s\" has incorrect vary length",
                       c->file.name.data);
-        return NGX_DECLINED;
+        return NGX_DECLINED; //如果返回这个NGX_DECLINED，会把cached置0，返回出去后只有从后端从新获取数据
     }
 
     if (h->vary_len) {
@@ -737,11 +761,27 @@ ngx_http_file_cache_read(ngx_http_request_t *r, ngx_http_cache_t *c)
 //读取缓存文件中前面[ngx_http_file_cache_header_t]["\nKEY: "][fastcgi_cache_key中的KEY]["\n"][header]部分的内容长度空间,也就是
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@前面的内容
 
+/*
+发送缓存文件中内容到客户端过程:
+ ngx_http_file_cache_open->ngx_http_file_cache_read->ngx_http_file_cache_aio_read这个流程获取文件中前面的头部信息相关内容，并获取整个
+ 文件stat信息，例如文件大小等。
+ 头部部分在ngx_http_cache_send->ngx_http_send_header发送，
+ 缓存文件后面的包体部分在ngx_http_cache_send后半部代码中触发在filter模块中发送
+
+ 接收后端数据并转发到客户端触发数据发送过程:
+ ngx_event_pipe_write_to_downstream中的
+ if (p->upstream_eof || p->upstream_error || p->upstream_done) {
+    遍历p->in 或者遍历p->out，然后执行输出
+    p->output_filter(p->output_ctx, p->out);
+ }
+ */
+
 /* 读取缓存文件中前面的[ngx_http_file_cache_header_t]["\nKEY: "][fastcgi_cache_key中的KEY]["\n"][header] */
 //注意置读取前面的头部信息，紧跟后面的后端应答回来的缓存包体是没有读取的
 static ssize_t
 ngx_http_file_cache_aio_read(ngx_http_request_t *r, ngx_http_cache_t *c)
 {
+//注意这里读取缓存文件中的头部部分的时候，只有aio读取或者缓存方式读取，和sendfile没有关系，因为头部读出来需要重新组装发往客户端的头部行信息，必须从文件读到内存中
 #if (NGX_HAVE_FILE_AIO || NGX_THREADS)
     ssize_t                    n;
     ngx_http_core_loc_conf_t  *clcf;
@@ -751,7 +791,7 @@ ngx_http_file_cache_aio_read(ngx_http_request_t *r, ngx_http_cache_t *c)
 
 #if (NGX_HAVE_FILE_AIO)
 
-    if (clcf->aio == NGX_HTTP_AIO_ON && ngx_file_aio) {
+    if (clcf->aio == NGX_HTTP_AIO_ON && ngx_file_aio) { //aio on这这里  aio on | off | threads[=pool]; 
         n = ngx_file_aio_read(&c->file, c->buf->pos, c->body_start, 0, r->pool);
 
         if (n != NGX_AGAIN) {
@@ -774,12 +814,12 @@ ngx_http_file_cache_aio_read(ngx_http_request_t *r, ngx_http_cache_t *c)
 
 #if (NGX_THREADS)
 
-    if (clcf->aio == NGX_HTTP_AIO_THREADS) {
+    if (clcf->aio == NGX_HTTP_AIO_THREADS) { //aio thread配置的时候走这里  aio on | off | threads[=pool]; 
         c->file.thread_handler = ngx_http_cache_thread_handler;
         c->file.thread_ctx = r;
 
         n = ngx_thread_read(&c->thread_task, &c->file, c->buf->pos,
-                            c->body_start, 0, r->pool);
+                            c->body_start, 0, r->pool); //只是读取缓冲区文件中前面的头部信息部分
 
         c->reading = (n == NGX_AGAIN);
 
@@ -787,6 +827,14 @@ ngx_http_file_cache_aio_read(ngx_http_request_t *r, ngx_http_cache_t *c)
     }
 
 #endif
+
+    /*
+     ngx_http_file_cache_open->ngx_http_file_cache_read->ngx_http_file_cache_aio_read这个流程获取文件中前面的头部信息相关内容，并获取整个
+     文件stat信息，例如文件大小等。
+     头部部分在ngx_http_cache_send->ngx_http_send_header发送，
+     缓存文件后面的包体部分在ngx_http_cache_send后半部代码中触发在filter模块中发送
+     */
+
 
     /* 读取缓存文件中前面的[ngx_http_file_cache_header_t]["\nKEY: "][fastcgi_cache_key中的KEY]["\n"][header] */
     return  ngx_read_file(&c->file, c->buf->pos, c->body_start, 0);
@@ -832,9 +880,11 @@ ngx_http_cache_aio_event_handler(ngx_event_t *ev)
 
 #if (NGX_THREADS)
 
+////aio thread配置的时候走这里  aio on | off | threads[=pool]; 
+//这里添加task->event信息到task中，当task->handler指向完后，通过nginx_notify可以继续通过epoll_wait返回执行task->event
 static ngx_int_t
 ngx_http_cache_thread_handler(ngx_thread_task_t *task, ngx_file_t *file)
-{
+{ //由ngx_thread_read触发执行
     ngx_str_t                  name;
     ngx_thread_pool_t         *tp;
     ngx_http_request_t        *r;
@@ -864,7 +914,7 @@ ngx_http_cache_thread_handler(ngx_thread_task_t *task, ngx_file_t *file)
     task->event.data = r;
     task->event.handler = ngx_http_cache_thread_event_handler;
 
-    if (ngx_thread_task_post(tp, task) != NGX_OK) {
+    if (ngx_thread_task_post(tp, task) != NGX_OK) { //该任务的handler函数式task->handler = ngx_thread_read_handler;
         return NGX_ERROR;
     }
 
@@ -874,10 +924,9 @@ ngx_http_cache_thread_handler(ngx_thread_task_t *task, ngx_file_t *file)
     return NGX_OK;
 }
 
-
 static void
 ngx_http_cache_thread_event_handler(ngx_event_t *ev)
-{
+{//在ngx_notify(ngx_thread_pool_handler); 中的ngx_thread_pool_handler执行该函数，表示线程读文件完成，通过ngx_notify epoll方式触发
     ngx_connection_t    *c;
     ngx_http_request_t  *r;
 
@@ -1693,8 +1742,26 @@ done:
     }
 }
 
+/*
+发送缓存文件中内容到客户端过程:
+ ngx_http_file_cache_open->ngx_http_file_cache_read->ngx_http_file_cache_aio_read这个流程获取文件中前面的头部信息相关内容，并获取整个
+ 文件stat信息，例如文件大小等。
+ 头部部分在ngx_http_cache_send->ngx_http_send_header发送，
+ 缓存文件后面的包体部分在ngx_http_cache_send后半部代码中触发在filter模块中发送
 
-ngx_int_t
+ 接收后端数据并转发到客户端触发数据发送过程:
+ ngx_event_pipe_write_to_downstream中的
+ if (p->upstream_eof || p->upstream_error || p->upstream_done) {
+    遍历p->in 或者遍历p->out，然后执行输出
+    p->output_filter(p->output_ctx, p->out);
+ }
+ */
+
+/*
+缓存文件除去文件前面头部部分，剩下的就是实际的包体数据，通过这里发送触发在ngx_http_write_filter->ngx_linux_sendfile_chain(如果文件通过sendfile发送)，
+如果是普通写发送，则在ngx_http_write_filter->ngx_writev(一般chain->buf在内存中的情况下用该方式)，
+或者ngx_http_copy_filter->ngx_output_chain中的if (ctx->aio) { return NGX_AGAIN;}(如果文件通过aio发送)，然后由aio异步事件epoll触发读取文件内容超过，然后在继续发送文件
+*/ngx_int_t
 ngx_http_cache_send(ngx_http_request_t *r)
 {
     ngx_int_t          rc;

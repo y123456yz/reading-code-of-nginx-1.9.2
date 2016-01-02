@@ -167,7 +167,7 @@ ngx_open_cached_file(ngx_open_file_cache_t *cache, ngx_str_t *name,
     */ 
     // 如果cache结构没有被初始化， 则获取name文件stat信息。
 
-        if (of->test_only) {//如果只是测试用
+        if (of->test_only) {//如果只是测试用  例如进入index module的时候，就走这里
 
             if (ngx_file_info_wrapper(name, of, &fi, pool->log) //对该文件的文件信息进行查询就返回，并不实际打开它
                 == NGX_FILE_ERROR)

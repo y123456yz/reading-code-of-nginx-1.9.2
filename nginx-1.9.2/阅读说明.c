@@ -78,3 +78,22 @@ nginx的以下功能模块的相关代码已经阅读，并对其源码及相关
     sendfile流程分析
     线程池详解分析
     aio sendfile 线程池分界点详细分析
+	
+16.1.10
+	推敲为什么每次在发送后端数据最后都会调用ngx_http_send_special的原因分析
+    进一步分析aio异步事件触发流程
+    关键点新增打印，利用分析日志。
+    分析在ngx_http_write_filter的时候，明明从后端接收的数据到了缓存文件，并且理论上出去的数据时in file的，单实际上在out的时候却是in mem而非in file
+    sendfile与普通ngx_writev分界点进一步分析
+    缓存情况下的copy filter执行流程和非缓存情况下的copy filter执行流程进一步分析注释。
+    filter后端数据到客户端的时候，是否需要重新开辟内存空间分界点详细分析。
+    分析直接direct I/O的生效场景，以及结合相关资料分析说明时候使用direct I/O
+    direct I/O和异步AIO结合提升效率代码分析及高压测试
+    directio真正生效过程代码分析
+    同时配置sendfile on;  aio on; dirction xxx;的情况下sendfile和aio选择判断流程详细分析
+    线程池thread_pool_module源码详细分析注释 
+    aio thread执行流程详细分析
+    进一步分析获取缓存文件头部部分和文件后半部包体部分的发送流程。
+    secure_link权限访问模块原理分析，以及代码分析，并举例测试分析
+    从新走到index和static模块，配合secure_link测试。
+    添加第三方模块-防盗链模块，了解原理后走读代码分析

@@ -88,9 +88,15 @@ struct ngx_file_s { //一般做为ngx_conf_file_t的成员使用，
     ngx_log_t                 *log; //日志对象，相关的日志会输出到log指定的日志文件中
 
 #if (NGX_THREADS)
+/*
+Ngx_http_copy_filter_module.c (src\http):            ctx->thread_handler = ngx_http_copy_thread_handler;
+Ngx_http_file_cache.c (src\http):        c->file.thread_handler = ngx_http_cache_thread_handler;
+Ngx_output_chain.c (src\core):        buf->file->thread_handler = ctx->thread_handler;
+*/
+//客户端请求在ngx_http_file_cache_aio_read读取缓存的时候赋值为c->file.thread_handler = ngx_http_cache_thread_handler;然后在ngx_thread_read中执行
     ngx_int_t                (*thread_handler)(ngx_thread_task_t *task,
                                                ngx_file_t *file);
-    void                      *thread_ctx;
+    void                      *thread_ctx; //客户端请求r
 #endif
 
 #if (NGX_HAVE_FILE_AIO)
@@ -98,7 +104,17 @@ struct ngx_file_s { //一般做为ngx_conf_file_t的成员使用，
 #endif
 
     unsigned                   valid_info:1;//目前未使用
-    unsigned                   directio:1;//与配置文件中的directio配置项相对应，在发送大文件时可以设为1
+
+    /*
+     //Ngx_http_echo_subrequest.c (src\echo-nginx-module-master\src):        b->file->directio = of.is_directio;
+    // Ngx_http_flv_module.c (src\http\modules):    b->file->directio = of.is_directio;
+    // Ngx_http_gzip_static_module.c (src\http\modules):    b->file->directio = of.is_directio;
+     //Ngx_http_mp4_module.c (src\http\modules):    b->file->directio = of.is_directio;
+    // Ngx_http_static_module.c (src\http\modules):    b->file->directio = of.is_directio; 
+     of.is_directio只有在文件大小大于directio 512配置的大小时才会置1，见ngx_open_and_stat_file中会置1
+     只有配置文件中有配置这几个模块相关配置，并且获取的文件大小(例如缓存文件)大于directio 512，也就是文件大小大于512时，则置1
+     */
+    unsigned                   directio:1;//一般都为0  注意并不是配置了directio  xxx;就会置1，这个和具体模块有关
 };
 
 

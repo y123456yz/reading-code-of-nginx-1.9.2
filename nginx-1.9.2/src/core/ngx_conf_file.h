@@ -1069,13 +1069,13 @@ typedef struct { //对应的是核心模块NGX_CORE_MODULE,在ngx_init_cycle中执行
 } ngx_core_module_t;
 
 typedef struct {
-    ngx_file_t            file;
+    ngx_file_t            file; //配置文件名
     ngx_buf_t            *buffer; //文件内容在这里面存储
 
     //当在解析从文件中读取到的4096字节内存时，如果最后面的内存不足以构成一个token，
     //则把这部分内存零时存起来，然后拷贝到下一个4096内存的头部参考ngx_conf_read_token
     ngx_buf_t            *dump;
-    ngx_uint_t            line;
+    ngx_uint_t            line; //在配置文件中的行号  可以参考ngx_thread_pool_add
 } ngx_conf_file_t;
 
 

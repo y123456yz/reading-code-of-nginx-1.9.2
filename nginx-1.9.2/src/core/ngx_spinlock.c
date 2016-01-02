@@ -47,7 +47,8 @@
 value参数表示希塑当锁没有被任何进程持有时（也就是lock值为0），把lock值设为value表示当前进程持有了锁；第三个参数spin表示在多处
 理器系统内，当ngx_spinlock方法没有拿到锁时，当前进程在内核的一次调度中，该方法等待其他处理器释放锁的时间
 */
-void
+void 
+//如果lock为0，表示可以获取锁，然后把lock置为value，如果lock不为0，则循环调度一会儿，再次检查，如果spin次循环还没有获取到锁，则让出CPU控制权
 ngx_spinlock(ngx_atomic_t *lock, ngx_atomic_int_t value, ngx_uint_t spin)
 {
 

@@ -197,9 +197,10 @@ ngx_http_write_filter(ngx_http_request_t *r, ngx_chain_t *in)
         *ll = cl;
         ll = &cl->next;
 
+//注意从后端接收的数据到缓存文件中后，在filter模块中，有可能是新的buf数据指针了，因为ngx_http_copy_filter->ngx_output_chain中会重新分配内存读取缓存文件内容
         ngx_log_debug7(NGX_LOG_DEBUG_EVENT, c->log, 0,
-                       "write new buf t:%d f:%d %p, pos %p, size: %z "
-                       "file: %O, size: %O",
+                       "write new buf temporary:%d buf-in-file:%d, buf->start:%p, buf->pos:%p, buf_size: %z "
+                       "file_pos: %O, in_file_size: %O",
                        cl->buf->temporary, cl->buf->in_file,
                        cl->buf->start, cl->buf->pos,
                        cl->buf->last - cl->buf->pos,
@@ -244,7 +245,7 @@ ngx_http_write_filter(ngx_http_request_t *r, ngx_chain_t *in)
     *ll = NULL;
 
     ngx_log_debug3(NGX_LOG_DEBUG_HTTP, c->log, 0,
-                   "http write filter: l:%d f:%d s:%O", last, flush, size);
+                   "http write filter: last:%d flush:%d size:%O", last, flush, size);
 
     clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
 
@@ -286,6 +287,8 @@ Connection: keep-alive
      */ //例如如果有头部，又有包体，则一般最尾部的头部filter函数ngx_http_header_filter->ngx_http_write_filter到这里的时候一般头部字段
      //过少，这里直接返回NGX_OK，这样就可以让头部和包体在最尾部的包体filter函数ngx_http_write_filter->ngx_http_write_filter和包体在一个报文中发送出去
     if (!last && !flush && in && size < (off_t) clcf->postpone_output) {
+        ngx_log_debugall(c->log, 0, "send size:%O < min postpone_output:%O, do not send", size, (off_t) clcf->postpone_output);
+        //如果last flush都等于0，并且in不为NULL，并且输出链中的数据小于postpone_output，则直接返回，表示等数据跟多(达到postpone_output)，或者指定last flush则输出
         return NGX_OK;
     }
 

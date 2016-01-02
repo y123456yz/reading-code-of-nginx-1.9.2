@@ -285,7 +285,7 @@ typedef struct { //从ngx_cycle_s中的conf_ctx指向这里
      ngx_int_t                debug_points;
 
      ngx_int_t                rlimit_nofile;
-     off_t                    rlimit_core;
+     off_t                    rlimit_core;//worker_rlimit_core 1024k;  coredump文件大小
 
      int                      priority;
 
@@ -296,7 +296,7 @@ typedef struct { //从ngx_cycle_s中的conf_ctx指向这里
      ngx_uid_t                user;
      ngx_gid_t                group;
 
-     ngx_str_t                working_directory;
+     ngx_str_t                working_directory;//working_directory /var/yyz/corefile/;  coredump存放路径
      ngx_str_t                lock_file;
 
      ngx_str_t                pid;

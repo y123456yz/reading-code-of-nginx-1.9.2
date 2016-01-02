@@ -58,10 +58,10 @@ ngx_chain_t *ngx_writev_chain(ngx_connection_t *c, ngx_chain_t *in,
 
 typedef struct {
     struct iovec  *iovs;
-    ngx_uint_t     count;
+    ngx_uint_t     count; //等于0，则表明chain链中的所有数据在文件中
     size_t         size;
     ngx_uint_t     nalloc;
-} ngx_iovec_t;
+} ngx_iovec_t;//可以参考ngx_output_chain_to_iovec
 
 ngx_chain_t *ngx_output_chain_to_iovec(ngx_iovec_t *vec, ngx_chain_t *in,
     size_t limit, ngx_log_t *log);

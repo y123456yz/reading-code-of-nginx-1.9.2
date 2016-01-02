@@ -691,12 +691,16 @@ sendfile系统调用
     /*
     When both AIO and sendfile are enabled on Linux, AIO is used for files that are larger than or equal to the size specified in the 
     directio directive, while sendfile is used for files of smaller sizes or when directio is disabled. 
-    如果aio on; sendfile都配置了，则当文件大小大于等于directio指定size(默认512)的时候使用aio,当小于size或者directio off的时候使用sendfile
-    生效见ngx_open_and_stat_file  if (of->directio <= ngx_file_size(&fi)) { ngx_directio_on }
-    */ //ngx_output_chain_as_is  ngx_output_chain_copy_buf是aio和sendfile和普通文件读写的分支点
+    如果aio on; sendfile都配置了，并且执行了b->file->directio = of.is_directio(并且of.is_directio要为1)这几个模块，
+    则当文件大小大于等于directio指定size(默认512)的时候使用aio,当小于size或者directio off的时候使用sendfile
+    生效见ngx_open_and_stat_file  if (of->directio <= ngx_file_size(&fi)) { ngx_directio_on } 以及ngx_output_chain_copy_buf
+
+    不过不满足上面的条件，如果aio on; sendfile都配置了，则还是以sendfile为准
+    */ //ngx_output_chain_as_is  ngx_output_chain_copy_buf是aio和sendfile和普通文件读写的分支点  ngx_linux_sendfile_chain是sendfile发送和普通write发送的分界点
     { ngx_string("sendfile"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_HTTP_LIF_CONF
                         |NGX_CONF_FLAG,
+//一般大缓存文件用aio发送，小文件用sendfile，因为aio是异步的，不影响其他流程，但是sendfile是同步的，太大的话可能需要多次sendfile才能发送完，有种阻塞感觉
       ngx_conf_set_flag_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_core_loc_conf_t, sendfile),
@@ -772,10 +776,14 @@ compatible only with the epoll, kqueue, and eventport methods. Multi-threaded se
 /*
 When both AIO and sendfile are enabled on Linux, AIO is used for files that are larger than or equal to the size specified in the 
 directio directive, while sendfile is used for files of smaller sizes or when directio is disabled. 
-如果aio on; sendfile都配置了，则当文件大小大于等于directio指定size(默认512)的时候使用aio,当小于size或者directio off的时候使用sendfile
-生效见ngx_open_and_stat_file  if (of->directio <= ngx_file_size(&fi)) { ngx_directio_on }
-*/ //ngx_output_chain_as_is  ngx_output_chain_copy_buf是aio和sendfile和普通文件读写的分支点
-    { ngx_string("aio"),
+如果aio on; sendfile都配置了，并且执行了b->file->directio = of.is_directio(并且of.is_directio要为1)这几个模块，
+则当文件大小大于等于directio指定size(默认512)的时候使用aio,当小于size或者directio off的时候使用sendfile
+生效见ngx_open_and_stat_file  if (of->directio <= ngx_file_size(&fi)) { ngx_directio_on } 以及ngx_output_chain_copy_buf
+
+不过不满足上面的条件，如果aio on; sendfile都配置了，则还是以sendfile为准
+*/ //ngx_output_chain_as_is  ngx_output_chain_align_file_buf  ngx_output_chain_copy_buf是aio和sendfile和普通文件读写的分支点  ngx_linux_sendfile_chain是sendfile发送和普通write发送的分界点
+    { ngx_string("aio"),  
+//一般大缓存文件用aio发送，小文件用sendfile，因为aio是异步的，不影响其他流程，但是sendfile是同步的，太大的话可能需要多次sendfile才能发送完，有种阻塞感觉
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_http_core_set_aio,
       NGX_HTTP_LOC_CONF_OFFSET,
@@ -793,18 +801,27 @@ directio directive, while sendfile is used for files of smaller sizes or when di
 语法：directio size | off;
 默认：directio off;
 配置块：http、server、location
-此配置项在FreeBSD和Linux系统上使用O_DIRECT选项去读取文件，缓冲区大小为size，通常对大文件的读取速度有优化作用。注意，它与sendfile功能是互斥的。
+当文件大小大于该值的时候，可以此配置项在FreeBSD和Linux系统上使用O_DIRECT选项去读取文件，通常对大文件的读取速度有优化作用。注意，它与sendfile功能是互斥的。
 */
 /*
 When both AIO and sendfile are enabled on Linux, AIO is used for files that are larger than or equal to the size specified in the 
 directio directive, while sendfile is used for files of smaller sizes or when directio is disabled. 
-如果aio on; sendfile都配置了，则当文件大小大于等于directio指定size(默认512)的时候使用aio,当小于size或者directio off的时候使用sendfile
-生效见ngx_open_and_stat_file  if (of->directio <= ngx_file_size(&fi)) { ngx_directio_on }
+如果aio on; sendfile都配置了，并且执行了b->file->directio = of.is_directio(并且of.is_directio要为1)这几个模块，
+则当文件大小大于等于directio指定size(默认512)的时候使用aio,当小于size或者directio off的时候使用sendfile
+生效见ngx_open_and_stat_file  if (of->directio <= ngx_file_size(&fi)) { ngx_directio_on } 以及ngx_output_chain_copy_buf
+
+不过不满足上面的条件，如果aio on; sendfile都配置了，则还是以sendfile为准
+
 
 当读入长度大于等于指定size的文件时，开启DirectIO功能。具体的做法是，在FreeBSD或Linux系统开启使用O_DIRECT标志，在MacOS X系统开启
 使用F_NOCACHE标志，在Solaris系统开启使用directio()功能。这条指令自动关闭sendfile(0.7.15版)。它在处理大文件时 
-*/ //ngx_output_chain_as_is  ngx_output_chain_copy_buf是aio和sendfile和普通文件读写的分支点
-    { ngx_string("directio"),
+*/ //ngx_output_chain_as_is  ngx_output_chain_align_file_buf  ngx_output_chain_copy_buf是aio和sendfile和普通文件读写的分支点  ngx_linux_sendfile_chain是sendfile发送和普通write发送的分界点
+  //生效见ngx_open_and_stat_file  if (of->directio <= ngx_file_size(&fi)) { ngx_directio_on }
+
+    /* 数据在文件里面，并且程序有走到了 b->file->directio = of.is_directio(并且of.is_directio要为1)这几个模块，
+        并且文件大小大于directio xxx中的大小才才会生效，见ngx_output_chain_align_file_buf  ngx_output_chain_as_is */
+    { ngx_string("directio"), //在获取缓存文件内容的时候，只有文件大小大与等于directio的时候才会生效ngx_directio_on
+//一般大缓存文件用aio发送，小文件用sendfile，因为aio是异步的，不影响其他流程，太大的话可能需要多次sendfile才能发送完，有种阻塞感觉
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_http_core_directio,
       NGX_HTTP_LOC_CONF_OFFSET,
@@ -818,7 +835,7 @@ directio_alignment
 配置块：http、server、location
 它与directio配合使用，指定以directio方式读取文件时的对齐方式。一般情况下，512B已经足够了，但针对一些高性能文件系统，如Linux下的XFS文件系统，
 可能需要设置到4KB作为对齐方式。
-*/
+*/ // 默认512   在ngx_output_chain_get_buf生效，表示分配内存空间的时候，空间起始地址需要按照这个值对齐
     { ngx_string("directio_alignment"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_off_slot,
@@ -3016,7 +3033,7 @@ ngx_http_test_content_type(ngx_http_request_t *r, ngx_hash_t *types_hash)
                          r->headers_out.content_type_lowcase, len);
 }
 
-
+/*可以调用ngx_http_set_content_type(r)方法帮助我们设置Content-Type头部，这个方法会根据URI中的文件扩展名并对应着mime.type来设置Content-Type值,取值如:image/jpeg*/
 ngx_int_t
 ngx_http_set_content_type(ngx_http_request_t *r)
 {
@@ -3096,7 +3113,12 @@ ngx_http_set_exten(ngx_http_request_t *r)
     return;
 }
 
-
+/*
+ ETag是一个可以与Web资源关联的记号（token）。典型的Web资源可以一个Web页，但也可能是JSON或XML文档。服务器单独负责判断记号是什么
+ 及其含义，并在HTTP响应头中将其传送到客户端，以下是服务器端返回的格式：ETag:"50b1c1d4f775c61:df3"客户端的查询更新格式是这样
+ 的：If-None-Match : W / "50b1c1d4f775c61:df3"如果ETag没改变，则返回状态304然后不返回，这也和Last-Modified一样。测试Etag主要
+ 在断点下载时比较有用。 "etag:XXX" ETag值的变更说明资源状态已经被修改
+ */
 ngx_int_t
 ngx_http_set_etag(ngx_http_request_t *r)
 {
@@ -3274,7 +3296,24 @@ TestHead: TestValud\r\n
 如果发送的是一个不含有HTTP包体的响应，这时就可以直接结束请求了（例如，在ngx_http_mytest_handler方法中，直接在ngx_http_send_header方法执行后将其返回值return即可）。
 
 注意　ngx_http_send_header方法会首先调用所有的HTTP过滤模块共同处理headers_out中定义的HTTP响应头部，全部处理完毕后才会序列化为TCP字符流发送到客户端，相关流程可参见11.9.1节
-*/ //调用ngx_http_output_filter方法即可向客户端发送HTTP响应包体，ngx_http_send_header发送响应行和响应头部
+*/ 
+
+/*
+发送缓存文件中内容到客户端过程:
+ ngx_http_file_cache_open->ngx_http_file_cache_read->ngx_http_file_cache_aio_read这个流程获取文件中前面的头部信息相关内容，并获取整个
+ 文件stat信息，例如文件大小等。
+ 头部部分在ngx_http_cache_send->ngx_http_send_header发送，
+ 缓存文件后面的包体部分在ngx_http_cache_send后半部代码中触发在filter模块中发送
+
+ 接收后端数据并转发到客户端触发数据发送过程:
+ ngx_event_pipe_write_to_downstream中的
+ if (p->upstream_eof || p->upstream_error || p->upstream_done) {
+    遍历p->in 或者遍历p->out，然后执行输出
+    p->output_filter(p->output_ctx, p->out);
+ }
+ */
+
+//调用ngx_http_output_filter方法即可向客户端发送HTTP响应包体，ngx_http_send_header发送响应行和响应头部
 ngx_int_t
 ngx_http_send_header(ngx_http_request_t *r)
 {
@@ -4231,7 +4270,7 @@ ngx_http_cleanup_add(ngx_http_request_t *r, size_t size) //申请一个ngx_http_clea
     return cln;
 }
 
-
+//符号连接相关
 ngx_int_t
 ngx_http_set_disable_symlinks(ngx_http_request_t *r,
     ngx_http_core_loc_conf_t *clcf, ngx_str_t *path, ngx_open_file_info_t *of)
@@ -6740,7 +6779,7 @@ ngx_http_core_limit_except(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return rv;
 }
 
-
+//aio on | off | threads[=pool];
 static char *
 ngx_http_core_set_aio(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -6836,7 +6875,7 @@ ngx_http_core_set_aio(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             return NGX_CONF_ERROR;
         }
 
-        clcf->thread_pool = tp;
+        clcf->thread_pool = tp; //aio thread 配置的时候，location{}块对应的thread_poll信息
 
         return NGX_CONF_OK;
 #else
@@ -6869,6 +6908,7 @@ ngx_http_core_directio(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_OK;
     }
 
+    //最终生效//生效见ngx_open_and_stat_file  if (of->directio <= ngx_file_size(&fi)) { ngx_directio_on }
     clcf->directio = ngx_parse_offset(&value[1]);
     if (clcf->directio == (off_t) NGX_ERROR) {
         return "invalid value";

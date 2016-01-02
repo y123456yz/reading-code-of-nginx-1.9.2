@@ -96,7 +96,7 @@ bufferin方式如果配置xxx_buffers  XXX_buffer_size指定的空间都用完了，则会把缓存中
     unsigned           upstream_done:1; // 1：表示Nginx与上游交互已经结束 后后端短连接的情况下收到NGX_HTTP_FASTCGI_END_REQUEST标识报文置1
     unsigned           upstream_error:1;// 1：Nginx与上游服务器的连接出现错误
     //p->upstream->recv_chain(p->upstream, chain, limit);返回0的时候置1
-    unsigned           upstream_eof:1;// 1：协议栈内容已经读取完毕 ngx_event_pipe_read_upstream中置1  
+    unsigned           upstream_eof:1;//p->upstream->recv_chain(p->upstream, chain, limit);返回0的时候置1
     /* 1：表示暂时阻塞读取上游响应的的流程。此时会先调用ngx_event_pipe_write_to_downstream
     函数发送缓冲区中的数据给下游，从而腾出缓冲区空间，再调用ngx_event_pipe_read_upstream
     函数读取上游信息 */ ////非cachable方式下，指定分配的空间用完会置1

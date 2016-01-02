@@ -192,7 +192,7 @@ ngx_create_temp_file(ngx_file_t *file, ngx_path_t *path, ngx_pool_t *pool,
         ngx_create_hashed_filename(path, file->name.data, file->name.len);
 
         ngx_log_debug3(NGX_LOG_DEBUG_CORE, file->log, 0,
-                       "hashed path: %s, persistent:%U, access:%U", 
+                       "hashed path: %s, persistent:%ui, access:%ui", 
                        file->name.data, persistent, access);
 
         file->fd = ngx_open_tempfile(file->name.data, persistent, access);

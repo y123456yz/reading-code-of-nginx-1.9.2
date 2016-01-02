@@ -19,10 +19,11 @@
 typedef struct {
     ngx_fd_t                 fd;
     ngx_file_uniq_t          uniq;//文件inode节点号 同一个设备中的每个文件，这个值都是不同的
-    time_t                   mtime;
+    time_t                   mtime; //文件最后被修改的时间
     off_t                    size;
     off_t                    fs_size;
-    //取值是从ngx_http_core_loc_conf_s->directio
+    //取值是从ngx_http_core_loc_conf_s->directio  //在获取缓存文件内容的时候，只有文件大小大与等于directio的时候才会生效ngx_directio_on
+    ////默认NGX_OPEN_FILE_DIRECTIO_OFF是个超级大的值，相当于不使能
     off_t                    directio; //生效见ngx_open_and_stat_file  if (of->directio <= ngx_file_size(&fi)) { ngx_directio_on }
     size_t                   read_ahead;  /* read_ahead配置，默认0 */
 
@@ -48,6 +49,13 @@ typedef struct {
 #endif
 
     unsigned                 test_dir:1;
+/*
+Ngx_http_core_module.c (src\http):        of.test_only = 1;
+Ngx_http_index_module.c (src\http\modules):        of.test_only = 1;
+Ngx_http_index_module.c (src\http\modules):    of.test_only = 1;
+Ngx_http_log_module.c (src\http\modules):        of.test_only = 1;
+Ngx_http_script.c (src\http):    of.test_only = 1;
+*/
     unsigned                 test_only:1;
     unsigned                 log:1;
     unsigned                 errors:1;
@@ -57,7 +65,8 @@ typedef struct {
     unsigned                 is_file:1;
     unsigned                 is_link:1;
     unsigned                 is_exec:1;
-    unsigned                 is_directio:1;
+    //注意这里如果文件大小大于direction设置，则置1，后面会使能direct I/O方式,生效见ngx_directio_on
+    unsigned                 is_directio:1; //当文件大小大于directio xxx；中的配置时ngx_open_and_stat_file中会置1
 } ngx_open_file_info_t;
 
 

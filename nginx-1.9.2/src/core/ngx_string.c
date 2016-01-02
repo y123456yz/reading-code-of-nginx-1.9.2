@@ -1217,7 +1217,7 @@ ngx_hex_dump(u_char *dst, u_char *src, size_t len)
 /*
 这两个函数用于对str进行base64编码与解码，调用前，需要保证dst中有足够的空间来存放结果，如果不知道具体大小，可先调用
 ngx_base64_encoded_length与ngx_base64_decoded_length来预估最大占用空间。
-*/
+*/ //ngx_encode_base64  ngx_decode_base64对应解密解密
 void
 ngx_encode_base64(ngx_str_t *dst, ngx_str_t *src)
 {
@@ -1227,7 +1227,8 @@ ngx_encode_base64(ngx_str_t *dst, ngx_str_t *src)
     ngx_encode_base64_internal(dst, src, basis64, 1);
 }
 
-
+//ngx_decode_base64url  ngx_encode_base64url对应加密解密
+//ngx_encode_base64url  ngx_decode_base64对应解密解密
 void
 ngx_encode_base64url(ngx_str_t *dst, ngx_str_t *src)
 {
@@ -1281,7 +1282,8 @@ ngx_encode_base64_internal(ngx_str_t *dst, ngx_str_t *src, const u_char *basis,
     dst->len = d - dst->data;
 }
 
-
+//对src数据最hash然后存到dst中，这里为什么可以保证dst不被越界，一般都是在代码中字节保证src的长度来实现的，可以参考ngx_http_secure_link_variable
+//ngx_encode_base64  ngx_decode_base64对应解密解密
 ngx_int_t
 ngx_decode_base64(ngx_str_t *dst, ngx_str_t *src)
 {
@@ -1308,7 +1310,8 @@ ngx_decode_base64(ngx_str_t *dst, ngx_str_t *src)
     return ngx_decode_base64_internal(dst, src, basis64);
 }
 
-
+//对src数据最hash然后存到dst中，这里为什么可以保证dst不被越界，一般都是在代码中字节保证src的长度来实现的，可以参考ngx_http_secure_link_variable
+//ngx_decode_base64url  ngx_encode_base64url对应加密解密
 ngx_int_t
 ngx_decode_base64url(ngx_str_t *dst, ngx_str_t *src)
 {
@@ -1335,7 +1338,7 @@ ngx_decode_base64url(ngx_str_t *dst, ngx_str_t *src)
     return ngx_decode_base64_internal(dst, src, basis64);
 }
 
-
+//对src数据最hash然后存到dst中，这里为什么可以保证dst不被越界，一般都是在代码中字节保证src的长度来实现的，可以参考ngx_http_secure_link_variable
 static ngx_int_t
 ngx_decode_base64_internal(ngx_str_t *dst, ngx_str_t *src, const u_char *basis)
 {
@@ -1368,11 +1371,11 @@ ngx_decode_base64_internal(ngx_str_t *dst, ngx_str_t *src, const u_char *basis)
         len -= 4;
     }
 
-    if (len > 1) {
+    if (len > 1) { //s[0]和s[1]在上面也有用，因此这里d比实际的s/2要多1字节，在加上后面多1字节，总共多2字节
         *d++ = (u_char) (basis[s[0]] << 2 | basis[s[1]] >> 4);
     }
 
-    if (len > 2) {
+    if (len > 2) {//s[0]和s[1]在上面也有用，因此这里d比实际的s/2要多1字节，在加上后面多1字节，总共多2字节
         *d++ = (u_char) (basis[s[1]] << 4 | basis[s[2]] >> 2);
     }
 

@@ -785,16 +785,22 @@ typedef struct { //包含在ngx_http_request_s结构中
     ngx_table_elt_t                  *refresh;
     ngx_table_elt_t                  *last_modified;
     ngx_table_elt_t                  *content_range;
-    ngx_table_elt_t                  *accept_ranges;
+    ngx_table_elt_t                  *accept_ranges;//Accept-Ranges: bytes  应该是content_length的单位
     ngx_table_elt_t                  *www_authenticate;
     ngx_table_elt_t                  *expires;
+    /*
+     ETag是一个可以与Web资源关联的记号（token）。典型的Web资源可以一个Web页，但也可能是JSON或XML文档。服务器单独负责判断记号是什么
+     及其含义，并在HTTP响应头中将其传送到客户端，以下是服务器端返回的格式：ETag:"50b1c1d4f775c61:df3"客户端的查询更新格式是这样
+     的：If-None-Match : W / "50b1c1d4f775c61:df3"如果ETag没改变，则返回状态304然后不返回，这也和Last-Modified一样。测试Etag主要
+     在断点下载时比较有用。 "etag:XXX" ETag值的变更说明资源状态已经被修改
+     */ //见ngx_http_set_etag ETag: "569204ba-4e0924
     ngx_table_elt_t                  *etag;
 
     ngx_str_t                        *override_charset;
 
 /*可以调用ngx_http_set_content_type(r)方法帮助我们设置Content-Type头部，这个方法会根据URI中的文件扩展名并对应着mime.type来设置Content-Type值,取值如:image/jpeg*/
     size_t                            content_type_len;
-    ngx_str_t                         content_type;
+    ngx_str_t                         content_type;//见ngx_http_set_content_type
     ngx_str_t                         charset; //是从content_type中解析出来的，见ngx_http_upstream_copy_content_type
     u_char                           *content_type_lowcase;
     ngx_uint_t                        content_type_hash;

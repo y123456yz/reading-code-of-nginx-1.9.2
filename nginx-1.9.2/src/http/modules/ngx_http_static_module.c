@@ -44,10 +44,11 @@ ngx_module_t  ngx_http_static_module = {
     NGX_MODULE_V1_PADDING
 };
 
-
+//ngx_http_static_module模块主要是在nginx系统中查找uri指定文件是否存在，存在则直接返回给客户端
 static ngx_int_t
 ngx_http_static_handler(ngx_http_request_t *r)
-{
+{//注意:ngx_http_static_handler如果uri不是以/结尾返回，ngx_http_index_handler不以/结尾返回
+//ngx_http_static_handler ngx_http_index_handler每次都要获取缓存信息stat信息，因此每次获取很可能是上一次stat执行的时候获取的信息，除非缓存过期
     u_char                    *last, *location;
     size_t                     root, len;
     ngx_str_t                  path;
@@ -63,7 +64,8 @@ ngx_http_static_handler(ngx_http_request_t *r)
         return NGX_HTTP_NOT_ALLOWED;
     }
 
-    if (r->uri.data[r->uri.len - 1] == '/') {
+    if (r->uri.data[r->uri.len - 1] == '/') { 
+    //注意:ngx_http_static_handler如果uri不是以/结尾返回，ngx_http_index_handler不以/结尾返回
         return NGX_DECLINED;
     }
 
@@ -262,7 +264,7 @@ ngx_http_static_handler(ngx_http_request_t *r)
     b->file->fd = of.fd;
     b->file->name = path;
     b->file->log = log;
-    b->file->directio = of.is_directio;
+    b->file->directio = of.is_directio; //注意这里如果文件大小大于direction设置，则置1，后面会使能direct I/O方式,见ngx_directio_on
 
     out.buf = b;
     out.next = NULL;

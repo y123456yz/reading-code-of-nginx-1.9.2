@@ -415,7 +415,7 @@ typedef struct { //服务器后端应答回来的头部信息
      ETag是一个可以与Web资源关联的记号（token）。典型的Web资源可以一个Web页，但也可能是JSON或XML文档。服务器单独负责判断记号是什么
      及其含义，并在HTTP响应头中将其传送到客户端，以下是服务器端返回的格式：ETag:"50b1c1d4f775c61:df3"客户端的查询更新格式是这样
      的：If-None-Match : W / "50b1c1d4f775c61:df3"如果ETag没改变，则返回状态304然后不返回，这也和Last-Modified一样。测试Etag主要
-     在断点下载时比较有用。
+     在断点下载时比较有用。 "etag:XXX" ETag值的变更说明资源状态已经被修改
      */
     ngx_table_elt_t                 *etag; //"etag:XXX" ETag值的变更说明资源状态已经被修改
     ngx_table_elt_t                 *x_accel_expires;

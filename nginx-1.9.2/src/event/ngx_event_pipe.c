@@ -84,6 +84,10 @@ ngx_event_pipe(ngx_event_pipe_t *p, ngx_int_t do_write)
                 ngx_add_timer(rev, p->read_timeout, NGX_FUNC_LINE); //本轮读取后端数据完毕，添加超时定时器，继续读，如果时间到还没数据，表示超时
 
             } else if (rev->timer_set) {
+             /*
+                这里删除的定时器是发送数据到后端后，需要等待后端应答，在
+                ngx_http_upstream_send_request->ngx_add_timer(c->read, u->conf->read_timeout, NGX_FUNC_LINE); 中添加的定时器 
+                */
                 ngx_del_timer(rev, NGX_FUNC_LINE);
             }
         }
@@ -268,8 +272,8 @@ ngx_event_pipe_read_upstream(ngx_event_pipe_t *p)
                        && p->downstream->write->ready
                        && !p->downstream->write->delayed)
             {
-            //前面已经开辟了5个3Kbuf已经都开辟了，不能在分配空间了
-            //到这里，那说明没法申请内存了，但是配置里面没要求必须先保留在cache里，那我们可以吧当前的数据发送给客户端了。跳出循环。
+            //没有开启换成，并且前面已经开辟了5个3Kbuf已经都开辟了，不能在分配空间了
+            //到这里，那说明没法申请内存了，但是配置里面没要求必须先保留在cache里，那我们可以吧当前的数据发送给客户端了。跳出循环进行write操作，然后就会空余处空间来继续读。
                 /*
                  * if the bufs are not needed to be saved in a cache and
                  * a downstream is ready then write the bufs to a downstream
@@ -560,7 +564,7 @@ ngx_event_pipe_read_upstream(ngx_event_pipe_t *p)
         }
     }
 
-    if (p->cacheable && (p->in || p->buf_to_file)) {
+    if (p->cacheable && (p->in || p->buf_to_file)) {  
 
         ngx_log_debug0(NGX_LOG_DEBUG_EVENT, p->log, 0, "pipe write chain");
 
@@ -606,16 +610,41 @@ ngx_event_pipe_write_to_downstream(ngx_event_pipe_t *p)
             return ngx_event_pipe_drain_chains(p);//清空upstream发过来的，解析过格式后的HTML数据。将其放入free_raw_bufs里面。
         }
 
+        /*
+         ngx_event_pipe_write_to_downstream
+         if (p->upstream_eof || p->upstream_error || p->upstream_done) {
+            p->output_filter(p->output_ctx, p->out);
+         }
+          */
+
         //upstream_eof表示内核缓冲区数据已经读完 如果upstream的连接已经关闭了，或出问题了，或者发送完毕了，那就可以发送了。
         if (p->upstream_eof || p->upstream_error || p->upstream_done) {
-
+            //实际上在接受完后端数据后，在想客户端发送包体部分的时候，会两次调用该函数，一次是ngx_event_pipe_write_to_downstream-> p->output_filter(),
+            //另一次是ngx_http_upstream_finalize_request->ngx_http_send_special,
+            
             /* pass the p->out and p->in chains to the output filter */
 
             for (cl = p->busy; cl; cl = cl->next) {
                 cl->buf->recycled = 0;//不需要回收重复利用了，因为upstream_done了，不会再给我发送数据了。
             }
 
-            if (p->out) {  //和临时文件相关
+
+/*
+发送缓存文件中内容到客户端过程:
+ ngx_http_file_cache_open->ngx_http_file_cache_read->ngx_http_file_cache_aio_read这个流程获取文件中前面的头部信息相关内容，并获取整个
+ 文件stat信息，例如文件大小等。
+ 头部部分在ngx_http_cache_send->ngx_http_send_header发送，
+ 缓存文件后面的包体部分在ngx_http_cache_send后半部代码中触发在filter模块中发送
+
+ 接收后端数据并转发到客户端触发数据发送过程:
+ ngx_event_pipe_write_to_downstream中的
+ if (p->upstream_eof || p->upstream_error || p->upstream_done) {
+    遍历p->in 或者遍历p->out，然后执行输出
+    p->output_filter(p->output_ctx, p->out);
+ }
+ */
+            //如果没有开启缓存，数据不会写入临时文件中，p->out = NULL
+            if (p->out) {  //和临时文件相关,如果换成存在与临时文件中，走这里
                 ngx_log_debug0(NGX_LOG_DEBUG_EVENT, p->log, 0,
                                "pipe write downstream flush out");
 
@@ -636,6 +665,7 @@ ngx_event_pipe_write_to_downstream(ngx_event_pipe_t *p)
             }
 
             //ngx_event_pipe_read_upstream读取数据后通过ngx_http_fastcgi_input_filter把读取到的数据加入到p->in链表
+            //如果开启缓存，则数据写入临时文件中，p->in=NULL
             if (p->in) { //跟out同理。简单调用ngx_http_output_filter进入各个filter发送过程中。
                 ngx_log_debug0(NGX_LOG_DEBUG_EVENT, p->log, 0,
                                "pipe write downstream flush in");
@@ -769,7 +799,7 @@ ngx_event_pipe_write_to_downstream(ngx_event_pipe_t *p)
     flush:
 
         ngx_log_debug2(NGX_LOG_DEBUG_EVENT, p->log, 0,
-                       "pipe write: out:%p, f:%d", out, flush);
+                       "pipe write: out:%p, flush:%d", out, flush);
 
         //下面将out指针指向的内存调用output_filter，进入filter过程。
         

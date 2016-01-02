@@ -2827,6 +2827,7 @@ ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
 
     if (c->write->timer_set) {
         c->write->delayed = 0;
+        //这里的定时器一般在ngx_http_set_write_handler->ngx_add_timer中添加的
         ngx_del_timer(c->write, NGX_FUNC_LINE);
     }
 
@@ -3010,6 +3011,15 @@ ngx_http_set_write_handler(ngx_http_request_t *r)
     因为超时的原因执行了该write_event_handler(例如在向客户端发送数据的过程中，客户端一直不recv，就会造成内核缓存区满，
     数据永远发送不出去，于是就在ngx_http_set_write_handler中添加了写事件定时器)，从而可以检查是否写超时，从而可以关闭连接
      */
+
+     /*
+        当数据全部发送到客户端后，在ngx_http_finalize_request中删除
+        if (c->write->timer_set) {
+            c->write->delayed = 0;
+            //这里的定时器一般在ngx_http_set_write_handler->ngx_add_timer中添加的
+            ngx_del_timer(c->write, NGX_FUNC_LINE);
+        }
+       */
         ngx_add_timer(wev, clcf->send_timeout, NGX_FUNC_LINE);
     }
 
@@ -3810,10 +3820,15 @@ ngx_http_request_empty_handler(ngx_http_request_t *r)
 
 //在发送后端的返回的数据到客户端成功后，会调用该函数，一般在chunk传送方式的时候有效，调用ngx_http_chunked_body_filter标识该chunk传送方式的包体传送接收
 
+//实际上在接受完后端数据后，在想客户端发送包体部分的时候，会两次调用该函数，一次是ngx_event_pipe_write_to_downstream-> p->output_filter(),
+//另一次是ngx_http_upstream_finalize_request->ngx_http_send_special,
+
 //网页包体一般进过该函数触发进行发送，头部行在该函数外已经发送出去了，例如ngx_http_upstream_send_response->ngx_http_send_header
 ngx_int_t
 ngx_http_send_special(ngx_http_request_t *r, ngx_uint_t flags)
-{
+{//该函数实际上就是做一件事，就是在要发送出去的chain链末尾添加一个空chain(见ngx_output_chain->ngx_output_chain_add_copy)，当遍历chain发送数据的时候，以此来标记数据发送完毕，这是最后一个chain，
+
+//见ngx_http_write_filter -> if (!last && !flush && in && size < (off_t) clcf->postpone_output) {
     ngx_buf_t    *b;
     ngx_chain_t   out;
 
@@ -3822,6 +3837,7 @@ ngx_http_send_special(ngx_http_request_t *r, ngx_uint_t flags)
         return NGX_ERROR;
     }
 
+    //见ngx_http_write_filter -> if (!last && !flush && in && size < (off_t) clcf->postpone_output) {
     if (flags & NGX_HTTP_LAST) {
 
         if (r == r->main && !r->post_action) {//一般进入这个if里面
@@ -3840,7 +3856,13 @@ ngx_http_send_special(ngx_http_request_t *r, ngx_uint_t flags)
     out.buf = b;
     out.next = NULL;
 
-    ngx_log_debugall(r->connection->log, 0, "ngx http send special, flags:%ui", flags);
+    ngx_int_t last_buf = b->last_buf;
+    ngx_int_t sync = b->sync;
+    ngx_int_t last_in_chain = b->last_in_chain;
+    ngx_int_t flush = b->flush;
+    
+    ngx_log_debugall(r->connection->log, 0, "ngx http send special, flags:%ui, last_buf:%i, sync:%i, last_in_chain:%i, flush:%i",
+        flags, last_buf, sync,  last_in_chain, flush);
     return ngx_http_output_filter(r, &out);
 }
 

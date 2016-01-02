@@ -60,11 +60,11 @@ ngx_output_chain(ngx_output_chain_ctx_t *ctx, ngx_chain_t *in)  //in为需要发送的
     ngx_int_t     rc, last;
     ngx_chain_t  *cl, *out, **last_out;
 
-    int sendfile = ctx->sendfile;
-    int aio = ctx->aio;
-    int directio = ctx->directio;
+   ngx_uint_t sendfile = ctx->sendfile;
+   ngx_uint_t aio = ctx->aio;
+   ngx_uint_t directio = ctx->directio;
     
-    ngx_log_debugall(ctx->pool->log, 0, "ctx->sendfile:%d, ctx->aio:%d, ctx->directio:%d", sendfile, aio, directio);
+   ngx_log_debugall(ctx->pool->log, 0, "ctx->sendfile:%ui, ctx->aio:%ui, ctx->directio:%ui", sendfile, aio, directio);
     if (ctx->in == NULL && ctx->busy == NULL
 #if (NGX_HAVE_FILE_AIO || NGX_THREADS)
         && !ctx->aio
@@ -93,7 +93,7 @@ ngx_output_chain(ngx_output_chain_ctx_t *ctx, ngx_chain_t *in)  //in为需要发送的
     }
 
     /* add the incoming buf to the chain ctx->in */
-
+   
     if (in) {//拷贝一份数据到ctx->in里面，需要老老实实的进行数据拷贝了。将in参数里面的数据拷贝到ctx->in里面。换了个in
         if (ngx_output_chain_add_copy(ctx->pool, &ctx->in, in) == NGX_ERROR) {
             return NGX_ERROR;
@@ -109,7 +109,12 @@ ngx_output_chain(ngx_output_chain_ctx_t *ctx, ngx_chain_t *in)  //in为需要发送的
     for ( ;; ) { //循环读取缓存中或者内存中的数据发送
 
 #if (NGX_HAVE_FILE_AIO || NGX_THREADS)
+        //实际上在接受完后端数据后，在想客户端发送包体部分的时候，会两次调用该函数，一次是ngx_event_pipe_write_to_downstream-> p->output_filter(),
+        //另一次是ngx_http_upstream_finalize_request->ngx_http_send_special,
+        
+        //如果是aio方式，则第一次该值为0，但是第二次从ngx_http_send_special走到这里的时候已经在ngx_output_chain->ngx_file_aio_read->ngx_http_copy_aio_handler置1
         if (ctx->aio) { //如果是aio，则由内核完成READ，read成功后会epoll触发返回，执行在ngx_file_aio_event_handler
+            ngx_log_debugall(ctx->pool->log, 0, "ctx->aio = 1, wait kernel complete read");
             return NGX_AGAIN;
         }
 #endif
@@ -159,6 +164,9 @@ ngx_output_chain(ngx_output_chain_ctx_t *ctx, ngx_chain_t *in)  //in为需要发送的
                 continue;
             }
 
+
+//注意从后端接收的数据到缓存文件中后，在filter模块中，有可能是新的buf数据指针了，因为ngx_http_copy_filter->ngx_output_chain中会重新分配内存读取缓存文件内容
+
             //如果是需要赋值buf(一般都是sendfile的时候)，用户空间内存里面没有数据，所以需要开辟空间来把文件中的内容赋值一份出来
             
             /* 到达这里，说明我们需要拷贝buf，这里buf最终都会被拷贝进ctx->buf中， 因此这里先判断ctx->buf是否为空 */ 
@@ -184,7 +192,7 @@ ngx_output_chain(ngx_output_chain_ctx_t *ctx, ngx_chain_t *in)  //in为需要发送的
                         /* 将要重用的chain链接到ctx->poll中，以便于chain的重用 */  
                         ngx_free_chain(ctx->pool, cl);
 
-                    } else if (out || ctx->allocated == ctx->bufs.num) {//output_buffers 2 32768都用完了
+                    } else if (out || ctx->allocated == ctx->bufs.num) {//output_buffers 1 32768都用完了
                    /* 
                         如果已经等于buf的个数限制，则跳出循环，发送已经存在的buf。 这里可以看到如果out存在的话，nginx会跳出循环，然后发送out，
                         等发送完会再次处理，这里很好的体现了nginx的流式处理 
@@ -200,6 +208,8 @@ ngx_output_chain(ngx_output_chain_ctx_t *ctx, ngx_chain_t *in)  //in为需要发送的
             
             /* 从原来的buf中拷贝内容或者从原来的文件中读取内容 */  //注意如果是aio on或者aio thread=poll方式返回的是NGX_AGAIN
             rc = ngx_output_chain_copy_buf(ctx); //把ctx->in->buf中的内容赋值给ctx->buf
+//ngx_output_chain_copy_bufc中tx->in中的内存数据或者缓存文件数据会拷贝到dst中，也就是ctx->buf,然后在ngx_output_chain_copy_buf函数
+//外层会重新把ctx->buf赋值给新的chain，然后write出去 ,见下面的创建新chain
 
             if (rc == NGX_ERROR) {
                 return rc;
@@ -268,19 +278,67 @@ static ngx_inline ngx_int_t
 ngx_output_chain_as_is(ngx_output_chain_ctx_t *ctx, ngx_buf_t *buf)//ngx_output_chain_as_is是aio还是sendfile的分支点
 {//看看这个节点是否可以拷贝。检测content是否在文件中。判断是否需要复制buf.
 //返回1表示上层不需要拷贝buf,否则需要重新alloc一个节点，拷贝实际内存到另外一个节点。
+
+/* 如果返回0，表示需要在ngx_output_chain从新开辟空间，如果之前是in_file的，则会从新读取缓存文件内容到内存中，就变为内存型chain buf了 */
+
+/*
+    一般开启sendfile on的时候返回1,因为ngx_output_chain_as_is返回1，不会重新开辟内存空间读取缓存内容。然后通过
+ngx_linux_sendfile_chain中的ngx_linux_sendfile直接通过sendfile发送出去，而无需读取缓存文件内容到内存，然后从内存中发送。
+
+    一般不开启缓存功能的时候，该函数也会返回1，这时候后端数据不会缓存到文件，而是接收到内存中然后发送，在ngx_linux_sendfile_chain中
+直接调用ngx_writev发送，而不是sendfile发送
+
+    如果返回0，则会在ngx_http_copy_filter->ngx_output_chain->ngx_output_chain_align_file_buf开辟新内存，然后从ngx_output_chain_copy_buf中从新
+读取缓存文件内容到新的内存中，然后把新内存数据发送出去，在ngx_linux_sendfile_chain中直接调用ngx_writev发送，而不是sendfile发送
+ */
+
     ngx_uint_t  sendfile;
 
-    if (ngx_buf_special(buf)) { //说明buf中没有实际数据
+    unsigned int buf_special = ngx_buf_special(buf);
+    unsigned int in_file = buf->in_file;
+    unsigned int buf_in_mem = ngx_buf_in_memory(buf);
+    unsigned int need_in_memory = ctx->need_in_memory;
+    unsigned int need_in_temp = ctx->need_in_temp;
+    unsigned int memory = buf->memory;
+    unsigned int mmap = buf->mmap;
+   if (buf->in_file) {
+       unsigned int directio = buf->file->directio;
+       ngx_log_debugall(ngx_cycle->log, 0, 
+        "ngx_output_chain_as_is--- buf_special:%ui, in_file:%ui, directio:%ui, buf_in_mem:%ui,"
+            "need_in_memory:%ui, need_in_temp:%ui, memory:%ui, mmap:%ui", 
+            buf_special, in_file, directio, buf_in_mem, need_in_memory, need_in_temp, memory, mmap);
+    } else {
+        ngx_log_debugall(ngx_cycle->log, 0, 
+        "ngx_output_chain_as_is--- buf_special:%ui, in_file:%ui, buf_in_mem:%ui,"
+            "need_in_memory:%ui, need_in_temp:%ui, memory:%ui, mmap:%ui", 
+            buf_special, in_file, buf_in_mem, need_in_memory, need_in_temp, memory, mmap);
+    }
+    
+    if (ngx_buf_special(buf)) { 
+    //说明buf中没有实际数据  例如进程在发送数据到后端后，都会调用一个ngx_http_send_special来触发ngx_http_write_filter立刻把数据发送出去
+    //这时候ngx_http_send_special就是填充的一个空buf
         return 1;
     }
 
 #if (NGX_THREADS)
     if (buf->in_file) {
+        //ngx_http_copy_filter中赋值为ngx_http_copy_thread_handler
         buf->file->thread_handler = ctx->thread_handler;
         buf->file->thread_ctx = ctx->filter_ctx;
     }
 #endif
 
+    /*
+     Ngx_http_echo_subrequest.c (src\echo-nginx-module-master\src):        b->file->directio = of.is_directio;
+     Ngx_http_flv_module.c (src\http\modules):    b->file->directio = of.is_directio;
+     Ngx_http_gzip_static_module.c (src\http\modules):    b->file->directio = of.is_directio;
+     Ngx_http_mp4_module.c (src\http\modules):    b->file->directio = of.is_directio;
+     Ngx_http_static_module.c (src\http\modules):    b->file->directio = of.is_directio;
+    只会在上面这几个模块中置1，从这里返回，也就是说如果有配置这几个模块命令，在同时配置sendfile on; aio on;directio xxx；的前提下，
+    会从这里返回出去，然后从新获取空间
+
+    但是如果不是上面的这些模块，在同时配置sendfile on; aio on;directio xxx;的情况下还是会返回1，也就是还是采用sendfile方式
+     */
     if (buf->in_file && buf->file->directio) {  
         return 0;//如果buf在文件中，使用了directio，需要拷贝buf
     }
@@ -289,7 +347,7 @@ ngx_output_chain_as_is(ngx_output_chain_ctx_t *ctx, ngx_buf_t *buf)//ngx_output_
 
 #if (NGX_SENDFILE_LIMIT)
 
-    if (buf->in_file && buf->file_pos >= NGX_SENDFILE_LIMIT) { //文件中内容超过了sendfile的最大上限
+    if (buf->in_file && buf->file_pos >= NGX_SENDFILE_LIMIT) { //文件中内容超过了sendfile的最大上限,则只有重新读取文件到内存中发送
         sendfile = 0;
     }
 
@@ -297,12 +355,12 @@ ngx_output_chain_as_is(ngx_output_chain_ctx_t *ctx, ngx_buf_t *buf)//ngx_output_
 
     if (!sendfile) {
 
-        if (!ngx_buf_in_memory(buf)) { //例如临时文件中的内容等
+        if (!ngx_buf_in_memory(buf)) { //一般不启用sendfile on的时候从这里退出去  如果启用了aio on，没有启用sendfile on的情况下，也会从这里出去
         //不启用sendfile(要么未配置sendfile，要么配置了sendfile，但是文件太大，超过sendfile上限)，并且buf在文件中，返回0，需要重新获取文件内容
             return 0;
         }
 
-        buf->in_file = 0;
+        buf->in_file = 0; 
     }
 
 #if (NGX_HAVE_AIO_SENDFILE)
@@ -319,6 +377,7 @@ ngx_output_chain_as_is(ngx_output_chain_ctx_t *ctx, ngx_buf_t *buf)//ngx_output_
         return 0;
     }
 
+    //开启sendfile on一般从这里出去，如果不开启缓存，也就是不缓存数据到文件，一般也会从这里返回
     return 1;
 }
 
@@ -417,18 +476,28 @@ ngx_output_chain_add_copy(ngx_pool_t *pool, ngx_chain_t **chain,
 //只有ngx_output_chain_align_file_buf不分配内存直接返回后才会在ngx_output_chain_get_buf分配满足条件ngx_buf_in_memory的内存空间
 static ngx_int_t
 ngx_output_chain_align_file_buf(ngx_output_chain_ctx_t *ctx, off_t bsize)
-{
+{ //调用该函数的前提是需要重新分配空间，ngx_output_chain_as_is返回0
     size_t      size;
     ngx_buf_t  *in;
 
     in = ctx->in->buf;
 
+    /*
+     //Ngx_http_echo_subrequest.c (src\echo-nginx-module-master\src):        b->file->directio = of.is_directio;
+     //Ngx_http_flv_module.c (src\http\modules):    b->file->directio = of.is_directio;
+     //Ngx_http_gzip_static_module.c (src\http\modules):    b->file->directio = of.is_directio;
+     //Ngx_http_mp4_module.c (src\http\modules):    b->file->directio = of.is_directio;
+     //Ngx_http_static_module.c (src\http\modules):    b->file->directio = of.is_directio;
+     如果数据不在文件中而在内存中，或者没有在配置文件中配置上面这几个模块配置信息，或者获取的文件大小小于directio配置的大小，则直接返回
+     */
     if (in->file == NULL || !in->file->directio) {
     //如果没有启用direction,则直接返回，实际空间在该函数外层ngx_output_chain_get_buf中创建
         return NGX_DECLINED;
     }
 
-    /* 下面开辟的是不满足条件ngx_buf_in_memory的内存空间 */
+
+    /* 数据在文件里面，并且程序有走到了 b->file->directio = of.is_directio;这几个模块，
+        并且文件大小大于directio xxx中的大小 */
     ctx->directio = 1;
 
     size = (size_t) (in->file_pos - (in->file_pos & ~(ctx->alignment - 1)));
@@ -472,7 +541,7 @@ ngx_output_chain_align_file_buf(ngx_output_chain_ctx_t *ctx, off_t bsize)
 //获取bsize字节的空间
 static ngx_int_t
 ngx_output_chain_get_buf(ngx_output_chain_ctx_t *ctx, off_t bsize)
-{ /* 下面开辟的是满足条件ngx_buf_in_memory的内存空间 */
+{ /* 下面开辟的是满足条件ngx_buf_in_memory的内存空间 */ //调用该函数的前提是需要重新分配空间，ngx_output_chain_as_is返回0
     size_t       size;
     ngx_buf_t   *b, *in;
     ngx_uint_t   recycled;
@@ -555,12 +624,14 @@ ngx_output_chain_copy_buf(ngx_output_chain_ctx_t *ctx)
     ngx_uint_t   sendfile;
 
     src = ctx->in->buf;//结合ngx_http_xxx_create_request(ngx_http_fastcgi_create_request)阅读，ctx->in中的数据实际上是从ngx_http_xxx_create_request组成ngx_chain_t来的，数据来源在ngx_http_xxx_create_request
-    dst = ctx->buf;
+//ctx->in中的内存数据或者缓存文件数据会拷贝到dst中，也就是ctx->buf,然后在ngx_output_chain_copy_buf函数外层会重新把ctx->buf赋值给新的chain，然后write出去
+    dst = ctx->buf; 
 
     size = ngx_buf_size(src); //如果buf指向的是文件，则是文件中的内容，否则是内存buf中的内容
     size = ngx_min(size, dst->end - dst->pos);
 
-    sendfile = ctx->sendfile & !ctx->directio;//是否采用sendfile
+//注意:一般缓存中的文件通过sendfile发送的时候，一般在ngx_output_chain_as_is返回1，表示无需新开辟空间，因此不会走到该函数中来，除非ngx_output_chain_as_is中need_in_memory置1的情况
+    sendfile = ctx->sendfile & !ctx->directio;//是否采用sendfile  也就是说如果同时配置了sendfile和aio xxx;directio xxx并且ctx->directio为1,则默认关闭sendfile
 
 #if (NGX_SENDFILE_LIMIT)
 
@@ -570,7 +641,8 @@ ngx_output_chain_copy_buf(ngx_output_chain_ctx_t *ctx)
 
 #endif
     //该函数外层只有ngx_output_chain_align_file_buf不分配内存直接返回后才会在ngx_output_chain_get_buf分配满足条件ngx_buf_in_memory的内存空间
-    if (ngx_buf_in_memory(src)) {//如果数据在内存里，或者文件在内存里面有指向
+    if (ngx_buf_in_memory(src)) {
+    /* (数据在内存中)，或者(数据在文件里面，并且b->file->directio = 0;或者文件大小小于directio xxx中的大小) */
         ngx_memcpy(dst->pos, src->pos, (size_t) size); 
         //这里的size为什么能保证不越界，是因为开辟内存的时候，是在ngx_output_chain_get_buf的时候bsize就等于bsize = ngx_buf_size(ctx->in->buf);
         src->pos += (size_t) size;
@@ -579,7 +651,10 @@ ngx_output_chain_copy_buf(ngx_output_chain_ctx_t *ctx)
         if (src->in_file) { //????????????? 这部分有点没弄明白 sendfile有点晕，后面分析
         //size的数据要么存在于文件中，要么就在内存中。前面的size = ngx_buf_size(src);页可以看出来
 
-            if (sendfile) {//
+            if (sendfile) {
+            //在同时开启sendfile on; aio on以及direction xxx；的前提下，如果有模块执行过b->file->directio = 1(of.is_directio);
+            //但是文件大小小于direction的配置，则还是使用sendfile
+            
                 dst->in_file = 1;
                 dst->file = src->file;
 
@@ -616,9 +691,9 @@ ngx_output_chain_copy_buf(ngx_output_chain_ctx_t *ctx)
         }
 
 #endif
-
+//aio on | off | threads[=pool];
 #if (NGX_HAVE_FILE_AIO)
-        if (ctx->aio_handler) {// aio on的情况下
+        if (ctx->aio_handler) {// aio on的情况下  ngx_output_chain_copy_buf  ngx_file_aio_read
             n = ngx_file_aio_read(src->file, dst->pos, (size_t) size,
                                   src->file_pos, ctx->pool);
             if (n == NGX_AGAIN) {//正常情况下回返回NGX_AGAIN
@@ -628,7 +703,7 @@ ngx_output_chain_copy_buf(ngx_output_chain_ctx_t *ctx)
             }
 
         } else
-#endif
+#endif //aio on | off | threads[=pool];
 #if (NGX_THREADS)
         if (src->file->thread_handler) {//aio thread=poll的情况
             n = ngx_thread_read(&ctx->thread_task, src->file, dst->pos,
@@ -640,18 +715,19 @@ ngx_output_chain_copy_buf(ngx_output_chain_ctx_t *ctx)
 
         } else
 #endif
-        {
+        { //为配置aio和sendfile的情况直接从这里读取缓存文件
             n = ngx_read_file(src->file, dst->pos, (size_t) size,
                               src->file_pos); //从src->file文件的src->file_pos处读取size字节到dst->pos指向的内存空间
         }
 
 #if (NGX_HAVE_ALIGNED_DIRECTIO)
-
+        /* 数据在文件里面，并且程序有走到了 b->file->directio = of.is_directio;这几个模块，
+        并且文件大小大于directio xxx中的大小 */
         if (ctx->unaligned) {
             ngx_err_t  err;
 
             err = ngx_errno;
-
+            
             if (ngx_directio_on(src->file->fd) == NGX_FILE_ERROR) {
                 ngx_log_error(NGX_LOG_ALERT, ctx->pool->log, ngx_errno,
                               ngx_directio_on_n " \"%s\" failed",

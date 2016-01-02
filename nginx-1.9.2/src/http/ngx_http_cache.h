@@ -262,6 +262,7 @@ body_start: [ngx_http_file_cache_header_t]["\nKEY: "][fastcgi_cache_key中的KEY][
     ngx_http_file_cache_node_t      *node; //ngx_http_file_cache_exists中创建空间和赋值
 
 #if (NGX_THREADS)
+//ngx_http_file_cache_aio_read->ngx_thread_read中创建空间和赋值
     ngx_thread_task_t               *thread_task;
 #endif
 

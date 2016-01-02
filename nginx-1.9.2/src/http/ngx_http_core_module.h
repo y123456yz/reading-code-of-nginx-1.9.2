@@ -29,9 +29,9 @@
 #define NGX_HTTP_GZIP_PROXIED_ANY       0x0200
 
 
-#define NGX_HTTP_AIO_OFF                0
-#define NGX_HTTP_AIO_ON                 1
-#define NGX_HTTP_AIO_THREADS            2
+#define NGX_HTTP_AIO_OFF                0 //aio off
+#define NGX_HTTP_AIO_ON                 1 //aio on
+#define NGX_HTTP_AIO_THREADS            2 //aio thread
 
 /*
 相对于NGX HTTP ACCESS PHASE阶段处理方法，satisfy配置项参数的意义
@@ -1020,12 +1020,12 @@ location @fallback {
     ngx_array_t  *root_values;
 
     ngx_array_t  *types;
-    ngx_hash_t    types_hash;
+    ngx_hash_t    types_hash;//mime.type文件中的type类型存到该hash中
     ngx_str_t     default_type;
 
     off_t         client_max_body_size;    /* client_max_body_size */ //默认1M 1 * 1024 * 1024
     //生效见ngx_open_and_stat_file  if (of->directio <= ngx_file_size(&fi)) { ngx_directio_on }
-    off_t         directio;                /* directio */ //默认NGX_OPEN_FILE_DIRECTIO_OFF 可以directio 512配置
+    off_t         directio;                /* directio */ //默认NGX_OPEN_FILE_DIRECTIO_OFF是个超级大的值，相当于不使能 可以directio 512配置
     //默认512
     off_t         directio_alignment;      /* directio_alignment */ //directio_alignment 512;  它与directio配合使用，指定以directio方式读取文件时的对齐方式
     //实际上是client_body_buffer_size + client_body_buffer_size >> 2
@@ -1034,7 +1034,7 @@ location @fallback {
     size_t        send_lowat;              /* send_lowat */ //配置该选项后，会启用ngx_send_lowat
    /* 
    clcf->postpone_output：由于处理postpone_output指令，用于设置延时输出的阈值。比如指令“postpone s”，当输出内容的size小于s， 默认1460
-   并且不是最后一个buffer，也不需要flush，那么就延时输出。见ngx_http_write_filter  
+   并且不是最后一个buffer，也不需要flush，那么就延时输出。见ngx_http_write_filter -> if (!last && !flush && in && size < (off_t) clcf->postpone_output) {
     */
     size_t        postpone_output;         /* postpone_output */ //默认1460
     size_t        limit_rate;              /* limit_rate */
@@ -1116,7 +1116,7 @@ lingering_close
 #endif
 
 #if (NGX_THREADS)
-    ngx_thread_pool_t         *thread_pool;
+    ngx_thread_pool_t         *thread_pool;//aio thread 配置的时候，location{}块对应的thread_poll信息，见ngx_http_core_set_aio
     ngx_http_complex_value_t  *thread_pool_value;
 #endif
 
