@@ -446,7 +446,7 @@ eintr:
 
 
 #if (NGX_THREADS)
-
+//ngx_linux_sendfile_thread中创建空间和赋值
 typedef struct {
     ngx_buf_t     *file;
     ngx_socket_t   socket;

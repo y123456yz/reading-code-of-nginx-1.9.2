@@ -18,6 +18,7 @@ struct ngx_thread_task_s {
     ngx_thread_task_t   *next; //指向下一个提交的任务  
     ngx_uint_t           id; //任务id  没添加一个任务就自增加，见ngx_thread_pool_task_id
     void                *ctx; //执行回调函数的参数  
+    //ngx_thread_pool_cycle中执行
     void               (*handler)(void *data, ngx_log_t *log); //回调函数   执行完handler后会通过ngx_notify执行event->handler 
     //执行完handler后会通过ngx_notify执行event->handler 
     ngx_event_t          event; //一个任务和一个事件对应  事件在通过ngx_notify在ngx_thread_pool_handler中执行

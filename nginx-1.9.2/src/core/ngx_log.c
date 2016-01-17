@@ -352,7 +352,7 @@ ngx_log_error_coreall(ngx_uint_t level, ngx_log_t *log, const char* filename, in
     p = ngx_slprintf(p, last, " [%V] ", &err_levels[level]);
 
     /* pid#tid */
-    p = ngx_slprintf(p, last, "%P#" NGX_TID_T_FMT ": ", ngx_log_pid, ngx_log_tid);
+    p = ngx_slprintf(p, last, "%P#" NGX_TID_T_FMT ": ", ngx_log_pid, ngx_log_tid); //进程ID和线程ID(在开启线程池的时候线程ID和进程ID不同)
     
     if (log->connection) {
         p = ngx_slprintf(p, last, "*%uA ", log->connection);

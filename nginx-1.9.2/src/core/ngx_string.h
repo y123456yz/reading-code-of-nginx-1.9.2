@@ -96,6 +96,7 @@ void ngx_strlow(u_char *dst, u_char *src, size_t n);
 #define ngx_strstr(s1, s2)  strstr((const char *) s1, (const char *) s2)
 #define ngx_strlen(s)       strlen((const char *) s)
 
+//查找字符串s中首次出现字符c的位置
 #define ngx_strchr(s1, c)   strchr((const char *) s1, (int) c)
 
 static ngx_inline u_char *
@@ -260,6 +261,16 @@ ngx_str_node_t *ngx_str_rbtree_lookup(ngx_rbtree_t *rbtree, ngx_str_t *name,
 
 void ngx_sort(void *base, size_t n, size_t size,
     ngx_int_t (*cmp)(const void *, const void *));
+
+/*
+功 能： 使用快速排序例程进行排序
+头文件：stdlib.h
+用 法：void qsort(void *base,int nelem,int width,int (*fcmp)(const void *,const void *));
+参数： 1 待排序数组首地址
+2 数组中待排序元素数量
+3 各元素的占用空间大小
+4 指向函数的指针，用于确定排序的顺序
+*/
 #define ngx_qsort             qsort
 
 

@@ -89,7 +89,8 @@ NGX_PROCESS_JUST_RESPAWN标识最终会在ngx_spawn_process()创建worker进程时，将ngx_p
 #define ngx_getpid   getpid
 
 #ifndef ngx_log_pid
-#define ngx_log_pid  ngx_pid
+#define ngx_log_pid  ngx_pid 
+//ngx_log_pid, ngx_log_tid进程ID和线程ID(主线程号和进程号相同，在开启线程池的时候线程ID和进程ID不同),日志文件中会记录
 #endif
 
 

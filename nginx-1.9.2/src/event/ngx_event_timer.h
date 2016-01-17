@@ -30,7 +30,7 @@ extern ngx_rbtree_t  ngx_event_timer_rbtree;
 
 static ngx_inline void
 ngx_event_del_timer(ngx_event_t *ev, const char *func, unsigned int line)
-{
+{//ngx_del_timer
     char tmpbuf[128];
 
     snprintf(tmpbuf, sizeof(tmpbuf), "<%25s, %5d> ", func, line);
@@ -65,7 +65,7 @@ epoll_wait返回，可以是读写事件触发返回，也可能是因为没获取到共享锁，从而等待0.5s
 //注意定时器的超时处理，不一定就是timer时间超时，超时误差可能为timer_resolution，如果没有设置timer_resolution则定时器可能永远不超时，因为epoll_wait不返回，无法更新时间
 static ngx_inline void
 ngx_event_add_timer(ngx_event_t *ev, ngx_msec_t timer, const char *func, unsigned int line)
-{
+{//ngx_add_timer
     ngx_msec_t      key;
     ngx_msec_int_t  diff;
     char tmpbuf[128];

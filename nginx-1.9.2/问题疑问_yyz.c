@@ -442,6 +442,79 @@ date1="2015-10-14 19:22:22"
 storepath=/var/yyz/nginx/nginx-1.9.2
 find $storepath1   -execdir touch  -d "$date1" {} \;
 
+
+
+
+分布式系统之网络篇
+Zookeeper入门
+Zookeeper原理: Zookeeper原理介绍
+Curator客户端 : 对Zookeeper知名客户端Curator进行介绍，初步掌握其编程方式和用法。
+ 迷你P2P网络服务案例: 采用Zookeeper打造一个迷你P2P网络系统，节点之间相互交换名片，并且实现动态路由（节点宕机后其他节点自动感知并更新链路状态），
+
+ 第3课  分布式存储-文件系统篇
+ 传统的分布式文件系统：Lustre、GlusterFS等经典分布式文件系统分析
+ 新型分布式文件系统：介绍Ceph以及它跟Openstack的关系
+ 互联网领域中的小文件系统：GridFS、FastDFS、TFS等分析学习
+
+ 第4课 分布式存储-内存篇
+Hazelcast 详解与分析
+GridGain详解与分析
+MemCache详解与分析
+ 案例集锦：分布式系统存储之基于内存的两表Join演示
+
+ 第5课 分布式存储-数据库篇
+ 分布式数据库原理 ：介绍分布式数据库的实现原理，特性、优缺点、以及难点、热点问题
+Mycat前世今生：介绍目前基于MYSQL的热门开源数据库血统，包括Cobar、tddl、Amoeba、以及目前很火的Mycat
+案例集锦：某大型网站每天1亿数据处的案例剖析
+
+ 第6课 分布式系统之云计算篇
+ 主机虚拟化：介绍主机虚拟化的技术
+ 网络虚拟化：介绍网络虚拟化的技术
+ 存储虚拟化：介绍存储虚拟化的技术
+ 云计算实践：VirtualBox虚机集群搭建
+Openstack原理介绍：介绍Openstack的体系、架构、以及基本功能
+ 案例集锦：基于RDO实现Openstack的安装、部署等。
+
+ 第7课 分布式计算框架
+Map-Reduce原理：介绍Map-Reduce的原理以及限制问题
+Apache　Storm应用：学习Storm的原理并搭建测试环境，掌握基本编程
+ 案例集锦：实现基于Storm的１０００万×１０００万的SQL　Join和排序分页
+
+ 第8课 通信机制的设计与实现
+ 分布式通信机制概述：讲解分布式通信的几种常见机制，RPC调用、共享远程数据、消息队列等。
+RPC通信机制的原理 讲解RPC通信机制的原理和实现方式：
+ 案例集锦：设计并实现一个XML-RPC框架 动手设计和实现一个简单的XML-RPC框架
+
+ 第9课 消息队列
+ 消息队列机制介绍: 介绍古典的和新型的消息队列机制的相同点和不同点
+ 消息队列通信的案例分析: 对一些采用消息队列通信的系统做分析，掌握消息队列用作分布式通信的一般设计原则
+ 案例集锦：对知名开源消息中间件Kafka做一个入门学习，并动手完成一个实际编程案例
+
+ 第10课 打造高可用系统（上）
+ 高可用系统常规方案：介绍高可用系统的一些原理、实现机制、常规实现方案，包括基于硬件、软件中间件、系统架构等一些典型方案的实现
+HA　Proxy入门：介绍业界常规的HA　Proxy的原理以及用法
+ 实践篇：Java开发一个类似HA Proxy的代理中间件
+
+ 第11课 打造高可用系统（下）
+ 高可用集群套件中间件：介绍基于Corosync+Pacemaker的高可用集群套件中间件系统的原理、配置以及常见案例
+Corosync技术； 
+Pacemaker技术；
+Pacemaker实践：实现基于Pacemaker的MYSQL高可用方案。
+
+ 第12课 Mycat架构的分布式演进背后的秘密
+ 配置文件的分布式访问问题：为什么最终选择了Zookeeper
+ Mycat负载均衡的特殊性：为什么标准的HA Proxy还无法满足Mycat的负载均衡要求
+ 大数据Join背后的难题：数据、网络、内存和计算能力的矛盾和调和
+
+ 第13课 Java分布式系统中的高性能难题
+ 高性能网络框架的难题：AIO，NIO，Netty还是自己开发框架
+ 堆内和堆外存储：堆内与堆外存储的差别，开源的堆外存储组件为何凤毛麟角
+ 高性能事件派发机制：线程池模型的性能问题以及不为人知的Disruptor模型
+
+
+#define NGX_CONFIGURE " --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads --add-module=/var/yyz/nginx-1.9.2/src/echo-nginx-module-master --add-module=./src/nginx-requestkey-module-master/ --with-http_secure_link_module --add-module=./src/redis2-nginx-module-master/
+
+
 #define NGX_CONFIGURE " --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads"
 
 
@@ -450,6 +523,8 @@ find $storepath1   -execdir touch  -d "$date1" {} \;
 https://github.com/cfsego/nginx-limit-upstream
 
 nginx日志切割和记录cookie .http://blog.csdn.net/chlaws/article/details/8468080
+
+
 
 */
 

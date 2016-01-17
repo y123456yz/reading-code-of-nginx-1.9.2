@@ -722,7 +722,7 @@ int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)
 int epoll_wait(int epfd, struct epoll_event *events, int nevents, int timeout);
 
 /*
-
+//ngx_notify->ngx_epoll_notify只会触发epoll_in，不会同时引发epoll_out，如果是网络读事件epoll_in,则会同时引起epoll_out
 */
 int epoll_wait(int epfd, struct epoll_event *events, int nevents, int timeout) //timeout为-1表示无限等待
 {
@@ -1566,6 +1566,7 @@ ngx_epoll_notify(ngx_event_handler_pt handler)
 
     notify_event.data = handler;
 
+    //ngx_notify->ngx_epoll_notify只会触发epool_in，不会同时引发epoll_out，如果是网络读事件epoll_in,则会同时引起epoll_out
     if ((size_t) write(notify_fd, &inc, sizeof(uint64_t)) != sizeof(uint64_t)) {
         ngx_log_error(NGX_LOG_ALERT, notify_event.log, ngx_errno,
                       "write() to eventfd %d failed", notify_fd);
@@ -1643,6 +1644,10 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
     这里面等待的事件包括客户端连接事件(这个是从父进程继承过来的ep，然后在子进程while前的ngx_event_process_init->ngx_add_event添加)，
     对已经建立连接的fd读写事件的添加在ngx_event_accept->ngx_http_init_connection->ngx_handle_read_event
     */
+
+/*
+ngx_notify->ngx_epoll_notify只会触发epoll_in，不会同时引发epoll_out，如果是网络读事件epoll_in,则会同时引起epoll_out
+*/
     events = epoll_wait(ep, event_list, (int) nevents, timer);  //timer为-1表示无限等待   nevents表示最多监听多少个事件，必须大于0
     //EPOLL_WAIT如果没有读写事件或者定时器超时事件发生，则会进入睡眠，这个过程会让出CPU
 

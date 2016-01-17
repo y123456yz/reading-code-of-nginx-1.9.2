@@ -184,7 +184,7 @@ cc -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -o objs/autotest objs/autotest.c
 ----------------------------------------
 checking for crypt()
 
-/tmp/ccW7buRt.o: In function `main':
+/tmp/ccgYDpQM.o: In function `main':
 autotest.c:(.text+0x1f): undefined reference to `crypt'
 collect2: ld returned 1 exit status
 ----------
@@ -292,7 +292,7 @@ checking for statvfs()
 ----------------------------------------
 checking for dlopen()
 
-/tmp/ccQR0QsF.o: In function `main':
+/tmp/cccvsvyi.o: In function `main':
 autotest.c:(.text+0x19): undefined reference to `dlopen'
 collect2: ld returned 1 exit status
 ----------
@@ -515,7 +515,7 @@ checking for time_t size
 ----------------------------------------
 checking for setproctitle()
 
-/tmp/ccgm6S1F.o: In function `main':
+/tmp/cccvpA1V.o: In function `main':
 autotest.c:(.text+0x1a): undefined reference to `setproctitle'
 collect2: ld returned 1 exit status
 ----------
@@ -544,7 +544,7 @@ checking for pwrite()
 ----------------------------------------
 checking for sys_nerr
 
-/tmp/ccC97m39.o: In function `main':
+/tmp/ccM39iIt.o: In function `main':
 autotest.c:(.text+0x13): warning: `sys_nerr' is deprecated; use `strerror' or `strerror_r' instead
 132
 ----------------------------------------
@@ -574,7 +574,7 @@ checking for System V shared memory
 ----------------------------------------
 checking for POSIX semaphores
 
-/tmp/cckV2Sba.o: In function `main':
+/tmp/ccYAytSK.o: In function `main':
 autotest.c:(.text+0x1d): undefined reference to `sem_init'
 autotest.c:(.text+0x38): undefined reference to `sem_destroy'
 collect2: ld returned 1 exit status
@@ -648,6 +648,200 @@ checking for openat(), fstatat()
 
 ----------------------------------------
 checking for getaddrinfo()
+
+
+----------------------------------------
+checking for Lua library
+
+objs/autotest.c:4:21: error: lauxlib.h: No such file or directory
+objs/autotest.c:8:5: error: #error unsupported Lua language version
+----------
+
+#include <sys/types.h>
+#include <unistd.h>
+#include <lauxlib.h>
+
+int main() {
+    #if LUA_VERSION_NUM != 501
+#   error unsupported Lua language version
+#endif
+(void) luaL_newstate();;
+    return 0;
+}
+
+----------
+cc -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -o objs/autotest objs/autotest.c -llua -lm
+----------
+
+----------------------------------------
+checking for Lua library in /usr/local/
+
+objs/autotest.c:4:21: error: lauxlib.h: No such file or directory
+objs/autotest.c:8:5: error: #error unsupported Lua language version
+----------
+
+#include <sys/types.h>
+#include <unistd.h>
+#include <lauxlib.h>
+
+int main() {
+    #if LUA_VERSION_NUM != 501
+#   error unsupported Lua language version
+#endif
+(void) luaL_newstate();;
+    return 0;
+}
+
+----------
+cc -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -I /usr/local/include/lua-5.1 -o objs/autotest objs/autotest.c -L/usr/local/lib -llua5.1 -lm
+----------
+
+----------------------------------------
+checking for Lua library in /usr/local/
+
+objs/autotest.c:4:21: error: lauxlib.h: No such file or directory
+objs/autotest.c:8:5: error: #error unsupported Lua language version
+----------
+
+#include <sys/types.h>
+#include <unistd.h>
+#include <lauxlib.h>
+
+int main() {
+    #if LUA_VERSION_NUM != 501
+#   error unsupported Lua language version
+#endif
+(void) luaL_newstate();;
+    return 0;
+}
+
+----------
+cc -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -I /usr/local/include -o objs/autotest objs/autotest.c -L/usr/local/lib -llua -lm
+----------
+
+----------------------------------------
+checking for Lua library in /usr/pkg/
+
+objs/autotest.c:4:21: error: lauxlib.h: No such file or directory
+objs/autotest.c:8:5: error: #error unsupported Lua language version
+----------
+
+#include <sys/types.h>
+#include <unistd.h>
+#include <lauxlib.h>
+
+int main() {
+    #if LUA_VERSION_NUM != 501
+#   error unsupported Lua language version
+#endif
+(void) luaL_newstate();;
+    return 0;
+}
+
+----------
+cc -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -I /usr/pkg/include/ -o objs/autotest objs/autotest.c -L/usr/pkg/lib -lm -llua
+----------
+
+----------------------------------------
+checking for Lua library in /opt/local/
+
+objs/autotest.c:4:21: error: lauxlib.h: No such file or directory
+objs/autotest.c:8:5: error: #error unsupported Lua language version
+----------
+
+#include <sys/types.h>
+#include <unistd.h>
+#include <lauxlib.h>
+
+int main() {
+    #if LUA_VERSION_NUM != 501
+#   error unsupported Lua language version
+#endif
+(void) luaL_newstate();;
+    return 0;
+}
+
+----------
+cc -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -I /opt/local/include -o objs/autotest objs/autotest.c -L/opt/local/lib -lm -llua
+----------
+
+----------------------------------------
+checking for Lua library in /usr/local/*/lua51/
+
+objs/autotest.c:4:21: error: lauxlib.h: No such file or directory
+objs/autotest.c:8:5: error: #error unsupported Lua language version
+----------
+
+#include <sys/types.h>
+#include <unistd.h>
+#include <lauxlib.h>
+
+int main() {
+    #if LUA_VERSION_NUM != 501
+#   error unsupported Lua language version
+#endif
+(void) luaL_newstate();;
+    return 0;
+}
+
+----------
+cc -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -I /usr/local/include/lua51 -o objs/autotest objs/autotest.c -L/usr/local/lib/lua51 -llua -lm
+----------
+
+----------------------------------------
+checking for Lua library in /usr/
+
+objs/autotest.c:4:21: error: lauxlib.h: No such file or directory
+objs/autotest.c:8:5: error: #error unsupported Lua language version
+----------
+
+#include <sys/types.h>
+#include <unistd.h>
+#include <lauxlib.h>
+
+int main() {
+    #if LUA_VERSION_NUM != 501
+#   error unsupported Lua language version
+#endif
+(void) luaL_newstate();;
+    return 0;
+}
+
+----------
+cc -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -I /usr/include/lua5.1 -o objs/autotest objs/autotest.c -L/usr/lib -lm -llua5.1
+----------
+
+----------------------------------------
+checking for LuaJIT library in /usr/local/
+
+
+----------------------------------------
+checking for export symbols by default (-E)
+
+
+----------------------------------------
+checking for export symbols by default (--export-all-symbols)
+
+/usr/lib/gcc/i486-slackware-linux/4.4.4/../../../../i486-slackware-linux/bin/ld: unrecognized option '--export-all-symbols'
+/usr/lib/gcc/i486-slackware-linux/4.4.4/../../../../i486-slackware-linux/bin/ld: use the --help option for usage information
+collect2: ld returned 1 exit status
+----------
+
+#include <sys/types.h>
+#include <unistd.h>
+#include <stdio.h>
+
+int main() {
+    printf("hello");;
+    return 0;
+}
+
+----------
+cc -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -o objs/autotest objs/autotest.c -Wl,--export-all-symbols
+----------
+
+----------------------------------------
+checking for SO_PASSCRED
 
 
 ----------------------------------------

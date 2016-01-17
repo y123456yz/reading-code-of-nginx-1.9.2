@@ -122,7 +122,11 @@ secure link 防盗链原理
 整个过程实际上很简单，类似于用户密码验证. 尤为注意的一点是大家一定不要泄露了自己的密钥，否则别人就可以盗链了，除了泄露之外最好能经常更新密钥.
 
 */  
-//ngx_http_accesskey_module Nginx防盗链模块  ngx_http_secure_link_module Nginx的安全模块,免得别人拿webserver权限。
+
+//ngx_http_secure_link_module现在可以代替ngx_http_accesskey_module，他们功能类似   ngx_http_secure_link_module Nginx的安全模块,免得别人拿webserver权限。
+//ngx_http_referer_module具有普通防盗链功能
+
+
 /*
 The ngx_http_secure_link_module module (0.7.18) is used to check authenticity of requested links, protect resources 
 from unauthorized access, and limit link lifetime. 
@@ -171,7 +175,7 @@ static ngx_command_t  ngx_http_secure_link_commands[] = {
 
 如果是secure_link_secret方式，则是把客户端请求uri中的/p/5e814704a28d9bc1914ff19fa0c4a00a/link/xx中的5e814704a28d9bc1914ff19fa0c4a00a字符串与
 secure_link_secret xxx计算出的MD5值进行比较，相同则有权限，置变量$secure_link为'1'，否则子变量为‘0'。该方式不涉及time过期
-*/
+*/ //secure_link $MD5_STR可以从uri中获取，可以参考ngx_http_arg
      
     { ngx_string("secure_link"),   //注意还存在变量$secure_link_expires和变量$secure_link
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
@@ -263,7 +267,10 @@ static ngx_http_module_t  ngx_http_secure_link_module_ctx = {
     ngx_http_secure_link_merge_conf        /* merge location configuration */
 };
 
+//ngx_http_secure_link_module现在可以代替ngx_http_accesskey_module，他们功能类似   ngx_http_secure_link_module Nginx的安全模块,免得别人拿webserver权限。
+//ngx_http_referer_module具有普通防盗链功能
 
+//该模块一般需要专门的客户端支持
 ngx_module_t  ngx_http_secure_link_module = {
     NGX_MODULE_V1,
     &ngx_http_secure_link_module_ctx,      /* module context */

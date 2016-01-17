@@ -49,8 +49,8 @@ typedef struct { //相关成员和ngx_http_regex_t中的一样
 
 
 typedef struct {
-    ngx_regex_t  *regex;
-    u_char       *name;
+    ngx_regex_t  *regex; //正则表达式经过ngx_regex_compile转换后的regex信息
+    u_char       *name; //正则表达式原字符串
 } ngx_regex_elt_t;
 
 

@@ -1314,6 +1314,13 @@ ngx_set_priority(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 }
 
 
+/*
+worker_processes 4;
+worker_cpu_affinity 0001 0010 0100 1000; 四个工作进程分别在四个指定的he上面运行
+
+如果是5he可以这样配置
+worker_cpu_affinity 00001 00010 00100 01000 10000; 其他多核类似
+*/ 
 static char *
 ngx_set_cpu_affinity(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -1329,6 +1336,7 @@ ngx_set_cpu_affinity(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return "is duplicate";
     }
 
+    //一个64位的空间来存储64个位
     mask = ngx_palloc(cf->pool, (cf->args->nelts - 1) * sizeof(uint64_t));
     if (mask == NULL) {
         return NGX_CONF_ERROR;

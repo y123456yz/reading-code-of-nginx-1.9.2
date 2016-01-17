@@ -250,6 +250,11 @@ ngx_thread_task_alloc(ngx_pool_t *pool, size_t size)
     return task;
 }
 
+/*
+一般主线程通过ngx_thread_task_post添加任务，线程队列中的线程执行任务，主线程号和进程号一样，线程队列中的线程和进程号不一样，例如
+2016/01/07 12:38:01[               ngx_thread_task_post,   280][yangya  [debug] 20090#20090: ngx add task to thread, task id:183
+20090#20090前面是进程号，后面是主线程号，他们相同
+*/
 //任务添加到对应的线程池任务队列中
 ngx_int_t //ngx_thread_pool_cycle和ngx_thread_task_post配合阅读
 ngx_thread_task_post(ngx_thread_pool_t *tp, ngx_thread_task_t *task)
@@ -329,6 +334,11 @@ ngx_thread_pool_cycle(void *data)
         return NULL;
     }
 
+    /*
+    一般主线程通过ngx_thread_task_post添加任务，线程队列中的线程执行任务，主线程号和进程号一样，线程队列中的线程和进程号不一样，例如
+    2016/01/07 12:38:01[               ngx_thread_task_post,   280][yangya  [debug] 20090#20090: ngx add task to thread, task id:183
+    20090#20090前面是进程号，后面是主线程号，他们相同
+    */
     for ( ;; ) {//一次任务执行完后又会走到这里，循环
         if (ngx_thread_mutex_lock(&tp->mtx, tp->log) != NGX_OK) {
             return NULL;
@@ -369,7 +379,7 @@ ngx_thread_pool_cycle(void *data)
                        "run task #%ui in thread pool name:\"%V\"",
                        task->id, &tp->name);
 
-        task->handler(task->ctx, tp->log);
+        task->handler(task->ctx, tp->log); //每个任务有各自的ctx,因此这里不需要加锁
 
         ngx_log_debug2(NGX_LOG_DEBUG_CORE, tp->log, 0,
                        "complete task #%ui in thread pool name: \"%V\"",
@@ -427,7 +437,11 @@ ngx_thread_pool_handler(ngx_event_t *ev)
         event->complete = 1;
         event->active = 0;
 
-        //函数指向可以参考ngx_http_cache_thread_handler  ngx_http_copy_thread_handler  ngx_thread_read
+      /*如果是小文件，则一次可以读完，函数指向可以参考ngx_http_cache_thread_handler  ngx_http_copy_thread_handler  ngx_thread_read
+
+        如果是大文件下载，则第一次走这里函数式上面的几个函数，但是由于一次最多获取32768字节，因此需要多次读取文件，就是由一次tread执行完任务后
+        触发ngx_notify通道epoll，然后走到这里继续读 
+        */
         event->handler(event);//这里是否应该检查event->handler是否为空，例如参考ngx_thread_pool_destroy
     }
 }

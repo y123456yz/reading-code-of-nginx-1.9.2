@@ -1371,7 +1371,7 @@ poll的性能与select类似，在大量并发连接下性能都远不如epoll。默认情况下，Nginx是不
 表1-10列出了默认就会编译进Nginx的核心HTTP模块，以及如何把这些HTTP模块从产品中去除。
 
 表1-10　configure中默认编译到Nginx中的HTTP模块参数
-默认安装的HTTP 模块 意　义
+默认安装的HTTP模块                        意　义
 --without-http_charset_module 不安装http charset module。这个模块可以将服务器发出的HTTP响应重编码
 --without-http_gzip_module 不安装http gzip module。在服务器发出的HTTP响应包中，这个模块可以按照配置文件指定的content-type对特定大小的HTTP响应包体执行gzip压缩
 --without-http_ssi_module 不安装http ssi module。该模块可以在向用户返回的HTTP响应包体中加入特定的内容，如HTML文件中固定的页头和页尾

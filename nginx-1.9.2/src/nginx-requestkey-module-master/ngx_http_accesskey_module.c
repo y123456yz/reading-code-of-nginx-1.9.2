@@ -65,6 +65,69 @@ static ngx_conf_post_handler_pt  ngx_http_accesskey_signature_p =
 就为http://www.csdn.net 
 */
 
+
+/*
+一：一般的防盗链如下： 
+location ~* \.(gif|jpg|png|swf|flv)$ { 
+valid_referers none blocked www.jb51.net jb51.net ; 
+if ($invalid_referer) { 
+rewrite ^/ http://www.jb51.net/retrun.html; 
+#return 403; 
+} 
+} 
+
+
+第一行：gif|jpg|png|swf|flv 
+表示对gif、jpg、png、swf、flv后缀的文件实行防盗链 
+第二行： 表示对www.ingnix.com这2个来路进行判断 
+if{}里面内容的意思是，如果来路不是指定来路就跳转到http://www.jb51.net/retrun.html页面，当然直接返回403也是可以的。 
+
+二：针对图片目录防止盗链 
+
+复制代码 代码如下:
+
+
+location /images/ { 
+alias /data/images/; 
+valid_referers none blocked server_names *.xok.la xok.la ; 
+if ($invalid_referer) {return 403;} 
+} 
+
+
+三：使用第三方模块ngx_http_accesskey_module实现Nginx防盗链 
+实现方法如下： 
+
+实现方法如下：
+1. 下载NginxHttpAccessKeyModule模块文件：Nginx-accesskey-2.0.3.tar.gz；
+2. 解压此文件后，找到nginx-accesskey-2.0.3下的config文件。编辑此文件：替换其中的”$HTTP_ACCESSKEY_MODULE”为”ngx_http_accesskey_module”；
+3. 用一下参数重新编译nginx：
+./configure --add-module=path/to/nginx-accesskey
+4. 修改nginx的conf文件，添加以下几行：
+location /download {
+  accesskey             on;
+  accesskey_hashmethod  md5;
+  accesskey_arg         "key";
+  accesskey_signature   "mypass$remote_addr";
+}
+其中：
+accesskey为模块开关；
+accesskey_hashmethod为加密方式MD5或者SHA-1；
+accesskey_arg为url中的关键字参数；
+accesskey_signature为加密值，此处为mypass和访问IP构成的字符串。
+
+访问测试脚本download.php：
+<?
+$ipkey= md5("mypass".$_SERVER['REMOTE_ADDR']);
+$output_add_key="<a href=http://www.jb51.net/download/G3200507120520LM.rar?key=".$ipkey.">download_add_key</a><br />";
+$output_org_url="<a href=http://www.jb51.net/download/G3200507120520LM.rar>download_org_path</a><br />";
+echo $output_add_key;
+echo $output_org_url;
+?>
+访问第一个download_add_key链接可以正常下载，第二个链接download_org_path会返回403 Forbidden错误。
+
+*/
+//ngx_http_secure_link_module现在可以代替ngx_http_accesskey_module，他们功能类似   ngx_http_secure_link_module Nginx的安全模块,免得别人拿webserver权限。
+//ngx_http_referer_module具有普通防盗链功能
 static ngx_command_t  ngx_http_accesskey_commands[] = {
     { ngx_string("accesskey"), //on | off 为模块开关；
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
@@ -113,7 +176,8 @@ static ngx_http_module_t  ngx_http_accesskey_module_ctx = {
     ngx_http_accesskey_merge_loc_conf         /* merge location configuration */
 };
 
-
+//ngx_http_secure_link_module现在可以代替ngx_http_accesskey_module，他们功能类似   ngx_http_secure_link_module Nginx的安全模块,免得别人拿webserver权限。
+//ngx_http_referer_module具有普通防盗链功能
 ngx_module_t  ngx_http_accesskey_module = {
     NGX_MODULE_V1,
     &ngx_http_accesskey_module_ctx,           /* module context */

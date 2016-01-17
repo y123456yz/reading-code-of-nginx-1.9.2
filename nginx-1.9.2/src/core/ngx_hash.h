@@ -19,16 +19,26 @@ ngx_hash_elt_tÖĞuchar name[1]µÄÉè¼Æ£¬Èç¹ûÔÚnameºÜ¶ÌµÄÇé¿öÏÂ£¬nameºÍ ushort µÄ×Ö½
 ¸öuchar* µÄÖ¸ÕëÉÙÕ¼ÓÃÒ»¸ö×Ö½Ú£¬¿ÉÒÔ¿´µ½ngxÊÇÕæµÄÔÚÄÚ´æÉÏ¿¼ÂÇ£¬½ÚÊ¡Ã¿Ò»·ÖÄÚ´æÀ´Ìá¸ß²¢·¢¡£
 */
 //hash±íÖĞÔªËØngx_hash_elt_t Ô¤Ìí¼Ó¹şÏ£É¢ÁĞÔªËØ½á¹¹ ngx_hash_key_t
-typedef struct {
+typedef struct {//Êµ¼ÊÒ»¸öngx_hash_elt_tÔİÓÃµÄ¿Õ¼äÎªNGX_HASH_ELT_SIZE£¬±Èsizeof(ngx_hash_elt_t)´ó£¬ÒòÎªĞèÒª´æ´¢¾ßÌåµÄ×Ö·û´®name
+    //Èç¹ûvalue=NULL,±íÊ¾ÊÇ¸Ã¾ßÌåhashÍ°bucket[i]ÖĞµÄ×îºóÒ»¸öngx_hash_elt_t³ÉÔ±
     void             *value;//value£¬¼´Ä³¸ökey¶ÔÓ¦µÄÖµ£¬¼´<key,value>ÖĞµÄvalue   
     u_short           len;//name³¤¶È  keyµÄ³¤¶È    
+    //Ã¿´ÎÒÆ¶¯test[]µÄÊ±ºò£¬¶¼ÊÇÒÆ¶¯NGX_HASH_ELT_SIZE(&names[n])£¬ÀïÃæÓĞ¸ønameÔ¤Áôname×Ö·û´®³¤¶È¿Õ¼ä£¬¼ûngx_hash_init
     u_char            name[1]; //Ä³¸öÒªhashµÄÊı¾İ(ÔÚnginxÖĞ±íÏÖÎª×Ö·û´®)£¬¼´<key,value>ÖĞµÄkey     ¶¼ÊÇĞ¡Ğ´×ÖÄ¸
+
+//ngx_hash_elt_tÊÇngx_hash_t->buckets[i]Í°ÖĞµÄ¾ßÌå³ÉÔ±
 } ngx_hash_elt_t; //hashÔªËØ½á¹¹   //ngx_hash_initÖĞnamesÊı×é´æÈëhashÍ°Ç°£¬Æä½á¹¹ÊÇngx_hash_key_tĞÎÊ½£¬ÔÚÍùhashÍ°ÀïÃæ´æÊı¾İµÄÊ±ºò£¬»á°Ñngx_hash_key_tÀïÃæµÄ³ÉÔ±¿½±´µ½ngx_hash_elt_tÖĞÏàÓ¦³ÉÔ±  
 
+
+/*
+ÕâÀïÃæµÄngx_hash_keys_arrays_tÍ°keys_hash  dns_wc_head_hash  dns_wc_tail_hash£¬¶ÔÓ¦µÄ¾ßÌåÍ°ÖĞµÄ¿Õ¼äÊÇÊı×é£¬Êı×é´óĞ¡ÊÇÌáÇ°½øĞĞÊı×é³õÊ¼»¯µÄÊ±ºòÉèÖÃºÃµÄ
+ngx_hash_t->buckets[]ÖĞµÄ¾ßÌåÍ°ÖĞµÄ³ÉÔ±ÊÇ¸ù¾İÊµ¼Ê³ÉÔ±¸öÊı´´½¨µÄ¿Õ¼ä
+*/
+
 //ÔÚ´´½¨hashÍ°µÄÊ±ºò¸³Öµ£¬¼ûngx_hash_init
-typedef struct { //hashÍ°±éÀú¿ÉÒÔ²Î¿¼ngx_hash_find
-    ngx_hash_elt_t  **buckets; //hashÍ°(ÓĞsize¸öÍ°)   
-    ngx_uint_t        size;//hashÍ°¸öÊı   
+typedef struct { //hashÍ°±éÀú¿ÉÒÔ²Î¿¼ngx_hash_find  
+    ngx_hash_elt_t  **buckets; //hashÍ°(ÓĞsize¸öÍ°)    Ö¸Ïò¸÷¸öÍ°µÄÍ·²¿Ö¸Õë£¬Ò²¾ÍÊÇbucket[]Êı×é£¬bucket[I]ÓÖÖ¸ÏòÃ¿¸öÍ°ÖĞµÄµÚÒ»¸öngx_hash_elt_t³ÉÔ±£¬¼ûngx_hash_init
+    ngx_uint_t        size;//hashÍ°¸öÊı£¬×¢ÒâÊÇÍ°µÄ¸öÊı£¬²»ÊÇÃ¿¸öÍ°ÖĞµÄ³ÉÔ±¸öÊı£¬¼ûngx_hash_init
 } ngx_hash_t;
 
 /*
@@ -55,7 +65,7 @@ typedef struct {
 
 
 //hash±íÖĞÔªËØngx_hash_elt_t Ô¤Ìí¼Ó¹şÏ£É¢ÁĞÔªËØ½á¹¹ ngx_hash_key_t
-typedef struct {
+typedef struct { //¸³Öµ²Î¿¼ngx_hash_add_key
     ngx_str_t         key; //key£¬ÎªnginxµÄ×Ö·û´®½á¹¹   
     ngx_uint_t        key_hash; //ÓÉ¸Ãkey¼ÆËã³öµÄhashÖµ(Í¨¹ıhashº¯ÊıÈçngx_hash_key_lc())  
     void             *value;  //¸Ãkey¶ÔÓ¦µÄÖµ£¬×é³ÉÒ»¸ö¼ü-Öµ¶Ô<key,value>    ÔÚÍ¨Åä·ûhashÖĞÒ²¿ÉÄÜÖ¸ÏòÏÂÒ»¸öÍ¨Åä·ûhash,¼ûngx_hash_wildcard_init
@@ -85,17 +95,29 @@ Nginx¶ÔÓÚserver- nameÖ÷»úÃûÍ¨Åä·ûµÄÖ§³Ö¹æÔò¡£
 ngx_hash_combined_tÊÇÓÉ3¸ö¹şÏ£±í×é³É£¬Ò»¸öÆÕÍ¨hash±íhash£¬Ò»¸ö°üº¬Ç°ÏòÍ¨Åä·ûµÄhash±íwc_headºÍÒ»¸ö°üº¬ºóÏòÍ¨Åä·ûµÄhash±í wc_tail¡£
 */ //ngx_http_virtual_names_tÖĞ°üº¬¸Ã½á¹¹
 typedef struct { //ÕâÀïÃæµÄhashĞÅÏ¢ÊÇngx_http_server_namesÖĞ´æ´¢µ½hash±íÖĞµÄserver_name¼°ÆäËùÔÚserver{}ÉÏÏÂÎÄctx,server_nameÎªkey£¬ÉÏÏÂÎÄctxÎªvalue
+    //¸ÃhashÖĞ´æ·ÅµÄÊÇngx_hash_keys_arrays_t->keys[]Êı×éÖĞµÄ³ÉÔ±
     ngx_hash_t            hash; //ÆÕÍ¨hash£¬ÍêÈ«Æ¥Åä
+    //¸Ãwc_head hashÖĞ´æ´¢µÄÊÇngx_hash_keys_arrays_t->dns_wc_headÊı×éÖĞµÄ³ÉÔ±
     ngx_hash_wildcard_t  *wc_head; //Ç°ÖÃÍ¨Åä·ûhash
+    //¸Ãwc_head hashÖĞ´æ´¢µÄÊÇngx_hash_keys_arrays_t->dns_wc_tailÊı×éÖĞµÄ³ÉÔ±
     ngx_hash_wildcard_t  *wc_tail; //ºóÖÃÍ¨Åä·ûhash
 } ngx_hash_combined_t;
 
-
-typedef struct {
+//²Î¿¼http://www.oschina.net/question/234345_42065  http://www.bkjia.com/ASPjc/905190.html
+typedef struct {//ÈçºÎÊ¹ÓÃÒÔ¼°Ê¹ÓÃ·½·¨¿ÉÒÔ²Î¿¼ngx_http_referer_merge_conf
     ngx_hash_t       *hash;//Ö¸Ïò´ı³õÊ¼»¯µÄhash½á¹¹
     ngx_hash_key_pt   key; //hashº¯ÊıÖ¸Õë   
 
+    /*  max_sizeºÍbucket_sizeµÄÒâÒå
+    max_size±íÊ¾×î¶à·ÖÅämax_size¸öÍ°£¬Ã¿¸öÍ°ÖĞµÄÔªËØ(ngx_hash_elt_t)¸öÊı * NGX_HASH_ELT_SIZE(&names[n])²»ÄÜ³¬¹ıbucket_size´óĞ¡
+    Êµ¼Êngx_hash_init´¦ÀíµÄÊ±ºò²¢²»ÊÇÖ±½ÓÓÃmax_size¸öÍ°£¬¶øÊÇ´Óx=1µ½max_sizeÈ¥ÊÔ£¬Ö»Òªngx_hash_init²ÎÊıÖĞµÄnames[]Êı×éÊı¾İÄÜÈ«²¿hash
+    µ½Õâx¸öÍ°ÖĞ£¬²¢ÇÒÂú×ãÌõ¼ş:Ã¿¸öÍ°ÖĞµÄÔªËØ(ngx_hash_elt_t)¸öÊı * NGX_HASH_ELT_SIZE(&names[n])²»³¬¹ıbucket_size´óĞ¡,ÔòËµÃ÷ÓÃx
+    ¸öÍ°¾Í¹»ÓÃÁË£¬È»ºóÖ±½ÓÊ¹ÓÃx¸öÍ°´æ´¢¡£ ¼ûngx_hash_init
+     */
+    
     ngx_uint_t        max_size;//×î¶àĞèÒªÕâÃ´¶à¸öÍ°£¬Êµ¼ÊÉÏÍ°µÄ¸öÊı£¬ÊÇÍ¨¹ı¼ÆËãµÃµ½µÄ£¬²Î¿¼ngx_hash_init
+    //·ÖÅäµ½¸Ã¾ßÌåÍ°ÖĞµÄ³ÉÔ±¸öÊı * NGX_HASH_ELT_SIZE(&names[n])ÒªĞ¡ÓÚbucket_size£¬±íÊ¾¸ÃÍ°ÖĞ×î¶à´æ´¢ÕâÃ´¶à¸öngx_hash_elt_t³ÉÔ±
+    //ÉúĞ§µØ·½¼ûngx_hash_initÖĞµÄ:if (test[key] > (u_short) bucket_size) { }
     ngx_uint_t        bucket_size; //±íÊ¾Ã¿¸öhashÍ°ÖĞ(hash->buckets[i->³ÉÔ±[i]])¶ÔÓ¦µÄ³ÉÔ±ËùÓĞngx_hash_elt_t³ÉÔ±ÔİÓÃ¿Õ¼äºÍµÄ×î´óÖµ£¬¾ÍÊÇÃ¿¸öÍ°ÔİÓÃµÄËùÓĞ¿Õ¼ä×î´óÖµ£¬Í¨¹ıÕâ¸öÖµ¼ÆËãĞèÒª¶àÉÙ¸öÍ°
     char             *name; //¸Ãhash½á¹¹µÄÃû×Ö(½öÔÚ´íÎóÈÕÖ¾ÖĞÊ¹ÓÃ,ÓÃÓÚµ÷ÊÔ´òÓ¡µÈ)   
     ngx_pool_t       *pool;  //¸Ãhash½á¹¹´ÓpoolÖ¸ÏòµÄÄÚ´æ³ØÖĞ·ÖÅä   
@@ -108,7 +130,7 @@ typedef struct {
 #define NGX_HASH_LARGE_ASIZE      16384
 #define NGX_HASH_LARGE_HSIZE      10007
 
-#define NGX_HASH_WILDCARD_KEY     1
+#define NGX_HASH_WILDCARD_KEY     1 //Í¨Åä·ûÀàĞÍ
 #define NGX_HASH_READONLY_KEY     2
 
 
@@ -159,8 +181,9 @@ dns_wc_tail_hash: ¸ÃÖµÔÚµ÷ÓÃµÄ¹ı³ÌÖĞÓÃÀ´±£´æºÍ¼ì²âÊÇ·ñÓĞ³åÍ»µÄºóÏòÍ¨Åä·ûµÄkeyÖµ£
 Èı¸ö¶şÎ¬Êı×éÖĞ´æ·ÅµÄÔªËØÊÇngx_str_tÀàĞÍµÄ¡£
 ngx_hash_keys_array_init¾ÍÊÇÎªÉÏÊö½á¹¹·ÖÅä¿Õ¼ä¡£
 */ //¸Ã½á¹¹Ö»ÊÇÓÃÀ´°ÑÍêÈ«Æ¥Åä   Ç°ÖÃÆ¥Åä  ºóÖÃÆ¥ÅäÍ¨¹ı¸Ã½á¹¹ÌåÈ«²¿´æ´¢ÔÚ¸Ã½á¹¹Ìå¶ÔÓ¦µÄhashºÍÊı×éÖĞ
-typedef struct {
-    ngx_uint_t        hsize; //É¢ÁĞÖĞ²Û×ÜÊı
+typedef struct { //¸Ã½á¹¹Ò»°ãÓÃÀ´´æ´¢ÓòÃûĞÅÏ¢
+    //É¢ÁĞÖĞ²Û×ÜÊı  Èç¹ûÊÇ´óhashÍ°·½Ê½£¬Ôòhsize=NGX_HASH_LARGE_HSIZE,Ğ¡hashÍ°·½Ê½£¬hsize=107,¼ûngx_hash_keys_array_init
+    ngx_uint_t        hsize; 
 
     ngx_pool_t       *pool;//ÄÚ´æ³Ø£¬ÓÃÓÚ·ÖÅäÓÀ¾ÃĞÔµÄÄÚ´æ
     ngx_pool_t       *temp_pool; //ÁÙÊ±ÄÚ´æ³Ø£¬ÏÂÃæµÄÁÙÊ±¶¯Ì¬Êı×é¶¼ÊÇÓÉÁÙÊ±ÄÚ´æ³Ø·ÖÅä
@@ -172,17 +195,40 @@ typedef struct {
     ¼ÙÉèÓĞ3¸ökey,·Ö±ğÊÇkey1,key2ºÍkey3¼ÙÉèhashÖµËã³öÀ´ÒÔºó¶ÔhsizeÈ¡Ä£µÄÖµ¶¼ÊÇi£¬ÄÇÃ´ÕâÈı¸ökeyµÄÖµ¾ÍË³Ğò´æ·ÅÔÚkeys_hash[i][0],
     keys_hash[i][1], keys_hash[i][2]¡£¸ÃÖµÔÚµ÷ÓÃµÄ¹ı³ÌÖĞÓÃÀ´±£´æºÍ¼ì²âÊÇ·ñÓĞ³åÍ»µÄkeyÖµ£¬Ò²¾ÍÊÇÊÇ·ñÓĞÖØ¸´¡£
     */ //ÍêÈ«Æ¥ÅäkeysÊı×éÖ»´æ·Åkey×Ö·û´®£¬½ÚµãÀàĞÍÎªngx_str_t£¬keys_hash hash±í´æ·Åkey¶ÔÓ¦µÄkey-valueÖĞ£¬hash±íÖĞÊı¾İ½ÚµãÀàĞÍÎªngx_hash_key_t
-    ngx_array_t       keys; //´æ·ÅËùÓĞ·ÇÍ¨Åä·ûkeyµÄÊı×é¡£    //ha->keysÖĞ´æ·ÅµÄÊÇÍêÈ«Æ¥Åä£¬key  value¶Ô
-    ngx_array_t      *keys_hash;//ÍêÈ«Æ¥ÅäµÄ×Ö·û´®key´æ·ÅÔÚÕâÀïÃæ£¬¶ÔÓ¦µÄkey-value´æ·ÅÔÚÉÏÃæµÄkeysÖĞ£¬ÅĞ¶ÏÍêÈ«Í¨Åä·ûÊÇ·ñÖØ¸´Ò²ÊÇÓÃ¸Ãhash±íÅĞ¶Ï
 
-    //Ç°ÖÃÍ¨Åä·ûdns_wc_headÊı×éÖ»´æ·Åkey×Ö·û´®£¬½ÚµãÀàĞÍÎªngx_str_t£¬dns_wc_head_hash hash±í´æ·Åkey¶ÔÓ¦µÄkey-valueÖĞ£¬hash±íÖĞÊı¾İ½ÚµãÀàĞÍÎªngx_hash_key_t
-    ngx_array_t       dns_wc_head;//´æ·ÅÇ°ÏòÍ¨Åä·ûkey±»´¦ÀíÍê³ÉÒÔºóµÄÖµ¡£±ÈÈç£º¡°*.abc.com¡±±»´¦ÀíÍê³ÉÒÔºó£¬±ä³É¡°com.abc.¡±±»´æ·ÅÔÚ´ËÊı×éÖĞ¡£
-    ngx_array_t      *dns_wc_head_hash;////key¶ÔÓ¦µÄkey-value¶Ô´æ·ÅÔÚ¸ÃhashÖĞ£¬Í¬Ê±ÔÚ´æ´¢¹ı³ÌÖĞ¸ÃÖµÔÚµ÷ÓÃµÄ¹ı³ÌÖĞÓÃÀ´±£´æºÍ¼ì²âÊÇ·ñÓĞ³åÍ»µÄÇ°ÏòÍ¨Åä·ûµÄkeyÖµ£¬Ò²¾ÍÊÇÊÇ·ñÓĞÖØ¸´¡£
+   /* 
+    hashÍ°keys_hash  dns_wc_head_hash   dns_wc_tail_hashÍ·²¿Ö¸ÕëĞÅÏ¢³õÊ¼»¯ÔÚngx_hash_keys_array_init£¬ÆäÖĞµÄ¾ßÌå
+    Í°keys_hash[i] dns_wc_head_hash[i]  dns_wc_tail_hash[i]ÖĞµÄÊı¾İÀàĞÍÎªngx_str_t£¬Ã¿¸öÍ°µÄÊı¾İ³ÉÔ±Ä¬ÈÏ4¸ö£¬¼ûngx_hash_add_key£¬
+    Í°ÖĞ´æ´¢µÄÊı¾İĞÅÏ¢¾ÍÊÇngx_hash_add_key²ÎÊıÖĞkey²ÎÊı×Ö·û´®
+    
+    Êı×ékeys[] dns_wc_head[] dns_wc_tail[]ÖĞµÄÊı¾İÀàĞÍÎªngx_hash_key_t£¬¼ûngx_hash_keys_array_init£¬
+    ngx_hash_key_tÖĞµÄkeyºÍvalue·Ö±ğ´æ´¢ngx_hash_add_keyÖĞµÄkey²ÎÊıºÍvalue²ÎÊı
+    */
 
-    //ºóÖÃÍ¨Åä·ûdns_wc_tailÊı×éÖ»´æ·Åkey×Ö·û´®£¬½ÚµãÀàĞÍÎªngx_str_t£¬dns_wc_tail_hash hash±í´æ·Åkey¶ÔÓ¦µÄkey-valueÖĞ£¬hash±íÖĞÊı¾İ½ÚµãÀàĞÍÎªngx_hash_key_t
-    ngx_array_t       dns_wc_tail;//´æ·ÅºóÏòÍ¨Åä·ûkey±»´¦ÀíÍê³ÉÒÔºóµÄÖµ¡£±ÈÈç£º¡°mail.xxx.*¡±±»´¦ÀíÍê³ÉÒÔºó£¬±ä³É¡°mail.xxx.¡±±»´æ·ÅÔÚ´ËÊı×éÖĞ¡£
-    ngx_array_t      *dns_wc_tail_hash;//key¶ÔÓ¦µÄkey-value¶Ô´æ·ÅÔÚ¸ÃhashÖĞ£¬Í¬Ê±ÔÚ´æ´¢¹ı³ÌÖĞ¸ÃÖµÔÚµ÷ÓÃµÄ¹ı³ÌÖĞÓÃÀ´±£´æºÍ¼ì²âÊÇ·ñÓĞ³åÍ»µÄºóÏòÍ¨Åä·ûµÄkeyÖµ£¬Ò²¾ÍÊÇÊÇ·ñÓĞÖØ¸´¡£
-} ngx_hash_keys_arrays_t;
+    /*
+
+    ¸³Öµ¼ûngx_hash_add_key
+    
+    Ô­Ê¼key                  ´æ·Åµ½hashÍ°(keys_hash»òdns_wc_head_hash                 ´æ·Åµ½Êı×éÖĞ(keys»òdns_wc_head»ò
+                                    »òdns_wc_tail_hash)                                     dns_wc_tail)
+                                    
+ www.example.com                 www.example.com(´æÈëkeys_hash)                        www.example.com (´æÈëkeysÊı×é³ÉÔ±ngx_hash_key_t¶ÔÓ¦µÄkeyÖĞ)
+  .example.com             example.com(´æµ½keys_hash£¬Í¬Ê±´æÈëdns_wc_tail_hash)        com.example  (´æÈëdns_wc_headÊı×é³ÉÔ±ngx_hash_key_t¶ÔÓ¦µÄkeyÖĞ)
+ www.example.*                     www.example. (´æÈëdns_wc_tail_hash)                 www.example  (´æÈëdns_wc_tailÊı×é³ÉÔ±ngx_hash_key_t¶ÔÓ¦µÄkeyÖĞ)
+ *.example.com                     example.com  (´æÈëdns_wc_head_hash)                 com.example. (´æÈëdns_wc_headÊı×é³ÉÔ±ngx_hash_key_t¶ÔÓ¦µÄkeyÖĞ)
+
+    //ÕâÀïÃæµÄngx_hash_keys_arrays_tÍ°keys_hash  dns_wc_head_hash  dns_wc_tail_hash£¬¶ÔÓ¦µÄ¾ßÌåÍ°ÖĞµÄ¿Õ¼äÊÇÊı×é£¬Êı×é´óĞ¡ÊÇÌáÇ°½øĞĞÊı×é³õÊ¼»¯µÄÊ±ºòÉèÖÃºÃµÄ
+    ngx_hash_t->buckets[]ÖĞµÄ¾ßÌåÍ°ÖĞµÄ³ÉÔ±ÊÇ¸ù¾İÊµ¼Ê³ÉÔ±¸öÊı´´½¨µÄ¿Õ¼ä
+    */
+    ngx_array_t       keys;//Êı×é³ÉÔ±ngx_hash_key_t
+    ngx_array_t      *keys_hash;//keys_hash[i]¶ÔÓ¦hashÍ°Í·²¿Ö¸Õë£¬£¬¾ßÌåÍ°ÖĞ³ÉÔ±ÀàĞÍngx_str_t
+
+    ngx_array_t       dns_wc_head; //Êı×é³ÉÔ±ngx_hash_key_t
+    ngx_array_t      *dns_wc_head_hash;//dns_wc_head_hash[i]¶ÔÓ¦hashÍ°Í·²¿Ö¸Õë£¬¾ßÌåÍ°ÖĞ³ÉÔ±ÀàĞÍngx_str_t
+
+    ngx_array_t       dns_wc_tail; //Êı×é³ÉÔ±ngx_hash_key_t
+    ngx_array_t      *dns_wc_tail_hash; //dns_wc_tail_hash[i]¶ÔÓ¦hashÍ°Í·²¿Ö¸Õë£¬¾ßÌåÍ°ÖĞ³ÉÔ±ÀàĞÍngx_str_t
+} ngx_hash_keys_arrays_t; //ngx_http_referer_conf_tÖĞµÄkeys³ÉÔ±
 
 /*
 ngx_table_elt_tÊı¾İ½á¹¹ÈçÏÂËùÊ¾£º

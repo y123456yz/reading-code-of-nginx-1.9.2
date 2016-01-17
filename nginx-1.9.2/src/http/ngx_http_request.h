@@ -1177,6 +1177,16 @@ http_versionÊÇNginx½âÎö¹ıµÄĞ­Òé°æ±¾£¬ËüµÄÈ¡Öµ·¶Î§ÈçÏÂ£º
     ngx_uint_t                        http_version;//http_versionÊÇNginx½âÎö¹ıµÄĞ­Òé°æ±¾£¬ËüµÄÈ¡Öµ·¶Î§ÈçÏÂ£º
 
     ngx_str_t                         request_line; //ÇëÇóĞĞÄÚÈİ
+
+
+/*
+2016/01/07 12:38:01[      ngx_http_process_request_line,  1002]  [debug] 20090#20090: *14 http request line: "GET /download/nginx-1.9.2.rar?st=xhWL03HbtjrojpEAfiD6Mw&e=1452139931 HTTP/1.1"
+2016/01/07 12:38:01[       ngx_http_process_request_uri,  1223]  [debug] 20090#20090: *14 http uri: "/download/nginx-1.9.2.rar"
+2016/01/07 12:38:01[       ngx_http_process_request_uri,  1226]  [debug] 20090#20090: *14 http args: "st=xhWL03HbtjrojpEAfiD6Mw&e=1452139931"
+2016/01/07 12:38:01[       ngx_http_process_request_uri,  1229]  [debug] 20090#20090: *14 http exten: "rar"
+*/
+
+    
 //ngx_str_tÀàĞÍµÄuri³ÉÔ±Ö¸ÏòÓÃ»§ÇëÇóÖĞµÄURI¡£Í¬Àí£¬u_char*ÀàĞÍµÄuri_startºÍuri_endÒ²Óërequest_start¡¢method_endµÄÓÃ·¨ÏàËÆ£¬Î¨Ò»²»
 //Í¬µÄÊÇ£¬method_endÖ¸Ïò·½·¨ÃûµÄ×îºóÒ»¸ö×Ö·û£¬¶øuri_endÖ¸ÏòURI½áÊøºóµÄÏÂÒ»¸öµØÖ·£¬Ò²¾ÍÊÇ×îºóÒ»¸ö×Ö·ûµÄÏÂÒ»¸ö×Ö·ûµØÖ·£¨HTTP¿ò¼ÜµÄĞĞÎª£©£¬
 //ÕâÊÇ´ó²¿·Öu_char*ÀàĞÍÖ¸Õë¶Ô¡°xxx_start¡±ºÍ¡°xxx_end¡±±äÁ¿µÄÓÃ·¨¡£
@@ -1185,6 +1195,9 @@ http_versionÊÇNginx½âÎö¹ıµÄĞ­Òé°æ±¾£¬ËüµÄÈ¡Öµ·¶Î§ÈçÏÂ£º
     ngx_str_t                         uri; 
     //argÖ¸ÏòÓÃ»§ÇëÇóÖĞµÄURL²ÎÊı¡£  http://10.135.10.167/mytest?abc?tttÖĞµÄabc?ttt   
     //Í¬Ê±"GET /mytest?abc?ttt HTTP/1.1"ÖĞµÄmytest?abc?tttºÍuriÖĞµÄÒ»Ñù    
+
+ /*°ÑÇëÇóÖĞGET /download/nginx-1.9.2.rar?st=xhWL03HbtjrojpEAfiD6Mw&e=1452139931 HTTP/1.1µÄstºÍeĞÎ³É±äÁ¿$arg_st #arg_e£¬value·Ö±ğ
+ÎªxhWL03HbtjrojpEAfiD6Mw 1452139931¼´$arg_st=xhWL03HbtjrojpEAfiD6Mw£¬#arg_e=1452139931£¬¼ûngx_http_arg */
     ngx_str_t                         args;
     /*
     ngx_str_tÀàĞÍµÄextern³ÉÔ±Ö¸ÏòÓÃ»§ÇëÇóµÄÎÄ¼şÀ©Õ¹Ãû¡£ÀıÈç£¬ÔÚ·ÃÎÊ¡°GET /a.txt HTTP/1.1¡±Ê±£¬externµÄÖµÊÇ{len = 3, data = "txt"}£¬
@@ -1344,7 +1357,10 @@ ngx_http_finalize_request·½·¨Ò»´Î£¬ÕâÊÇÕıÈ·µÄ¡£¶ÔÓÚmytestÄ£¿éÒ²Ò»Ñù£¬Îñ±ØÒª±£Ö¤¶
         ngx_http_copy_aio_handler»á×ÔÔö£¬µ±ÄÚºË°ÑÊı¾İ·¢ËÍ³öÈ¥ºó»áÔÚngx_http_copy_aio_event_handler×Ô¼ô
      */
     unsigned                          blocked:8; //×èÈû±êÖ¾Î»£¬Ä¿Ç°½öÓÉaioÊ¹ÓÃ  Îª0£¬±íÊ¾Ã»ÓĞHTTPÄ£¿é»¹ĞèÒª´¦ÀíÇëÇó
-    //ngx_http_copy_aio_handlerÖĞÖÃ1£¬handler ngx_http_copy_aio_event_handlerÖ´ĞĞºó£¬»áÖÃ»Øµ½0
+    //ngx_http_copy_aio_handler handler ngx_http_copy_aio_event_handlerÖ´ĞĞºó£¬»áÖÃ»Øµ½0   
+    //ngx_http_copy_thread_handler ngx_http_copy_thread_event_handlerÖÃ0
+    //ngx_http_cache_thread_handlerÖÃ1£¬ ngx_http_cache_thread_event_handlerÖÃ0
+    //ngx_http_file_cache_aio_readÖĞÖÃ1£¬
     unsigned                          aio:1;  //±êÖ¾Î»£¬Îª1Ê±±íÊ¾µ±Ç°ÇëÇóÕıÔÚÊ¹ÓÃÒì²½ÎÄ¼şIO
 
     unsigned                          http_state:4; //¸³Öµ¼ûngx_http_state_eÖĞµÄ³ÉÔ±

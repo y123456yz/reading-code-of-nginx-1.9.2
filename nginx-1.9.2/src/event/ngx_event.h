@@ -106,7 +106,7 @@ struct ngx_event_s {
     unsigned         oneshot:1;
 
     /* aio operation is complete */
-    //该标志位用于异步AIO事件的处理，在9.9节中会详细描述
+    //aio on | thread_pool方式下，如果读取数据完成，则在ngx_epoll_eventfd_handler(aio on)或者ngx_thread_pool_handler(aio thread_pool)中置1
     unsigned         complete:1; //表示读取数据完成，通过epoll机制返回获取 ，见ngx_epoll_eventfd_handler
 
     //标志位，为1时表示当前处理的字符流已经结束

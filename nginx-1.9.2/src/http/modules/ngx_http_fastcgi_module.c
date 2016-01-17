@@ -3461,9 +3461,12 @@ ngx_http_fastcgi_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     if (conf->upstream.busy_buffers_size
         > (conf->upstream.bufs.num - 1) * conf->upstream.bufs.size)
     {
+        size_t buf1 = (size_t)((conf->upstream.bufs.num - 1) * conf->upstream.bufs.size);
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-             "\"fastcgi_busy_buffers_size\" must be less than "
-             "the size of all \"fastcgi_buffers\" minus one buffer");
+             "\"fastcgi_busy_buffers_size:%z\" must be less than "
+             "the size of all \"fastcgi_buffers\" :%z minus one buffer", 
+             conf->upstream.busy_buffers_size, 
+             buf1);
 
         return NGX_CONF_ERROR;
     }

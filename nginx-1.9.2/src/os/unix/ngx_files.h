@@ -183,6 +183,7 @@ ngx_write_fd(ngx_fd_t fd, void *buf, size_t n)
 
 /* rename函数功能是给一个文件重命名，用该函数可以实现文件移动功能，把一个文件的完整路径的盘符改一下就实现了这个文件的移动 */
 //rename和mv命令差不多，只是rename支持批量修改  也就是说，mv也能用于改名，但不能实现批量处理（改名时，不支持*等符号的），而rename可以。
+//rename后文件的fd和stat信息不变
 #define ngx_rename_file(o, n)    rename((const char *) o, (const char *) n)
 #define ngx_rename_file_n        "rename()"
 

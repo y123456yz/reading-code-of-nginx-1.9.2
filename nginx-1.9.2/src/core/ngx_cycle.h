@@ -289,8 +289,15 @@ typedef struct { //从ngx_cycle_s中的conf_ctx指向这里
 
      int                      priority;
 
-     ngx_uint_t               cpu_affinity_n;
-     uint64_t                *cpu_affinity;
+     /*
+     worker_processes 4;
+     worker_cpu_affinity 0001 0010 0100 1000; 四个工作进程分别在四个指定的he上面运行
+     
+     如果是5he可以这样配置
+     worker_cpu_affinity 00001 00010 00100 01000 10000; 其他多核类似
+     */  //参考ngx_set_cpu_affinity
+     ngx_uint_t               cpu_affinity_n; //worker_cpu_affinity参数个数
+     uint64_t                *cpu_affinity;//worker_cpu_affinity 00001 00010 00100 01000 10000;转换的位图结果就是0X11111
 
      char                    *username;
      ngx_uid_t                user;

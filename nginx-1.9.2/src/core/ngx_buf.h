@@ -204,7 +204,14 @@ struct ngx_output_chain_ctx_s {//ngx_http_copy_filter中创建空间和赋值
     /* 是否需要在内存中重新复制一份，不管buf是在内存还是文件, 这样的话，后续模块可以直接修改这块内存 */  
     unsigned                     need_in_temp:1;
 #if (NGX_HAVE_FILE_AIO || NGX_THREADS)
-    //ngx_http_copy_aio_handler中置1
+/*
+ngx_http_copy_aio_handler handler ngx_http_copy_aio_event_handler执行后，会置回到0   
+ngx_http_copy_thread_handler ngx_http_copy_thread_event_handler置0
+ngx_http_cache_thread_handler置1， ngx_http_cache_thread_event_handler置0
+ngx_http_file_cache_aio_read中置1，
+*/
+    //ngx_http_copy_aio_handler中置1   ngx_http_copy_filter中ctx->aio = ngx_http_request_t->aio
+    //生效地方见ngx_output_chain
     unsigned                     aio:1; //配置aio on或者aio thread poll的时候置1
 #endif
 

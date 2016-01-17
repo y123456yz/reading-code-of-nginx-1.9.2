@@ -1,0 +1,43 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use File::Temp 'tempfile';
+
+my $infile = "src/ngx_http_redis2_reply.c";
+my ($out, $outfile) = tempfile();
+open my $in, $infile
+    or die "Cannot open $infile for reading: $!\n";
+
+my $hits = 0;
+while (<$in>) {
+    if (/ \b reply_ (?: en_main | first_final ) \b /x)
+     {
+        #warn "HIT!";
+        $hits++;
+        next;
+    }
+    print $out $_;
+}
+
+close $in;
+close $out;
+
+if ($hits) {
+    my $cmd = "cp $outfile $infile";
+    system($cmd) == 0
+        or die "Cannot run command \"$cmd\": $!";
+}
+#die;
+
+__END__
+
+This script is to fix the following clang warnings when using Ragel 6.8/6.9/etc:
+
+src/ngx_http_redis2_reply.c:19:18: error: unused variable 'reply_first_final' [-Werror,-Wunused-const-variable]
+static const int reply_first_final = 52;
+                 ^
+src/ngx_http_redis2_reply.c:22:18: error: unused variable 'reply_en_main' [-Werror,-Wunused-const-variable]
+static const int reply_en_main = 1;
+                 ^
+2 errors generated.

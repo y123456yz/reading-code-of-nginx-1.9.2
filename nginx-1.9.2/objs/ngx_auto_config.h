@@ -1,4 +1,4 @@
-#define NGX_CONFIGURE " --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads --add-module=/var/yyz/nginx-1.9.2/src/echo-nginx-module-master --add-module=./src/nginx-requestkey-module-master/ --with-http_secure_link_module"
+#define NGX_CONFIGURE " --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads --add-module=/var/yyz/nginx-1.9.2/src/echo-nginx-module-master --add-module=./src/nginx-requestkey-module-master/ --with-http_secure_link_module --add-module=./src/redis2-nginx-module-master/ --add-module=./src/lua-nginx-module-master/"
 
 #ifndef NGX_DEBUG
 #define NGX_DEBUG  1
@@ -320,6 +320,11 @@
 
 #ifndef NGX_HTTP_UPSTREAM_ZONE
 #define NGX_HTTP_UPSTREAM_ZONE  1
+#endif
+
+
+#ifndef NGX_HTTP_LUA_HAVE_SO_PASSCRED
+#define NGX_HTTP_LUA_HAVE_SO_PASSCRED  1
 #endif
 
 

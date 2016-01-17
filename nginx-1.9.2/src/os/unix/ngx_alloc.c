@@ -15,9 +15,9 @@ ngx_uint_t  ngx_pagesize_shift; //ngx_pagesize进行移位的次数，见for (n = ngx_pag
 
 /*
 如果能知道CPU cache行的大小，那么就可以有针对性地设置内存的对齐值，这样可以提高程序的效率。
-Nginx有分配内存池的接口，Nginx会将内存池边界对齐到 CPU cache行大小
+Nginx有分配内存池的接口，Nginx会将内存池边界对齐到 CPU cache行大小  32位平台，ngx_cacheline_size=32
 */
-ngx_uint_t  ngx_cacheline_size;
+ngx_uint_t  ngx_cacheline_size;//32位平台，ngx_cacheline_size=32
 
 
 void *

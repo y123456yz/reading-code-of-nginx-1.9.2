@@ -228,12 +228,23 @@ I/O测试工具，iostat  网络接口流量测试工具ifstat
 防盗链 缓存分析 sendfile  日志模块
 线程池
 
- 
+    buffering方式和非buffering方式处理后端数据的流程详细分析。
+    buffering方式pipe处理流程详细分析
+    keepalive模块代码理解，后端连接缓存原理分析。
+    分析后端服务器失效判断方法,已经再次恢复使用检测方法分析
+    反向代理proxy-module详细分析，proxy_pass相关接收方式格式组包解析分析，proxy模块非阻塞发送接收原理分析
+    chunk编码方式分析，触发按照chunk方式发送包体到后端条件，以及组包过程分析
+    keepalive-module后端服务器连接缓存进一步分析
+    子连接subrequest及其相应的postpone分析
+    多级subrequest如何保证数据按照指定先后顺序发送的客户端浏览器代码分析。
+    临时文件创建管理缓存过程分析，以及相关配置详细分析。
+    指定的缓存不够的情况下，后端数据写入临时文件过程分析
+    proxy_cache原理分析，包括共享内存创建，管理，参数解析等
+    slab原理分析，以及slab管理共享内存过程分析
 
     http://blog.csdn.net/weiyuefei/article/details/35782523  http://www.tuicool.com/articles/QnMNr23
 
-
-
-
+    --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads --add-module=/var/yyz/nginx-1.9.2/src/echo-nginx-module-master --add-module=./src/nginx-requestkey-module-master/ --with-http_secure_link_module
+    
 */
 

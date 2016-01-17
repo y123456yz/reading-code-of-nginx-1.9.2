@@ -124,6 +124,7 @@ ngx_read_file(ngx_file_t *file, u_char *buf, size_t size, off_t offset)
 
 #if (NGX_THREADS)
 
+//ngx_thread_read中创建空间和赋值
 typedef struct {
     ngx_fd_t     fd; //文件fd
     u_char      *buf; //读取文件内容到该buf中
@@ -134,11 +135,16 @@ typedef struct {
     ngx_err_t    err; //ngx_thread_read_handler读取返回后的错误信息
 } ngx_thread_read_ctx_t; //见ngx_thread_read，该结构由ngx_thread_task_t->ctx指向
 
-
+//第一次进来的时候表示开始把读任务加入线程池中处理，表示正在开始读，第二次进来的时候表示数据已经通过notify_epoll通知读取完毕，可以处理了，第一次返回NAX_AGAIN
+//第二次放回线程池中的线程处理读任务读取到的字节数
 ssize_t
 ngx_thread_read(ngx_thread_task_t **taskp, ngx_file_t *file, u_char *buf,
     size_t size, off_t offset, ngx_pool_t *pool)
 {
+    /*
+        该函数一般会进来两次，第一次是通过原始数据发送触发走到这里，这时候complete = 0，第二次是当线程池读取数据完成，则会通过
+        ngx_thread_pool_handler->ngx_http_copy_thread_event_handler->ngx_http_request_handler->ngx_http_writer在次走到这里
+     */
     ngx_thread_task_t      *task;
     ngx_thread_read_ctx_t  *ctx;
 
@@ -162,6 +168,11 @@ ngx_thread_read(ngx_thread_task_t **taskp, ngx_file_t *file, u_char *buf,
     ctx = task->ctx;
 
     if (task->event.complete) {
+    /*
+    该函数一般会进来两次，第一次是通过原始数据发送触发走到这里，这时候complete = 0，第二次是当线程池读取数据完成，则会通过
+    ngx_thread_pool_handler->ngx_http_copy_thread_event_handler->ngx_http_request_handler->ngx_http_writer在次走到这里，不过
+    这次complete已经在ngx_thread_pool_handler置1
+     */   
         task->event.complete = 0;
 
         if (ctx->err) {
@@ -200,6 +211,7 @@ ngx_thread_read_handler(void *data, ngx_log_t *log)
 
     ngx_log_debug0(NGX_LOG_DEBUG_CORE, log, 0, "thread read handler");
 
+    //缓存文件数据会拷贝到dst中，也就是ngx_output_chain_ctx_t->buf,然后在ngx_output_chain_copy_buf函数外层会重新把ctx->buf赋值给新的chain，然后write出去
     n = pread(ctx->fd, ctx->buf, ctx->size, ctx->offset);
 
     if (n == -1) {

@@ -865,7 +865,7 @@ ngx_http_cache_aio_event_handler(ngx_event_t *ev)
     ngx_http_set_log_request(c->log, r);
 
     ngx_log_debug2(NGX_LOG_DEBUG_HTTP, c->log, 0,
-                   "http file cache aio: \"%V?%V\"", &r->uri, &r->args);
+                   "http file cache aio on: \"%V?%V\"", &r->uri, &r->args);
 
     r->main->blocked--;
     r->aio = 0;
@@ -936,7 +936,7 @@ ngx_http_cache_thread_event_handler(ngx_event_t *ev)
     ngx_http_set_log_request(c->log, r);
 
     ngx_log_debug2(NGX_LOG_DEBUG_HTTP, c->log, 0,
-                   "http file cache thread: \"%V?%V\"", &r->uri, &r->args);
+                   "http file cache aio thread: \"%V?%V\"", &r->uri, &r->args);
 
     r->main->blocked--;
     r->aio = 0;
