@@ -16,11 +16,13 @@
 /*
 Nginx配置文件详解
 
+
 #运行用户 
 user nobody nobody; 
 #启动进程 
 worker_processes 2; 
 #全局错误日志及PID文件 
+
 error_log logs/error.log notice; 
 pid logs/nginx.pid; 
 #工作模式及连接数上限 
@@ -425,7 +427,6 @@ NGX_HTTP_LMT_CONF: 配置项可以出现在limit_except{}块内,该limit_except块必须属于ht
 
 
 //注意ngx_http_get_module_main_conf ngx_http_get_module_loc_conf和ngx_http_get_module_ctx的区别
-
 //获取该条request对应的自己所处的main,例如http{}的对应模块的配置信息
 #define ngx_http_get_module_main_conf(r, module)                             \
     (r)->main_conf[module.ctx_index]
