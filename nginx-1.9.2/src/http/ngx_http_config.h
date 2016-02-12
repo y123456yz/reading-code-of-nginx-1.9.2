@@ -425,7 +425,6 @@ NGX_HTTP_LMT_CONF: 配置项可以出现在limit_except{}块内,该limit_except块必须属于ht
 #define NGX_HTTP_SRV_CONF_OFFSET   offsetof(ngx_http_conf_ctx_t, srv_conf)
 #define NGX_HTTP_LOC_CONF_OFFSET   offsetof(ngx_http_conf_ctx_t, loc_conf)
 
-
 //注意ngx_http_get_module_main_conf ngx_http_get_module_loc_conf和ngx_http_get_module_ctx的区别
 //获取该条request对应的自己所处的main,例如http{}的对应模块的配置信息
 #define ngx_http_get_module_main_conf(r, module)                             \
