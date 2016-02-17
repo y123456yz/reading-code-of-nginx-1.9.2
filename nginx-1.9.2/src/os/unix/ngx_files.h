@@ -183,7 +183,7 @@ ngx_write_fd(ngx_fd_t fd, void *buf, size_t n)
 
 /* rename函数功能是给一个文件重命名，用该函数可以实现文件移动功能，把一个文件的完整路径的盘符改一下就实现了这个文件的移动 */
 //rename和mv命令差不多，只是rename支持批量修改  也就是说，mv也能用于改名，但不能实现批量处理（改名时，不支持*等符号的），而rename可以。
-//rename后文件的fd和stat信息不变
+//rename后文件的fd和stat信息不变  使用 RENAME ，原子性地对临时文件进行改名，覆盖原来的 RDB 文件。
 #define ngx_rename_file(o, n)    rename((const char *) o, (const char *) n)
 #define ngx_rename_file_n        "rename()"
 
@@ -196,6 +196,94 @@ ngx_int_t ngx_set_file_time(u_char *name, ngx_fd_t fd, time_t s);
 #define ngx_set_file_time_n      "utimes()"
 
 /*
+
+Linux stat函数讲解：
+
+表头文件:    #include <sys/stat.h>
+                      #include <unistd.h>
+定义函数:    int stat(const char *file_name, struct stat *buf);
+
+函数说明:    通过文件名filename获取文件信息，并保存在buf所指的结构体stat中
+ 返回值:     执行成功则返回0，失败返回-1，错误代码存于errno
+错误代码:
+     ENOENT         参数file_name指定的文件不存在
+    ENOTDIR        路径中的目录存在但却非真正的目录
+    ELOOP          欲打开的文件有过多符号连接问题，上限为16符号连接
+    EFAULT         参数buf为无效指针，指向无法存在的内存空间
+    EACCESS        存取文件时被拒绝
+    ENOMEM         核心内存不足
+    ENAMETOOLONG   参数file_name的路径名称太长
+#include <sys/stat.h>
+ #include <unistd.h>
+ #include <stdio.h>
+ int main() {
+     struct stat buf;
+     stat("/etc/hosts", &buf);
+     printf("/etc/hosts file size = %d\n", buf.st_size);
+ }
+ -----------------------------------------------------
+ struct stat {
+     dev_t         st_dev;       //文件的设备编号
+    ino_t         st_ino;       //节点
+    mode_t        st_mode;      //文件的类型和存取的权限
+    nlink_t       st_nlink;     //连到该文件的硬连接数目，刚建立的文件值为1
+     uid_t         st_uid;       //用户ID
+     gid_t         st_gid;       //组ID
+     dev_t         st_rdev;      //(设备类型)若此文件为设备文件，则为其设备编号
+    off_t         st_size;      //文件字节数(文件大小)
+     unsigned long st_blksize;   //块大小(文件系统的I/O 缓冲区大小)
+     unsigned long st_blocks;    //块数
+    time_t        st_atime;     //最后一次访问时间
+    time_t        st_mtime;     //最后一次修改时间
+    time_t        st_ctime;     //最后一次改变时间(指属性)
+ };
+先前所描述的st_mode 则定义了下列数种情况：
+    S_IFMT   0170000    文件类型的位遮罩
+    S_IFSOCK 0140000    scoket
+     S_IFLNK 0120000     符号连接
+    S_IFREG 0100000     一般文件
+    S_IFBLK 0060000     区块装置
+    S_IFDIR 0040000     目录
+    S_IFCHR 0020000     字符装置
+    S_IFIFO 0010000     先进先出
+    S_ISUID 04000     文件的(set user-id on execution)位
+    S_ISGID 02000     文件的(set group-id on execution)位
+    S_ISVTX 01000     文件的sticky位
+    S_IRUSR(S_IREAD) 00400     文件所有者具可读取权限
+    S_IWUSR(S_IWRITE)00200     文件所有者具可写入权限
+    S_IXUSR(S_IEXEC) 00100     文件所有者具可执行权限
+    S_IRGRP 00040             用户组具可读取权限
+    S_IWGRP 00020             用户组具可写入权限
+    S_IXGRP 00010             用户组具可执行权限
+    S_IROTH 00004             其他用户具可读取权限
+    S_IWOTH 00002             其他用户具可写入权限
+    S_IXOTH 00001             其他用户具可执行权限
+    上述的文件类型在POSIX中定义了检查这些类型的宏定义：
+    S_ISLNK (st_mode)    判断是否为符号连接
+    S_ISREG (st_mode)    是否为一般文件
+    S_ISDIR (st_mode)    是否为目录
+    S_ISCHR (st_mode)    是否为字符装置文件
+    S_ISBLK (s3e)        是否为先进先出
+    S_ISSOCK (st_mode)   是否为socket
+     若一目录具有sticky位(S_ISVTX)，则表示在此目录下的文件只能被该文件所有者、此目录所有者或root来删除或改名。
+
+使用stat函数最多的可能是ls-l命令，用其可以获得有关一个文件的所有信息。
+1 函数都是获取文件（普通文件，目录，管道，socket，字符，块（）的属性。
+函数原型
+#include <sys/stat.h>
+int stat(const char *restrict pathname, struct stat *restrict buf);
+提供文件名字，获取文件对应属性。
+int fstat(int filedes, struct stat *buf);
+通过文件描述符获取文件对应的属性。
+int lstat(const char *restrict pathname, struct stat *restrict buf);
+连接文件描述命，获取文件属性。
+
+
+
+
+
+
+
 stat系统调用系列包括了fstat、stat和lstat，它们都是用来返回“相关文件状态信息”的，三者的不同之处在于设定源文件的方式不同。
 
 我们已经学习完了struct stat和各种st_mode相关宏，现在就可以拿它们和stat系统调用相互配合工作了！

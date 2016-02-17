@@ -16,8 +16,8 @@ static ngx_int_t ngx_init_zone_pool(ngx_cycle_t *cycle,
 static ngx_int_t ngx_test_lockfile(u_char *file, ngx_log_t *log);
 static void ngx_clean_old_cycles(ngx_event_t *ev);
 
-
-volatile ngx_cycle_t  *ngx_cycle; //ngx_cycle = cycle;
+//初始化参考ngx_init_cycle，最终有一个全局类型的ngx_cycle_s，即ngx_cycle
+volatile ngx_cycle_t  *ngx_cycle; //ngx_cycle = cycle;  赋值见main->ngx_init_cycle
 ngx_array_t            ngx_old_cycles;
 
 static ngx_pool_t     *ngx_temp_pool;
@@ -83,7 +83,7 @@ static ngx_connection_t  dumb;
 ┃ngx_int_t n, ngx_int_t type)      ┃                                      ┃                                      ┃
 ┃                                  ┃    4) NGX.PROCESS JUST_RESPAWN;      ┃句柄通信机制                          ┃
 ┃                                  ┃    5) NGX_PROCESS—DETACHED.         ┃                                      ┃
-┃                                  ┃type的值将影响8.6节中ngn_process_t    ┃                                      ┃
+┃                                  ┃type的值将影响       ngn_process_t    ┃                                      ┃
 ┃                                  ┃结构体的respawn. detached. just_spawn ┃                                      ┃
 ┃                                  ┃标志位的值                            ┃                                      ┃
 ┣━━━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━┫
@@ -133,7 +133,7 @@ static ngx_connection_t  dumb;
 ┃   void ngx_process_events_         ┃  cycle是当前进程的ngx_cycle_t结  ┃  使用事件模块处理截止到现在已经收  ┃
 ┃                                    ┃                                  ┃集到的事件。该函数由事伴模块实现，  ┃
 ┃and_timers (ngx_cycle_t *cycle)     ┃构体指针                          ┃                                    ┃
-┃                                    ┃                                  ┃详见第9章                           ┃
+┃                                    ┃                                  ┃                                    ┃
 ┗━━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━━┛
 */
 

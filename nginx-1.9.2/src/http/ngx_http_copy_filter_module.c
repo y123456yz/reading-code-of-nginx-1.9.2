@@ -282,7 +282,7 @@ static ngx_http_output_body_filter_pt    ngx_http_next_body_filter;
 //in为需要发送的chain链，上面存储的是实际要发送的数据
 static ngx_int_t
 ngx_http_copy_filter(ngx_http_request_t *r, ngx_chain_t *in)
-{ //实际上在接受完后端数据后，在想客户端发送包体部分的时候，会两次调用该函数，一次是ngx_event_pipe_write_to_downstream-> p->output_filter(),
+{ //实际上在接受完后端数据后，在想客户端发送包体部分的时候，会两次调用该函数，一次是ngx_event_pipe_write_to_downstream-> p->output_filter(), 
 //另一次是ngx_http_upstream_finalize_request->ngx_http_send_special,可以参考上面的日志打印注释
     ngx_int_t                     rc;
     ngx_connection_t             *c;
@@ -363,7 +363,7 @@ ngx_http_copy_filter(ngx_http_request_t *r, ngx_chain_t *in)
     rc = ngx_output_chain(ctx, in);//aio on | thread_pool，这里肯定返回NGX_AGAIN,因为他们是由对应的epoll触发读取数据完毕，然后发送。
     //sendfile或者内存数据这里返回NGX_OK，通过后面的ngx_linux_sendfile_chain->(ngx_linux_sendfile,ngx_writev)把数据发送出去
 
-    if (ctx->in == NULL) {
+    if (ctx->in == NULL) { //ctx->in链中的数据，没发送一部分就会从ctx->in链中摘除，见ngx_output_chain，当in链中数据发送完毕，则为NULL
         r->buffered &= ~NGX_HTTP_COPY_BUFFERED;
 
     } else {//说明还有数据未发送到客户端r

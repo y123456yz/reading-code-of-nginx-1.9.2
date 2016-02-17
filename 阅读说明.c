@@ -111,3 +111,30 @@ nginx的以下功能模块的相关代码已经阅读，并对其源码及相关
     结合refer防盗链模块重新把hash走读理解注释一遍，加深理解
     重新理解前置通配符后置通配符hash存储过程
     添加lua库和lua-module 把定时器 事件机制函数相关修改添加到lua模块和redis模块
+		
+16.2.17
+	分析注释errlog_module模块，研究errlog_module和Ngx_http_core_module中error_log配置的区别，同时分析在这两个模块配置生效前的日志记录过程
+    新增ngx_log_debugall功能，用于自己添加调试代码，以免影响原有代码，减少耦合，便于新增功能代码错误排查。
+    同时配置多条error_log配置信息，每条文件名和等级不一样，也就是不同等级日志输出到不同日志文件的过程分析及注释。
+    ngx_http_log_module详细分析，以及access_log如果是常量路径和变量路径的优化处理过程。
+    NGX_HTTP_LOG_PHASE阶段ngx_http_log_module生效过程及日志记录过程细化分析注释,同时明确ngx_errlog_module和ngx_http_log_module的区别
+    进一步细化分析ngx_http_index_module代码，以及配合rewrite-phase进行内部重定向流程
+	研究分析ngx_http_autoindex_module目录浏览模块源码分析注释，同时发现只有ngx_http_index_module模块不编译到源码中的时候，
+		ngx_http_autoindex_module才会生效，如果index-module模块编译进源码，则要么进行内部重定向要么直接关闭连接，永远不会执
+		行ngx_http_autoindex_module，这里和官网描述不一致，TODO，待后面确认
+    autoindex搭建目录服务器过程源码分析流程
+    结合代码理解If-None-Match和ETag , If-Modified-Since和Last-Modified这几个头部行配合浏览器缓存生效过程,也就是决定是否(304 NOT modified)，
+        并且分析注释ngx_http_not_modified_filter_module实现过程
+    Cache-Control expire 头部行代码实现流程，详细分析expires和add_header配置，分析注释ngx_http_headers_filter_module模块
+    从新结合代码对比分析并总结几种负债均衡算法(hash  ip_hash least_conn rr)
+    结合error_pages配置，对ngx_http_special_response_handler进行分析，同时对内部重定向功能和@new_location进行分析
+
+
+	
+	
+	
+	
+改造点及可疑问题:
+        和后端服务器通过检查套接字连接状态来判断后端服务器是否down机，如果失效则连接下一个服务器。这种存在缺陷，例如如果后端服务器直接拔掉网线或者后端服务器断
+    电了，则检测套接字是判断不出来的，协议栈需要长时间过后才能判断出，如果关闭掉协议栈的keepalive可能永远检测不出，这是个严重bug。
+

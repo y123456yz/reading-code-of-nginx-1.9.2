@@ -9,7 +9,6 @@
 #define _NGX_HTTP_CACHE_H_INCLUDED_
 
 /*
-
 »º´æÉæ¼°Ïà¹Ø:
 ?http://blog.csdn.net/brainkick/article/details/8535242 
 ?http://blog.csdn.net/brainkick/article/details/8570698 
@@ -69,8 +68,8 @@ node½ÚµãÒ²»áÊÇÍ¬Ò»¸ö£¬²Î¿¼ngx_http_file_cache_lookup
 */
 
 /*
-»º´æÎÄ¼þstat×´Ì¬ÐÅÏ¢ngx_cached_open_file_sÔÚngx_expire_old_cached_files½øÐÐÊ§Ð§ÅÐ¶Ï, »º´æÎÄ¼þÄÚÈÝÐÅÏ¢(ÊµÊµÔÚÔÚµÄÎÄ¼þÐÅÏ¢)
-ngx_http_file_cache_node_tÔÚngx_http_file_cache_expire½øÐÐÊ§Ð§ÅÐ¶Ï¡£
+»º´æÎÄ¼þstat×´Ì¬ÐÅÏ¢ngx_cached_open_file_s(ngx_open_file_cache_t->rbtree(expire_queue)µÄ³ÉÔ±   )ÔÚngx_expire_old_cached_files½øÐÐÊ§Ð§ÅÐ¶Ï, 
+»º´æÎÄ¼þÄÚÈÝÐÅÏ¢(ÊµÊµÔÚÔÚµÄÎÄ¼þÐÅÏ¢)ngx_http_file_cache_node_t(ngx_http_file_cache_s->shÖÐµÄ³ÉÔ±)ÔÚngx_http_file_cache_expire½øÐÐÊ§Ð§ÅÐ¶Ï¡£
 */
 
 //¸Ã½á¹¹ÎªÊ²Ã´ÄÜ´ú±íÒ»¸ö»º´æÎÄ¼þ? ÒòÎªngx_http_file_cache_node_tÖÐµÄnode+key[]¾ÍÊÇÒ»¸ö¶ÔÓ¦µÄ»º´æÎÄ¼þµÄÄ¿Â¼f/27/46492fbf0d9d35d3753c66851e81627fÖÐµÄ46492fbf0d9d35d3753c66851e81627f£¬×¢Òâf/27¾ÍÊÇ×îÎ²²¿µÄ×Ö½Ú
@@ -162,6 +161,10 @@ struct ngx_http_cache_s {//±£´æÓÚngx_http_request_s->cache
     
     time_t                           date;
 
+    /*
+     EtagÈ·¶¨ä¯ÀÀÆ÷»º´æ£º EtagµÄÔ­ÀíÊÇ½«ÎÄ¼þ×ÊÔ´±àºÅÒ»¸öetagÖµ£¬Response¸ø·ÃÎÊÕß£¬·ÃÎÊÕßÔÙ´ÎÇëÇóÊ±£¬´ø×ÅÕâ¸öEtagÖµ£¬Óë·þÎñ¶ËËùÇëÇó
+     µÄÎÄ¼þµÄEtag¶Ô±È£¬Èç¹û²»Í¬ÁË¾ÍÖØÐÂ·¢ËÍ¼ÓÔØ£¬Èç¹ûÏàÍ¬£¬Ôò·µ»Ø304. HTTP/1.1304 Not Modified
+     */ //etagÉèÖÃ¼ûngx_http_set_etag
     ngx_str_t                        etag; //ºó¶Ë·µ»ØÍ·²¿ÐÐ "etab:xxxx"
     ngx_str_t                        vary;//ºó¶Ë·µ»ØµÄÍ·²¿ÐÐ´øÓÐvary:xxx  ¼ûngx_http_upstream_process_vary
     u_char                           variant[NGX_HTTP_CACHE_KEY_LEN];
@@ -374,6 +377,10 @@ typedef struct { //Ð´ÈëÎÄ¼þÇ°¸³ÖµµÈ¼ûngx_http_file_cache_set_header£¬¶ÁÈ¡ÎÄ¼þÖÐµ
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@Ç°ÃæµÄÄÚÈÝ
     u_short                          body_start;
     u_char                           etag_len;
+    /*
+     EtagÈ·¶¨ä¯ÀÀÆ÷»º´æ£º EtagµÄÔ­ÀíÊÇ½«ÎÄ¼þ×ÊÔ´±àºÅÒ»¸öetagÖµ£¬Response¸ø·ÃÎÊÕß£¬·ÃÎÊÕßÔÙ´ÎÇëÇóÊ±£¬´ø×ÅÕâ¸öEtagÖµ£¬Óë·þÎñ¶ËËùÇëÇó
+     µÄÎÄ¼þµÄEtag¶Ô±È£¬Èç¹û²»Í¬ÁË¾ÍÖØÐÂ·¢ËÍ¼ÓÔØ£¬Èç¹ûÏàÍ¬£¬Ôò·µ»Ø304. HTTP/1.1304 Not Modified
+     */ //etagÉèÖÃ¼ûngx_http_set_etag
     u_char                           etag[NGX_HTTP_CACHE_ETAG_LEN];
     u_char                           vary_len;
     u_char                           vary[NGX_HTTP_CACHE_VARY_LEN];
@@ -412,6 +419,11 @@ typedef struct { //ÓÃÓÚ±£´æ»º´æ½Úµã ºÍ »º´æµÄµ±Ç°×´Ì¬ (ÊÇ·ñÕýÔÚ´Ó´ÅÅÌ¼ÓÔØ¡¢µ±Ç°»
 ÖÐ´´½¨ÁÙÊ±ÎÄ¼þ£¬È»ºóÔÚngx_event_pipe_write_chain_to_temp_file°Ñ¶ÁÈ¡µÄºó¶ËÊý¾ÝÐ´ÈëÁÙÊ±ÎÄ¼þ£¬×îºóÔÚ
 ngx_http_upstream_send_response->ngx_http_upstream_process_request->ngx_http_file_cache_updateÖÐ°ÑÁÙÊ±ÎÄ¼þÄÚÈÝrename(Ïàµ±ÓÚmv)µ½proxy_cache_pathÖ¸¶¨
 µÄcacheÄ¿Â¼ÏÂÃæ
+*/
+
+/*
+»º´æÎÄ¼þstat×´Ì¬ÐÅÏ¢ngx_cached_open_file_s(ngx_open_file_cache_t->rbtree(expire_queue)µÄ³ÉÔ±   )ÔÚngx_expire_old_cached_files½øÐÐÊ§Ð§ÅÐ¶Ï, 
+»º´æÎÄ¼þÄÚÈÝÐÅÏ¢(ÊµÊµÔÚÔÚµÄÎÄ¼þÐÅÏ¢)ngx_http_file_cache_node_t(ngx_http_file_cache_s->shÖÐµÄ³ÉÔ±)ÔÚngx_http_file_cache_expire½øÐÐÊ§Ð§ÅÐ¶Ï¡£
 */
 
 /*

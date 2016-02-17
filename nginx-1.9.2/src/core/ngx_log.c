@@ -36,7 +36,7 @@ Nginx的日志模块（这里所说的日志模块是ngx_errlog_module模块，而ngx_http_log_modul
 */
 //error_log path level path路径 level打印级别，只有比level级别高的才打印  值越小优先级越高
 static ngx_command_t  ngx_errlog_commands[] = { //    error_log file [ debug | info | notice | warn | error | crit ] 
-    {ngx_string("error_log"),
+    {ngx_string("error_log"), //ngx_errlog_module中的error_log配置只能全局配置，ngx_http_core_module在http{} server{} local{}中配置
      NGX_MAIN_CONF|NGX_CONF_1MORE,
      ngx_error_log,
      0,
@@ -53,7 +53,10 @@ static ngx_core_module_t  ngx_errlog_module_ctx = {
     NULL
 };
 
-
+/*
+Nginx的日志模块（这里所说的日志模块是ngx_errlog_module模块，而ngx_http_log_module模块是用于记录HTTP请求的访问日志的，
+两者功能不同，在实现上也没有任何关系）为其他模块提供了基本的记录日志功能
+*/
 ngx_module_t  ngx_errlog_module = {
     NGX_MODULE_V1,
     &ngx_errlog_module_ctx,                /* module context */
@@ -71,11 +74,11 @@ ngx_module_t  ngx_errlog_module = {
 
 
 static ngx_log_t        ngx_log;//指向的是ngx_log_file，见ngx_log_init
-static ngx_open_file_t  ngx_log_file;//NGX_ERROR_LOG_PATH文件
+static ngx_open_file_t  ngx_log_file;//NGX_ERROR_LOG_PATH文件 ngx_log_init
 ngx_uint_t              ngx_use_stderr = 1;
 
 
-static ngx_str_t err_levels[] = {
+static ngx_str_t err_levels[] = { //对应日志级别NGX_LOG_STDERR--NGX_LOG_DEBUG，参考ngx_log_set_levels
     ngx_null_string,
     ngx_string("emerg"),
     ngx_string("alert"),
@@ -87,7 +90,7 @@ static ngx_str_t err_levels[] = {
     ngx_string("debug")
 };
 
-static const char *debug_levels[] = {
+static const char *debug_levels[] = { //对应位图NGX_LOG_DEBUG_FIRST---NGX_LOG_DEBUG_LAST  参考ngx_log_set_levels
     "debug_core", "debug_alloc", "debug_mutex", "debug_event",
     "debug_http", "debug_mail", "debug_mysql", "debug_stream"
 };
@@ -109,9 +112,7 @@ ngx_log_error宏和ngx_log_debug宏都包括参数level、log、err、fmt，下面分别解释这
     (1) level参数
     对于ngx_log_error宏来说，level表示当前这条日志的级别。它的取值范围见表4-6。
 	
-	
-第4章配置、error日志和请求上下文◇151
-表4-6 ngx_log_error日志接口level参数的取值范围
+
 ┏━━━━━━━━┳━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃    级别名称    ┃  值  ┃    意义                                                            ┃
 ┣━━━━━━━━╋━━━╋━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
@@ -716,7 +717,32 @@ ngx_log_get_file_log(ngx_log_t *head)
     return NULL;
 }
 
+/*
 
+语法:  error_log file | stderr [debug | info | notice | warn | error | crit | alert | emerg];
+ 
+默认值:  error_log logs/error.log error;
+ 
+上下文:  main, http, server, location
+ 
+配置日志。 
+第一个参数定义了存放日志的文件。 如果设置为特殊值stderr，nginx会将日志输出到标准错误输出。 
+第二个参数定义日志级别。 日志级别在上面已经按严重性由轻到重的顺序列出。 设置为某个日志级别将会使指定级别和更高级别的日志都被记录下来。 
+比如，默认级别error会使nginx记录所有error、crit、alert和emerg级别的消息。 如果省略这个参数，nginx会使用error。 
+为了使debug日志工作，需要添加--with-debug编译选项。 
+
+
+
+error_log file [ debug | info | notice | warn | error | crit ]  | [{  debug_core | debug_alloc | debug_mutex | debug_event | debug_http | debug_mail | debug_mysql } ]
+日志级别 = 错误日志级别 | 调试日志级别; 或者
+日志级别 = 错误日志级别;
+错误日志的级别: emerg, alert, crit, error, warn, notic, info, debug, 
+调试日志的级别: debug_core, debug_alloc, debug_mutex, debug_event, debug_http, debug_mail, debug_mysql,
+
+ error_log 指令的日志级别配置分为 错误日志级别和调试日志级别
+ 且 错误日志只能设置一个级别 且 错误日志必须书写在调试日志级别的前面 且 调试日志可以设置多个级别
+ 其他配置方法可能达不到你的预期. 
+*/
 static char *
 ngx_log_set_levels(ngx_conf_t *cf, ngx_log_t *log)
 {
@@ -780,18 +806,48 @@ ngx_log_set_levels(ngx_conf_t *cf, ngx_log_t *log)
     return NGX_CONF_OK;
 }
 
-
+/* 全局中配置的error_log xxx存储在ngx_cycle_s->new_log，http{}、server{}、local{}配置的error_log保存在ngx_http_core_loc_conf_t->error_log,
+   见ngx_log_set_log,如果只配置全局error_log，不配置http{}、server{}、local{}则在ngx_http_core_merge_loc_conf conf->error_log = &cf->cycle->new_log;  */ 
 static char *
 ngx_error_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
     ngx_log_t  *dummy;
 
-    dummy = &cf->cycle->new_log;
+    dummy = &cf->cycle->new_log; 
 
     return ngx_log_set_log(cf, &dummy);
 }
 
 
+
+/*
+
+语法:  error_log file | stderr [debug | info | notice | warn | error | crit | alert | emerg];
+ 
+默认值:  error_log logs/error.log error;
+ 
+上下文:  main, http, server, location
+ 
+配置日志。 
+第一个参数定义了存放日志的文件。 如果设置为特殊值stderr，nginx会将日志输出到标准错误输出。 
+第二个参数定义日志级别。 日志级别在上面已经按严重性由轻到重的顺序列出。 设置为某个日志级别将会使指定级别和更高级别的日志都被记录下来。 
+比如，默认级别error会使nginx记录所有error、crit、alert和emerg级别的消息。 如果省略这个参数，nginx会使用error。 
+为了使debug日志工作，需要添加--with-debug编译选项。 
+
+
+
+error_log file [ debug | info | notice | warn | error | crit ]  | [{  debug_core | debug_alloc | debug_mutex | debug_event | debug_http | debug_mail | debug_mysql } ]
+日志级别 = 错误日志级别 | 调试日志级别; 或者
+日志级别 = 错误日志级别;
+错误日志的级别: emerg, alert, crit, error, warn, notic, info, debug, 
+调试日志的级别: debug_core, debug_alloc, debug_mutex, debug_event, debug_http, debug_mail, debug_mysql,
+
+ error_log 指令的日志级别配置分为 错误日志级别和调试日志级别
+ 且 错误日志只能设置一个级别 且 错误日志必须书写在调试日志级别的前面 且 调试日志可以设置多个级别
+ 其他配置方法可能达不到你的预期. 
+*/  /* 全局中配置的error_log xxx存储在ngx_cycle_s->new_log，http{}、server{}、local{}配置的error_log保存在ngx_http_core_loc_conf_t->error_log,
+    见ngx_log_set_log,如果只配置全局error_log，不配置http{}、server{}、local{}则在ngx_http_core_merge_loc_conf conf->error_log = &cf->cycle->new_log;  */
+    
 char *
 ngx_log_set_log(ngx_conf_t *cf, ngx_log_t **head)
 {

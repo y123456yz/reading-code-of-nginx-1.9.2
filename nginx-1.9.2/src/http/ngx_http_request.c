@@ -116,6 +116,15 @@ ngx_http_header_t  ngx_http_headers_in[] = {
                  offsetof(ngx_http_headers_in_t, content_type),
                  ngx_http_process_header_line },
 
+/*
+实现断点续传功能的下载 
+
+一. 两个必要响应头Accept-Ranges、ETag
+        客户端每次提交下载请求时，服务端都要添加这两个响应头，以保证客户端和服务端将此下载识别为可以断点续传的下载：
+Accept-Ranges：告知下载客户端这是一个可以恢复续传的下载，存放本次下载的开始字节位置、文件的字节大小；
+ETag：保存文件的唯一标识（我在用的文件名+文件最后修改时间，以便续传请求时对文件进行验证）；
+参考http://www.cnblogs.com/diyunpeng/archive/2011/12/29/2305702.html
+*/
     { ngx_string("Range"), offsetof(ngx_http_headers_in_t, range),
                  ngx_http_process_header_line },
 
@@ -4020,7 +4029,7 @@ ngx_http_free_request(ngx_http_request_t *r, ngx_int_t rc) //释放request的相关资
     在11个ngx_http_phases阶段中，最后一个阶段叫做NGX_HTTP_LOG_PHASE，它是用来记录客户端的访问日志的。在这一步骤中，将会依次
     调用NGX_HTTP_LOG_PHASE阶段的所有回调方法记录日志。官方的ngx_http_log_module模块就是在这里记录access_log的。
      */
-    ngx_http_log_request(r); //打印http log handler
+    ngx_http_log_request(r); //打印http log handler  接入按照access_format格式日志写入接入日志文件
 
     log->action = "closing request";
 

@@ -193,7 +193,7 @@ ngx_open_cached_file(ngx_open_file_cache_t *cache, ngx_str_t *name,
         }
 
         ////获取name文件的相关ngx_open_file_info_t信息,也就是获取文件属性信息
-        rc = ngx_open_and_stat_file(name, of, pool->log);
+        rc = ngx_open_and_stat_file(name, of, pool->log); //重新通过stat函数获取stat信息
 
         if (rc == NGX_OK && !of->is_dir) {
             cln->handler = ngx_pool_cleanup_file;
@@ -258,7 +258,7 @@ ngx_open_cached_file(ngx_open_file_cache_t *cache, ngx_str_t *name,
             ))
         {
             if (file->err == 0) {
-                //没问题就直接到found标记做找到的操作了
+                //没问题就直接到found标记做找到的操作了   直接从缓存中拷贝过来
 
                 of->fd = file->fd;
                 of->uniq = file->uniq;
@@ -884,7 +884,7 @@ ngx_file_info_wrapper(ngx_str_t *name, ngx_open_file_info_t *of,
 }
 
 //获取name文件的相关ngx_open_file_info_t信息，也就是主要获取文件属性stat信息。如果没有该文件存在，则会返回NGX_ERROR
-static ngx_int_t
+static ngx_int_t //重新通过stat函数获取文件stat信息
 ngx_open_and_stat_file(ngx_str_t *name, ngx_open_file_info_t *of,
     ngx_log_t *log)
 {
@@ -1156,10 +1156,9 @@ ngx_open_file_del_event(ngx_cached_open_file_t *file)
 }
 
 /*
-缓存文件stat状态信息ngx_cached_open_file_s在ngx_expire_old_cached_files进行失效判断, 缓存文件内容信息(实实在在的文件信息)
-ngx_http_file_cache_node_t在ngx_http_file_cache_expire进行失效判断。
+缓存文件stat状态信息ngx_cached_open_file_s(ngx_open_file_cache_t->rbtree(expire_queue)的成员   )在ngx_expire_old_cached_files进行失效判断, 
+缓存文件内容信息(实实在在的文件信息)ngx_http_file_cache_node_t(ngx_http_file_cache_s->sh中的成员)在ngx_http_file_cache_expire进行失效判断。
 */
-
 
 //删除红黑树和过期队列中过期的文件
 

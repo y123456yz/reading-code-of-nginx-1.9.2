@@ -43,7 +43,7 @@
 //stderr (0)>= emerg(1) >= alert(2) >= crit(3) >= err(4)>= warn(5) >= notice(6) >= info(7) >= debug(8) 
 //debug级别最低，stderr级别最高；圆括号中的数据是对应日志等级的值。
 //log->log_level中的低4位取值为NGX_LOG_STDERR等  5-12位取值为位图，表示对应模块的日志   另外NGX_LOG_DEBUG_CONNECTION NGX_LOG_DEBUG_ALL对应connect日志和所有日志
-//下面这些通过ngx_log_error输出
+//下面这些通过ngx_log_error输出  对应err_levels[]参考ngx_log_set_levels
 #define NGX_LOG_STDERR            0
 #define NGX_LOG_EMERG             1
 #define NGX_LOG_ALERT             2
@@ -82,7 +82,7 @@ DEBUG HTTP，这时如果109参数不属于HTTP模块，如使周了event事件模块的log，则
 */ //下面这些是通过与操作判断是否需要打印，可以参考ngx_log_debug7
 //log->log_level中的低4位取值为NGX_LOG_STDERR等  5-12位取值为位图，表示对应模块的日志   另外NGX_LOG_DEBUG_CONNECTION NGX_LOG_DEBUG_ALL对应connect日志和所有日志
 //如果通过加参数debug_http则会打开NGX_LOG_DEBUG_HTTP开关，见debug_levels  ngx_log_set_levels,如果打开下面开关中的一个，则NGX_LOG_STDERR到NGX_LOG_DEBUG会全部打开，因为log_level很大
-//下面这些通过ngx_log_debug0 -- ngx_log_debug8输出
+//下面这些通过ngx_log_debug0 -- ngx_log_debug8输出  对应debug_levels[] 参考ngx_log_set_levels
 #define NGX_LOG_DEBUG_CORE        0x010
 #define NGX_LOG_DEBUG_ALLOC       0x020
 #define NGX_LOG_DEBUG_MUTEX       0x040
@@ -143,7 +143,7 @@ struct ngx_log_s {
     ”+action，以此表示当前日志是在进行什么操作，帮助定位问题
     */
     char                *action;
-
+    //ngx_log_insert插入，在ngx_log_error_core找到对应级别的日志配置进行输出，因为可以配置error_log不同级别的日志存储在不同的日志文件中
     ngx_log_t           *next;
 };
 

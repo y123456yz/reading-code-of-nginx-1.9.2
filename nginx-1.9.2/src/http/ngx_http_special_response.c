@@ -361,10 +361,15 @@ static ngx_str_t ngx_http_error_pages[] = {
 
 static ngx_str_t  ngx_http_get_name = { 3, (u_char *) "GET " };
 
-
+/*
+当状态码为rc >= NGX_HTTP_SPECIAL_RESPONSE
+        || rc == NGX_HTTP_CREATED
+        || rc == NGX_HTTP_NO_CONTENT
+会调用该函数进行处理
+*/
 ngx_int_t
 ngx_http_special_response_handler(ngx_http_request_t *r, ngx_int_t error)
-{
+{ 
     ngx_uint_t                 i, err;
     ngx_http_err_page_t       *err_page;
     ngx_http_core_loc_conf_t  *clcf;
@@ -412,7 +417,7 @@ ngx_http_special_response_handler(ngx_http_request_t *r, ngx_int_t error)
         err_page = clcf->error_pages->elts;
 
         for (i = 0; i < clcf->error_pages->nelts; i++) {
-            if (err_page[i].status == error) {
+            if (err_page[i].status == error) { //按照error_pages配置，发送ngx_http_error_pages对应状态码的内容
                 return ngx_http_send_error_page(r, &err_page[i]);
             }
         }
@@ -530,10 +535,9 @@ ngx_http_clean_header(ngx_http_request_t *r)
     r->headers_out.last_modified_time = -1;
 }
 
-
 static ngx_int_t
 ngx_http_send_error_page(ngx_http_request_t *r, ngx_http_err_page_t *err_page)
-{
+{//结合ngx_http_core_error_page阅读，根据error_pages配置来确定是从定向还是直接发送ngx_http_error_pages中的对应内容给客户端浏览器
     ngx_int_t                  overwrite;
     ngx_str_t                  uri, args;
     ngx_table_elt_t           *location;
@@ -553,7 +557,7 @@ ngx_http_send_error_page(ngx_http_request_t *r, ngx_http_err_page_t *err_page)
         return NGX_ERROR;
     }
 
-    if (uri.len && uri.data[0] == '/') {
+    if (uri.len && uri.data[0] == '/') { //带有新的重定向地址/XXX,则进行重定向 
 
         if (err_page->value.lengths) {
             ngx_http_split_args(r, &uri, &args);
@@ -570,7 +574,7 @@ ngx_http_send_error_page(ngx_http_request_t *r, ngx_http_err_page_t *err_page)
         return ngx_http_internal_redirect(r, &uri, &args);
     }
 
-    if (uri.len && uri.data[0] == '@') {
+    if (uri.len && uri.data[0] == '@') { //重新定位新的location
         return ngx_http_named_location(r, &uri);
     }
 
@@ -602,12 +606,13 @@ ngx_http_send_error_page(ngx_http_request_t *r, ngx_http_err_page_t *err_page)
         return ngx_http_send_refresh(r);
     }
 
+    //直接发送ngx_http_error_pages中对应的状态码中的内容
     return ngx_http_send_special_response(r, clcf, r->err_status
                                                    - NGX_HTTP_MOVED_PERMANENTLY
                                                    + NGX_HTTP_OFF_3XX);
 }
 
-
+//error_pages内容是从ngx_http_error_pages中取的
 static ngx_int_t
 ngx_http_send_special_response(ngx_http_request_t *r,
     ngx_http_core_loc_conf_t *clcf, ngx_uint_t err)

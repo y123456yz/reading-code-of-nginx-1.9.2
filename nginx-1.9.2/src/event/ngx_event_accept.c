@@ -20,7 +20,7 @@ static void ngx_close_accepted_connection(ngx_connection_t *c);
     下面简单介绍一下它的流程，如图9-6所示。
     下面对流程中的7个步骤进行说明。
     1)首先调用accept方法试图建立新连接，如果没有准备好的新连接事件，ngx_event_accept方法会直接返回。
-    2)设置负载均衡阈值ngx_accept_disabled，这个阈值是进程允许的总连接数的1/8减去空闲连接数，它的具体用法参见9.8.3节。
+    2)设置负载均衡阈值ngx_accept_disabled，这个阈值是进程允许的总连接数的1/8减去空闲连接数，
     3)调用ngx_get_connection方法由连接池中获取一个ngx_connection_t连接对象。
     4)为ngx_connection_t中的pool指针建立内存池。在这个连接释放到空闲连接池时，释放pool内存池。
     5)设置套接字的属性，如设为非阻塞套接字。

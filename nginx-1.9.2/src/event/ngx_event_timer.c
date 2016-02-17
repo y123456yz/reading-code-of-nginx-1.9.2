@@ -62,7 +62,7 @@ static ngx_rbtree_node_t  ngx_event_timer_sentinel;
  * it should not be a problem, because we use the rbtree to find
  * a minimum timer value only
  */
-//初始化红黑树实现的定时器。关于定时器的实现细节可参见9.6节。
+//初始化红黑树实现的定时器。
 ngx_int_t
 ngx_event_timer_init(ngx_log_t *log)
 {

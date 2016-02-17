@@ -416,7 +416,7 @@ typedef struct { //·şÎñÆ÷ºó¶ËÓ¦´ğ»ØÀ´µÄÍ·²¿ĞÅÏ¢
      ¼°Æäº¬Òå£¬²¢ÔÚHTTPÏìÓ¦Í·ÖĞ½«Æä´«ËÍµ½¿Í»§¶Ë£¬ÒÔÏÂÊÇ·şÎñÆ÷¶Ë·µ»ØµÄ¸ñÊ½£ºETag:"50b1c1d4f775c61:df3"¿Í»§¶ËµÄ²éÑ¯¸üĞÂ¸ñÊ½ÊÇÕâÑù
      µÄ£ºIf-None-Match : W / "50b1c1d4f775c61:df3"Èç¹ûETagÃ»¸Ä±ä£¬Ôò·µ»Ø×´Ì¬304È»ºó²»·µ»Ø£¬ÕâÒ²ºÍLast-ModifiedÒ»Ñù¡£²âÊÔEtagÖ÷Òª
      ÔÚ¶ÏµãÏÂÔØÊ±±È½ÏÓĞÓÃ¡£ "etag:XXX" ETagÖµµÄ±ä¸üËµÃ÷×ÊÔ´×´Ì¬ÒÑ¾­±»ĞŞ¸Ä
-     */
+     */ //etagÉèÖÃ¼ûngx_http_set_etag
     ngx_table_elt_t                 *etag; //"etag:XXX" ETagÖµµÄ±ä¸üËµÃ÷×ÊÔ´×´Ì¬ÒÑ¾­±»ĞŞ¸Ä
     ngx_table_elt_t                 *x_accel_expires;
     //Èç¹ûÍ·²¿ÖĞÊ¹ÓÃÁËX-Accel-RedirectÌØĞÔ£¬Ò²¾ÍÊÇÏÂÔØÎÄ¼şµÄÌØĞÔ£¬ÔòÔÚÕâÀï½øĞĞÎÄ¼şÏÂÔØ¡££¬ÖØ¶¨Ïò¡£
@@ -484,7 +484,7 @@ upstream»á×ª·¢ÏìÓ¦°üÌå¡£µ±ngx_http_upstream_conf tÅäÖÃ½á¹¹ÌåÖĞµÄbuffering±êÖ¾Î»Î
     ×¢Òâ  ÉÏÊöµÄ8¸ö»Øµ÷·½·¨ÖĞ£¬Ö»ÓĞcreate_request¡¢process_header¡¢finalize_request
 ÊÇ±ØĞëÊµÏÖµÄ£¬ÆäÓà5¸ö»Øµ÷·½·¨-input_filter init¡¢input_filter¡¢reinit_request¡¢abort
 request¡¢rewrite redirectÊÇ¿ÉÑ¡µÄ¡£µÚ12ÕÂ»áÏêÏ¸½éÉÜÈçºÎÊ¹ÓÃÕâ5¸ö¿ÉÑ¡µÄ»Øµ÷·½·¨¡£Áí
-Íâ£¬Õâ8¸ö·½·¨µÄ»Øµ÷³¡¾°¼û5.2½Ú¡£
+Íâ£¬
 */
 
 /*
@@ -636,18 +636,16 @@ Ngx_http_proxy_module.c (src\http\modules):    u->create_key = ngx_http_proxy_cr
     /*
     create_request»Øµ÷·½·¨
     create_requestµÄ»Øµ÷³¡¾°×î¼òµ¥£¬¼´ËüÖ»¿ÉÄÜ±»µ÷ÓÃ1´Î£¨Èç¹û²»ÆôÓÃupstreamµÄ
-Ê§°ÜÖØÊÔ»úÖÆµÄ»°¡£Ïê¼ûµÚ12ÕÂ£©£¬ÈçÍ¼5-3ËùÊ¾¡£ÏÂÃæ¼òµ¥µØ½éÉÜÒ»ÏÂÍ¼5-3ÖĞµÄÃ¿Ò»
-¸ö²½Öè£º
-    1)ÔÚNginxÖ÷Ñ­»·£¨ÕâÀïµÄÖ÷Ñ­»·ÊÇÖ¸8.5½ÚÌáµ½µÄngx_worker_process_cycle·½·¨£©ÖĞ£¬»á¶¨ÆÚµØµ÷ÓÃÊÂ¼şÄ£¿é£¬ÒÔ¼ì²éÊÇ·ñÓĞÍøÂçÊÂ¼ş·¢Éú¡£
+Ê§°ÜÖØÊÔ»úÖÆµÄ»°£©£º
+    1)ÔÚNginxÖ÷Ñ­»·£¨ÕâÀïµÄÖ÷Ñ­»·ÊÇÖ¸ngx_worker_process_cycle·½·¨£©ÖĞ£¬»á¶¨ÆÚµØµ÷ÓÃÊÂ¼şÄ£¿é£¬ÒÔ¼ì²éÊÇ·ñÓĞÍøÂçÊÂ¼ş·¢Éú¡£
     2)ÊÂ¼şÄ£¿éÔÚ½ÓÊÕµ½HTTPÇëÇóºó»áµ÷ÓÃHTIP¿ò¼ÜÀ´´¦Àí¡£¼ÙÉè½ÓÊÕ¡¢½âÎöÍêHTTPÍ·²¿ºó·¢ÏÖÓ¦¸ÃÓÉmytestÄ£¿é´¦Àí£¬ÕâÊ±»áµ÷ÓÃmytestÄ£
     ¿éµÄngx_http_mytest_handlerÀ´´¦Àí¡£
-    3)ÕâÀïmytestÄ£¿é´ËÊ±»áÍê³É5.1.2½Ú¡«5.1.4½ÚÖĞËùÁĞ³öµÄ²½Öè¡£
     4)µ÷ÓÃngx_http_up stream_init·½·¨Æô¶¯upstream¡£
     5) upstreamÄ£¿é»áÈ¥¼ì²éÎÄ¼ş»º´æ£¬Èç¹û»º´æÖĞÒÑ¾­ÓĞºÏÊÊµÄÏìÓ¦°ü£¬Ôò»áÖ±½Ó·µ»Ø»º´æ£¨µ±È»±ØĞëÊÇÔÚÊ¹ÓÃ·´Ïò´úÀíÎÄ¼ş»º´æµÄÇ°ÌáÏÂ£©¡£
     ÎªÁËÈÃ¶ÁÕß·½±ãµØÀí½âupstream»úÖÆ£¬±¾ÕÂ½«²»ÔÙÌá¼°ÎÄ¼ş»º´æ¡£
     6)»Øµ÷mytestÄ£¿éÒÑ¾­ÊµÏÖµÄcreate_request»Øµ÷·½·¨¡£
     7) mytestÄ£¿éÍ¨¹ıÉèÖÃr->upstream->request_bufsÒÑ¾­¾ö¶¨ºÃ·¢ËÍÊ²Ã´ÑùµÄÇëÇóµ½ÉÏÓÎ·şÎñÆ÷¡£
-    8) upstreamÄ£¿é½«»á¼ì²é5.1.3½ÚÖĞ½éÉÜ¹ıµÄresolved³ÉÔ±£¬Èç¹ûÓĞresolved³ÉÔ±µÄ»°£¬¾Í¸ù¾İËüÉèÖÃºÃÉÏÓÎ·şÎñÆ÷µÄµØÖ·r->upstream->peer³ÉÔ±¡£
+    8) upstreamÄ£¿é½«»á¼ì²éresolved³ÉÔ±£¬Èç¹ûÓĞresolved³ÉÔ±µÄ»°£¬¾Í¸ù¾İËüÉèÖÃºÃÉÏÓÎ·şÎñÆ÷µÄµØÖ·r->upstream->peer³ÉÔ±¡£
     9)ÓÃÎŞ×èÈûµÄTCPÌ×½Ó×Ö½¨Á¢Á¬½Ó¡£
     10)ÎŞÂÛÁ¬½ÓÊÇ·ñ½¨Á¢³É¹¦£¬¸ºÔğ½¨Á¢Á¬½ÓµÄconnect·½·¨¶¼»áÁ¢¿Ì·µ»Ø¡£
     II) ngx_http_upstreamL init·µ»Ø¡£
@@ -765,7 +763,7 @@ ngx_http_upstream_process_headers·½·¨½«»á×îÖÕµ÷ÓÃrewrite¡ªredirect·½·¨
    /*Èç¹ûCache-Control²ÎÊıÖµÎªno-cache¡¢no-store¡¢privateÖĞÈÎÒâÒ»¸öÊ±£¬Ôò²»»º´æ...²»»º´æ...  ºó¶ËĞ¯´øÓĞ"x_accel_expires:0"Í·  ²Î¿¼http://blog.csdn.net/clh604/article/details/9064641
     ²¿ĞĞÒ²¿ÉÄÜÖÃ0£¬²Î¿¼ngx_http_upstream_process_accel_expires£¬²»¹ı¿ÉÒÔÍ¨¹ıfastcgi_ignore_headersºöÂÔÕâĞ©Í·²¿£¬´Ó¶ø¿ÉÒÔ¼ÌĞø»º´æ*/ 
     //´ËÍâ£¬Èç¹ûÃ»ÓĞÊ¹ÓÃfastcgi_cache_valid proxy_cache_valid ÉèÖÃÉúĞ§Ê±¼ä£¬ÔòÄ¬ÈÏ»á°ÑcacheableÖÃ0£¬¼ûngx_http_upstream_send_response
-    unsigned                         cacheable:1; //ÊÇ·ñÆôÓÃÎÄ¼ş»º´æ£¬±¾ÕÂ½öÌÖÂÛcacheable±êÖ¾×¡ÎªoµÄ³¡¾° ²Î¿¼http://blog.csdn.net/clh604/article/details/9064641
+    unsigned                         cacheable:1; //ÊÇ·ñÆôÓÃÎÄ¼ş»º´æ ²Î¿¼http://blog.csdn.net/clh604/article/details/9064641
     unsigned                         accel:1;
     unsigned                         ssl:1; //ÊÇ·ñ»ùÓÚSSLĞ­Òé·ÃÎÊÉÏÓÎ·şÎñÆ÷
 #if (NGX_HTTP_CACHE)

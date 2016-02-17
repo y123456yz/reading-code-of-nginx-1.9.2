@@ -1271,7 +1271,7 @@ off：表示忽略用户请求中的If-Modified-Since头部。这时，如果获取一个文件，那么会正
 exact：将If-Modified-Since头部包含的时间与将要返回的文件上次修改的时间做精确比较，如果没有匹配上，则返回200和文件的实际内容，如果匹配上，
 则表示浏览器缓存的文件内容已经是最新的了，没有必要再返回文件从而浪费时间与带宽了，这时会返回304 Not Modified，浏览器收到后会直接读取自己的本地缓存。
 before：是比exact更宽松的比较。只要文件的上次修改时间等于或者早于用户请求中的If-Modified-Since头部的时间，就会向客户端返回304 Not Modified。
-*/
+*/ //生效见ngx_http_test_if_modified
     { ngx_string("if_modified_since"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_enum_slot,
@@ -1293,6 +1293,7 @@ before：是比exact更宽松的比较。只要文件的上次修改时间等于或者早于用户请求中的If-
       offsetof(ngx_http_core_loc_conf_t, chunked_transfer_encoding),
       NULL },
 
+    //生效见ngx_http_set_etag
     { ngx_string("etag"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
       ngx_conf_set_flag_slot,
@@ -1328,7 +1329,7 @@ before：是比exact更宽松的比较。只要文件的上次修改时间等于或者早于用户请求中的If-
     )
     
     这样，返回404的请求会被反向代理到http://backend上游服务器中处理
-    */ //try_files和error_page都有重定向功能
+    */ //try_files和error_page都有重定向功能  //error_page错误码必须must be between 300 and 599，并且不能为499，见ngx_http_core_error_page
     { ngx_string("error_page"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_HTTP_LIF_CONF
                         |NGX_CONF_2MORE,
@@ -1371,7 +1372,7 @@ before：是比exact更宽松的比较。只要文件的上次修改时间等于或者早于用户请求中的If-
       NULL },
     
 //    error_log file [ debug | info | notice | warn | error | crit ] 
-    { ngx_string("error_log"),
+    { ngx_string("error_log"), //ngx_errlog_module中的error_log配置只能全局配置，ngx_http_core_module在http{} server{} local{}中配置
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_1MORE,
       ngx_http_core_error_log,
       NGX_HTTP_LOC_CONF_OFFSET,
@@ -1704,7 +1705,7 @@ ngx_http_handler(ngx_http_request_t *r)
                               || r->headers_in.chunked); 
         /*
        当internal标志位为0时，表示不需要重定向（如刚开始处理请求时），将phase_handler序号置为0，意味着从ngx_http_phase_engine_t指定数组
-       的第一个回调方法开始执行（参见10.6节，了解ngx_http_phase_engine_t是如何将各HTTP模块的回调方法构造成handlers数组的）。
+       的第一个回调方法开始执行（了解ngx_http_phase_engine_t是如何将各HTTP模块的回调方法构造成handlers数组的）。
           */
         r->phase_handler = 0;
 
@@ -3118,16 +3119,16 @@ ngx_http_set_exten(ngx_http_request_t *r)
  及其含义，并在HTTP响应头中将其传送到客户端，以下是服务器端返回的格式：ETag:"50b1c1d4f775c61:df3"客户端的查询更新格式是这样
  的：If-None-Match : W / "50b1c1d4f775c61:df3"如果ETag没改变，则返回状态304然后不返回，这也和Last-Modified一样。测试Etag主要
  在断点下载时比较有用。 "etag:XXX" ETag值的变更说明资源状态已经被修改
- */
+ */ //设置etag头部行 ，如果客户端在第一次请求文件和第二次请求文件这段时间，文件修改了，则etag就变了
 ngx_int_t
-ngx_http_set_etag(ngx_http_request_t *r)
-{
+ngx_http_set_etag(ngx_http_request_t *r) //ngx_http_test_if_match验证客户端过来的etag, ngx_http_set_etag设置最新etag
+{ //即使是下载一个超大文件，整体也只会调用该接口一次，针对一个文件调用一次，不会说因为大文件要多次发送还会调用这里，因此一个文件只要没修过，起etag始终是不变的
     ngx_table_elt_t           *etag;
     ngx_http_core_loc_conf_t  *clcf;
 
     clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
 
-    if (!clcf->etag) {
+    if (!clcf->etag) { //其他是etag on配置，默认是1
         return NGX_OK;
     }
 
@@ -3197,7 +3198,7 @@ ngx_http_weak_etag(ngx_http_request_t *r)
 
 
 ngx_int_t
-ngx_http_send_response(ngx_http_request_t *r, ngx_uint_t status,
+ngx_http_send_response(ngx_http_request_t *r, ngx_uint_t status,   //status真正发送给客户端的头部行组包生效在ngx_http_status_lines
     ngx_str_t *ct, ngx_http_complex_value_t *cv)
 {
     ngx_int_t     rc;
@@ -3278,7 +3279,7 @@ ngx_http_send_response(ngx_http_request_t *r, ngx_uint_t status,
 
 下面看一下HTTP框架提供的发送HTTP头部的方法，如下所示。
 
-在向headers链表中添加自定义的HTTP头部时，可以参考3.2.3节中ngx_list_push的使用方法。这里有一个简单的例子，如下所示。
+在向headers链表中添加自定义的HTTP头部时，可以参考ngx_list_push的使用方法。这里有一个简单的例子，如下所示。
 ngx_table_elt_t* h = ngx_list_push(&r->headers_out.headers);
 if (h == NULL) {
  return NGX_ERROR;
@@ -3387,7 +3388,7 @@ ngx_http_output_filter(ngx_http_request_t *r, ngx_chain_t *in)
     return rc;
 }
 
-//把uri拷贝到根目录后面
+//把uri拷贝到根目录root配置或者alias后面
 u_char *
 ngx_http_map_uri_to_path(ngx_http_request_t *r, ngx_str_t *path,
     size_t *root_length, size_t reserved)
@@ -3847,7 +3848,7 @@ ngx_http_request_t *r是当前的请求，也就是父请求。
 般，我们先建立一个子请求的空指针ngx_http_request_t *psr，再把它的地址&psr传人到ngx_
 http_subrequest方法中，如果ngx_http_subrequest返回成功，psr就指向建立好的子请求。
     (5)  ngx_http_post_subrequest_t *ps
-    这里传人5.4.2节中创建的ngx_http_post_subrequest_t结构体地址，它指出子请求结束
+    这里传却唇ǖ膎gx_http_post_subrequest_t结构体地址，它指出子请求结束
 时必须回调的处理方法。
     (6) ngx_uint_t flags
     flag的取值范围包括：①0。在没有特殊需求的情况下都应该填写它；②NGX—HTTP一
@@ -4112,9 +4113,9 @@ ngx_http_internal_redirect(ngx_http_request_t *r,
 {
     ngx_http_core_srv_conf_t  *cscf;
 
-    r->uri_changes--;
+    r->uri_changes--; //重定向次数减1，如果到0了，说明这么多次重定向已经结束，直接返回
 
-    if (r->uri_changes == 0) {
+    if (r->uri_changes == 0) {//初始设置为NGX_HTTP_MAX_URI_CHANGES，即最多重定向10此，这是为了避免循环重定向的问题。
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                       "rewrite or internal redirection cycle "
                       "while internally redirecting to \"%V\"", uri);
@@ -4155,7 +4156,7 @@ ngx_http_internal_redirect(ngx_http_request_t *r,
     r->add_uri_to_alias = 0;
     r->main->count++;
 
-    ngx_http_handler(r);
+    ngx_http_handler(r); //进行内部重定向过程
 
     return NGX_DONE;
 }
@@ -6917,10 +6918,38 @@ ngx_http_core_directio(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_OK;
 }
 
+/*
+根据HTTP返回码重定向页面
+语法：error_page code [ code... ] [ = | =answer-code ] uri | @named_location
+配置块：http、server、location、if 
 
-static char *
+当对于某个请求返回错误码时，如果匹配上了error_page中设置的code，则重定向到新的URI中。例如：
+error_page   404          /404.html;
+error_page   502 503 504  /50x.html;
+error_page   403          http://example.com/forbidden.html;
+error_page   404          = @fetch;
+
+注意，虽然重定向了URI，但返回的HTTP错误码还是与原来的相同。用户可以通过“=”来更改返回的错误码，例如：
+error_page 404 =200 /empty.gif;
+error_page 404 =403 /forbidden.gif;
+
+也可以不指定确切的返回错误码，而是由重定向后实际处理的真实结果来决定，这时，只要把“=”后面的错误码去掉即可，例如：
+error_page 404 = /empty.gif;
+
+如果不想修改URI，只是想让这样的请求重定向到另一个location中进行处理，那么可以这样设置：
+location / (
+    error_page 404 @fallback;
+)
+ 
+location @fallback (
+    proxy_pass http://backend;
+)
+
+这样，返回404的请求会被反向代理到http://backend上游服务器中处理
+*/  //(error_pages内容是从ngx_http_error_pages中取的)
+static char * //clcf->error_pages赋值参考ngx_http_core_error_page    生效见ngx_http_send_error_page
 ngx_http_core_error_page(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
-{
+{ //(error_pages内容是从ngx_http_error_pages中取的)
     ngx_http_core_loc_conf_t *clcf = conf;
 
     u_char                            *p;
@@ -6950,8 +6979,10 @@ ngx_http_core_error_page(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             return NGX_CONF_ERROR;
         }
 
-        if (value[i].len > 1) {
-            overwrite = ngx_atoi(&value[i].data[1], value[i].len - 1);
+        //=后面如果跟新的返回码，则必须紧跟=后面
+        if (value[i].len > 1) {//error_page 404 =200 /empty.gif;，表示以200作为新的返回码，用户可以通过“=”来更改返回的错误码
+            //error_page 404 =200 /empty.gif;
+            overwrite = ngx_atoi(&value[i].data[1], value[i].len - 1); //获取新的返回码
 
             if (overwrite == NGX_ERROR) {
                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
@@ -6959,14 +6990,14 @@ ngx_http_core_error_page(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
                 return NGX_CONF_ERROR;
             }
 
-        } else {
+        } else {//error_page 404 = /empty.gif; 表示返回码由重定向后实际处理的真实结果来决定，这时，只要把“=”后面没有返回码号
             overwrite = 0;
         }
 
         n = 2;
 
     } else {
-        overwrite = -1;
+        overwrite = -1; //没有=，就是以error_page   404          /404.html;中的404作为返回码
         n = 1;
     }
 
@@ -6996,7 +7027,8 @@ ngx_http_core_error_page(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
     }
 
-    for (i = 1; i < cf->args->nelts - n; i++) {
+    //解析error_page 401 404 =200 /empty.gif;中的401 402
+    for (i = 1; i < cf->args->nelts - n; i++) { //error_page错误码必须must be between 300 and 599，并且不能为499
         err = ngx_array_push(clcf->error_pages);
         if (err == NULL) {
             return NGX_CONF_ERROR;
@@ -7120,6 +7152,14 @@ ngx_http_core_try_files(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_OK;
 }
 
+
+/*
+nginx有两个指令是管理缓存文件描述符的:一个就是本文中说到的ngx_http_log_module模块的open_file_log_cache配置;存储在ngx_http_log_loc_conf_t->open_file_cache 
+另一个是ngx_http_core_module模块的 open_file_cache配置，存储在ngx_http_core_loc_conf_t->open_file_cache;前者是只用来管理access变量日志文件。
+后者用来管理的就多了，包括：static，index，tryfiles，gzip，mp4，flv，都是静态文件哦!
+这两个指令的handler都调用了函数 ngx_open_file_cache_init ，这就是用来管理缓存文件描述符的第一步：初始化
+*/
+
 //open_file_cache max=1000 inactive=20s; 执行该函数
 static char *
 ngx_http_core_open_file_cache(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
@@ -7191,14 +7231,16 @@ ngx_http_core_open_file_cache(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     }
 
     clcf->open_file_cache = ngx_open_file_cache_init(cf->pool, max, inactive);
-    if (clcf->open_file_cache) {
+    if (clcf->open_file_cache) {  
         return NGX_CONF_OK;
     }
 
     return NGX_CONF_ERROR;
 }
 
-
+/* 全局中配置的error_log xxx存储在ngx_cycle_s->new_log，http{}、server{}、local{}配置的error_log保存在ngx_http_core_loc_conf_t->error_log,
+   见ngx_log_set_log,如果只配置全局error_log，不配置http{}、server{}、local{}则在ngx_http_core_merge_loc_conf conf->error_log = &cf->cycle->new_log;  */
+  
 static char *
 ngx_http_core_error_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {

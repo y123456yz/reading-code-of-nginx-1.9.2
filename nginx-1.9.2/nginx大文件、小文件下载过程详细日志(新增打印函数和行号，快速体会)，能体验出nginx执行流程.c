@@ -1092,7 +1092,7 @@ root@root:/usr/local/nginx/logs#
 
 
 
-//如果是aio on | thread_pool方式，则会两次执行该函数，并且所有参数机会一样，参考上面日志。大文件下载和下文件获取过程机会一样，只是
+//如果是aio on | thread_pool方式，则会两次执行该函数，并且所有参数机会一样，参考上面日志。大文件下载和下文件获取过程几乎一样，只是
 //在ngx_http_writer后面有判断是否写完成，通过r->buffered是否为0来区分
 
 

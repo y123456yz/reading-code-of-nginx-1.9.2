@@ -117,7 +117,7 @@ node_t粪型的哨兵节点，并选择或者自定义ngx_rbtree_insert_pt类型的节点添加函数。
 value方法了。最后可调用ngx_rbtree_init方法初始化红黑树，代码如下所示。
     ngx_rbtree_node_t  sentinel ;
     ngx_rbtree_init ( &rbtree, &sentinel,ngx_str_rbtree_insert_value)
-    奉例中树节点的结构体将使用7.5.3节中介绍的TestRBTreeNode结构体，树中的所有节
+    例中树节点的结构体将使用TestRBTreeNode结构体，树中的所有节
 点都取自图7-7，每个元素的key关键字按照1、6、8、11、13、15、17、22、25、27的顺
 序一一向红黑树中添加，代码如下所示。
     rbTreeNode [0] .num=17;
@@ -133,7 +133,7 @@ value方法了。最后可调用ngx_rbtree_init方法初始化红黑树，代码如下所示。
         rbTreeNode [i].node. key=rbTreeNode[i]. num;
         ngx_rbtree_insert(&rbtree,&rbTreeNode[i].node);
     )
-    以这种顺序添加完的红黑树形态如图7-7所示。如果需要找出当前红黑树中最小的节
+    以这种顺序添加完的红黑树形态。如果需要找出当前红黑树中最小的节
 点，可以调用ngx_rbtree_min方法获取。
 ngx_rbtree_node_t *tmpnode   =   ngx_rbtree_min ( rbtree . root ,    &sentinel )  ;
     当然，参数中如果不使用根节点而是使用任一个节点也是可以的。下面来看一下如何
@@ -156,70 +156,6 @@ rbtree_lookup检索方法），但实际上检索是非常简单的。下面以寻找key关键字为13的节点
     从红黑树中删除1个节点也是非常简单的，如把刚刚找到的值为13的节点从rbtree中
 删除，只需调用ngx_rbtree_delete方法。
 ngx_rbtree_delete ( &rbtree , &lookupNode->node);
-
-7.5.5如何自定义添加成员方法
-    由于节点的key关键字必须是整型，这导致很多情况下不同的节点会具有相同的key关
-键字。如果不希望出现具有相同key关键字的不同节点在向红黑树添加时出现覆盖原节点的
-情况，就需要实现自有的ngx_rbtree_insert_pt艿法。
-    许多Nginx模块在使用红黑树时都自定义了ngx_rbtree_insert_pt方法（如geo、
-filecache模块等），本节以7.5.3节中介绍过的ngx_str_rbtree insert value为例，来说明如何
-
-
-
-
-
-第7章Nginx提供的高级数据结构◇235
-定义这样的方法。先看一下ngx_str_rbtree insert value的实现。代码如下。
-void :
-       I
-ngx_str_rbtree_insert_value  ( ngx_rbt ree_node_t    * temp ,
-           -l-
-     n,gx_rbtree_node_t *node, ngx_rbtree_node t *sentinel)
-                                                                                               .
-    n:,gx_str_node_t            *n,   ^ t ;
-     jgx_rbtree node t :k*p;
-l,  n = (ngx_str_node_t *) node;
-   I  t = (ngx_str_node t k) temp;
-    ／／首先比较key关键字，红黑树中以key作为第一索引关键字
-    if  (node- >key!-temp- >key)  {
-    ／／左子树节点的关键节小于右子树
-    p=  (node->key<temp->key)  ?&temp->left  :  &temp->right;
-    )
-    ／／当key关键字相同时，以字符串长度为第二索引关键字
-    else if  (n- >str. len!_t->str.len)  (
-    一  ／／左子树节点字符串的长度小于右子树
-    p=(n->str. len<t->str. len)  ?&temp- >left:&temp->rightj
-    )   else{
-    ，／key关键字相同且字符串长度相同时，再继续比较字符串内容
-    p=  (ngx_memcmp (n->str.data,t->str.data,n->str. len)<0)?&temp- >left
-&temp - >right j
-    )
-／／如果当前节点p是哨兵节点，那么跳出循环准备插入节点
-if (*p==sentinel)  {
-    break：
-)
-//p节点与要插入的节点具有相同的标识符时，必须覆盖内容
-temp=*p;
-    *;p=node;
-    ，／置插入节点的父节点
-    node- >parent=temp;
-    I／左右子节点都是哨兵节点
-    node->left=sentinel;
-    nOde一>righ七=8en七inel；
-    ，+将节点颜色置为红色。注意，红黑树的ngx-一rbtree insert方法会在可能的旋转操作后重置该节点
-的颜色+／
-    ng】(一rb七一red(node)；
-    )  1
-    可以看到，该代码与7.5.4节中介绍过的检索节点代码很相似。它所要处理的主要问
-题就是当key关键字相同时，继续以何种数据结构作为标准来确定红黑树节点的唯一性。
-Nginx中已经实现的诸多ngx_rbtree_insert_pt穷法都是非常相似的，读者完全可以参照ngx_
-
-
-
-
-236◇第二部分如何编写HTTP模块
-str rbtree insert value方法来自定义红黑树节点添加方法。
-
 */
 
 void
@@ -344,9 +280,6 @@ node_t粪型的哨兵节点，并选择或者自定义ngx_rbtree_insert_pt类型的节点添加函数。
     对于红黑树的每个节点来说，它们都具备表7-6所列的7个方法，如果只是想了解如何
 使用红黑树，那么只需要了解ngx_rbtree_min方法。
 
-
-第7章Nginx提供的高级数据结构专233
-表7-6红黑树节点提供的方法
 ┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━┓
 ┃    方法名                          ┃    参数含义                      ┃    执行意义                          ┃
 ┣━━━━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━┫
@@ -378,10 +311,6 @@ node_t粪型的哨兵节点，并选择或者自定义ngx_rbtree_insert_pt类型的节点添加函数。
 ┃ngx_rbtree_sentinel_init(node)      ┃                                  ┃                                      ┃
 ┃                                    ┃t类型的节点指针                   ┃颜色置为黑色                          ┃
 ┗━━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━━━┛
-    表7-5中的方法大部分用于实现或者扩展红黑树的功能，如果只是使用红黑树，那么一
-般情况下只会使用ngx_rbtre e_min方法。
-    本节介绍的方法或者结构体的简单用法的实现可参见7.5.4节的相关示例。
-
 
 使用红黑树的简单例子
     本节以一个简单的例子来说明如何使用红黑树容器。首先在栈中分配rbtree红黑树容器
@@ -390,7 +319,7 @@ node_t粪型的哨兵节点，并选择或者自定义ngx_rbtree_insert_pt类型的节点添加函数。
 value方法了。最后可调用ngx_rbtree_init方法初始化红黑树，代码如下所示。
     ngx_rbtree_node_t  sentinel ;
     ngx_rbtree_init ( &rbtree, &sentinel,ngx_str_rbtree_insert_value)
-    奉例中树节点的结构体将使用7.5.3节中介绍的TestRBTreeNode结构体，树中的所有节
+    奉例中树节点的结构体将使用TestRBTreeNode结构体，树中的所有节
 点都取自图7-7，每个元素的key关键字按照1、6、8、11、13、15、17、22、25、27的顺
 序一一向红黑树中添加，代码如下所示。
     rbTreeNode [0] .num=17;
@@ -406,8 +335,7 @@ value方法了。最后可调用ngx_rbtree_init方法初始化红黑树，代码如下所示。
         rbTreeNode [i].node. key=rbTreeNode[i]. num;
         ngx_rbtree_insert(&rbtree,&rbTreeNode[i].node);
     )
-    以这种顺序添加完的红黑树形态如图7-7所示。如果需要找出当前红黑树中最小的节
-点，可以调用ngx_rbtree_min方法获取。
+
 ngx_rbtree_node_t *tmpnode   =   ngx_rbtree_min ( rbtree . root ,    &sentinel )  ;
     当然，参数中如果不使用根节点而是使用任一个节点也是可以的。下面来看一下如何
 检索1个节点，虽然Nginx对此并没有提供预设的方法（仅对字符串类型提供了ngx_str_
@@ -435,64 +363,7 @@ ngx_rbtree_delete ( &rbtree , &lookupNode->node);
 键字。如果不希望出现具有相同key关键字的不同节点在向红黑树添加时出现覆盖原节点的
 情况，就需要实现自有的ngx_rbtree_insert_pt艿法。
     许多Nginx模块在使用红黑树时都自定义了ngx_rbtree_insert_pt方法（如geo、
-filecache模块等），本节以7.5.3节中介绍过的ngx_str_rbtree insert value为例，来说明如何
-
-
-
-
-
-第7章Nginx提供的高级数据结构◇235
-定义这样的方法。先看一下ngx_str_rbtree insert value的实现。代码如下。
-void :
-       I
-ngx_str_rbtree_insert_value  ( ngx_rbt ree_node_t    * temp ,
-           -l-
-     n,gx_rbtree_node_t *node, ngx_rbtree_node t *sentinel)
-                                                                                               .
-    n:,gx_str_node_t            *n,   ^ t ;
-     jgx_rbtree node t :k*p;
-l,  n = (ngx_str_node_t *) node;
-   I  t = (ngx_str_node t k) temp;
-    ／／首先比较key关键字，红黑树中以key作为第一索引关键字
-    if  (node- >key!-temp- >key)  {
-    ／／左子树节点的关键节小于右子树
-    p=  (node->key<temp->key)  ?&temp->left  :  &temp->right;
-    )
-    ／／当key关键字相同时，以字符串长度为第二索引关键字
-    else if  (n- >str. len!_t->str.len)  (
-    一  ／／左子树节点字符串的长度小于右子树
-    p=(n->str. len<t->str. len)  ?&temp- >left:&temp->rightj
-    )   else{
-    ，／key关键字相同且字符串长度相同时，再继续比较字符串内容
-    p=  (ngx_memcmp (n->str.data,t->str.data,n->str. len)<0)?&temp- >left
-&temp - >right j
-    )
-／／如果当前节点p是哨兵节点，那么跳出循环准备插入节点
-if (*p==sentinel)  {
-    break：
-)
-//p节点与要插入的节点具有相同的标识符时，必须覆盖内容
-temp=*p;
-    *;p=node;
-    ，／置插入节点的父节点
-    node- >parent=temp;
-    I／左右子节点都是哨兵节点
-    node->left=sentinel;
-    nOde一>righ七=8en七inel；
-    ，+将节点颜色置为红色。注意，红黑树的ngx-一rbtree insert方法会在可能的旋转操作后重置该节点
-的颜色+／
-    ng】(一rb七一red(node)；
-    )  1
-    可以看到，该代码与7.5.4节中介绍过的检索节点代码很相似。它所要处理的主要问
-题就是当key关键字相同时，继续以何种数据结构作为标准来确定红黑树节点的唯一性。
-Nginx中已经实现的诸多ngx_rbtree_insert_pt穷法都是非常相似的，读者完全可以参照ngx_
-
-
-
-
-236◇第二部分如何编写HTTP模块
-str rbtree insert value方法来自定义红黑树节点添加方法。
-
+filecache模块等），以ngx_str_rbtree insert value为例，来说明如何
 */
 
 void
@@ -570,9 +441,6 @@ node_t粪型的哨兵节点，并选择或者自定义ngx_rbtree_insert_pt类型的节点添加函数。
     对于红黑树的每个节点来说，它们都具备表7-6所列的7个方法，如果只是想了解如何
 使用红黑树，那么只需要了解ngx_rbtree_min方法。
 
-
-第7章Nginx提供的高级数据结构专233
-表7-6红黑树节点提供的方法
 ┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━┓
 ┃    方法名                          ┃    参数含义                      ┃    执行意义                          ┃
 ┣━━━━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━┫
@@ -616,8 +484,7 @@ node_t粪型的哨兵节点，并选择或者自定义ngx_rbtree_insert_pt类型的节点添加函数。
 value方法了。最后可调用ngx_rbtree_init方法初始化红黑树，代码如下所示。
     ngx_rbtree_node_t  sentinel ;
     ngx_rbtree_init ( &rbtree, &sentinel,ngx_str_rbtree_insert_value)
-    奉例中树节点的结构体将使用7.5.3节中介绍的TestRBTreeNode结构体，树中的所有节
-点都取自图7-7，每个元素的key关键字按照1、6、8、11、13、15、17、22、25、27的顺
+    奉例中树节点的结构体将使用的TestRBTreeNode结构体，每个元素的key关键字按照1、6、8、11、13、15、17、22、25、27的顺
 序一一向红黑树中添加，代码如下所示。
     rbTreeNode [0] .num=17;
     rbTreeNode [1] .num=22;
@@ -632,8 +499,7 @@ value方法了。最后可调用ngx_rbtree_init方法初始化红黑树，代码如下所示。
         rbTreeNode [i].node. key=rbTreeNode[i]. num;
         ngx_rbtree_insert(&rbtree,&rbTreeNode[i].node);
     )
-    以这种顺序添加完的红黑树形态如图7-7所示。如果需要找出当前红黑树中最小的节
-点，可以调用ngx_rbtree_min方法获取。
+
 ngx_rbtree_node_t *tmpnode   =   ngx_rbtree_min ( rbtree . root ,    &sentinel )  ;
     当然，参数中如果不使用根节点而是使用任一个节点也是可以的。下面来看一下如何
 检索1个节点，虽然Nginx对此并没有提供预设的方法（仅对字符串类型提供了ngx_str_
@@ -656,68 +522,12 @@ rbtree_lookup检索方法），但实际上检索是非常简单的。下面以寻找key关键字为13的节点
 删除，只需调用ngx_rbtree_delete方法。
 ngx_rbtree_delete ( &rbtree , &lookupNode->node);
 
-7.5.5如何自定义添加成员方法
+如何自定义添加成员方法
     由于节点的key关键字必须是整型，这导致很多情况下不同的节点会具有相同的key关
 键字。如果不希望出现具有相同key关键字的不同节点在向红黑树添加时出现覆盖原节点的
 情况，就需要实现自有的ngx_rbtree_insert_pt艿法。
     许多Nginx模块在使用红黑树时都自定义了ngx_rbtree_insert_pt方法（如geo、
 filecache模块等），本节以7.5.3节中介绍过的ngx_str_rbtree insert value为例，来说明如何
-
-
-
-
-
-第7章Nginx提供的高级数据结构◇235
-定义这样的方法。先看一下ngx_str_rbtree insert value的实现。代码如下。
-void :
-       I
-ngx_str_rbtree_insert_value  ( ngx_rbt ree_node_t    * temp ,
-           -l-
-     n,gx_rbtree_node_t *node, ngx_rbtree_node t *sentinel)
-                                                                                               .
-    n:,gx_str_node_t            *n,   ^ t ;
-     jgx_rbtree node t :k*p;
-l,  n = (ngx_str_node_t *) node;
-   I  t = (ngx_str_node t k) temp;
-    ／／首先比较key关键字，红黑树中以key作为第一索引关键字
-    if  (node- >key!-temp- >key)  {
-    ／／左子树节点的关键节小于右子树
-    p=  (node->key<temp->key)  ?&temp->left  :  &temp->right;
-    )
-    ／／当key关键字相同时，以字符串长度为第二索引关键字
-    else if  (n- >str. len!_t->str.len)  (
-    一  ／／左子树节点字符串的长度小于右子树
-    p=(n->str. len<t->str. len)  ?&temp- >left:&temp->rightj
-    )   else{
-    ，／key关键字相同且字符串长度相同时，再继续比较字符串内容
-    p=  (ngx_memcmp (n->str.data,t->str.data,n->str. len)<0)?&temp- >left
-&temp - >right j
-    )
-／／如果当前节点p是哨兵节点，那么跳出循环准备插入节点
-if (*p==sentinel)  {
-    break：
-)
-//p节点与要插入的节点具有相同的标识符时，必须覆盖内容
-temp=*p;
-    *;p=node;
-    ，／置插入节点的父节点
-    node- >parent=temp;
-    I／左右子节点都是哨兵节点
-    node->left=sentinel;
-    nOde一>righ七=8en七inel；
-    ，+将节点颜色置为红色。注意，红黑树的ngx-一rbtree insert方法会在可能的旋转操作后重置该节点
-的颜色+／
-    ng】(一rb七一red(node)；
-    )  1
-    可以看到，该代码与7.5.4节中介绍过的检索节点代码很相似。它所要处理的主要问
-题就是当key关键字相同时，继续以何种数据结构作为标准来确定红黑树节点的唯一性。
-Nginx中已经实现的诸多ngx_rbtree_insert_pt穷法都是非常相似的，读者完全可以参照ngx_
-
-
-
-
-236◇第二部分如何编写HTTP模块
-str rbtree insert value方法来自定义红黑树节点添加方法。
 
 */
 
@@ -803,12 +613,8 @@ ngx_rbtree_insert_timer_value(ngx_rbtree_node_t *temp, ngx_rbtree_node_t *node,
 ┗━━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━━┛
     在初始化红黑树时，需要先分配好保存红黑树的ngx_rbtree_t结构体，以及ngx_rbtree_
 node_t粪型的哨兵节点，并选择或者自定义ngx_rbtree_insert_pt类型的节点添加函数。
-    对于红黑树的每个节点来说，它们都具备表7-6所列的7个方法，如果只是想了解如何
-使用红黑树，那么只需要了解ngx_rbtree_min方法。
 
-
-第7章Nginx提供的高级数据结构专233
-表7-6红黑树节点提供的方法
+红黑树节点提供的方法
 ┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━┓
 ┃    方法名                          ┃    参数含义                      ┃    执行意义                          ┃
 ┣━━━━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━┫
@@ -840,10 +646,6 @@ node_t粪型的哨兵节点，并选择或者自定义ngx_rbtree_insert_pt类型的节点添加函数。
 ┃ngx_rbtree_sentinel_init(node)      ┃                                  ┃                                      ┃
 ┃                                    ┃t类型的节点指针                   ┃颜色置为黑色                          ┃
 ┗━━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━━━┛
-    表7-5中的方法大部分用于实现或者扩展红黑树的功能，如果只是使用红黑树，那么一
-般情况下只会使用ngx_rbtre e_min方法。
-    本节介绍的方法或者结构体的简单用法的实现可参见7.5.4节的相关示例。
-
 
 使用红黑树的简单例子
     本节以一个简单的例子来说明如何使用红黑树容器。首先在栈中分配rbtree红黑树容器
@@ -852,8 +654,7 @@ node_t粪型的哨兵节点，并选择或者自定义ngx_rbtree_insert_pt类型的节点添加函数。
 value方法了。最后可调用ngx_rbtree_init方法初始化红黑树，代码如下所示。
     ngx_rbtree_node_t  sentinel ;
     ngx_rbtree_init ( &rbtree, &sentinel,ngx_str_rbtree_insert_value)
-    奉例中树节点的结构体将使用7.5.3节中介绍的TestRBTreeNode结构体，树中的所有节
-点都取自图7-7，每个元素的key关键字按照1、6、8、11、13、15、17、22、25、27的顺
+    奉例中树节点的结构体将使用7.5.3节中介绍的TestRBTreeNode结构体，每个元素的key关键字按照1、6、8、11、13、15、17、22、25、27的顺
 序一一向红黑树中添加，代码如下所示。
     rbTreeNode [0] .num=17;
     rbTreeNode [1] .num=22;
@@ -892,69 +693,10 @@ rbtree_lookup检索方法），但实际上检索是非常简单的。下面以寻找key关键字为13的节点
 删除，只需调用ngx_rbtree_delete方法。
 ngx_rbtree_delete ( &rbtree , &lookupNode->node);
 
-7.5.5如何自定义添加成员方法
     由于节点的key关键字必须是整型，这导致很多情况下不同的节点会具有相同的key关
 键字。如果不希望出现具有相同key关键字的不同节点在向红黑树添加时出现覆盖原节点的
 情况，就需要实现自有的ngx_rbtree_insert_pt艿法。
-    许多Nginx模块在使用红黑树时都自定义了ngx_rbtree_insert_pt方法（如geo、
-filecache模块等），本节以7.5.3节中介绍过的ngx_str_rbtree insert value为例，来说明如何
-
-
-
-
-
-第7章Nginx提供的高级数据结构◇235
-定义这样的方法。先看一下ngx_str_rbtree insert value的实现。代码如下。
-void :
-       I
-ngx_str_rbtree_insert_value  ( ngx_rbt ree_node_t    * temp ,
-           -l-
-     n,gx_rbtree_node_t *node, ngx_rbtree_node t *sentinel)
-                                                                                               .
-    n:,gx_str_node_t            *n,   ^ t ;
-     jgx_rbtree node t :k*p;
-l,  n = (ngx_str_node_t *) node;
-   I  t = (ngx_str_node t k) temp;
-    ／／首先比较key关键字，红黑树中以key作为第一索引关键字
-    if  (node- >key!-temp- >key)  {
-    ／／左子树节点的关键节小于右子树
-    p=  (node->key<temp->key)  ?&temp->left  :  &temp->right;
-    )
-    ／／当key关键字相同时，以字符串长度为第二索引关键字
-    else if  (n- >str. len!_t->str.len)  (
-    一  ／／左子树节点字符串的长度小于右子树
-    p=(n->str. len<t->str. len)  ?&temp- >left:&temp->rightj
-    )   else{
-    ，／key关键字相同且字符串长度相同时，再继续比较字符串内容
-    p=  (ngx_memcmp (n->str.data,t->str.data,n->str. len)<0)?&temp- >left
-&temp - >right j
-    )
-／／如果当前节点p是哨兵节点，那么跳出循环准备插入节点
-if (*p==sentinel)  {
-    break：
-)
-//p节点与要插入的节点具有相同的标识符时，必须覆盖内容
-temp=*p;
-    *;p=node;
-    ，／置插入节点的父节点
-    node- >parent=temp;
-    I／左右子节点都是哨兵节点
-    node->left=sentinel;
-    nOde一>righ七=8en七inel；
-    ，+将节点颜色置为红色。注意，红黑树的ngx-一rbtree insert方法会在可能的旋转操作后重置该节点
-的颜色+／
-    ng】(一rb七一red(node)；
-    )  1
-    可以看到，该代码与7.5.4节中介绍过的检索节点代码很相似。它所要处理的主要问
-题就是当key关键字相同时，继续以何种数据结构作为标准来确定红黑树节点的唯一性。
-Nginx中已经实现的诸多ngx_rbtree_insert_pt穷法都是非常相似的，读者完全可以参照ngx_
-
-
-
-
-236◇第二部分如何编写HTTP模块
-str rbtree insert value方法来自定义红黑树节点添加方法。
-
+  
 */
 
 void

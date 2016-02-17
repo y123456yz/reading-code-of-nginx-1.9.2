@@ -335,9 +335,9 @@ ngx_rbtree_tÈİÆ÷½øĞĞÀí½â¡£
 ¼¸ºõÊÇÍêÈ«ÏàÍ¬µÄ£¨Nginx´úÂëÓëLinuxÄÚºË´úÂëºÜÏàËÆ£©£¬ÎÒÃÇ¿ÉÒÔ²ÎÕÕ×ÅÀí½â¡£ÔÚepoll
 ÖĞ£¬¶ÔÓÚÃ¿Ò»¸öÊÂ¼ş¶¼»á½¨Á¢Ò»¸öepitem½á¹¹Ìå£¬ÈçÏÂËùÊ¾¡£
 struct epitem{
-    £¯£¯ºìºÚÊ÷½Úµã£¬ÓëµÚ7ÕÂÖĞµÄngx_rbtree_nodeÆßºìºÚÊ÷½ÚµãÏàËÆ
+    £¯£¯ºìºÚÊ÷½Úµã£¬Óëngx_rbtree_nodeÆßºìºÚÊ÷½ÚµãÏàËÆ
     struct rb node rbn;
-£¯£¯Ë«ÏòÁ´±í½Úµã£¬ÓëµÚ7ÕÂÖĞµÄngx_queue_tË«ÏòÁ´±í½ÚµãÏàËÆ
+£¯£¯Ë«ÏòÁ´±í½Úµã£¬Óëngx_queue_tË«ÏòÁ´±í½ÚµãÏàËÆ
 struct list head rdllink;
 £¯£¯ÊÂ¼ş¾ä±úµÈĞÅÏ¢
 struct  epoll_filefd  f fd;
@@ -394,8 +394,7 @@ for(int i = 0; i < res;i++)
 }
 
 
-9.6 epollÊÂ¼şÇı¶¯Ä£¿é
-    ±¾ÕÂ9.1½Ú¡«9.5½Ú¶¼ÔÚÌ½ÌÖNginxÊÇÈçºÎÉè¼ÆÊÂ¼şÇı¶¯¿ò¼Ü¡¢ÈçºÎ¹ÜÀí²»Í¬µÄÊÂ¼şÇı
+    ÔÚÌ½ÌÖNginxÊÇÈçºÎÉè¼ÆÊÂ¼şÇı¶¯¿ò¼Ü¡¢ÈçºÎ¹ÜÀí²»Í¬µÄÊÂ¼şÇı
 ¶¯Ä£¿éµÄ£¬µ«±¾½ÚÖĞ½«ÒÔepollÎªÀı£¬ÌÖÂÛLinux²Ù×÷ÏµÍ³ÄÚºËÊÇÈçºÎÊµÏÖepollÊÂ¼şÇı¶¯»ú
 ÖÆµÄ£¬ÔÚ¼òµ¥ÁË½âËüµÄÓÃ·¨ºó£¬»á½øÒ»²½ËµÃ÷ngx_epoll_moduleÄ£¿éÊÇÈçºÎ»ùÓÚepollÊµÏÖ
 NginxµÄÊÂ¼şÇı¶¯µÄ¡£ÕâÑù¶ÁÕß¾Í»á¶ÔNginxÍêÕûµÄÊÂ¼şÇı¶¯Éè¼Æ·½·¨ÓĞÈ«ÃæµÄÁË½â£¬Í¬Ê±
@@ -404,11 +403,6 @@ NginxµÄÊÂ¼şÇı¶¯µÄ¡£ÕâÑù¶ÁÕß¾Í»á¶ÔNginxÍêÕûµÄÊÂ¼şÇı¶¯Éè¼Æ·½·¨ÓĞÈ«ÃæµÄÁË½â£¬Í¬Ê±
 
 
 
-
-
-
-µÚ9ÕÂÊÂ¼şÄ£¿é¡ó311
-9.6.1  epollµÄÔ­ÀíºÍÓÃ·¨
     ÉèÏëÒ»¸ö³¡¾°£ºÓĞ100ÍòÓÃ»§Í¬Ê±ÓëÒ»¸ö½ø³Ì±£³Ö×ÅTCPÁ¬½Ó£¬¶øÃ¿Ò»Ê±¿ÌÖ»ÓĞ¼¸Ê®¸ö
 »ò¼¸°Ù¸öTCPÁ¬½ÓÊÇ»îÔ¾µÄ£¨½ÓÊÕµ½TCP°ü£©£¬Ò²¾ÍÊÇËµ£¬ÔÚÃ¿Ò»Ê±¿Ì£¬½ø³ÌÖ»ĞèÒª´¦ÀíÕâ
 100ÍòÁ¬½ÓÖĞµÄÒ»Ğ¡²¿·ÖÁ¬½Ó¡£ÄÇÃ´£¬ÈçºÎ²ÅÄÜ¸ßĞ§µØ´¦ÀíÕâÖÖ³¡¾°ÄØ£¿½ø³ÌÊÇ·ñÔÚÃ¿´ÎÑ¯
@@ -455,9 +449,9 @@ ngx_rbtree_tÈİÆ÷½øĞĞÀí½â¡£
 ¼¸ºõÊÇÍêÈ«ÏàÍ¬µÄ£¨Nginx´úÂëÓëLinuxÄÚºË´úÂëºÜÏàËÆ£©£¬ÎÒÃÇ¿ÉÒÔ²ÎÕÕ×ÅÀí½â¡£ÔÚepoll
 ÖĞ£¬¶ÔÓÚÃ¿Ò»¸öÊÂ¼ş¶¼»á½¨Á¢Ò»¸öepitem½á¹¹Ìå£¬ÈçÏÂËùÊ¾¡£
 struct epitem{
-    £¯£¯ºìºÚÊ÷½Úµã£¬ÓëµÚ7ÕÂÖĞµÄngx_rbtree_nodeÆßºìºÚÊ÷½ÚµãÏàËÆ
+    £¯£¯ºìºÚÊ÷½Úµã£¬Óëngx_rbtree_nodeÆßºìºÚÊ÷½ÚµãÏàËÆ
     struct rb node rbn;
-£¯£¯Ë«ÏòÁ´±í½Úµã£¬ÓëµÚ7ÕÂÖĞµÄngx_queue_tË«ÏòÁ´±í½ÚµãÏàËÆ
+£¯£¯Ë«ÏòÁ´±í½Úµã£¬Óëngx_queue_tË«ÏòÁ´±í½ÚµãÏàËÆ
 struct list head rdllink;
 £¯£¯ÊÂ¼ş¾ä±úµÈĞÅÏ¢
 struct  epoll_filefd  f fd;
@@ -465,11 +459,6 @@ struct  epoll_filefd  f fd;
 struct eventpoll *ep;
 £¬£¯ÆÚ´ıµÄÊÂ¼şÀàĞÍ
 
-
-
-
-
-µÚ9ÕÂÊÂ¼şÄ£¿é¡ó313
     struct  epoll_event  event;
     )j
     ÕâÀï°üº¬Ã¿Ò»¸öÊÂ¼ş¶ÔÓ¦×ÅµÄĞÅÏ¢¡£
@@ -552,9 +541,6 @@ int  epoll_wait (int  epfd, struct  epoll_event*  events, int  maxevents, int  t
 
 
 
-
-
-µÚ9ÕÂÊÂ¼şÄ£¿é¡ó315
 ´íÎóÀàĞÍ¡£µÚ1¸ö²ÎÊıepfdÊÇepollµÄÃèÊö·û¡£µÚ2¸ö²ÎÊıeventsÔòÊÇ·ÖÅäºÃµÄepoll_event
 ½á¹¹ÌåÊı×é£¬Èçou½«»á°Ñ·¢ÉúµÄÊÂ¼ş¸´ÖÆµ½eVentsÊı×éÖĞ£¨eVents²»¿ÉÒÔÊÇ¿ÕÖ¸Õë£¬ÄÚºËÖ»
 ¸ºÔğ°ÑÊı¾İ¸´ÖÆµ½Õâ¸öeventsÊı×éÖĞ£¬²»»áÈ¥°ïÖúÎÒÃÇÔÚÓÃ»§Ì¬ÖĞ·ÖÅäÄÚ´æ¡£ÄÚºËÕâÖÖ×ö·¨
@@ -948,7 +934,7 @@ int64 t aio offset;
 7 7±£ÊÛÊÖ¶Î
 u int64Æßaio reserved2;
     £¯+±íÊ¾¿ÉÒÔÉèÖÃÎªIOCB FLAG RESFD£¬Ëü»á¸æËßÄÚºËµ±ÓĞÒì²½I/OÇëÇó´¦ÀíÍê³ÉÊ±Ê¹ÓÃeventfd½ø
-ĞĞÍ¨Öª£¬¿ÉÓëepollÅäºÏÊ¹ÓÃ£¬ÆäÔÚNginxÖĞµÄÊ¹ÓÃ·½·¨¿É²Î¼û9.9.2½Ú+£¯
+ĞĞÍ¨Öª£¬¿ÉÓëepollÅäºÏÊ¹ÓÃ+£¯
     u int32Æßaio_flags£»
 £¯£¯±íÊ¾µ±Ê¹ÓÃIOCB FLAG RESFD±êÖ¾Î»Ê±£¬ÓÃÓÚ½øĞĞÊÂ¼şÍ¨ÖªµÄ¾ä±ú
 U int32 t aio resfd;
@@ -1127,7 +1113,7 @@ ngx_epoll_init(ngx_cycle_t *cycle, ngx_msec_t timer)
 #endif
 
 #if (NGX_HAVE_FILE_AIO)
-        //Òì²½I/OÄÚÈİ¿É²Î¼û9.9½Ú
+
         ngx_epoll_aio_init(cycle, epcf);
 
 #endif
@@ -1400,8 +1386,7 @@ ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags) //¸Ãº¯Êı
 
     ee.events = events | (uint32_t) flags; //¼ÓÈëflags²ÎÊıµ½events±êÖ¾Î»ÖĞ
     /*
-    ptr³ÉÔ±´æ´¢µÄÊÇngx_connection_tÁ¬½Ó£¬¿É²Î¼û9.6.2½ÚÖĞepollµÄÊ¹ÓÃ·½Ê½¡£ÔÚ9.2½ÚÖĞÔø¾­Ìáµ½¹ıÊÂ¼şµÄinstance±êÖ¾Î»£¬ÏÂ
-    Ãæ¾ÍÅäºÏngx_epoll_process_events·½·¨ËµÃ÷ËüµÄÓÃ·¨
+    ptr³ÉÔ±´æ´¢µÄÊÇngx_connection_tÁ¬½Ó£¬¿É²Î¼ûepollµÄÊ¹ÓÃ·½Ê½¡£
      */
     ee.data.ptr = (void *) ((uintptr_t) c | ev->instance);
 
@@ -1653,7 +1638,7 @@ ngx_notify->ngx_epoll_notifyÖ»»á´¥·¢epoll_in£¬²»»áÍ¬Ê±Òı·¢epoll_out£¬Èç¹ûÊÇÍøÂç¶
 
     err = (events == -1) ? ngx_errno : 0;
 
-    //ÔÚ9.7½ÚÖĞ»á½éÉÜNginx¶ÔÊ±¼äµÄ»º´æºÍ¹ÜÀí¡£µ±flags±êÖ¾Î»Ö¸Ê¾Òª¸üĞÂÊ±¼äÊ±£¬¾ÍÊÇÔÚÕâÀï¸üĞÂµÄ
+    //µ±flags±êÖ¾Î»Ö¸Ê¾Òª¸üĞÂÊ±¼äÊ±£¬¾ÍÊÇÔÚÕâÀï¸üĞÂµÄ
     //ÒªÃşngx_timer_resolutionºÁÃë³¬Ê±ºó¸úĞÂÊ±¼ä£¬ÒªÃşepoll¶ÁĞ´ÊÂ¼ş³¬Ê±ºó¸úĞÂÊ±¼ä
     if (flags & NGX_UPDATE_TIME || ngx_event_timer_alarm) {
         ngx_time_update();
@@ -1763,7 +1748,7 @@ ngx_notify->ngx_epoll_notifyÖ»»á´¥·¢epoll_in£¬²»»áÍ¬Ê±Òı·¢epoll_out£¬Èç¹ûÊÇÍøÂç¶
             if (flags & NGX_POST_EVENTS) {
                 /*
                     Èç¹ûÒªÔÚpost¶ÓÁĞÖĞÑÓºó´¦Àí¸ÃÊÂ¼ş£¬Ê×ÏÈÒªÅĞ¶ÏËüÊÇĞÂÁ¬½ÓÊÂ¼ş»¹ÊÇÆÕÍ¨ÊÂ¼ş£¬ÒÔ¾ö¶¨°ÑËü¼ÓÈëµ½ngx_posted_accept_events¶Ó
-                    ÁĞ»òÕßngx_postedL events¶ÓÁĞÖĞ¡£¹ØÓÚpost¶ÓÁĞÖĞµÄÊÂ¼şºÎÊ±Ö´ĞĞ£¬¿É²Î¼û9.8½ÚÄÚÈİ
+                    ÁĞ»òÕßngx_postedL events¶ÓÁĞÖĞ¡£¹ØÓÚpost¶ÓÁĞÖĞµÄÊÂ¼şºÎÊ±Ö´ĞĞ
                     */
                 queue = rev->accept ? &ngx_posted_accept_events
                                     : &ngx_posted_events;

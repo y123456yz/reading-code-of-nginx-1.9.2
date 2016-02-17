@@ -20,8 +20,7 @@ typedef struct {
 } ngx_str_t;
 
 ngx_str_t只有两个成员，其中data指针指向字符串起始地址，len表示字符串的有效长度。注意，ngx_str_t的data成员指向的并不是普通的字符串，
-因为这段字符串未必会以'\0'作为结尾，所以使用时必须根据长度len来使用data成员。例如，在3.7.2节中，我们会看到r->method_name就是一个
-ngx_str_t类型的变量，比较method_name时必须如下这样使用：
+因为这段字符串未必会以'\0'作为结尾，所以使用时必须根据长度len来使用data成员。
  if (0 == ngx_strncmp(
    r->method_name.data,
    "PUT",

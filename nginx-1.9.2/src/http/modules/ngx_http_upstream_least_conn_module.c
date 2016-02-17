@@ -19,7 +19,18 @@ static char *ngx_http_upstream_least_conn(ngx_conf_t *cf, ngx_command_t *cmd,
 
 
 static ngx_command_t  ngx_http_upstream_least_conn_commands[] = {
+/*
 
+语法:  least_conn;
+ 
+默认值:  —  
+上下文:  upstream
+ 
+
+这个指令出现在版本 1.3.1 和 1.2.2. 
+
+指定服务器组的负载均衡方法，根据其权重值，将请求发送到活跃连接数最少的那台服务器。 如果这样的服务器有多台，那就采取有权重的轮转法进行尝试。 
+*/
     { ngx_string("least_conn"),
       NGX_HTTP_UPS_CONF|NGX_CONF_NOARGS,
       ngx_http_upstream_least_conn,
@@ -45,7 +56,21 @@ static ngx_http_module_t  ngx_http_upstream_least_conn_module_ctx = {
     NULL                                   /* merge location configuration */
 };
 
+/*
+负载均衡相关配置:
+upstream
+server
+ip_hash:根据客户端的IP来做hash,不过如果squid -- nginx -- server(s)则，ip永远是squid服务器ip,因此不管用,需要ngx_http_realip_module或者第三方模块
+keepalive:配置到后端的最大连接数，保持长连接，不必为每一个客户端都重新建立nginx到后端PHP等服务器的连接，需要保持和后端
+    长连接，例如fastcgi:fastcgi_keep_conn on;       proxy:  proxy_http_version 1.1;  proxy_set_header Connection "";
+least_conn:根据其权重值，将请求发送到活跃连接数最少的那台服务器
+hash:可以按照uri  ip 等参数进行做hash
 
+参考http://tengine.taobao.org/nginx_docs/cn/docs/http/ngx_http_upstream_module.html#ip_hash
+*/
+
+
+//指定服务器组的负载均衡方法，根据其权重值，将请求发送到活跃连接数最少的那台服务器。 如果这样的服务器有多台，那就采取有权重的轮转法进行尝试。 
 ngx_module_t  ngx_http_upstream_least_conn_module = {
     NGX_MODULE_V1,
     &ngx_http_upstream_least_conn_module_ctx, /* module context */

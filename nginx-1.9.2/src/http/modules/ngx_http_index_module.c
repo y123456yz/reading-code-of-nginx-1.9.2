@@ -19,7 +19,7 @@ typedef struct {
 
 typedef struct { //空间创建和赋值见ngx_http_index_set_index
     //把index  11.html 22.xx中的11.html和22.xx字符串保存到indices数组
-    ngx_array_t             *indices;    /* array of ngx_http_index_t */  
+    ngx_array_t             *indices;    /* array of ngx_http_index_t */    //indices上默认有一个NGX_HTTP_DEFAULT_INDEX
     size_t                   max_index_len; //该值为indices数组中中字符串最大的长度
 } ngx_http_index_loc_conf_t;
 
@@ -79,7 +79,13 @@ static ngx_http_module_t  ngx_http_index_module_ctx = {
     ngx_http_index_merge_loc_conf          /* merge location configuration */
 };
 
-
+/*
+location / {			
+    index index11.html	#必须保证新uri所在目录存在并且该目录下面没有index11.html，autoindex对应的ngx_http_autoindex_handler才会生效		
+    autoindex on;		
+}
+只有在index11.html文件不存在的时候才会执行autoindex，如果没有设置index则默认打开index.html，必须保证index.html的uri目录存在，如果不存在，是一个不存在的目录也不会执行autoindex
+*/
 ngx_module_t  ngx_http_index_module = {
     NGX_MODULE_V1,
     &ngx_http_index_module_ctx,            /* module context */
@@ -147,7 +153,7 @@ ngx_module_t  ngx_http_index_module = {
 2025/02/14 08:24:04[            ngx_http_static_handler,   145]  [debug] 2955#2955: *2 http static fd: 11
 2025/02/14 08:24:04[      ngx_http_discard_request_body,   734]  [debug] 2955#2955: *2 http set discard body
 */
-static ngx_int_t
+static ngx_int_t //主要功能是检查uri中的文件是否存在，不存在直接关闭连接，存在则做内部重定向，重定向后由于是文件路径，因此末尾没有/，走到该函数直接退出，然后在static-module中获取文件内容
 ngx_http_index_handler(ngx_http_request_t *r)
 {//注意:ngx_http_static_handler如果uri不是以/结尾返回，ngx_http_index_handler不以/结尾返回
 //循环遍历index index.html index_large.html  gmime-gmime-cipher-context.html;配置的文件，存在则返回，找到一个不在遍历后面的文件
@@ -216,10 +222,9 @@ ngx_http_index_handler(ngx_http_request_t *r)
     /* suppress MSVC warning */
     path.data = NULL;
 
-    ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, of.err,
-                           "yang test ... index-count:%ui", ilcf->indices->nelts);
     index = ilcf->indices->elts;
-    for (i = 0; i < ilcf->indices->nelts; i++) {
+    //indices上默认有一个NGX_HTTP_DEFAULT_INDEX
+    for (i = 0; i < ilcf->indices->nelts; i++) {//循环遍历index配置的文件，如果有该文件，则进行内部重定向，从新走NGX_HTTP_SERVER_REWRITE_PHASE
 
         if (index[i].lengths == NULL) {
 
@@ -341,7 +346,7 @@ ngx_http_index_handler(ngx_http_request_t *r)
             }
 
             if (of.err == NGX_ENOENT) {
-                continue;
+                continue; //stat获取的参数file_name指定的文件不存在
             }
 
             ngx_log_error(NGX_LOG_CRIT, r->connection->log, of.err,
@@ -549,8 +554,8 @@ ngx_http_index_init(ngx_conf_t *cf)
 
 
 /* TODO: warn about duplicate indices */
-
-static char *
+//index /index.html /html/index.php /index.php;
+static char * //把index配置的字符串添加到ilcf->indices数组中
 ngx_http_index_set_index(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
     ngx_http_index_loc_conf_t *ilcf = conf;

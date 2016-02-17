@@ -943,7 +943,7 @@ ngx_http_cache_thread_event_handler(ngx_event_t *ev)
 
     r->write_event_handler(r);
 
-    ngx_http_run_posted_requests(c);
+    ngx_http_run_posted_requests(c);  
 }
 
 #endif
@@ -1798,8 +1798,10 @@ ngx_http_cache_send(ngx_http_request_t *r)
         return rc;
     }
 
+    //Ò»ÏÂ´¥·¢°üÌå·¢ËÍ
+
     b->file_pos = c->body_start; //Ö¸ÏòÍøÒ³°üÌå²¿·ÖÄÚÈÝ
-    b->file_last = c->length; //°üÌåÄ©Î²´¦£¬Ò²¾ÍÊÇÎÄ¼þÎ²²¿
+    b->file_last = c->length; //°üÌåÄ©Î²´¦£¬Ò²¾ÍÊÇÎÄ¼þÎ²²¿   
 
     b->in_file = (c->length - c->body_start) ? 1: 0;
     b->last_buf = (r == r->main) ? 1: 0;
@@ -1997,8 +1999,8 @@ ngx_http_file_cache_expire£¬Ò»¸öÊÇngx_http_file_cache_forced_expire£¬ËûÃÇÓÐÊ²Ã´Ç
 */
 
 /*
-»º´æÎÄ¼þstat×´Ì¬ÐÅÏ¢ngx_cached_open_file_sÔÚngx_expire_old_cached_files½øÐÐÊ§Ð§ÅÐ¶Ï, »º´æÎÄ¼þÄÚÈÝÐÅÏ¢(ÊµÊµÔÚÔÚµÄÎÄ¼þÐÅÏ¢)
-ngx_http_file_cache_node_tÔÚngx_http_file_cache_expire½øÐÐÊ§Ð§ÅÐ¶Ï¡£
+»º´æÎÄ¼þstat×´Ì¬ÐÅÏ¢ngx_cached_open_file_s(ngx_open_file_cache_t->rbtree(expire_queue)µÄ³ÉÔ±   )ÔÚngx_expire_old_cached_files½øÐÐÊ§Ð§ÅÐ¶Ï, 
+»º´æÎÄ¼þÄÚÈÝÐÅÏ¢(ÊµÊµÔÚÔÚµÄÎÄ¼þÐÅÏ¢)ngx_http_file_cache_node_t(ngx_http_file_cache_s->shÖÐµÄ³ÉÔ±)ÔÚngx_http_file_cache_expire½øÐÐÊ§Ð§ÅÐ¶Ï¡£
 */
 
 //É¾³ý¹ýÆÚ»º´æ ngx_http_file_cache_expire º¯ÊýÇå³ý¹ýÆÚ»º´æÌõÄ¿ (É¾³ýÆäÕ¼ÓÃµÄ¹²ÏíÄÚ´æ ºÍ¶ÔÓ¦µÄ´ÅÅÌÎÄ¼þ)¡£ 

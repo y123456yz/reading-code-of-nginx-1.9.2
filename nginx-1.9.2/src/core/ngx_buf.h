@@ -15,14 +15,13 @@
 
 typedef void *            ngx_buf_tag_t;
 /*
-缓冲区ngx_buf_t是Nginx处理大数据的关键数据结构，它既应用于内存数据也应用于磁盘数据。下面主要介绍ngx_buf_t结构体本身，而描述磁盘
-文件的ngx_file_t结构体则在3.8.1节中说明。下面来看一下相关代码：
+缓冲区ngx_buf_t是Nginx处理大数据的关键数据结构，它既应用于内存数据也应用于磁盘数据
 */
 typedef struct ngx_buf_s  ngx_buf_t; //从内存池中分配ngx_buf_t空间，通过ngx_chain_s和pool关联，并初始化其中的各个变量初值函数为ngx_create_temp_buf
 /*
 ngx_buf_t是一种基本数据结构，本质上它提供的仅仅是一些指针成员和标志位。对于HTTP模块来说，需要注意HTTP框架、事件框架是如何设置
 和使用pos、last等指针以及如何处理这些标志位的，上述说明只是最常见的用法。（如果我们自定义一个ngx_buf_t结构体，不应当受限于上
-述用法，而应该根据业务需求自行定义。例如，在13.7节中用一个ngx_buf_t缓冲区转发上下游TCP流时，pos会指向将要发送到下游的TCP流起
+述用法，而应该根据业务需求自行定义。例如用一个ngx_buf_t缓冲区转发上下游TCP流时，pos会指向将要发送到下游的TCP流起
 始地址，而last会指向预备接收上游TCP流的缓冲区起始地址。）
 */
 /*
@@ -164,7 +163,7 @@ struct ngx_output_chain_ctx_s {//ngx_http_copy_filter中创建空间和赋值
     ngx_buf_t                   *buf;
 
 /*ngx_output_chain_copy_bufc中tx->in中的内存数据或者缓存文件数据会拷贝到dst中，也就是ctx->buf,然后在ngx_output_chain_copy_buf函数
-外层会重新把ctx->buf赋值给新的chain，然后write出去*/
+外层会重新把ctx->buf赋值给新的chain，然后write出去*/ //一次最多从in中拷贝65536字节，见ngx_output_chain_copy_buf
     
     /* 保存了将要发送的chain */  //实际in是在ngx_output_chain->ngx_output_chain_add_copy(ctx->pool, &ctx->in, in)让ctx->in是输入参数in的直接拷贝赋值
     //如果是aio thread方式，则在ngx_output_chain_copy_buf->ngx_thread_read->ngx_thread_read_handler中读取到in->buf中

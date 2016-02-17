@@ -84,8 +84,25 @@ static ngx_conf_enum_t  ngx_http_autoindex_format[] = {
 };
 
 
-static ngx_command_t  ngx_http_autoindex_commands[] = {
+/*
+location /{
+root   /var/www/html;
+autoindex on;
+} 
+这段代码的意思就是把 /var/www/html目录作为根目录来直接列出来。
+*/
 
+/*
+ngx_http_autoindex_module 模块可以列出目录中的文件。 一般当ngx_http_index_module模块找不到默认主页的时候，会把请求
+转给 ngx_http_autoindex_module模块去处理。 
+*/
+static ngx_command_t  ngx_http_autoindex_commands[] = {
+    /*     
+    语法:  autoindex on | off;
+    默认值:  autoindex off;
+    上下文:  http, server, location
+    开启或者关闭列出目录中文件的功能。 
+    */
     { ngx_string("autoindex"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
       ngx_conf_set_flag_slot,
@@ -100,6 +117,7 @@ static ngx_command_t  ngx_http_autoindex_commands[] = {
       offsetof(ngx_http_autoindex_loc_conf_t, format),
       &ngx_http_autoindex_format },
 
+    //设置目录中列出文件的时间是本地时间还是UTC时间。 
     { ngx_string("autoindex_localtime"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
       ngx_conf_set_flag_slot,
@@ -107,6 +125,7 @@ static ngx_command_t  ngx_http_autoindex_commands[] = {
       offsetof(ngx_http_autoindex_loc_conf_t, localtime),
       NULL },
 
+    //设置目录中列出的文件是显示精确大小，还是对KB，MB，GB进行四舍五入。
     { ngx_string("autoindex_exact_size"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
       ngx_conf_set_flag_slot,
@@ -132,8 +151,28 @@ static ngx_http_module_t  ngx_http_autoindex_module_ctx = {
     ngx_http_autoindex_merge_loc_conf      /* merge location configuration */
 };
 
+/*
+ngx_http_autoindex_module 模块可以列出目录中的文件。 一般当ngx_http_index_module模块找不到默认主页的时候，会把请求
+转给 ngx_http_autoindex_module模块去处理。 
+*/ 
 
-ngx_module_t  ngx_http_autoindex_module = {
+/*
+Index of /
+
+../
+download/                                          07-Jan-2016 04:16                   -
+nginx/                                             07-Jan-2016 03:16                   -
+index.html                                         07-Jan-2016 04:22                 699
+index.php                                          21-Mar-2025 19:53                 322
+test.php                                           07-Jan-2016 04:22                 347
+test2.php                                          06-Jan-2016 16:13                1220
+test3.php                                          23-Apr-2025 10:24                  27
+test4.php                                          06-Jan-2016 20:36                 428
+xiazai.php                                         07-Jan-2016 01:41                 673
+*/
+
+//自己研究发现只有在 ngx_http_index_module模块不编译到源码中的时候，ngx_http_autoindex_module才会生效
+ngx_module_t  ngx_http_autoindex_module = { //可以用着目录服务器下载文件
     NGX_MODULE_V1,
     &ngx_http_autoindex_module_ctx,        /* module context */
     ngx_http_autoindex_commands,           /* module directives */
@@ -148,10 +187,65 @@ ngx_module_t  ngx_http_autoindex_module = {
     NGX_MODULE_V1_PADDING
 };
 
+/*
+root@root:~# ls -l /var/yyz/www/
+total 36
+drwxr-xr-x 2 root root 4096 2016-01-07 12:16 download/
+-rwxr--r-- 1 root root  699 2016-01-07 12:22 index.html*
+-rwxrwxrwx 1 root root  322 2025-03-22 03:53 index.php*
+drwxr-xr-x 2 root root 4096 2016-01-07 11:16 nginx/
+-rwxrwxrwx 1 root root  347 2016-01-07 12:22 test.php*
+-rwxr--r-- 1 root root 1220 2016-01-07 00:13 test2.php*
+-rwxrwxrwx 1 root root   27 2025-04-23 18:24 test3.php*
+-rwxr--r-- 1 root root  428 2016-01-07 04:36 test4.php*
+-rwxr--r-- 1 root root  673 2016-01-07 09:41 xiazai.php*
+root@root:~# 
+root@root:~# curl http://10.2.13.167/
+<html>
+<head><title>Index of /</title></head>
+<body bgcolor="white">
+<h1>Index of /</h1><hr><pre><a href="../">../</a>
+<a href="download/">download/</a>                                          07-Jan-2016 04:16                   -
+<a href="nginx/">nginx/</a>                                             07-Jan-2016 03:16                   -
+<a href="index.html">index.html</a>                                         07-Jan-2016 04:22                 699
+<a href="index.php">index.php</a>                                          21-Mar-2025 19:53                 322
+<a href="test.php">test.php</a>                                           07-Jan-2016 04:22                 347
+<a href="test2.php">test2.php</a>                                          06-Jan-2016 16:13                1220
+<a href="test3.php">test3.php</a>                                          23-Apr-2025 10:24                  27
+<a href="test4.php">test4.php</a>                                          06-Jan-2016 20:36                 428
+<a href="xiazai.php">xiazai.php</a>                                         07-Jan-2016 01:41                 673
+</pre><hr></body>
+</html>
+root@root:~# 
 
-static ngx_int_t
-ngx_http_autoindex_handler(ngx_http_request_t *r)
-{
+
+界面输入http://ip结果:
+Index of /
+
+../
+download/                                          07-Jan-2016 04:16                   -
+nginx/                                             07-Jan-2016 03:16                   -
+index.html                                         07-Jan-2016 04:22                 699
+index.php                                          21-Mar-2025 19:53                 322
+test.php                                           07-Jan-2016 04:22                 347
+test2.php                                          06-Jan-2016 16:13                1220
+test3.php                                          23-Apr-2025 10:24                  27
+test4.php                                          06-Jan-2016 20:36                 428
+xiazai.php                                         07-Jan-2016 01:41                 673
+
+因此可以用着目录服务器下载文件
+*/
+
+/*
+location / {			
+    index index11.html	#必须保证新uri所在目录存在并且该目录下面没有index11.html，autoindex对应的ngx_http_autoindex_handler才会生效		
+    autoindex on;		
+}
+只有在index11.html文件不存在的时候才会执行autoindex，如果没有设置index则默认打开index.html，必须保证index.html的uri目录存在，如果不存在，是一个不存在的目录也不会执行autoindex
+*/
+static ngx_int_t  
+ngx_http_autoindex_handler(ngx_http_request_t *r) //只有在index-module不编译进来的时候该模块才会生效
+{ //获取uri目录中的所有文件信息组包发送给客户端浏览器
     u_char                         *last, *filename;
     size_t                          len, allocated, root;
     ngx_err_t                       err;
@@ -166,9 +260,11 @@ ngx_http_autoindex_handler(ngx_http_request_t *r)
     ngx_http_autoindex_entry_t     *entry;
     ngx_http_autoindex_loc_conf_t  *alcf;
 
-    if (r->uri.data[r->uri.len - 1] != '/') {
+    if (r->uri.data[r->uri.len - 1] != '/') { //autoindex的uri必须是目录形式，最末尾字符/
         return NGX_DECLINED;
     }
+
+    alcf = ngx_http_get_module_loc_conf(r, ngx_http_autoindex_module);
 
     //如果没有配置index或者try_files，则匹配location / {}到后会默认使用html/index.html 
     if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD))) {
@@ -185,6 +281,7 @@ ngx_http_autoindex_handler(ngx_http_request_t *r)
 
     last = ngx_http_map_uri_to_path(r, &path, &root,
                                     NGX_HTTP_AUTOINDEX_PREALLOCATE);
+
     if (last == NULL) {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }

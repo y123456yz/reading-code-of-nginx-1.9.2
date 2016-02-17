@@ -40,7 +40,7 @@ NginxÖÐ¶¨ÒåÁË»ù±¾µÄÊý¾Ý½á¹¹ngx_connection_tÀ´±íÊ¾Á¬½Ó£¬Õâ¸öÁ¬½Ó±íÊ¾ÊÇ¿Í»§¶ËÖ÷¶¯·
 ÆäÎª±»¶¯Á¬½Ó¡£Í¬Ê±£¬ÔÚÓÐÐ©ÇëÇóµÄ´¦Àí¹ý³ÌÖÐ£¬Nginx»áÊÔÍ¼Ö÷¶¯ÏòÆäËûÉÏÓÎ·þÎñÆ÷½¨Á¢Á¬½Ó£¬²¢ÒÔ´ËÁ¬½ÓÓëÉÏÓÎ·þÎñÆ÷Í¨ÐÅ£¬Òò´Ë£¬ÕâÑùµÄ
 Á¬½ÓÓëngx_connection_tÓÖÊÇ²»Í¬µÄ£¬Nginx¶¨ÒåÁË}ngx_peer_connection_t½á¹¹ÌåÀ´±íÊ¾Ö÷¶¯Á¬½Ó£¬µ±È»£¬ngx_peer_connection_tÖ÷¶¯Á¬½ÓÊÇ
 ÒÔngx_connection-t½á¹¹ÌåÎª»ù´¡ÊµÏÖµÄ¡£±¾½Ú½«ËµÃ÷ÕâÁ½ÖÖÁ¬½ÓÖÐ¸÷×Ö¶ÎµÄÒâÒå£¬Í¬Ê±ÐèÒª×¢ÒâµÄÊÇ£¬ÕâÁ½ÖÖÁ¬½Ó¶¼²»¿ÉÒÔËæÒâ´´½¨£¬±ØÐë´Ó
-Á¬½Ó³ØÖÐ»ñÈ¡£¬ÔÚ9.3.3½ÚÖÐ»áËµÃ÷Á¬½Ó³ØµÄÓÃ·¨¡£
+Á¬½Ó³ØÖÐ»ñÈ¡£¬
 */
 struct ngx_peer_connection_s {
     /* Ò»¸öÖ÷¶¯Á¬½ÓÊµ¼ÊÉÏÒ²ÐèÒªngx_connection_t½á¹¹ÌåÖÐµÄ´ó²¿·Ö³ÉÔ±£¬²¢ÇÒ³öÓÚÖØÓÃµÄ¿¼ÂÇ¶ø¶¨ÒåÁËconnection³ÉÔ± */
@@ -85,7 +85,7 @@ struct ngx_peer_connection_s {
 
     /* ngx_connection_log_error_e */
     /*NGX_ERROR_IGNORE_EINVAL  ngx_connection_log_error_e
-  Óë9.3.1½ÚÖÐngx_connection_tÀïµÄlog_error±¹ÒåÊÇÏàÍ¬µÄ£¬Çø±ðÔÚÓÚÕâÀïµÄlog_errorÖ»ÓÐÁ½Î»£¬Ö»ÄÜ±í´ï4ÖÖ´íÎó£¬NGX_ERROR_IGNORE_EINVAL´íÎóÎÞ·¨±í´ï
+  Óëngx_connection_tÀïµÄlog_error±¹ÒåÊÇÏàÍ¬µÄ£¬Çø±ðÔÚÓÚÕâÀïµÄlog_errorÖ»ÓÐÁ½Î»£¬Ö»ÄÜ±í´ï4ÖÖ´íÎó£¬NGX_ERROR_IGNORE_EINVAL´íÎóÎÞ·¨±í´ï
      */
     unsigned                         log_error:2;
 };

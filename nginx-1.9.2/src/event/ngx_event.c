@@ -13,12 +13,12 @@
 #define DEFAULT_CONNECTIONS  512
 
 
-
 extern ngx_module_t ngx_kqueue_module;
 extern ngx_module_t ngx_eventport_module;
 extern ngx_module_t ngx_devpoll_module;
 extern ngx_module_t ngx_epoll_module;
 extern ngx_module_t ngx_select_module;
+
 
 static char *ngx_event_init_conf(ngx_cycle_t *cycle, void *conf);
 static ngx_int_t ngx_event_module_init(ngx_cycle_t *cycle);
@@ -199,7 +199,7 @@ static ngx_command_t  ngx_event_core_commands[] = {
       0,
       NULL },
     //当事件模块通知有TCP连接时，尽可能在本次调度中对所有的客户端TCP连接请求都建立连接
-    //对应于9.2节中提到的事件定义的available字段。对于epoll事件驱动模式来说，意味着在接收到一个新连接事件时，调用accept以尽可能多地接收连接
+    //对应于事件定义的available字段。对于epoll事件驱动模式来说，意味着在接收到一个新连接事件时，调用accept以尽可能多地接收连接
     { ngx_string("multi_accept"),
       NGX_EVENT_CONF|NGX_CONF_FLAG,
       ngx_conf_set_flag_slot,
@@ -294,7 +294,7 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
     2.没有设置timer_resolution，flags = NGX_UPDATE_TIME，timer为定时器红黑树中最小定时时间，将作为epoll_wait的超时时间(timeout) */
     
     if (ngx_timer_resolution) {
-        timer = NGX_TIMER_INFINITE;
+        timer = NGX_TIMER_INFINITE; //如果设置了timer_resolution参数，timer为-1,也就是epoll_wait只有通过事件触发返回，定时器定时触发epoll_wait返回
         flags = 0;
 
     } else { //
@@ -796,7 +796,7 @@ ngx_event_module_init(ngx_cycle_t *cycle)
     ngx_accept_mutex_ptr = (ngx_atomic_t *) shared;
 
     /*
-     ngx_accept_mutex就是负载均衡锁，spin值为-1则是告诉Nginx这把锁不可以使进程进入睡眠状态，详见14.8节
+     ngx_accept_mutex就是负载均衡锁，spin值为-1则是告诉Nginx这把锁不可以使进程进入睡眠状态
      */
     ngx_accept_mutex.spin = (ngx_uint_t) -1;
 
@@ -843,7 +843,7 @@ ngx_event_module_init(ngx_cycle_t *cycle)
 //ngx_event_timer_alarm只是个全局变量，当它设为l时，表示需要更新时间。
 /*
 在ngx_event_ actions t的process_events方法中，每一个事件驱动模块都需要在ngx_event_timer_alarm为1时调
-用ngx_time_update方法（参见9.7.1节）更新系统时间，在更新系统结束后需要将ngx_event_timer_alarm设为0。
+用ngx_time_update方法（）更新系统时间，在更新系统结束后需要将ngx_event_timer_alarm设为0。
 */ //定时器超时触发epoll_wait返回，返回处理后才会执行timer超时handler  ngx_timer_signal_handler
 static void
 ngx_timer_signal_handler(int signo)
@@ -875,7 +875,6 @@ ngx_event_process_init(ngx_cycle_t *cycle)
      因此，即使我们在配置文件中指定打开accept_mutex锁，如果没有使用master模式或者worker进程数量等于1，进程在运行时还是不会使用
      负载均衡锁（既然不存在多个进程去抢一个监听端口上的连接的情况，那么自然不需要均衡多个worker进程的负载）。
          这时会将ngx_use_accept_mutex全局变量置为1，ngx_accept_mutex_held标志设为0，ngx_accept_mutex_delay则设为在配置文件中指定的最大延迟时间。
-     这3个变量的意义可参见9.8节中关于负载均衡锁的说明。
      */
     if (ccf->master && ccf->worker_processes > 1 && ecf->accept_mutex) {
         ngx_use_accept_mutex = 1;
@@ -900,7 +899,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
     ngx_queue_init(&ngx_posted_accept_events);
     ngx_queue_init(&ngx_posted_events);
 
-    //初始化红黑树实现的定时器。关于定时器的实现细节可参见9.6节。
+    //初始化红黑树实现的定时器。
     if (ngx_event_timer_init(cycle->log) == NGX_ERROR) {
         return NGX_ERROR;
     }
@@ -937,7 +936,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
         //设置定时器
         /*
             在ngx_event_ actions t的process_events方法中，每一个事件驱动模块都需要在ngx_event_timer_alarm为1时调
-            用ngx_time_update方法（参见9.7.1节）更新系统时间，在更新系统结束后需要将ngx_event_timer_alarm设为0。
+            用ngx_time_update方法（）更新系统时间，在更新系统结束后需要将ngx_event_timer_alarm设为0。
           */
         ngx_memzero(&sa, sizeof(struct sigaction)); //每隔ngx_timer_resolution ms会超时执行handle
         sa.sa_handler = ngx_timer_signal_handler;
@@ -1042,7 +1041,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
     /* for each listening socket */
     /*
      在刚刚建立好的连接池中，为所有ngx_listening_t监听对象中的connection成员分配连接，同时对监听端口的读事件设置处理方法
-     为ngx_event_accept，也就是说，有新连接事件时将调用ngx_event_accept方法建立新连接（详见9.8节中关于如何建立新连接的内容）。
+     为ngx_event_accept，也就是说，有新连接事件时将调用ngx_event_accept方法建立新连接（）。
      */
     ls = cycle->listening.elts;
     for (i = 0; i < cycle->listening.nelts; i++) {
@@ -1131,7 +1130,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
 #else
         /*
         对监听端口的读事件设置处理方法
-        为ngx_event_accept，也就是说，有新连接事件时将调用ngx_event_accept方法建立新连接（详见9.8节中关于如何建立新连接的内容）。
+        为ngx_event_accept，也就是说，有新连接事件时将调用ngx_event_accept方法建立新连接
           */
         rev->handler = ngx_event_accept; 
 

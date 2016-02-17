@@ -27,7 +27,7 @@ ngx_list_create(ngx_pool_t *pool, ngx_uint_t n, size_t size) //实际上就是为nginx
 }
 
 /*
-ngx_list_t也是一个顺序容器，它实际上相当于7.3节中介绍的动态数组与单向链表的结
+ngx_list_t也是一个顺序容器，它实际上相当于动态数组与单向链表的结
 合体，只是扩容起来比动态数组简单得多，它可以一次性扩容1个数组。
 */
 //如果l中的last的elts用完了，则在l链表中新创建一个ngx_list_part_t，起实际数据部分空间大小为l->nalloc * l->size。

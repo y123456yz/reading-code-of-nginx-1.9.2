@@ -54,7 +54,7 @@ struct ngx_event_s {
     /*
     这个标志位用于区分当前事件是否是过期的，它仅仅是给事件驱动模块使用的，而事件消费模块可不用关心。为什么需要这个标志位呢？
     当开始处理一批事件时，处理前面的事件可能会关闭一些连接，而这些连接有可能影响这批事件中还未处理到的后面的事件。这时，
-    可通过instance标志位来避免处理后面的已经过期的事件。在9.6节中，将详细描述ngx_epoll_module是如何使用instance标志位区分
+    可通过instance标志位来避免处理后面的已经过期的事件。将详细描述ngx_epoll_module是如何使用instance标志位区分
     过期事件的，这是一个巧妙的设计方法
 
         instance标志位为什么可以判断事件是否过期？从上面的代码可以看出，instance标志位的使用其实很简单，它利用了指针的最后一位一定
@@ -114,7 +114,7 @@ struct ngx_event_s {
     //标志位，为1时表示事件在处理过程中出现错误
     unsigned         error:1;
 
-    //标志位，为I时表示这个事件已经超时，用以提示事件的消费模块做超时处理，它与timer_set都用于9.7节将要介绍的定时器
+    //标志位，为I时表示这个事件已经超时，用以提示事件的消费模块做超时处理
     /*读客户端连接的数据，在ngx_http_init_connection(ngx_connection_t *c)中的ngx_add_timer(rev, c->listening->post_accept_timeout)把读事件添加到定时器中，如果超时则置1
       每次ngx_unix_recv把内核数据读取完毕后，在重新启动add epoll，等待新的数据到来，同时会启动定时器ngx_add_timer(rev, c->listening->post_accept_timeout);
       如果在post_accept_timeout这么长事件内没有数据到来则超时，开始处理关闭TCP流程*/
@@ -217,7 +217,7 @@ struct ngx_event_s {
     ngx_uint_t       index;
     //可用于记录error_log日志的ngx_log_t对象
     ngx_log_t       *log;  //可以记录日志的ngx_log_t对象 其实就是ngx_listening_t中获取的log //赋值见ngx_event_accept
-    //定时器节点，用于定时器红黑树中，在9.7节会详细介绍
+    //定时器节点，用于定时器红黑树中
     ngx_rbtree_node_t   timer; //见ngx_event_timer_rbtree
 
     /* the posted queue */
@@ -309,7 +309,7 @@ typedef struct {
 
     ngx_int_t  (*notify)(ngx_event_handler_pt handler); //ngx_notify中执行
 
-    //在正常的工作循环中，将通过调用process_event方法来处理事件。这个方法仅在第8章中提到的
+    //在正常的工作循环中，将通过调用process_event方法来处理事件。
     ngx_int_t  (*process_events)(ngx_cycle_t *cycle, ngx_msec_t timer,
                    ngx_uint_t flags); //调用见ngx_process_events
 
@@ -576,7 +576,7 @@ typedef struct {
     ngx_uint_t    connections; //连接池的大小
     //通过"use"选择IO复用方式 select epoll等，然后通过解析赋值 见ngx_event_use
     //默认赋值见ngx_event_core_init_conf，ngx_event_core_module后的第一个NGX_EVENT_MODULE也就是ngx_epoll_module默认作为第一个event模块
-    ngx_uint_t    use; //选用的事件模块在所有事件模块中的序号，也就是9.4.2节中介绍过的ctx_index成员 赋值见ngx_event_use
+    ngx_uint_t    use; //选用的事件模块在所有事件模块中的序号，也就是ctx_index成员 赋值见ngx_event_use
 
     /*
     事件的available标志位对应着multi_accept配置项。当available为l时，告诉Nginx -次性尽量多地建立新连接，它的实现原理也就在这里
@@ -590,7 +590,7 @@ typedef struct {
     ngx_flag_t    accept_mutex;//标志位，为1时表示启用负载均衡锁
 
     /*
-    负载均衡锁会使有些worker进程在拿不到锁时延迟建立新连接，accept_mutex_delay就是这段延迟时间的长度。关于它如何影响负载均衡的内容，可参见9.8.5节
+    负载均衡锁会使有些worker进程在拿不到锁时延迟建立新连接，accept_mutex_delay就是这段延迟时间的长度。关于它如何影响负载均衡的内容
      */ //默认500ms，也就是0.5s
     ngx_msec_t    accept_mutex_delay; //单位ms  如果没获取到mutex锁，则延迟这么多毫秒重新获取
 

@@ -64,9 +64,9 @@ static ngx_http_module_t  ngx_http_write_filter_module_ctx = {
 ┃ngx_http_ssi_filter_module          ┃                                                                  ┃
 ┃                                    ┃含到网页中并返回给用户                                            ┃
 ┣━━━━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-┃                                    ┃  仅对HTTP包体做处理。5.5.2节详细介绍过该过滤模块。它仅应用于     ┃
+┃                                    ┃  仅对HTTP包体做处理。                             它仅应用于     ┃
 ┃ngx_http_postpone_filter_module     ┃subrequest产生的子请求。它使得多个子请求同时向客户端发送响应时    ┃
-┃                                    ┃能够有序，所谓的“有序”是揩按照构造子请求的顺序发送响应            ┃
+┃                                    ┃能够有序，所谓的“有序”是揩按照构造子请求的顺序发送响应          ┃
 ┣━━━━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
 ┃                                    ┃  对特定的HTTP响应包体（如网页或者文本文件）进行gzip压缩，再      ┃
 ┃ngx_http_gzip_filter_module         ┃                                                                  ┃

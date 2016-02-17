@@ -466,6 +466,20 @@ static ngx_http_module_t  ngx_http_upstream_module_ctx = {
 };
 
 /*
+负载均衡相关配置:
+upstream
+server
+ip_hash:根据客户端的IP来做hash,不过如果squid -- nginx -- server(s)则，ip永远是squid服务器ip,因此不管用,需要ngx_http_realip_module或者第三方模块
+keepalive:配置到后端的最大连接数，保持长连接，不必为每一个客户端都重新建立nginx到后端PHP等服务器的连接，需要保持和后端
+    长连接，例如fastcgi:fastcgi_keep_conn on;       proxy:  proxy_http_version 1.1;  proxy_set_header Connection "";
+least_conn:根据其权重值，将请求发送到活跃连接数最少的那台服务器
+hash:可以按照uri  ip 等参数进行做hash
+
+参考http://tengine.taobao.org/nginx_docs/cn/docs/http/ngx_http_upstream_module.html#ip_hash
+*/
+
+
+/*
 Nginx不仅仅可以用做Web服务器。upstream机制其实是由ngx_http_upstream_module模块实现的，它是一个HTTP模块，使用upstream机制时客
 户端的请求必须基于HTTP。
 
@@ -617,7 +631,7 @@ ngx_http_upstream_create(ngx_http_request_t *r)//创建一个ngx_http_upstream_t结构
     为了让读者方便地理解upstream机制，本章将不再提及文件缓存。
     3)回调mytest模块已经实现的create_request回调方法。
     4) mytest模块通过设置r->upstream->request_bufs已经决定好发送什么样的请求到上游服务器。
-    5) upstream模块将会检查5.1.3节中介绍过的resolved成员，如果有resolved成员的话，就根据它设置好上游服务器的地址r->upstream->peer成员。
+    5) upstream模块将会检查resolved成员，如果有resolved成员的话，就根据它设置好上游服务器的地址r->upstream->peer成员。
     6)用无阻塞的TCP套接字建立连接。
     7)无论连接是否建立成功，负责建立连接的connect方法都会立刻返回。
 */
@@ -4264,7 +4278,15 @@ ngx_http_upstream_process_request(ngx_http_request_t *r,
         }
 
 #endif
-
+        size_t upstream_done = p->upstream_done;
+        size_t upstream_eof = p->upstream_eof;
+        size_t upstream_error = p->upstream_error;
+        size_t downstream_error = p->downstream_error;
+          
+        ngx_log_debugall(r->connection->log, 0, "ngx http cache, upstream_done:%z, upstream_eof:%z, "
+            "upstream_error:%z, downstream_error:%z", upstream_done, upstream_eof, 
+            upstream_error, downstream_error);
+            
         if (p->upstream_done || p->upstream_eof || p->upstream_error) {
             ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                            "http upstream exit: %p", p->out);

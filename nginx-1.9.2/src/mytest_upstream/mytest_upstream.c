@@ -155,7 +155,6 @@ mytest_upstream_create_request(ngx_http_request_t *r)
 {
     //发往google上游服务器的请求很简单，就是模仿正常的搜索请求，
 //以/search?q=…的URL来发起搜索请求。backendQueryLine中的%V等转化
-//格式的用法，请参见4.4节中的表4-7
     static ngx_str_t backendQueryLine =
         ngx_string("GET /search?q=%V HTTP/1.1\r\nHost: www.sina.com\r\nConnection: close\r\n\r\n");
     ngx_int_t queryLineLen = backendQueryLine.len + r->args.len - 2;
@@ -170,7 +169,6 @@ mytest_upstream_create_request(ngx_http_request_t *r)
     //last要指向请求的末尾
     b->last = b->pos + queryLineLen;
 
-    //作用相当于snprintf，只是它支持4.4节中的表4-7列出的所有转换格式
     ngx_snprintf(b->pos, queryLineLen, (char*)backendQueryLine.data, &r->args); 
               
     // r->upstream->request_bufs是一个ngx_chain_t结构，它包含着要发送给上游服务器的请求
@@ -489,12 +487,10 @@ ngx_http_mytest_upstream_handler(ngx_http_request_t *r)
     u->resolved->socklen = sizeof(struct sockaddr_in);
     u->resolved->naddrs = 1;
 
-    //设置三个必须实现的回调方法，也就是5.3.3节至5.3.5节中实现的3个方法
     u->create_request = mytest_upstream_create_request; //构造http请求行和头部行
     u->process_header = mytest_process_status_line;
     u->finalize_request = mytest_upstream_finalize_request;
 
-    //这里必须将count成员加1，理由见5.1.5节
 /*
 这里还需要执行r->main->count++，这是在告诉HTTP框架将当前请求的引用计数加1，即告诉ngx_http_mytest_handler方法暂时不要销
 毁请求，因为HTTP框架只有在引用计数为0时才能真正地销毁请求。这样的话，upstream机制接下来才能接管请求的处理工作。

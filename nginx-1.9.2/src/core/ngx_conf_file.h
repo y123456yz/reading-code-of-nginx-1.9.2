@@ -280,7 +280,7 @@ location ~ .*.(js|css)?$
 ①每个进程中都有一个唯一的ngx_cycle_t核心结构体，它有一个成员conf_ctx维护着所有模块的配置结构体，
   其类型是voi扩”4。conf ctx意义为首先指向一个成员皆为指针的数组，其中每个成员指针又指向另外一个
   成员皆为指针的数组，第2个子数组中的成员指针才会指向各模块生成的配置结构体。这正是为了事件模
-  块、http模块、mail模块而设计的，第9、10章都有详述，这有利于不同于NGX CORE MODULE类型的
+  块、http模块、mail模块而设计的，这有利于不同于NGX CORE MODULE类型的
   特定模块解析配置项。然而，NGX CORE—MODULE类型的核心模块解析配置项时，配置项一定是全局的，
   不会从属于任何{）配置块的，它不需要上述这种双数组设计。解析标识为NGX DIRECT CONF类型的配
   置项时，会把void+十++类型的conf ctx强制转换为void~+，也就是说，此时，在conf ctx指向的指针数组
@@ -605,7 +605,7 @@ index index.html index.htm;
 ①每个进程中都有一个唯一的ngx_cycle_t核心结构体，它有一个成员conf ctx维护着所有模块的配置结构体，
   其类型是voi扩”4。conf ctx意义为首先指向一个成员皆为指针的数组，其中每个成员指针又指向另外一个
   成员皆为指针的数组，第2个子数组中的成员指针才会指向各模块生成的配置结构体。这正是为了事件模
-  块、http模块、mail模块而设计的，第9、10章都有详述，这有利于不同于NGX CORE MODULE类型的
+  块、http模块、mail模块而设计的，这有利于不同于NGX CORE MODULE类型的
   特定模块解析配置项。然而，NGX CORE—MODULE类型的核心模块解析配置项时，配置项一定是全局的，
   不会从属于任何{）配置块的，它不需要上述这种双数组设计。解析标识为NGX DIRECT CONF类型的配
   置项时，会把void+十++类型的conf ctx强制转换为void~+，也就是说，此时，在conf ctx指向的指针数组
@@ -617,13 +617,9 @@ index index.html index.htm;
 
 
 char*(*set)(ngx_conf_t *cf, ngx_commandj 'vcmd,void *conf)
-    关于set回调方法，在第3章中处理mytest配置项时已经使用过，其中mytest配置项是
-不带参数的。如果处理配置项，我们既可以自己实现一个回调方法来处理配置项（4.2.4节中
-会举例说明如何自定义回调方法），也可以使用Nginx预设的14个解析配置项方法，这会少
-写许多代码，表4-2列出了这些预设的解析配置项方法。我们将在4.2.3节中举例说明这些
-预设方法的使用方式。
-
-表4-2预设的14个配置项解析方法
+    关于set回调方法，在处理mytest配置项时已经使用过，其中mytest配置项是
+不带参数的。如果处理配置项，我们既可以自己实现一个回调方法来处理配置项（），也可以使用Nginx预设的14个解析配置项方法，这会少
+写许多代码，
 ┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃    预设方法名              ┃    行为                                                                      ┃
 ┣━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
@@ -638,7 +634,7 @@ char*(*set)(ngx_conf_t *cf, ngx_commandj 'vcmd,void *conf)
 ┃                            ┃存这个配置项的参数，则可以使用ngx_conf_set_ str slot方法                      ┃
 ┣━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
 ┃                            ┃  如果这个配置项会出现多次，每个配置项后面都跟着1个参数，而在程序中我们       ┃
-┃                            ┃希望仅用一个ngx_array_t动态数组（用法见7.3节）来存储所有的参数，且数组中      ┃
+┃                            ┃希望仅用一个ngx_array_t动态数组（           ）来存储所有的参数，且数组中      ┃
 ┃ngx_conf_set_str_array_slot ┃                                                                              ┃
 ┃                            ┃的每个参数都以ngx_str_t来存储，那么预设的ngx_conf_set_str_array_slot有法可    ┃
 ┃                            ┃以帮我们做到                                                                  ┃
@@ -714,7 +710,7 @@ ngx_uint_t  conf
 3个结构体，分别用于存储main、srv、loc级别的配置项（对应于create_main_conf、create_srv_conf、
 create_loc_conf方法创建的结构体），而HTTP框架自动解析时需要知道应把解析
 出的配置项值写入哪个结构体中，这将由conf成员完成。
-    因此，对conf的设置是与ngx_http_module_t实现的回调方法（在4.2.1节中介绍）相
+    因此，对conf的设置是与ngx_http_module_t实现的回调方法（ ）相
 关的。如果用于存储这个配置项的数据结构是由create_main_conf回调方法完成的，那么必
 须把conf设置为NGX_HTTP_MAIN_CONF_OFFSET。同样，如果这个配置项所属的数据结
 构是由create_srv_conf回调方法完成的，那么必须把conf设置为NGX_HTTP_SRV_CONF_OFFSET。
@@ -722,7 +718,7 @@ create_loc_conf方法创建的结构体），而HTTP框架自动解析时需要知道应把解析
 NGX_HTTP_LOC_CONF_OFFSET。
     目前，功能较为简单的HTTP模块都只实现了create_loc_conf回调方法，对于http{）、
 server{}块内出现的同名配置项，都是并入某个location{）内create_loc_conf方法产生的结
-构体中的（在4.2.5节中会详述如何合并配置项）。当我们希望同时出现在http{）、server{）、
+构体中的（  ）。当我们希望同时出现在http{）、server{）、
 location{)块的同名配置项，在HTTP模块的代码中保存于不同的变量中时，就需要实现
 create_main_conf方法、create_srv_conf方法产生新的结构体，从而以不同的结构体独立保存不
 同级别的配置项，而不是全部合并到某个location下create_loc_conf方法生戍的结构体中。
@@ -750,8 +746,7 @@ offsetof将0地址转换成type结构体类型的指针，并在访问member成员时取得member咸员
     设置offset有什么作用呢？如果使用Nginx预设的解析配置项方法，就必须设置offset，
 这样Nginx首先通过conf成员找到应该用哪个结构体来存放，然后通过offset成员找到这个
 结构体中的相应成员，以便存放该配置。如果是自定义的专用配置项解析方法（只解析某一
-个配置项），则可以不设置offset的值。读者可以通过4.3.4节来了解预设配置项解析方法是
-如何使用offset的。
+个配置项），则可以不设置offset的值。
 
 (6) void  *post
     post指针有许多用途，从它被设计成void *就可以看出。
@@ -837,7 +832,7 @@ struct ngx_command_s { //所有配置的最初源头在ngx_init_cycle
     //在ngx_conf_parse解析完参数后，在ngx_conf_handler中执行
     char               *(*set)(ngx_conf_t *cf, ngx_command_t *cmd, void *conf); //参考上面的图形化信息
     ngx_uint_t            conf;//crate分配内存的时候的偏移量 NGX_HTTP_LOC_CONF_OFFSET NGX_HTTP_SRV_CONF_OFFSET
-    /*通常用于使用预设的解析方法解析配置项，这是配置模块的一个优秀设计。它需要与conf配合使用，在第4章中详细介绍*/
+    /*通常用于使用预设的解析方法解析配置项，这是配置模块的一个优秀设计。它需要与conf配合使用*/
     ngx_uint_t            offset;
 
     //如果使用Nginx预设的配置项解析方法，就需要根据这些预设方法来决定post的使用方式。表4-4说明了post相对于14个预设方法的用途。
@@ -912,7 +907,7 @@ auto/modules(auto/sources)脚本中的。读者可以通过阅读这个modules脚本的源代码了解N
 ┃ngx_http_ssi_filter module          ┃                                                                  ┃
 ┃                                    ┃含到网页中并返回给用户                                            ┃
 ┣━━━━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-┃                                    ┃  仅对HTTP包体做处理。5.5.2节详细介绍过该过滤模块。它仅应用于     ┃
+┃                                    ┃  仅对HTTP包体做处理。                             它仅应用于     ┃
 ┃ngx_http_postpone_filter module     ┃subrequest产生的子请求。它使得多个子请求同时向客户端发送响应时    ┃
 ┃                                    ┃能够有序，所谓的“有序”是揩按照构造子请求的顺序发送响应          ┃
 ┣━━━━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
@@ -945,8 +940,7 @@ struct ngx_module_s {//相关空间初始化，赋值等可以参考ngx_http_block
     /*
     对于一类模块（由下面的type成员决定类别）而言，ctx_index表示当前模块在这类模块中的序号。这个成员常常是由管理这类模块的一个
     Nginx核心模块设置的，对于所有的HTTP模块而言，ctx_index是由核心模块ngx_http_module设置的。ctx_index非常重要，Nginx的模块化
-    设计非常依赖于各个模块的顺序，它们既用于表达优先级，也用于表明每个模块的位置，借以帮助Nginx框架快速获得某个模块的数据（HTTP
-    框架设置ctx_index的过程参见10.7节）
+    设计非常依赖于各个模块的顺序，它们既用于表达优先级，也用于表明每个模块的位置，借以帮助Nginx框架快速获得某个模块的数据（）
     */
     //ctx index表明了模块在相同类型模块中的顺序
     ngx_uint_t            ctx_index; //初始化赋值见ngx_http_block, 这个值是按照在http_modules中的位置顺序来排序的，见ngx_http_block
@@ -978,7 +972,7 @@ struct ngx_module_s {//相关空间初始化，赋值等可以参考ngx_http_block
     指向特定类型模块的公共接口。例如，在HTTP模块中，ctx需要指向ngx_http_module_t结构体, event模块中，指向ngx_event_module_t
     */
     void                 *ctx; //HTTP框架初始化时完成的
-    ngx_command_t        *commands; //commands将处理nginx.conf中的配置项，详见第4章
+    ngx_command_t        *commands; //commands将处理nginx.conf中的配置项
 
     
     /*
@@ -1002,7 +996,7 @@ struct ngx_module_s {//相关空间初始化，赋值等可以参考ngx_http_block
 
 
     /*
-    在Nginx的启动、停止过程中，以下7个函数指针表示有7个执行点会分别调用这7种方法（参见8.4节～8.6节）。对于任一个方法而言，
+    在Nginx的启动、停止过程中，以下7个函数指针表示有7个执行点会分别调用这7种方法（  ）。对于任一个方法而言，
     如果不需要Nginx在某个时刻执行它，那么简单地把它设为NULL空指针即可
     */
 
@@ -1092,7 +1086,7 @@ typedef char *(*ngx_conf_handler_pt)(ngx_conf_t *cf,
 struct ngx_conf_s { 
     char                 *name;
     ngx_array_t          *args;//每解析一行，从配置文件中解析出的配置项全部在这里面
-
+    //最终指向的是一个全局类型的ngx_cycle_s，即ngx_cycle，见ngx_init_cycle
     ngx_cycle_t          *cycle; //指向对应的cycle，见ngx_init_cycle中的两行conf.ctx = cycle->conf_ctx; conf.cycle = cycle;
     ngx_pool_t           *pool;
     ngx_pool_t           *temp_pool; //用该poll的空间都是临时空间，最终在ngx_init_cycle->ngx_destroy_pool(conf.temp_pool);中释放

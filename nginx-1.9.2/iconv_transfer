@@ -1,0 +1,266 @@
+#!/bin/sh  
+#=====================  
+# configure 
+#=====================  
+
+function fun_dir(){
+for child in `ls $1`
+do
+    if [[ -f $1/$child ]]
+    then
+        echo "convert $1/$child"
+        iconv -f utf-8 -t gb2312 $1/$child > $2/$child
+        if (( $? != 0 ))
+            then
+                cp $1/$child $2/$child
+                echo "cp $1/$child $2/$child"
+            fi
+    elif [[ -d $1/$child ]]
+    then
+        mkdir $2/$child
+        fun_dir $1/$child $2/$child
+    fi
+done
+}
+
+if (( $# != 2 ))
+    then
+    echo "parameter error"
+    exit
+    fi
+ 
+fun_dir ${1%/} ${2%/}
+
+exit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# check period (second)
+CHECK_PERIOD=10
+
+# the proccess name needed to checking
+PROC_NAME_LIST="mcpd mcplog nc safagent"
+
+# number of connections
+NO_OF_CONNECTIONS=6
+
+# System CPU used
+CPU_USED=70
+
+
+
+
+# where message print
+OUT_TTY="/dev/ttyS0"
+#OUT_TTY=""
+
+#=====================                                             
+# function                                                                    
+#=====================
+
+function outlog()
+{
+	MYDATE=`date +%Y%m%d-%H:%M:%S`
+	echo ${MYDATE} "Warning: "$1 >>/var/log/start_mu.log
+}
+
+####start process, arg1 is process name ###
+function start_proc()
+{
+	case "$1" in
+	'mcpd')
+		if [ -x /usr/local/bin/mcpd ]; then
+			/usr/local/bin/mcpd -d -f /usr/local/conf/mcpd.conf -i /var/run/mcpd.pid >/dev/null
+		fi
+		;;
+	'nc')
+		if [ -x /usr/local/bin/nc ]; then
+			/usr/local/bin/nc -D -f /usr/local/conf/mcpprobd.conf >/dev/null
+		fi
+		;;  
+	'safagent')
+		if [ -x /usr/local/bin/safagent ]; then
+			/usr/local/bin/safagent -f /usr/local/conf/config.xml >/dev/null &
+		fi
+		;; 
+	'mcplog')
+		if [ -x /usr/local/bin/mcplog ]; then
+		/usr/local/bin/mcplog -d 1 -l /var/log/mcp_log_db_err.log -D >/dev/null
+		fi
+		;;
+	'httpd')
+		if [ -x /usr/local/bin/apachectl ]; then
+			/usr/local/bin/apachectl start >/dev/null
+		fi
+		;;
+	'mysqld')
+		if [ -x /etc/rc.d/rc.mysqld ]; then
+			/etc/rc.d/rc.mysqld start >/dev/null
+		fi
+		;;
+	'snort')
+		if [ -x /etc/rc.d/rc.snort ]; then
+			/etc/rc.d/rc.snort start >/dev/null
+		fi
+		;;
+	'check_pkt')
+		if [ -x /usr/local/bin/check_pkt ]; then
+			/usr/local/bin/check_pkt -d -i /var/run/check_pkt.pid >/dev/null
+		fi
+		;;
+	'netflow')
+		if [ -x /usr/local/bin/netflow  ]; then
+			/usr/local/bin/netflow bond0 1 & >/dev/null
+		fi
+		;;
+	'dbwriter')
+		if [ -x /usr/local/bin/dbwriter ]; then
+			/usr/local/bin/dbwriter -f /usr/local/conf/ids_cfg.txt & >/dev/null
+		fi
+		;;
+	'yhids')
+		if [ -x /usr/local/bin/yhids ]; then
+			/usr/local/bin/yhids -i eth2 -c /usr/local/conf/yhids/yhids.conf -A udp -j -J & >/dev/null
+		fi
+		;;		
+	*)
+		return 1
+	esac
+}
+
+####check process and start
+function check_proc_start()
+{
+	pname=$1
+	proc_pid=`pidof ${pname}`
+	if [ "$proc_pid" == "" ]; then
+		start_proc ${pname}
+		proc_pid=`pidof ${pname}`
+		if [ "$proc_pid" == "" ]; then
+			outlog "process [${pname}] has stoped, can NOT start!"
+		else
+			outlog "process [${pname}] has stoped, and have restart!"
+	
+		fi
+	fi
+}
+
+function check_net_connection()
+{
+	tmpfile=/tmp/NETIP_LIST
+	tmpnum=/tmp/NETIP_NUMLIST
+	tmpout=/tmp/NETIP_OUTLIST
+	netstat -ntp | grep "^tcp" >$tmpfile
+	cat $tmpfile| awk '{print $7}' | sort | uniq -c | sort -nr >$tmpnum
+	while read line; do
+		cur_line_num=$(echo $line | cut -d" " -f1)
+		cur_proc=$(echo $line | cut -d" " -f2)
+		if [ $cur_line_num -lt $NO_OF_CONNECTIONS ]; then
+			break
+		fi
+
+		outlog "proccess [${cur_proc}] with $cur_line_num connections"
+		if [ $cur_proc == "-" ]; then
+			cat $tmpfile|grep "-"|awk '{print $6}'| awk '{++S[$NF]} END {for(a in S) print a, S[a]}' >$tmpout
+		else
+			cat $tmpfile | grep "$cur_proc" >$tmpout
+		fi
+
+	done < $tmpnum
+
+	rm -f $tmpfile
+	rm -f $tmpnum
+	rm -f $tmpout
+}
+
+function check_system_cpu()
+{
+	tmptop=/tmp/TMP_TOPFILE
+	tmpout=/tmp/TMP_OUTTOPFILE
+	cpu_used=0
+
+	echo "PID	USER	%CPU	COMMAND" >$tmpout
+	top -bn 1 | grep "^ *[1-9]" | awk '{if($9>0)print $1,$2,$9,$12}'|sed 's/ /\t/g' >$tmptop
+	while read line; do
+		proc_cpu=`echo $line | awk '{print $3}'|grep -v '0.0'`
+		if ! [ "$proc_cpu" = "" ]; then
+			cpu_used=`echo "$cpu_used + $proc_cpu"|bc`
+			echo $line|sed 's/ /\t/g' >>$tmpout
+		fi
+	done < $tmptop
+
+	tmp_use=`echo "$cpu_used>$CPU_USED"|bc`
+	[ $tmp_use -eq 1 ] && outlog "System CPU($CPU_NUM) used: "$cpu_used"%"
+	rm -f $tmptop
+	rm -f $tmpout
+}
+
+#add core dump file directory, then change the core dump file address
+tmp_dir=`pwd`
+if [ ! -d /var/corefile ] ; then
+        cd /var/
+        mkdir corefile
+fi
+cd $tmp_dir
+core_dump_times=0  #change directory of the coredump file after 2 minutes
+
+##################################
+#
+#  Main loop
+#
+##################################
+
+[ "$1" != "" ] && PROC_NAME_LIST=$1 
+
+CPU_NUM=`cat /proc/cpuinfo | grep 'processor' |wc -l`
+
+while true
+do
+	for onename in `echo ${PROC_NAME_LIST}`; do
+		check_proc_start $onename
+	done
+
+
+#	check_net_connection
+	
+#	check_system_cpu
+	sleep ${CHECK_PERIOD}
+
+
+        if [ $core_dump_times -le 12 ] ; then
+                core_dump_times=`expr $core_dump_times + 1`
+                if [ $core_dump_times -eq 12 ] ; then
+                        ulimit -c unlimited
+                        echo 0 > /proc/sys/kernel/core_uses_pid
+                        echo /var/corefile/core-%e > /proc/sys/kernel/core_pattern
+                fi
+        fi
+
+done
+

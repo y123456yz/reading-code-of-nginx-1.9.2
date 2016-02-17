@@ -203,7 +203,7 @@ NginxÖÐ¶¨ÒåÁË»ù±¾µÄÊý¾Ý½á¹¹ngx_connection_tÀ´±íÊ¾Á¬½Ó£¬Õâ¸öÁ¬½Ó±íÊ¾ÊÇ¿Í»§¶ËÖ÷¶¯·
 ÆäÎª±»¶¯Á¬½Ó¡£Í¬Ê±£¬ÔÚÓÐÐ©ÇëÇóµÄ´¦Àí¹ý³ÌÖÐ£¬Nginx»áÊÔÍ¼Ö÷¶¯ÏòÆäËûÉÏÓÎ·þÎñÆ÷½¨Á¢Á¬½Ó£¬²¢ÒÔ´ËÁ¬½ÓÓëÉÏÓÎ·þÎñÆ÷Í¨ÐÅ£¬Òò´Ë£¬ÕâÑùµÄ
 Á¬½ÓÓëngx_connection_tÓÖÊÇ²»Í¬µÄ£¬Nginx¶¨ÒåÁË}ngx_peer_connection_t½á¹¹ÌåÀ´±íÊ¾Ö÷¶¯Á¬½Ó£¬µ±È»£¬ngx_peer_connection_tÖ÷¶¯Á¬½ÓÊÇ
 ÒÔngx_connection-t½á¹¹ÌåÎª»ù´¡ÊµÏÖµÄ¡£±¾½Ú½«ËµÃ÷ÕâÁ½ÖÖÁ¬½ÓÖÐ¸÷×Ö¶ÎµÄÒâÒå£¬Í¬Ê±ÐèÒª×¢ÒâµÄÊÇ£¬ÕâÁ½ÖÖÁ¬½Ó¶¼²»¿ÉÒÔËæÒâ´´½¨£¬±ØÐë´Ó
-Á¬½Ó³ØÖÐ»ñÈ¡£¬ÔÚ9.3.3½ÚÖÐ»áËµÃ÷Á¬½Ó³ØµÄÓÃ·¨¡£
+Á¬½Ó³ØÖÐ»ñÈ¡£¬
 */
 
 /*

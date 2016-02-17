@@ -423,7 +423,7 @@ typedef struct {
     ¶ÔÓÚ³£¼ûµÄHTTPÍ·²¿£¬Ö±½Ó»ñÈ¡r->headers_inÖĞÒÑ¾­ÓÉHTTP¿ò¼Ü½âÎö¹ıµÄ³ÉÔ±¼´¿É£¬¶ø¶ÔÓÚ²»³£¼ûµÄHTTPÍ·²¿£¬ĞèÒª±éÀúr->headers_in.headersÁ´±í²ÅÄÜ»ñµÃ¡£
 */
 
-    /*ËùÓĞ½âÎö¹ıµÄHTTPÍ·²¿¶¼ÔÚheadersÁ´±íÖĞ£¬¿ÉÒÔÊ¹ÓÃ3.2.3½ÚÖĞ½éÉÜµÄ±éÀúÁ´±íµÄ·½·¨À´»ñÈ¡ËùÓĞµÄHTTPÍ·²¿¡£×¢Òâ£¬ÕâÀïheadersÁ´±íµÄ
+    /*ËùÓĞ½âÎö¹ıµÄHTTPÍ·²¿¶¼ÔÚheadersÁ´±íÖĞ£¬¿ÉÒÔÊ¹ÓÃ±éÀúÁ´±íµÄ·½·¨À´»ñÈ¡ËùÓĞµÄHTTPÍ·²¿¡£×¢Òâ£¬ÕâÀïheadersÁ´±íµÄ
     Ã¿Ò»¸öÔªËØ¶¼ÊÇngx_table_elt_t³ÉÔ±*/ //´Óngx_http_headers_in»ñÈ¡±äÁ¿ºó´æ´¢µ½¸ÃÁ´±íÖĞ£¬Á´±íÖĞµÄ³ÉÔ±¾ÍÊÇÏÂÃæµÄ¸÷¸öngx_table_elt_t³ÉÔ±
     ngx_list_t                        headers; //ÔÚngx_http_process_request_line³õÊ¼»¯list¿Õ¼ä  ngx_http_process_request_headersÖĞ´æ´¢½âÎöµ½µÄÇëÇóĞĞvalueºÍkey
 
@@ -548,10 +548,29 @@ typedef struct {
     µ±ËüÃÇÎªNULL¿ÕÖ¸ÕëÊ±£¬±íÊ¾Ã»ÓĞ½âÎöµ½ÏàÓ¦µÄHTTPÍ·²¿*/ //serverºÍhostÖ¸ÏòÄÚÈİÒ»Ñù£¬¶¼ÊÇÍ·²¿ÖĞĞ¯´øµÄhostÍ·²¿
     ngx_table_elt_t                  *host; //http1.0ÒÔÉÏ±ØĞë´øÉÏhostÍ·²¿ĞĞ£¬¼ûngx_http_process_request_header
     ngx_table_elt_t                  *connection;
+
+/*
+If-Modified-Since:´Ó×ÖÃæÉÏ¿´, ¾ÍÊÇËµ: Èç¹û´ÓÄ³¸öÊ±¼äµãËãÆğ, Èç¹ûÎÄ¼ş±»ĞŞ¸ÄÁË. 
+    1.Èç¹ûÕæµÄ±»ĞŞ¸Ä: ÄÇÃ´¾Í¿ªÊ¼´«Êä, ·şÎñÆ÷·µ»Ø:200 OK  
+    2.Èç¹ûÃ»ÓĞ±»ĞŞ¸Ä: ÄÇÃ´¾ÍÎŞĞè´«Êä, ·şÎñÆ÷·µ»Ø: 403 Not Modified.
+ÓÃÍ¾:¿Í»§¶Ë³¢ÊÔÏÂÔØ×îĞÂ°æ±¾µÄÎÄ¼ş. ±ÈÈçÍøÒ³Ë¢ĞÂ, ¼ÓÔØ´óÍ¼µÄÊ±ºò¡£ºÜÃ÷ÏÔ: Èç¹û´ÓÍ¼Æ¬ÏÂÔØÒÔºó¶¼Ã»ÓĞÔÙ±»ĞŞ¸Ä, µ±È»¾ÍÃ»±ØÒªÖØĞÂÏÂÔØÁË!
+
+If-Unmodified-Since: ´Ó×ÖÃæÉÏ¿´, ÒâË¼ÊÇ: Èç¹û´ÓÄ³¸öÊ±¼äµãËãÆğ, ÎÄ¼şÃ»ÓĞ±»ĞŞ¸Ä.....
+    1. Èç¹ûÃ»ÓĞ±»ĞŞ¸Ä: Ôò¿ªÊ¼`¼ÌĞø'´«ËÍÎÄ¼ş: ·şÎñÆ÷·µ»Ø: 200 OK
+    2. Èç¹ûÎÄ¼ş±»ĞŞ¸Ä: Ôò²»´«Êä, ·şÎñÆ÷·µ»Ø: 412 Precondition failed (Ô¤´¦Àí´íÎó)
+ÓÃÍ¾:¶ÏµãĞø´«(Ò»°ã»áÖ¸¶¨Range²ÎÊı). ÒªÏë¶ÏµãĞø´«, ÄÇÃ´ÎÄ¼ş¾ÍÒ»¶¨²»ÄÜ±»ĞŞ¸Ä, ·ñÔò¾Í²»ÊÇÍ¬Ò»¸öÎÄ¼şÁË
+
+×ÜÖ®Ò»¾ä»°: Ò»¸öÊÇĞŞ¸ÄÁË²ÅÏÂÔØ, Ò»¸öÊÇÃ»ĞŞ¸Ä²ÅÏÂÔØ.
+*/
     ngx_table_elt_t                  *if_modified_since;
     ngx_table_elt_t                  *if_unmodified_since;
-    ngx_table_elt_t                  *if_match;
-    ngx_table_elt_t                  *if_none_match;
+
+/*
+ETagsºÍIf-None-MatchÊÇÒ»ÖÖ³£ÓÃµÄÅĞ¶Ï×ÊÔ´ÊÇ·ñ¸Ä±äµÄ·½·¨¡£ÀàËÆÓÚLast-ModifiedºÍHTTP-If-Modified-Since¡£µ«ÊÇÓĞËù²»Í¬µÄÊÇLast-ModifiedºÍHTTP-If-Modified-SinceÖ»ÅĞ¶Ï×ÊÔ´µÄ×îºóĞŞ¸ÄÊ±¼ä£¬¶øETagsºÍIf-None-Match¿ÉÒÔÊÇ×ÊÔ´ÈÎºÎµÄÈÎºÎÊôĞÔ¡£
+ETagsºÍIf-None-MatchµÄ¹¤×÷Ô­ÀíÊÇÔÚHTTPResponseÖĞÌí¼ÓETagsĞÅÏ¢¡£µ±¿Í»§¶ËÔÙ´ÎÇëÇó¸Ã×ÊÔ´Ê±£¬½«ÔÚHTTPRequestÖĞ¼ÓÈëIf-None-MatchĞÅÏ¢£¨ETagsµÄÖµ£©¡£Èç¹û·şÎñÆ÷ÑéÖ¤×ÊÔ´µÄETagsÃ»ÓĞ¸Ä±ä£¨¸Ã×ÊÔ´Ã»ÓĞ¸Ä±ä£©£¬½«·µ»ØÒ»¸ö304×´Ì¬£»·ñÔò£¬·şÎñÆ÷½«·µ»Ø200×´Ì¬£¬²¢·µ»Ø¸Ã×ÊÔ´ºÍĞÂµÄETags¡£
+*/
+    ngx_table_elt_t                  *if_match; //ºÍetagÅä¶Ô
+    ngx_table_elt_t                  *if_none_match; //ºÍetagÅä¶Ô
     ngx_table_elt_t                  *user_agent;
     ngx_table_elt_t                  *referer;
     ngx_table_elt_t                  *content_length;
@@ -598,6 +617,38 @@ typedef struct {
     ngx_str_t                         user;
     ngx_str_t                         passwd;
 
+/*
+ CookieµÄÊµÏÖ
+CookieÊÇweb serverÏÂ·¢¸øä¯ÀÀÆ÷µÄÈÎÒâµÄÒ»¶ÎÎÄ±¾£¬ÔÚºóĞøµÄhttp ÇëÇóÖĞ£¬ä¯ÀÀÆ÷»á½«cookie´ø»Ø¸øWeb Server¡£
+Í¬Ê±ÔÚä¯ÀÀÆ÷ÔÊĞí½Å±¾Ö´ĞĞµÄÇé¿öÏÂ£¬CookieÊÇ¿ÉÒÔ±»JavaScriptµÈ½Å±¾ÉèÖÃµÄ¡£
+
+
+a. ÈçºÎÖÖÖ²Cookie
+
+httpÇëÇócookieÏÂ·¢Á÷³Ì
+http·½Ê½:ÒÔ·ÃÎÊhttp://www.webryan.net/index.phpÎªÀı
+Step1.¿Í»§¶Ë·¢ÆğhttpÇëÇóµ½Server
+
+GET /index.php HTTP/1.1
+ Host: www.webryan.net
+ (ÕâÀïÊÇÊ¡È¥ÁËUser-Agent,AcceptµÈ×Ö¶Î)
+
+Step2. ·şÎñÆ÷·µ»Øhttp response,ÆäÖĞ¿ÉÒÔ°üº¬CookieÉèÖÃ
+
+HTTP/1.1 200 OK
+ Content-type: text/html
+ Set-Cookie: name=value
+ Set-Cookie: name2=value2; Expires=Wed, 09 Jun 2021 10:18:14 GMT
+ (content of page)
+
+Step3. ºóĞø·ÃÎÊwebryan.netµÄÏà¹ØÒ³Ãæ
+
+GET /spec.html HTTP/1.1
+ Host: www.webryan.net
+ Cookie: name=value; name2=value2
+ Accept: * / *
+ĞèÒªĞŞ¸ÄcookieµÄÖµµÄ»°£¬Ö»ĞèÒªSet-Cookie: name=newvalue¼´¿É£¬ä¯ÀÀÆ÷»áÓÃĞÂµÄÖµ½«¾ÉµÄÌæ»»µô¡£
+*/
     /*cookiesÊÇÒÔngx_array_tÊı×é´æ´¢µÄ£¬±¾ÕÂÏÈ²»½éÉÜÕâ¸öÊı¾İ½á¹¹£¬¸ĞĞËÈ¤µÄ»°¿ÉÒÔÖ±½ÓÌøµ½7.3½ÚÁË½ângx_array_tµÄÏà¹ØÓÃ·¨*/
     ngx_array_t                       cookies;
     //serverºÍhostÖ¸ÏòÄÚÈİÒ»Ñù£¬¶¼ÊÇÍ·²¿ÖĞĞ¯´øµÄhostÍ·²¿
@@ -626,7 +677,7 @@ typedef struct {
 
 
 /*
-ÔÚÏòheadersÁ´±íÖĞÌí¼Ó×Ô¶¨ÒåµÄHTTPÍ·²¿Ê±£¬¿ÉÒÔ²Î¿¼3.2.3½ÚÖĞngx_list_pushµÄÊ¹ÓÃ·½·¨¡£ÕâÀïÓĞÒ»¸ö¼òµ¥µÄÀı×Ó£¬ÈçÏÂËùÊ¾¡£
+ÔÚÏòheadersÁ´±íÖĞÌí¼Ó×Ô¶¨ÒåµÄHTTPÍ·²¿Ê±£¬¿ÉÒÔ²Î¿¼ngx_list_pushµÄÊ¹ÓÃ·½·¨¡£ÕâÀïÓĞÒ»¸ö¼òµ¥µÄÀı×Ó£¬ÈçÏÂËùÊ¾¡£
 ngx_table_elt_t* h = ngx_list_push(&r->headers_out.headers);
 if (h == NULL) {
  return NGX_ERROR;
@@ -645,13 +696,13 @@ TestHead: TestValud\r\n
 ngx_http_send_header·½·¨Ö´ĞĞºó½«Æä·µ»ØÖµreturn¼´¿É£©¡£
 
 ×¢Òâ¡¡ngx_http_send_header·½·¨»áÊ×ÏÈµ÷ÓÃËùÓĞµÄHTTP¹ıÂËÄ£¿é¹²Í¬´¦Àíheaders_outÖĞ¶¨ÒåµÄHTTPÏìÓ¦Í·²¿£¬È«²¿´¦ÀíÍê
-±Ïºó²Å»áĞòÁĞ»¯ÎªTCP×Ö·ûÁ÷·¢ËÍµ½¿Í»§¶Ë£¬Ïà¹ØÁ÷³Ì¿É²Î¼û11.9.1½Ú
+±Ïºó²Å»áĞòÁĞ»¯ÎªTCP×Ö·ûÁ÷·¢ËÍµ½¿Í»§¶Ë£¬
 */
 typedef struct { //°üº¬ÔÚngx_http_request_s½á¹¹ÖĞ
     //Èç¹ûÁ¬½ÓÁËºó¶Ë(ÀıÈçfastcgiµ½PHP·şÎñÆ÷),ÀïÃæ´æ´¢µÄÊÇºó¶Ë·şÎñÆ÷·µ»ØµÄÒ»ĞĞÒ»ĞĞµÄÍ·²¿ĞĞĞÅÏ¢,¸³ÖµÔÚngx_http_upstream_process_headers->ngx_http_upstream_copy_header_line
     ngx_list_t                        headers;//´ı·¢ËÍµÄHTTPÍ·²¿Á´±í£¬Óëheaders_inÖĞµÄheaders³ÉÔ±ÀàËÆ  
 
-    ngx_uint_t                        status;/*ÏìÓ¦ÖĞµÄ×´Ì¬Öµ£¬Èç200±íÊ¾³É¹¦¡£ÕâÀï¿ÉÒÔÊ¹ÓÃ3.6.1½ÚÖĞ½éÉÜ¹ıµÄ¸÷¸öºê£¬ÈçNGX_HTTP_OK */
+    ngx_uint_t                        status;/*ÏìÓ¦ÖĞµÄ×´Ì¬Öµ£¬Èç200±íÊ¾³É¹¦¡£NGX_HTTP_OK */ //ÕæÕı·¢ËÍ¸ø¿Í»§¶ËµÄÍ·²¿ĞĞ×é°üÉúĞ§ÔÚngx_http_status_lines
     ngx_str_t                         status_line;//ÏìÓ¦µÄ×´Ì¬ĞĞ£¬Èç¡°HTTP/1.1 201 CREATED¡±
 
 /*
@@ -787,13 +838,18 @@ typedef struct { //°üº¬ÔÚngx_http_request_s½á¹¹ÖĞ
     ngx_table_elt_t                  *content_range;
     ngx_table_elt_t                  *accept_ranges;//Accept-Ranges: bytes  Ó¦¸ÃÊÇcontent_lengthµÄµ¥Î»
     ngx_table_elt_t                  *www_authenticate;
-    ngx_table_elt_t                  *expires;
+    //expires´Ù·¢Ìõ¼şÊÇexpiresÅäÖÃ£¬¼ûngx_http_set_expires £¬Í·²¿ĞĞÔÚngx_http_set_expires½øĞĞ´´½¨¿Õ¼äÒÔ¼°Í·²¿ĞĞ×é×°
+    ngx_table_elt_t                  *expires;//expires xxÅäÖÃ´æ´¢º¯ÊıÎªngx_http_headers_expires£¬ÕæÕı×é°üÉúĞ§º¯ÊıÎªngx_http_set_expires
     /*
      ETagÊÇÒ»¸ö¿ÉÒÔÓëWeb×ÊÔ´¹ØÁªµÄ¼ÇºÅ£¨token£©¡£µäĞÍµÄWeb×ÊÔ´¿ÉÒÔÒ»¸öWebÒ³£¬µ«Ò²¿ÉÄÜÊÇJSON»òXMLÎÄµµ¡£·şÎñÆ÷µ¥¶À¸ºÔğÅĞ¶Ï¼ÇºÅÊÇÊ²Ã´
      ¼°Æäº¬Òå£¬²¢ÔÚHTTPÏìÓ¦Í·ÖĞ½«Æä´«ËÍµ½¿Í»§¶Ë£¬ÒÔÏÂÊÇ·şÎñÆ÷¶Ë·µ»ØµÄ¸ñÊ½£ºETag:"50b1c1d4f775c61:df3"¿Í»§¶ËµÄ²éÑ¯¸üĞÂ¸ñÊ½ÊÇÕâÑù
      µÄ£ºIf-None-Match : W / "50b1c1d4f775c61:df3"Èç¹ûETagÃ»¸Ä±ä£¬Ôò·µ»Ø×´Ì¬304È»ºó²»·µ»Ø£¬ÕâÒ²ºÍLast-ModifiedÒ»Ñù¡£²âÊÔEtagÖ÷Òª
      ÔÚ¶ÏµãÏÂÔØÊ±±È½ÏÓĞÓÃ¡£ "etag:XXX" ETagÖµµÄ±ä¸üËµÃ÷×ÊÔ´×´Ì¬ÒÑ¾­±»ĞŞ¸Ä
-     */ //¼ûngx_http_set_etag ETag: "569204ba-4e0924
+
+     
+     EtagÈ·¶¨ä¯ÀÀÆ÷»º´æ£º EtagµÄÔ­ÀíÊÇ½«ÎÄ¼ş×ÊÔ´±àºÅÒ»¸öetagÖµ£¬Response¸ø·ÃÎÊÕß£¬·ÃÎÊÕßÔÙ´ÎÇëÇóÊ±£¬´ø×ÅÕâ¸öEtagÖµ£¬Óë·şÎñ¶ËËùÇëÇó
+     µÄÎÄ¼şµÄEtag¶Ô±È£¬Èç¹û²»Í¬ÁË¾ÍÖØĞÂ·¢ËÍ¼ÓÔØ£¬Èç¹ûÏàÍ¬£¬Ôò·µ»Ø304. HTTP/1.1304 Not Modified
+     */ //¼ûngx_http_set_etag ETag: "569204ba-4e0924 //etagÉèÖÃ¼ûngx_http_set_etag Èç¹û¿Í»§¶ËÔÚµÚÒ»´ÎÇëÇóÎÄ¼şºÍµÚ¶ş´ÎÇëÇóÎÄ¼şÕâ¶ÎÊ±¼ä£¬ÎÄ¼şĞŞ¸ÄÁË£¬Ôòetag¾Í±äÁË
     ngx_table_elt_t                  *etag;
 
     ngx_str_t                        *override_charset;
@@ -804,12 +860,15 @@ typedef struct { //°üº¬ÔÚngx_http_request_s½á¹¹ÖĞ
     ngx_str_t                         charset; //ÊÇ´Ócontent_typeÖĞ½âÎö³öÀ´µÄ£¬¼ûngx_http_upstream_copy_content_type
     u_char                           *content_type_lowcase;
     ngx_uint_t                        content_type_hash;
-
+    //cache_control´Ù·¢Ìõ¼şÊÇexpiresÅäÖÃ»òÕßadd_head cache_control valueÅäÖÃ£¬¼ûngx_http_set_expires £¬Í·²¿ĞĞÔÚngx_http_set_expires½øĞĞ´´½¨¿Õ¼äÒÔ¼°Í·²¿ĞĞ×é×°
     ngx_array_t                       cache_control;
     /*ÔÚÕâÀïÖ¸¶¨¹ıcontent_length_nºó£¬²»ÓÃÔÙ´Îµ½ngx_table_elt_t *content_ lengthÖĞÉèÖÃÏìÓ¦³¤¶È*/
     off_t                             content_length_n; //Õâ¸ö±êÊ¾Ó¦´ğÌåµÄ³¤¶È
     time_t                            date_time;
-    time_t                            last_modified_time;
+
+    //Êµ¼ÊÉÏ¸ÃÊ±¼äÊÇÍ¨¹ıngx_open_and_stat_file->stat»ñÈ¡µÄÎÄ¼ş×î½üĞŞ¸ÄµÄÊ±¼ä£¬¿Í»§¶ËÃ¿´ÎÇëÇó¶¼»á´ÓĞÂÍ¨¹ıstat»ñÈ¡£¬Èç¹û¿Í»§¶ËµÚÒ»´ÎÇëÇó¸ÃÎÄ¼şºÍµÚ¶ş´ÎÇëÇó¸ÃÎÄ¼ş¹ı³ÌÖĞĞŞ¸ÄÁË¸ÃÎÄ¼ş£¬Ôò
+    //×îÍ¨¹ıstatĞÅÏ¢»ñÈ¡µÄÊ±¼ä¾Í»áºÍÖ®Ç°Í¨¹ılast_modified_time·¢ËÍ¸ø¿Í»§¶ËµÄÊ±¼ä²»Ò»Ñù
+    time_t                            last_modified_time; //±íÊ¾ÎÄ¼ş×îºó±»ĞŞ¸ÄµÄÊµ¼Ê£¬¿ÉÒÔ²Î¿¼ngx_http_static_handler
 } ngx_http_headers_out_t;
 
 //ÔÚngx_http_read_client_request_bodyÖĞ£¬°üÌå½ÓÊÕÍê±Ïºó»áÖ´ĞĞ»Øµ÷·½·¨ngx_http_client_body_handler_pt
@@ -920,8 +979,8 @@ typedef struct {
 
 typedef struct ngx_http_postponed_request_s  ngx_http_postponed_request_t;
 /*
-µ±ÅÉÉúÒ»¸ö×ÓÇëÇó·ÃÎÊµÚÈı·½·şÎñ¸½£¬Èç¹ûÖ»ÊÇÏ£Íû½ÓÊÕµ½ÍêÕûµÄÏìÓ¦ºóÔÚNginxÖĞ½âÎö¡¢´¦Àí£¬ÄÇÃ´ÕâÀï¾Í²»ĞèÒªpostponeÄ£¿é£¬¾ÍÏñ5.6½ÚÖĞ
-µÄÀı×ÓÄÇÑù´¦Àí¼´¿É£»Èç¹ûÔ­Ê¼ÇëÇóÅÉÉú³öĞí¶à×ÓÇëÇó£¬²¢ÇÒÏ£Íû½«ËùÓĞ×ÓÇëÇóµÄÏìÓ¦ÒÀ´Î×ª·¢¸ø¿Í»§¶Ë£¬µ±È»£¬ÕâÀïµÄ¡°ÒÀ´Î¡±¾ÍÊÇ°´ÕÕ´´½¨
+µ±ÅÉÉúÒ»¸ö×ÓÇëÇó·ÃÎÊµÚÈı·½·şÎñ¸½£¬Èç¹ûÖ»ÊÇÏ£Íû½ÓÊÕµ½ÍêÕûµÄÏìÓ¦ºóÔÚNginxÖĞ½âÎö¡¢´¦Àí£¬ÄÇÃ´ÕâÀï¾Í²»ĞèÒªpostponeÄ£¿é£»
+Èç¹ûÔ­Ê¼ÇëÇóÅÉÉú³öĞí¶à×ÓÇëÇó£¬²¢ÇÒÏ£Íû½«ËùÓĞ×ÓÇëÇóµÄÏìÓ¦ÒÀ´Î×ª·¢¸ø¿Í»§¶Ë£¬µ±È»£¬ÕâÀïµÄ¡°ÒÀ´Î¡±¾ÍÊÇ°´ÕÕ´´½¨
 ×ÓÇëÇóµÄË³ĞòÀ´·¢ËÍÏìÓ¦£¬ÕâÊ±£¬postponeÄ£¿é¾ÍÓĞÁË¡°ÓÃÎäÖ®µØ¡±¡£NginxÖĞµÄËùÓĞÇëÇó¶¼ÊÇÒì²½Ö´ĞĞµÄ£¬ºó´´½¨µÄ×ÓÇëÇó¿ÉÄÜÓÅÏÈÖ´ĞĞ£¬ÕâÑù
 ×ª·¢µ½¿Í»§¶ËµÄÏìÓ¦¾Í»á²úÉú»ìÂÒ¡£¶øpostponeÄ£¿é»áÇ¿ÖÆµØ°Ñ´ı×ª·¢µÄÏìÓ¦°üÌå·ÅÔÚÒ»¸öÁ´±íÖĞ·¢ËÍ£¬Ö»ÓĞÓÅÏÈ×ª·¢µÄ×ÓÇëÇó½áÊøºó²Å»á¿ªÊ¼
 ×ª·¢ÏÂÒ»¸ö×ÓÇëÇóÖĞµÄÏìÓ¦¡£ÏÂÃæ½éÉÜÒ»ÏÂËüÊÇÈçºÎÊµÏÖµÄ¡£Ã¿¸öÇëÇóµÄngx_http_request_t½á¹¹ÌåÖĞ¶¼ÓĞÒ»¸öpostponed³ÉÔ±£º
@@ -1041,8 +1100,7 @@ name=Professional%20Ajax&publisher=Wiley
 */
 /*
 ÇëÇóµÄËùÓĞĞÅÏ¢£¨Èç·½·¨¡¢URI¡¢Ğ­Òé°æ±¾ºÅºÍÍ·²¿µÈ£©¶¼¿ÉÒÔÔÚ´«ÈëµÄngx_http_request_tÀàĞÍ²ÎÊırÖĞÈ¡µÃ¡£
-ngx_http_request_t½á¹¹ÌåµÄÄÚÈİºÜ¶à£¬±¾½Ú²»»áÌ½ÌÖngx_http_request_tÖĞËùÓĞ³ÉÔ±µÄÒâÒå£¨ngx_http_request_t½á¹¹ÌåÖĞµÄĞí¶à³ÉÔ±Ö»ÓĞHTTP¿ò¼Ü²Å¸ĞĞËÈ¤£¬
-ÔÚ11.3.1½Ú»á¸üÏêÏ¸µÄËµÃ÷£©£¬
+ngx_http_request_t½á¹¹ÌåµÄÄÚÈİºÜ¶à£¬±¾½Ú²»»áÌ½ÌÖngx_http_request_tÖĞËùÓĞ³ÉÔ±µÄÒâÒå
 */
 /*
 ngx_http_core_main_conf_t->variabelsÊı×é³ÉÔ±µÄ½á¹¹Ê½ngx_http_variable_s£¬ ngx_http_request_s->variabelsÊı×é³ÉÔ±½á¹¹ÊÇ
@@ -1243,8 +1301,8 @@ outÖĞ»¹»á±£´æ´ı·¢ËÍµÄHTTP°üÌå£¬ËüÊÇÊµÏÖÒì²½·¢ËÍHTTPÏìÓ¦µÄ¹Ø¼ü */
     ngx_http_request_t               *parent;//µ±Ç°ÇëÇóµÄ¸¸ÇëÇó¡£×¢Òâ£¬¸¸ÇëÇóÎ´±ØÊÇÔ­Ê¼ÇëÇó
 
 /*
-    µ±ÅÉÉúÒ»¸ö×ÓÇëÇó·ÃÎÊµÚÈı·½·şÎñ¸½£¬Èç¹ûÖ»ÊÇÏ£Íû½ÓÊÕµ½ÍêÕûµÄÏìÓ¦ºóÔÚNginxÖĞ½âÎö¡¢´¦Àí£¬ÄÇÃ´ÕâÀï¾Í²»ĞèÒªpostponeÄ£¿é£¬¾ÍÏñ5.6½ÚÖĞ
-µÄÀı×ÓÄÇÑù´¦Àí¼´¿É£»Èç¹ûÔ­Ê¼ÇëÇóÅÉÉú³öĞí¶à×ÓÇëÇó£¬²¢ÇÒÏ£Íû½«ËùÓĞ×ÓÇëÇóµÄÏìÓ¦ÒÀ´Î×ª·¢¸ø¿Í»§¶Ë£¬µ±È»£¬ÕâÀïµÄ¡°ÒÀ´Î¡±¾ÍÊÇ°´ÕÕ´´½¨
+    µ±ÅÉÉúÒ»¸ö×ÓÇëÇó·ÃÎÊµÚÈı·½·şÎñ¸½£¬Èç¹ûÖ»ÊÇÏ£Íû½ÓÊÕµ½ÍêÕûµÄÏìÓ¦ºóÔÚNginxÖĞ½âÎö¡¢´¦Àí£¬ÄÇÃ´ÕâÀï¾Í²»ĞèÒªpostponeÄ£¿é£¬
+    Èç¹ûÔ­Ê¼ÇëÇóÅÉÉú³öĞí¶à×ÓÇëÇó£¬²¢ÇÒÏ£Íû½«ËùÓĞ×ÓÇëÇóµÄÏìÓ¦ÒÀ´Î×ª·¢¸ø¿Í»§¶Ë£¬µ±È»£¬ÕâÀïµÄ¡°ÒÀ´Î¡±¾ÍÊÇ°´ÕÕ´´½¨
 ×ÓÇëÇóµÄË³ĞòÀ´·¢ËÍÏìÓ¦£¬ÕâÊ±£¬postponeÄ£¿é¾ÍÓĞÁË¡°ÓÃÎäÖ®µØ¡±¡£NginxÖĞµÄËùÓĞÇëÇó¶¼ÊÇÒì²½Ö´ĞĞµÄ£¬ºó´´½¨µÄ×ÓÇëÇó¿ÉÄÜÓÅÏÈÖ´ĞĞ£¬ÕâÑù
 ×ª·¢µ½¿Í»§¶ËµÄÏìÓ¦¾Í»á²úÉú»ìÂÒ¡£¶øpostponeÄ£¿é»áÇ¿ÖÆµØ°Ñ´ı×ª·¢µÄÏìÓ¦°üÌå·ÅÔÚÒ»¸öÁ´±íÖĞ·¢ËÍ£¬Ö»ÓĞÓÅÏÈ×ª·¢µÄ×ÓÇëÇó½áÊøºó²Å»á¿ªÊ¼
 ×ª·¢ÏÂÒ»¸ö×ÓÇëÇóÖĞµÄÏìÓ¦¡£ÏÂÃæ½éÉÜÒ»ÏÂËüÊÇÈçºÎÊµÏÖµÄ¡£Ã¿¸öÇëÇóµÄngx_http_request_t½á¹¹ÌåÖĞ¶¼ÓĞÒ»¸öpostponed³ÉÔ±£º
@@ -1313,7 +1371,7 @@ ngx_http_run_posted_requests·½·¨¾ÍÊÇÍ¨¹ı±éÀú¸Ãµ¥Á´±íÀ´Ö´ĞĞ×ÓÇëÇóµÄ */
 
     off_t                             request_length; //HTTPÇëÇóµÄÈ«²¿³¤¶È£¬°üÀ¨HTTP°üÌå
 
-    ngx_uint_t                        err_status;
+    ngx_uint_t                        err_status; //´íÎóÂë£¬È¡ÖµÎªNGX_HTTP_BAD_REQUESTµÈ
 
     //µ±Á¬½Ó½¨Á¢³É¹¦ºó£¬µ±ÊÕµ½¿Í»§¶ËµÄµÚÒ»¸öÇëÇóµÄÊ±ºò»áÍ¨¹ıngx_http_wait_request_handler->ngx_http_create_request´´½¨ngx_http_request_t
     //Í¬Ê±°Ñr->http_connectionÖ¸Ïòaccept¿Í»§¶ËÁ¬½Ó³É¹¦Ê±ºò´´½¨µÄngx_http_connection_t£¬ÕâÀïÃæÓĞ´æ´¢server{}ÉÏÏÂÎÄctxºÍserver_nameµÈĞÅÏ¢
@@ -1336,7 +1394,7 @@ ngx_http_run_posted_requests·½·¨¾ÍÊÇÍ¨¹ı±éÀú¸Ãµ¥Á´±íÀ´Ö´ĞĞ×ÓÇëÇóµÄ */
 /*
 ÔÚÔÄ¶ÁHTTP·´Ïò´úÀíÄ£¿é(ngx_http_proxy_module)Ô´´úÂëÊ±£¬»á·¢ÏÖËü²¢Ã»ÓĞµ÷ÓÃr->main->count++£¬ÆäÖĞproxyÄ£¿éÊÇÕâÑùÆô¶¯upstream»úÖÆµÄ£º
 ngx_http_read_client_request_body(r£¬ngx_http_upstream_init);£¬Õâ±íÊ¾¶ÁÈ¡ÍêÓÃ»§ÇëÇóµÄHTTP°üÌåºó²Å»áµ÷ÓÃngx_http_upstream_init·½·¨
-Æô¶¯upstream»úÖÆ£¨²Î¼û3.6.4½Ú£©¡£ÓÉÓÚngx_http_read_client_request_bodyµÄµÚÒ»ĞĞÓĞĞ§Óï¾äÊÇr->maln->count++£¬ËùÒÔHTTP·´Ïò´úÀíÄ£¿é²»ÄÜ
+Æô¶¯upstream»úÖÆ¡£ÓÉÓÚngx_http_read_client_request_bodyµÄµÚÒ»ĞĞÓĞĞ§Óï¾äÊÇr->maln->count++£¬ËùÒÔHTTP·´Ïò´úÀíÄ£¿é²»ÄÜ
 ÔÙ´ÎÔÚÆä´úÂëÖĞÖ´ĞĞr->main->count++¡£
 
 Õâ¸ö¹ı³Ì¿´ÆğÀ´ËÆºõÈÃÈËÀ§»ó¡£ÎªÊ²Ã´ÓĞÊ±ĞèÒª°ÑÒıÓÃ¼ÆÊı¼Ó1£¬ÓĞÊ±È´²»ĞèÒªÄØ£¿ÒòÎªngx_http_read- client_request_body¶ÁÈ¡ÇëÇó°üÌåÊÇ
@@ -1461,7 +1519,7 @@ ngx_http_finalize_request·½·¨Ò»´Î£¬ÕâÊÇÕıÈ·µÄ¡£¶ÔÓÚmytestÄ£¿éÒ²Ò»Ñù£¬Îñ±ØÒª±£Ö¤¶
 ½×¶Î¿ªÊ¼ÔÙ´ÎÖ´ĞĞ£¬ÕâÊÇNginxµÄÇëÇó¿ÉÒÔ·´¸´rewriteÖØ¶¨ÏòµÄ»ù´¡¡£¼ûngx_http_handler */ //ngx_http_internal_redirectÖÃ1
 //ÄÚ²¿ÖØ¶¨ÏòÊÇ´ÓNGX_HTTP_SERVER_REWRITE_PHASE´¦¼ÌĞøÖ´ĞĞ(ngx_http_internal_redirect)£¬¶øÖØĞÂrewriteÊÇ´ÓNGX_HTTP_FIND_CONFIG_PHASE´¦Ö´ĞĞ(ngx_http_core_post_rewrite_phase)
     unsigned                          internal:1;//t±êÖ¾Î»£¬Îª1Ê±±íÊ¾ÇëÇóµÄµ±Ç°×´Ì¬ÊÇÔÚ×öÄÚ²¿Ìø×ª£¬ÔòÖ±½Ó
-    unsigned                          error_page:1;
+    unsigned                          error_page:1; //Ä¬ÈÏ0£¬ÔÚngx_http_special_response_handlerÖĞ¿ÉÄÜÖÃ1
     unsigned                          filter_finalize:1;
     unsigned                          post_action:1;//ngx_http_post_actionÖĞÖÃ1 Ä¬ÈÏÎª0£¬³ı·Çpost_action XXXÅäÖÃ
     unsigned                          request_complete:1;
@@ -1481,7 +1539,8 @@ ngx_http_finalize_request·½·¨Ò»´Î£¬ÕâÊÇÕıÈ·µÄ¡£¶ÔÓÚmytestÄ£¿éÒ²Ò»Ñù£¬Îñ±ØÒª±£Ö¤¶
     unsigned                          filter_need_temporary:1;
     unsigned                          allow_ranges:1;  //Ö§³Ö¶ÏµãĞø´«
     unsigned                          single_range:1;
-    unsigned                          disable_not_modified:1;
+    //
+    unsigned                          disable_not_modified:1; //r->disable_not_modified = !u->cacheable;Òò´ËÄ¬ÈÏÎª0
 
 #if (NGX_STAT_STUB)
     unsigned                          stat_reading:1;

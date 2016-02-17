@@ -401,7 +401,8 @@ typedef struct { //ngx_http_phase_engine_t结构体是保存在全局的ngx_http_core_main
 
 typedef struct { //存储在ngx_http_core_main_conf_t->phases[]
     //handlers动态数组保存着每一个HTTP模块初始化时添加到当前阶段的处理方法
-    ngx_array_t                handlers; //数组中存储的是ngx_http_handler_pt
+    ////注意:每一个阶段中最后加入到handlers[]中的会首先添加到cmcf->phase_engine.handlers, 见ngx_http_init_phase_handlers
+    ngx_array_t                handlers; //数组中存储的是ngx_http_handler_pt   ngx_http_init_phase_handlers
 } ngx_http_phase_t;
 
 //参考:http://tech.uc.cn/?p=300
@@ -829,8 +830,13 @@ typedef struct { //赋值见ngx_http_add_address    (ngx_http_port_t->ngx_http_in_a
 
 
 
-typedef struct {
+typedef struct { //赋值参考ngx_http_core_error_page    生效见ngx_http_send_error_page
     ngx_int_t                  status;
+    /*
+    error_page 404 =200 /empty.gif;，表示以200作为新的返回码，用户可以通过“=”来更改返回的错误码,此时overwrite为200
+    error_page 404 = /empty.gif; 表示返回码由重定向后实际处理的真实结果来决定，这时，只要把“=”后面没有返回码号  此时overwrite=0
+    没有=，就是以error_page   404   /404.html;中的404作为返回码   此时overwrite=-1
+     */
     ngx_int_t                  overwrite;
     ngx_http_complex_value_t   value;
     ngx_str_t                  args;
@@ -1080,6 +1086,7 @@ lingering_close
 上是否已经有准备就绪的来自用户的数据。on是中间值，一般情况下在关闭连接前都会处理连接上的用户发送的数据，除了有些情况下在业务上认定这之后的数据是不必要的。
 */
     ngx_uint_t    lingering_close;         /* lingering_close */
+    //if_modified_since [off|exact|before];进行配置 //生效见ngx_http_test_if_modified
     ngx_uint_t    if_modified_since;       /* if_modified_since */
     ngx_uint_t    max_ranges;              /* max_ranges */
     ngx_uint_t    client_body_in_file_only; /* client_body_in_file_only */ //取值NGX_HTTP_REQUEST_BODY_FILE_CLEAN等
@@ -1102,7 +1109,11 @@ lingering_close
     ngx_flag_t    recursive_error_pages;   /* recursive_error_pages */
     ngx_flag_t    server_tokens;           /* server_tokens */
     ngx_flag_t    chunked_transfer_encoding; /* chunked_transfer_encoding */ //默认1
-    ngx_flag_t    etag;                    /* etag */
+    /*
+     Etag确定浏览器缓存： Etag的原理是将文件资源编号一个etag值，Response给访问者，访问者再次请求时，带着这个Etag值，与服务端所请求
+     的文件的Etag对比，如果不同了就重新发送加载，如果相同，则返回304. HTTP/1.1 304 Not Modified,否则直接返回文件内容，应答头部行 200 OK
+     */ //etag设置见ngx_http_set_etag
+    ngx_flag_t    etag;                    /* etag */ //可以etag off关闭，则永远不参数etag头部行给浏览器
 
 #if (NGX_HTTP_GZIP)
     ngx_flag_t    gzip_vary;               /* gzip_vary */
@@ -1124,7 +1135,9 @@ lingering_close
     ngx_uint_t    disable_symlinks;        /* disable_symlinks */
     ngx_http_complex_value_t  *disable_symlinks_from; //disable_symlinks on | if_not_owner [from=part];中from携带的参数part
 #endif
-
+    //由error_page进行配置，创建空间和赋值见ngx_http_core_error_page   
+    //clcf->error_pages赋值参考ngx_http_core_error_page    生效见ngx_http_special_response_handler  ngx_http_send_error_page(error_pages内容是从ngx_http_error_pages中取的)
+    //error_page 401 404 =200 /empty.gif;  =前面有两个编码号，因此占用两个数组成员，成员类型ngx_http_err_page_t，见ngx_http_core_error_page
     ngx_array_t  *error_pages;             /* error_page */
     ngx_http_try_file_t    *try_files;     /* try_files */ //创建空间和赋值见ngx_http_core_try_files，相当于一个数组，用来存取try_files aaa bbb ccc中的 aaa bbb ccc
 
@@ -1142,6 +1155,9 @@ lingering_close
     ngx_flag_t    open_file_cache_errors;
     ngx_flag_t    open_file_cache_events;
 
+     /* 全局中配置的error_log xxx存储在ngx_cycle_s->new_log，http{}、server{}、local{}配置的error_log保存在ngx_http_core_loc_conf_t->error_log,
+    见ngx_log_set_log,如果只配置全局error_log，不配置http{}、server{}、local{}则在ngx_http_core_merge_loc_conf conf->error_log = &cf->cycle->new_log;  */
+    //ngx_log_insert插入，在ngx_log_error_core找到对应级别的日志配置进行输出，因为可以配置error_log不同级别的日志存储在不同的日志文件中
     ngx_log_t    *error_log;
 
     ngx_uint_t    types_hash_max_size;

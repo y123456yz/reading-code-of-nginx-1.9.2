@@ -134,6 +134,11 @@ ngx_http_static_handler(ngx_http_request_t *r)
             break;
         }
 
+        /* 
+           如果文件不存在，则返回出去后会结束请求
+           2016/02/16 10:27:36[            ngx_http_static_handler,   139]  [error] 19131#19131: *1 open() "/var/yyz/www/ttt/xx.html" failed (2: No such file or directory), client: 10.2.13.167, server: localhost, request: "GET / HTTP/1.1", host: "10.2.13.167"
+           2016/02/16 10:27:36[          ngx_http_finalize_request,  2598]  [debug] 19131#19131: *1 http finalize request rc: 404, "/ttt/xx.html?" a:1, c:2
+          */
         if (rc != NGX_HTTP_NOT_FOUND || clcf->log_not_found) {
             ngx_log_error(level, log, of.err,
                           "%s \"%s\" failed", of.failed, path.data);
@@ -220,7 +225,7 @@ ngx_http_static_handler(ngx_http_request_t *r)
 
     r->headers_out.status = NGX_HTTP_OK;
     r->headers_out.content_length_n = of.size;
-    r->headers_out.last_modified_time = of.mtime;
+    r->headers_out.last_modified_time = of.mtime; //文件最后被修改的时间
 
     if (ngx_http_set_etag(r) != NGX_OK) {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;

@@ -73,7 +73,7 @@ int64 t aio offset;
 7 7保售手段
 u int64七aio reserved2;
     ／+表示可以设置为IOCB FLAG RESFD，它会告诉内核当有异步I/O请求处理完成时使用eventfd进
-行通知，可与epoll配合使用，其在Nginx中的使用方法可参见9.9.2节+／
+行通知，可与epoll配合使用+／
     u int32七aio_flags；
 ／／表示当使用IOCB FLAG RESFD标志位时，用于进行事件通知的句柄
 U int32 t aio resfd;
@@ -179,7 +179,7 @@ int64 t aio offset;
 7 7保售手段
 u int64七aio reserved2;
     ／+表示可以设置为IOCB FLAG RESFD，它会告诉内核当有异步I/O请求处理完成时使用eventfd进
-行通知，可与epoll配合使用，其在Nginx中的使用方法可参见9.9.2节+／
+行通知，可与epoll配合使用+／
     u int32七aio_flags；
 ／／表示当使用IOCB FLAG RESFD标志位时，用于进行事件通知的句柄
 U int32 t aio resfd;

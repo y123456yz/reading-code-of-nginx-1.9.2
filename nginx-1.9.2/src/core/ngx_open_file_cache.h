@@ -74,8 +74,8 @@ typedef struct ngx_cached_open_file_s  ngx_cached_open_file_t;
 
 //ngx_cached_open_file_s是ngx_open_file_cache_t->rbtree(expire_queue)的成员   
 /*
-缓存文件stat状态信息ngx_cached_open_file_s在ngx_expire_old_cached_files进行失效判断, 缓存文件内容信息(实实在在的文件信息)
-ngx_http_file_cache_node_t在ngx_http_file_cache_expire进行失效判断。
+缓存文件stat状态信息ngx_cached_open_file_s(ngx_open_file_cache_t->rbtree(expire_queue)的成员   )在ngx_expire_old_cached_files进行失效判断, 
+缓存文件内容信息(实实在在的文件信息)ngx_http_file_cache_node_t(ngx_http_file_cache_s->sh中的成员)在ngx_http_file_cache_expire进行失效判断。
 */ //为什么需要内存中保存文件stat信息节点?因为这里面可以保存文件的fd已经文件大小等信息，就不用每次重复打开文件并且获取文件大小信息，可以直接读fd，这样可以提高效率
 struct ngx_cached_open_file_s {//ngx_open_cached_file中创建节点   主要存储的是文件的fstat信息，见ngx_open_and_stat_file
     //node.key是文件名做的 hash = ngx_crc32_long(name->data, name->len);//文件名做hash添加到ngx_open_file_cache_t->rbtree红黑树中
@@ -117,12 +117,20 @@ struct ngx_cached_open_file_s {//ngx_open_cached_file中创建节点   主要存储的是文
 };
 
 /*
-缓存文件stat状态信息ngx_cached_open_file_s在ngx_expire_old_cached_files进行失效判断, 缓存文件内容信息(实实在在的文件信息)
-ngx_http_file_cache_node_t在ngx_http_file_cache_expire进行失效判断。
+缓存文件stat状态信息ngx_cached_open_file_s(ngx_open_file_cache_t->rbtree(expire_queue)的成员   )在ngx_expire_old_cached_files进行失效判断, 
+缓存文件内容信息(实实在在的文件信息)ngx_http_file_cache_node_t(ngx_http_file_cache_s->sh中的成员)在ngx_http_file_cache_expire进行失效判断。
 */
 
+/*
+nginx有两个指令是管理缓存文件描述符的:一个就是本文中说到的ngx_http_log_module模块的open_file_log_cache配置;存储在ngx_http_log_loc_conf_t->open_file_cache 
+另一个是ngx_http_core_module模块的 open_file_cache配置，存储在ngx_http_core_loc_conf_t->open_file_cache;前者是只用来管理access变量日志文件。
+后者用来管理的就多了，包括：static，index，tryfiles，gzip，mp4，flv，都是静态文件哦!
+这两个指令的handler都调用了函数 ngx_open_file_cache_init ，这就是用来管理缓存文件描述符的第一步：初始化
+*/
+
+
 //为什么需要内存中保存文件stat信息节点?因为这里面可以保存文件的fd已经文件大小等信息，就不用每次重复打开文件并且获取文件大小信息，可以直接读fd，这样可以提高效率
-typedef struct { //ngx_http_core_open_file_cache->ngx_open_file_cache_init中创建空间和赋值，在ngx_open_file_cache_cleanup中释放资源
+typedef struct { //ngx_open_file_cache_init中创建空间和赋值，在ngx_open_file_cache_cleanup中释放资源
     //该红黑树和expire_queue队列的节点成员是ngx_cached_open_file_s
     ngx_rbtree_t             rbtree;//rbtree红黑树和expire_queue队列中包含的是同样的元素
     ngx_rbtree_node_t        sentinel;

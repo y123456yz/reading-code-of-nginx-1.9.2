@@ -63,7 +63,7 @@ ngx_event_pipe(ngx_event_pipe_t *p, ngx_int_t do_write)
         //p->read的值可以参考ngx_event_pipe_read_upstream->p->upstream->recv_chain()->ngx_readv_chain里面是否赋值为0
         //upstream_blocked是在ngx_event_pipe_read_upstream里面设置的变量,代表是否有数据已经从upstream读取了。
         if (!p->read && !p->upstream_blocked) { //内核缓冲区数据已经读完，或者本地指定内存已经用完，则推出
-            break; //只要后端
+            break; //读取后端返回NGX_AGAIN则read置0
         }
 
         do_write = 1;//还要写。因为我这次读到了一些数据
@@ -802,7 +802,7 @@ ngx_event_pipe_write_to_downstream(ngx_event_pipe_t *p)
                        "pipe write: out:%p, flush:%d", out, flush);
 
         //下面将out指针指向的内存调用output_filter，进入filter过程。
-        
+        //如果后端数据有写入临时文件，则out=NULL，只有在获取到全部后端数据并写入临时文件后，才会通过前面的if (p->upstream_eof || p->upstream_error || p->upstream_done) {p->output_filter()}发送出去
         if (out == NULL) { //在下面的ngx_chain_update_chains中有可能置为NULL，表示out链上的数据发送完毕
 
             if (!flush) {

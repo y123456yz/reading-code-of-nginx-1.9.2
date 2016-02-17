@@ -94,6 +94,20 @@ static ngx_http_module_t  ngx_http_upstream_ip_hash_module_ctx = {
 };
 
 /*
+负载均衡相关配置:
+upstream
+server
+ip_hash:根据客户端的IP来做hash,不过如果squid -- nginx -- server(s)则，ip永远是squid服务器ip,因此不管用,需要ngx_http_realip_module或者第三方模块
+keepalive:配置到后端的最大连接数，保持长连接，不必为每一个客户端都重新建立nginx到后端PHP等服务器的连接，需要保持和后端
+    长连接，例如fastcgi:fastcgi_keep_conn on;       proxy:  proxy_http_version 1.1;  proxy_set_header Connection "";
+least_conn:根据其权重值，将请求发送到活跃连接数最少的那台服务器
+hash:可以按照uri  ip 等参数进行做hash
+
+参考http://tengine.taobao.org/nginx_docs/cn/docs/http/ngx_http_upstream_module.html#ip_hash
+*/
+
+
+/*
 ip_hash做负载均衡问题:
 squid -- nginx -- server(s)
     前端使用squid做缓存，后端用多台服务器，但多台服务器间的SESSION不共享，为了做负载均衡，使用nginx的ip_hash来做，使得来源机器的会话是持续的。

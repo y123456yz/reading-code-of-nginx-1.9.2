@@ -16,38 +16,46 @@ typedef ngx_int_t (*ngx_http_set_header_pt)(ngx_http_request_t *r,
     ngx_http_header_val_t *hv, ngx_str_t *value);
 
 
-typedef struct {
+typedef struct { //ngx_http_set_headers中会用
     ngx_str_t                  name;
     ngx_uint_t                 offset;
     ngx_http_set_header_pt     handler;
 } ngx_http_set_header_t;
 
 
-struct ngx_http_header_val_s {
-    ngx_http_complex_value_t   value;
-    ngx_str_t                  key;
-    ngx_http_set_header_pt     handler;
-    ngx_uint_t                 offset;
+struct ngx_http_header_val_s { //创建空间和赋值见ngx_http_headers_add
+    ngx_http_complex_value_t   value;//add_header name value中的value
+    ngx_str_t                  key;//add_header name value;中的name
+    //默认ngx_http_add_header  ，如果add_header name value;中的name和ngx_http_set_headers中的配对，则对应hander为ngx_http_set_headers中的handler
+    ngx_http_set_header_pt     handler; 
+    //如果add_header name value;中的name和ngx_http_set_headers中的配对，则对应hander为ngx_http_set_headers中的handler
+    ngx_uint_t                 offset; //对应ngx_http_set_headers中的offset
+    ////add_header name value always;
     ngx_uint_t                 always;  /* unsigned  always:1 */
-};
+}; 
 
 
-typedef enum {
-    NGX_HTTP_EXPIRES_OFF,
-    NGX_HTTP_EXPIRES_EPOCH,
-    NGX_HTTP_EXPIRES_MAX,
+typedef enum { //生效见ngx_http_headers_expires  ngx_http_parse_expires
+    NGX_HTTP_EXPIRES_OFF,  //expire modified off
+    NGX_HTTP_EXPIRES_EPOCH, //expire modified epoch
+    NGX_HTTP_EXPIRES_MAX,   //expire modified max
     NGX_HTTP_EXPIRES_ACCESS,
     NGX_HTTP_EXPIRES_MODIFIED,
     NGX_HTTP_EXPIRES_DAILY,
     NGX_HTTP_EXPIRES_UNSET
 } ngx_http_expires_t;
 
+//expires xx配置存储函数为ngx_http_headers_expires，真正组包生效函数为ngx_http_set_expires
+typedef struct {//真正发送给客户端的头部组装在ngx_http_headers_filter
+    //expires time如果不带有变量类型则存储在expires 和 expires_time中
+    ngx_http_expires_t         expires; //expires time类型，赋值为ngx_http_expires_t  ，见ngx_http_set_expires
+    time_t                     expires_time; //expires time中的time，见ngx_http_set_expires
 
-typedef struct {
-    ngx_http_expires_t         expires;
-    time_t                     expires_time;
+    //expires time如果带有变量类型则存储在expires_value中
     ngx_http_complex_value_t  *expires_value;
-    ngx_array_t               *headers;
+
+    //add_header name value;配置          真正发送给客户端的头部组装在ngx_http_headers_filter
+    ngx_array_t               *headers; //见ngx_http_headers_add   成员类型ngx_http_header_val_t
 } ngx_http_headers_conf_t;
 
 
@@ -73,14 +81,17 @@ static char *ngx_http_headers_expires(ngx_conf_t *cf, ngx_command_t *cmd,
 static char *ngx_http_headers_add(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
 
-
+//add_header name value;中的name可以为下面这几个
 static ngx_http_set_header_t  ngx_http_set_headers[] = {
 
     { ngx_string("Cache-Control"), 0, ngx_http_add_cache_control },
-
+/*
+nginx配置expire后会在应答头部行中添加这几个Cache-Control、Last-Modified、expire头部行,客户端再次请求后会携带If-Modified-Since(内容就是nginx之前传送的Last-Modified内容)
+服务器收到这个If-Modified-Since后进行判断，看文件是否有更改(expire设置的时间)，没有则直接返回304 Not modified 参考http://www.fastcache.com.cn/html/3264072438.html
+ */
     { ngx_string("Last-Modified"),
                  offsetof(ngx_http_headers_out_t, last_modified),
-                 ngx_http_set_last_modified },
+                 ngx_http_set_last_modified }, 
 
     { ngx_string("ETag"),
                  offsetof(ngx_http_headers_out_t, etag),
@@ -140,9 +151,56 @@ location ~ .*\.(js|css)$
  {
             expires 1h;
  }
-*/  //该配置会修改应答头中的Cache-Control头部行，从而浏览器可以获取到该文件的缓存时间，如果在这段时间内浏览器再次获取该文件，
-//则不会发送请求到nginx，浏览器使用本地缓存。也就是浏览器根据该时间段内直接获取本地浏览器缓存，而不是从nginx从新获取，从而提高效率 
-//如果浏览器携带请求过来，我们可以直接回应304 Not Modified，表示没变动。这样浏览器就判断直接使用浏览器本地缓存
+
+Expires是给一个资源设定一个过期时间，也就是说无需去服务端验证，直接通过浏览器自身确认是否过期即可，所以不会产生额外的流量。此种方法非常适合
+不经常变动的资源。如果文件变动较频繁，不要使用Expires来缓存。
+
+syntax:  add_header name value;
+default:  —  
+context:  http, server, location
+ 
+Adds the specified field to a response header provided that the response code equals 200, 204, 206, 301, 302, 303, 304, or 307. 
+    A value can contain variables. 
+
+syntax:  expires [modified] time;
+expires epoch | max | off;
+ 
+default:  expires off;
+ 
+context:  http, server, location
+ 
+
+Enables or disables adding or modifying the “Expires” and “Cache-Control” response header fields. A parameter can be a positive 
+or negative time. 
+
+A time in the “Expires” field is computed as a sum of the current time and time specified in the directive. If the modified parameter 
+is used (0.7.0, 0.6.32) then time is computed as a sum of the file’s modification time and time specified in the directive. 
+
+In addition, it is possible to specify a time of the day using the “@” prefix (0.7.9, 0.6.34): 
+
+expires @15h30m;
+
+
+The epoch parameter corresponds to the absolute time “Thu, 01 Jan 1970 00:00:01 GMT”. The contents of the “Cache-Control” field 
+depends on the sign of the specified time: 
+? time is negative — “Cache-Control: no-cache”. 
+? time is positive or zero — “Cache-Control: max-age=t”, where t is a time specified in the directive, in seconds. 
+
+
+The max parameter sets “Expires” to the value “Thu, 31 Dec 2037 23:55:55 GMT”, and “Cache-Control” to 10 years. 
+The off parameter disables adding or modifying the “Expires” and “Cache-Control” response header fields. 
+
+
+
+*/  //该配置会修改应答头中的Cache-Control头部行，从而浏览器可以获取到该文件的缓存时间，如果在这段时间内点击浏览器再次获取该文件，
+//如果浏览器支持expires，则自己判断没有过期，浏览器不会发送请求到nginx，浏览器使用本地缓存。也就是浏览器根据该时间段内直接获取本地浏览器缓存，而不是从nginx从新获取，从而提高效率 
+//如果浏览器不支持，携带请求过来，我们可以直接回应304 Not Modified，表示没变动。这样浏览器就判断直接使用浏览器本地缓存
+
+    /*
+    nginx配置expire后会在应答头部行中添加这几个Cache-Control、Last-Modified、expire头部行,客户端再次请求后会携带If-Modified-Since(内容就是nginx之前传送的Last-Modified内容)
+    服务器收到这个If-Modified-Since后进行判断，看文件是否有更改(expire设置的时间)，没有则直接返回304 Not modified 
+    参考http://www.fastcache.com.cn/html/3264072438.html
+     */
     { ngx_string("expires"), //也就是在响应中是否携带头部行:Expires: Thu, 01 Dec 2010 16:00:00 GMT等信息
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_HTTP_LIF_CONF
                         |NGX_CONF_TAKE12,
@@ -158,6 +216,14 @@ add_header指令
 配置段: http, server, location, if in location
 对响应代码为200，201，204，206，301，302，303，304，或307的响应报文头字段添加任意域。如：
 add_header From ttlsa.com
+
+
+syntax:  add_header name value;
+ 
+default:  —  
+context:  http, server, location
+
+Adds the specified field to a response header provided that the response code equals 200, 204, 206, 301, 302, 303, 304, or 307. A value can contain variables. 
 */
     { ngx_string("add_header"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_HTTP_LIF_CONF
@@ -280,7 +346,7 @@ ngx_http_headers_filter(ngx_http_request_t *r)
     conf = ngx_http_get_module_loc_conf(r, ngx_http_headers_filter_module);
 
     if ((conf->expires == NGX_HTTP_EXPIRES_OFF && conf->headers == NULL)
-        || r != r->main)
+        || r != r->main) //expires off并且没有配置add_header，或者为子请求
     {
         return ngx_http_next_header_filter(r);
     }
@@ -331,8 +397,8 @@ ngx_http_headers_filter(ngx_http_request_t *r)
     return ngx_http_next_header_filter(r);
 }
 
-
-static ngx_int_t
+//expires配置解析，会触发创建设置r->headers_out.expires r->headers_out.cache_control
+static ngx_int_t //expires xx配置存储函数为ngx_http_headers_expires，真正组包生效函数为ngx_http_set_expires
 ngx_http_set_expires(ngx_http_request_t *r, ngx_http_headers_conf_t *conf)
 {
     char                *err;
@@ -347,7 +413,7 @@ ngx_http_set_expires(ngx_http_request_t *r, ngx_http_headers_conf_t *conf)
     expires = conf->expires;
     expires_time = conf->expires_time;
 
-    if (conf->expires_value != NULL) {
+    if (conf->expires_value != NULL) { //说明expires配置的是变量类型
 
         if (ngx_http_complex_value(r, conf->expires_value, &value) != NGX_OK) {
             return NGX_ERROR;
@@ -417,14 +483,14 @@ ngx_http_set_expires(ngx_http_request_t *r, ngx_http_headers_conf_t *conf)
 
     if (expires == NGX_HTTP_EXPIRES_EPOCH) {
         e->value.data = (u_char *) "Thu, 01 Jan 1970 00:00:01 GMT";
-        ngx_str_set(&cc->value, "no-cache");
+        ngx_str_set(&cc->value, "no-cache");//设置r->headers_out.cache_control
         return NGX_OK;
     }
 
     if (expires == NGX_HTTP_EXPIRES_MAX) {
         e->value.data = (u_char *) "Thu, 31 Dec 2037 23:55:55 GMT";
         /* 10 years */
-        ngx_str_set(&cc->value, "max-age=315360000");
+        ngx_str_set(&cc->value, "max-age=315360000");//设置r->headers_out.cache_control
         return NGX_OK;
     }
 
@@ -436,7 +502,7 @@ ngx_http_set_expires(ngx_http_request_t *r, ngx_http_headers_conf_t *conf)
     if (expires_time == 0 && expires != NGX_HTTP_EXPIRES_DAILY) {
         ngx_memcpy(e->value.data, ngx_cached_http_time.data,
                    ngx_cached_http_time.len + 1);
-        ngx_str_set(&cc->value, "max-age=0");
+        ngx_str_set(&cc->value, "max-age=0");//设置r->headers_out.cache_control
         return NGX_OK;
     }
 
@@ -460,10 +526,11 @@ ngx_http_set_expires(ngx_http_request_t *r, ngx_http_headers_conf_t *conf)
     ngx_http_time(e->value.data, expires_time);
 
     if (conf->expires_time < 0 || max_age < 0) {
-        ngx_str_set(&cc->value, "no-cache");
+        ngx_str_set(&cc->value, "no-cache");//设置r->headers_out.cache_control
         return NGX_OK;
     }
 
+    //设置r->headers_out.cache_control
     cc->value.data = ngx_pnalloc(r->pool,
                                  sizeof("max-age=") + NGX_TIME_T_LEN + 1);
     if (cc->value.data == NULL) {
@@ -476,7 +543,7 @@ ngx_http_set_expires(ngx_http_request_t *r, ngx_http_headers_conf_t *conf)
     return NGX_OK;
 }
 
-
+//获取expires配置的时间
 static ngx_int_t
 ngx_http_parse_expires(ngx_str_t *value, ngx_http_expires_t *expires,
     time_t *expires_time, char **err)
@@ -486,17 +553,17 @@ ngx_http_parse_expires(ngx_str_t *value, ngx_http_expires_t *expires,
     if (*expires != NGX_HTTP_EXPIRES_MODIFIED) {
 
         if (value->len == 5 && ngx_strncmp(value->data, "epoch", 5) == 0) {
-            *expires = NGX_HTTP_EXPIRES_EPOCH;
+            *expires = NGX_HTTP_EXPIRES_EPOCH; //expire modified epoch
             return NGX_OK;
         }
 
         if (value->len == 3 && ngx_strncmp(value->data, "max", 3) == 0) {
-            *expires = NGX_HTTP_EXPIRES_MAX;
+            *expires = NGX_HTTP_EXPIRES_MAX; //expire modified max
             return NGX_OK;
         }
 
         if (value->len == 3 && ngx_strncmp(value->data, "off", 3) == 0) {
-            *expires = NGX_HTTP_EXPIRES_OFF;
+            *expires = NGX_HTTP_EXPIRES_OFF;  //expire modified off
             return NGX_OK;
         }
     }
@@ -541,7 +608,7 @@ ngx_http_parse_expires(ngx_str_t *value, ngx_http_expires_t *expires,
         return NGX_ERROR;
     }
 
-    if (minus) {
+    if (minus) { //时间为负数，转为整数
         *expires_time = - *expires_time;
     }
 
@@ -722,9 +789,70 @@ ngx_http_headers_filter_init(ngx_conf_t *cf)
 }
 
 
+/*
+expires
+语法： expires [time|epoch|max|off]
+
+默认值： expires off
+
+作用域： http, server, location
+
+使用本指令可以控制HTTP应答中的“Expires”和“Cache-Control”的头标，（起到控制页面缓存的作用）。
+
+可以在time值中使用正数或负数。“Expires”头标的值将通过当前系统时间加上您设定的 time 值来获得。
+
+epoch 指定“Expires”的值为 1 January, 1970, 00:00:01 GMT。
+
+max 指定“Expires”的值为 31 December 2037 23:59:59 GMT，“Cache-Control”的值为10年。
+
+-1 指定“Expires”的值为 服务器当前时间 -1s,即永远过期
+
+“Cache-Control”头标的值由您指定的时间来决定：
+
+负数：Cache-Control: no-cache
+正数或零：Cache-Control: max-age = #, # 为您指定时间的秒数。
+"off" 表示不修改“Expires”和“Cache-Control”的值
+*/
+
+/*
+syntax:  add_header name value;
+default:  —  
+context:  http, server, location
+ 
+Adds the specified field to a response header provided that the response code equals 200, 204, 206, 301, 302, 303, 304, or 307. 
+    A value can contain variables. 
+
+syntax:  expires [modified] time;
+expires epoch | max | off;
+ 
+default:  expires off;
+ 
+context:  http, server, location
+ 
+
+Enables or disables adding or modifying the “Expires” and “Cache-Control” response header fields. A parameter can be a positive 
+or negative time. 
+
+A time in the “Expires” field is computed as a sum of the current time and time specified in the directive. If the modified parameter 
+is used (0.7.0, 0.6.32) then time is computed as a sum of the file’s modification time and time specified in the directive. 
+
+In addition, it is possible to specify a time of the day using the “@” prefix (0.7.9, 0.6.34): 
+
+expires @15h30m;
+
+
+The epoch parameter corresponds to the absolute time “Thu, 01 Jan 1970 00:00:01 GMT”. The contents of the “Cache-Control” field 
+depends on the sign of the specified time: 
+? time is negative — “Cache-Control: no-cache”. 
+? time is positive or zero — “Cache-Control: max-age=t”, where t is a time specified in the directive, in seconds. 
+
+
+The max parameter sets “Expires” to the value “Thu, 31 Dec 2037 23:55:55 GMT”, and “Cache-Control” to 10 years. 
+The off parameter disables adding or modifying the “Expires” and “Cache-Control” response header fields. 
+*/
 static char *
 ngx_http_headers_expires(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
-{
+{ //expires xx配置存储函数为ngx_http_headers_expires，真正组包生效函数为ngx_http_set_expires
     ngx_http_headers_conf_t *hcf = conf;
 
     char                              *err;
@@ -734,20 +862,20 @@ ngx_http_headers_expires(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_http_complex_value_t           cv;
     ngx_http_compile_complex_value_t   ccv;
 
-    if (hcf->expires != NGX_HTTP_EXPIRES_UNSET) {
+    if (hcf->expires != NGX_HTTP_EXPIRES_UNSET) { //说明之前设置过
         return "is duplicate";
     }
 
     value = cf->args->elts;
 
-    if (cf->args->nelts == 2) {
+    if (cf->args->nelts == 2) { //expires后面直接跟了时间
 
         hcf->expires = NGX_HTTP_EXPIRES_ACCESS;
 
         n = 1;
 
-    } else { /* cf->args->nelts == 3 */
-
+    } else { /* cf->args->nelts == 3 */  //expires modified xxx   参考ngx_http_parse_expires
+ 
         if (ngx_strcmp(value[1].data, "modified") != 0) {
             return "invalid value";
         }
@@ -789,7 +917,7 @@ ngx_http_headers_expires(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_OK;
 }
 
-
+//add_header name value;
 static char *
 ngx_http_headers_add(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -816,7 +944,7 @@ ngx_http_headers_add(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
-    hv->key = value[1];
+    hv->key = value[1]; //add_header name value;中的name
     hv->handler = ngx_http_add_header;
     hv->offset = 0;
     hv->always = 0;
@@ -827,7 +955,9 @@ ngx_http_headers_add(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             continue;
         }
 
+        //如果add_header name value;中的name和ngx_http_set_headers中的配对，则对应offset为ngx_http_set_headers中的offset
         hv->offset = set[i].offset;
+        //如果add_header name value;中的name和ngx_http_set_headers中的配对，则对应hander为ngx_http_set_headers中的handler
         hv->handler = set[i].handler;
 
         break;
@@ -842,16 +972,17 @@ ngx_http_headers_add(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     ccv.cf = cf;
     ccv.value = &value[2];
-    ccv.complex_value = &hv->value;
+    ccv.complex_value = &hv->value; //把//add_header name value;中的value解析出来付给hv->value
 
     if (ngx_http_compile_complex_value(&ccv) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
 
-    if (cf->args->nelts == 3) {
+    if (cf->args->nelts == 3) { //add_header name value;
         return NGX_CONF_OK;
     }
 
+    //add_header name value always;
     if (ngx_strcmp(value[3].data, "always") != 0) {
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                            "invalid parameter \"%V\"", &value[3]);

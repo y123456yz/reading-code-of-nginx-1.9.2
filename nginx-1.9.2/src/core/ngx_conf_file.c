@@ -1125,11 +1125,8 @@ ngx_conf_log_error(ngx_uint_t level, ngx_conf_t *cf, ngx_err_t err,
 
 /*
 char*(*set)(ngx_conf_t *cf, ngx_commandj 'vcmd,void *conf)
-    关于set回调方法，在第3章中处理mytest配置项时已经使用过，其中mytest配置项是
-不带参数的。如果处理配置项，我们既可以自己实现一个回调方法来处理配置项（4.2.4节中
-会举例说明如何自定义回调方法），也可以使用Nginx预设的14个解析配置项方法，这会少
-写许多代码，表4-2列出了这些预设的解析配置项方法。我们将在4.2.3节中举例说明这些
-预设方法的使用方式。
+    如果处理配置项，我们既可以自己实现一个回调方法来处理配置项（），也可以使用Nginx预设的14个解析配置项方法，这会少
+写许多代码，表4-2列出了这些预设的解析配置项方法。
 
 表4-2预设的14个配置项解析方法
 ┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -1146,7 +1143,7 @@ char*(*set)(ngx_conf_t *cf, ngx_commandj 'vcmd,void *conf)
 ┃                            ┃存这个配置项的参数，则可以使用ngx_conf_set_ str slot方法                      ┃
 ┣━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
 ┃                            ┃  如果这个配置项会出现多次，每个配置项后面都跟着1个参数，而在程序中我们       ┃
-┃                            ┃希望仅用一个ngx_array_t动态数组（用法见7.3节）来存储所有的参数，且数组中      ┃
+┃                            ┃希望仅用一个ngx_array_t动态数组（           ）来存储所有的参数，且数组中      ┃
 ┃ngx_conf_set_str_array_slot ┃                                                                              ┃
 ┃                            ┃的每个参数都以ngx_str_t来存储，那么预设的ngx_conf_set_str_array_slot有法可    ┃
 ┃                            ┃以帮我们做到                                                                  ┃
@@ -1283,11 +1280,8 @@ ngx_conf_set_str_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
 /*
 char*(*set)(ngx_conf_t *cf, ngx_commandj 'vcmd,void *conf)
-    关于set回调方法，在第3章中处理mytest配置项时已经使用过，其中mytest配置项是
-不带参数的。如果处理配置项，我们既可以自己实现一个回调方法来处理配置项（4.2.4节中
-会举例说明如何自定义回调方法），也可以使用Nginx预设的14个解析配置项方法，这会少
-写许多代码，表4-2列出了这些预设的解析配置项方法。我们将在4.2.3节中举例说明这些
-预设方法的使用方式。
+    如果处理配置项，我们既可以自己实现一个回调方法来处理配置项（），也可以使用Nginx预设的14个解析配置项方法，这会少
+写许多代码，表4-2列出了这些预设的解析配置项方法。
 
 表4-2预设的14个配置项解析方法
 ┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -1304,7 +1298,7 @@ char*(*set)(ngx_conf_t *cf, ngx_commandj 'vcmd,void *conf)
 ┃                            ┃存这个配置项的参数，则可以使用ngx_conf_set_ str slot方法                      ┃
 ┣━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
 ┃                            ┃  如果这个配置项会出现多次，每个配置项后面都跟着1个参数，而在程序中我们       ┃
-┃                            ┃希望仅用一个ngx_array_t动态数组（用法见7.3节）来存储所有的参数，且数组中      ┃
+┃                            ┃希望仅用一个ngx_array_t动态数组（           ）来存储所有的参数，且数组中      ┃
 ┃ngx_conf_set_str_array_slot ┃                                                                              ┃
 ┃                            ┃的每个参数都以ngx_str_t来存储，那么预设的ngx_conf_set_str_array_slot有法可    ┃
 ┃                            ┃以帮我们做到                                                                  ┃
@@ -1440,7 +1434,7 @@ ngx_conf_set_str_array_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
 /*
 注意  在ngx_http_mytest_create_loc_conf创建结构体时，如果想使用ngx_conf_set_
-keyval_slot，必须把my_keyval初始化为NULL空指针，也就是4.2.1节中的语句mycf->my_keyval= NULL;，
+keyval_slot，必须把my_keyval初始化为NULL空指针，
 否则ngx_conf_set_keyval_slot在解析时会报错。
 */
 char *
@@ -1482,13 +1476,9 @@ ngx_conf_set_keyval_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
 /*
 char*(*set)(ngx_conf_t *cf, ngx_commandj 'vcmd,void *conf)
-    关于set回调方法，在第3章中处理mytest配置项时已经使用过，其中mytest配置项是
-不带参数的。如果处理配置项，我们既可以自己实现一个回调方法来处理配置项（4.2.4节中
-会举例说明如何自定义回调方法），也可以使用Nginx预设的14个解析配置项方法，这会少
-写许多代码，表4-2列出了这些预设的解析配置项方法。我们将在4.2.3节中举例说明这些
-预设方法的使用方式。
-
-表4-2预设的14个配置项解析方法
+    关于set回调方法，在处理mytest配置项时已经使用过，其中mytest配置项是
+不带参数的。如果处理配置项，我们既可以自己实现一个回调方法来处理配置项（），也可以使用Nginx预设的14个解析配置项方法，这会少
+写许多代码
 ┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃    预设方法名              ┃    行为                                                                      ┃
 ┣━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
@@ -1503,7 +1493,7 @@ char*(*set)(ngx_conf_t *cf, ngx_commandj 'vcmd,void *conf)
 ┃                            ┃存这个配置项的参数，则可以使用ngx_conf_set_ str slot方法                      ┃
 ┣━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
 ┃                            ┃  如果这个配置项会出现多次，每个配置项后面都跟着1个参数，而在程序中我们       ┃
-┃                            ┃希望仅用一个ngx_array_t动态数组（用法见7.3节）来存储所有的参数，且数组中      ┃
+┃                            ┃希望仅用一个ngx_array_t动态数组（           ）来存储所有的参数，且数组中      ┃
 ┃ngx_conf_set_str_array_slot ┃                                                                              ┃
 ┃                            ┃的每个参数都以ngx_str_t来存储，那么预设的ngx_conf_set_str_array_slot有法可    ┃
 ┃                            ┃以帮我们做到                                                                  ┃
@@ -1577,8 +1567,7 @@ char*(*set)(ngx_conf_t *cf, ngx_commandj 'vcmd,void *conf)
 
 /*
 注意在ngx_http_mytest_create loc conf创建结构体时，如果想使用ngx_conf_set_num_slot,
-必须把my_num初始化为NGX_CONF_UNSET宏，也就是4.2.1节中的语句
-mycf->my_num= NGX CONF_UNSET;否则ngx_conf_set_num_slot在解析时会报错。
+必须把my_num初始化为NGX_CONF_UNSET宏  否则ngx_conf_set_num_slot在解析时会报错。
 */
 char *
 ngx_conf_set_num_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
@@ -1621,7 +1610,7 @@ Kilobyte，m或者M表示Megabyte。用ngx_http_mytest_conf_t结构中的size_t my_size;来
     ngx_conf_set size slot只允许配置项后的参数携带单位k或者K、m或者M，不允许有
 g或者G的出现，这与ngx_conf_set_off_slot是不同的。
     注意  在ngx_http_mytest_create_loc_conf创建结构体时，如果想使用ngx_conf_set_size_slot，
-    必须把my_size初始化为NGX_CONF_UNSET_SIZE宕，也就是4.2.1节中的语句
+    必须把my_size初始化为NGX_CONF_UNSET_SIZE
     mycf->my_size= NGX_CONF_UNSET_SIZE;，否则ngx_conf_set_size_slot在解析时会报错。
 */
 char *
@@ -1656,13 +1645,9 @@ ngx_conf_set_size_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
 /*
 char*(*set)(ngx_conf_t *cf, ngx_commandj 'vcmd,void *conf)
-    关于set回调方法，在第3章中处理mytest配置项时已经使用过，其中mytest配置项是
-不带参数的。如果处理配置项，我们既可以自己实现一个回调方法来处理配置项（4.2.4节中
-会举例说明如何自定义回调方法），也可以使用Nginx预设的14个解析配置项方法，这会少
-写许多代码，表4-2列出了这些预设的解析配置项方法。我们将在4.2.3节中举例说明这些
-预设方法的使用方式。
-
-表4-2预设的14个配置项解析方法
+    关于set回调方法，在处理mytest配置项时已经使用过，其中mytest配置项是
+不带参数的。如果处理配置项，我们既可以自己实现一个回调方法来处理配置项（），也可以使用Nginx预设的14个解析配置项方法，这会少
+写许多代码，
 ┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃    预设方法名              ┃    行为                                                                      ┃
 ┣━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
@@ -1677,7 +1662,7 @@ char*(*set)(ngx_conf_t *cf, ngx_commandj 'vcmd,void *conf)
 ┃                            ┃存这个配置项的参数，则可以使用ngx_conf_set_ str slot方法                      ┃
 ┣━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
 ┃                            ┃  如果这个配置项会出现多次，每个配置项后面都跟着1个参数，而在程序中我们       ┃
-┃                            ┃希望仅用一个ngx_array_t动态数组（用法见7.3节）来存储所有的参数，且数组中      ┃
+┃                            ┃希望仅用一个ngx_array_t动态数组（           ）来存储所有的参数，且数组中      ┃
 ┃ngx_conf_set_str_array_slot ┃                                                                              ┃
 ┃                            ┃的每个参数都以ngx_str_t来存储，那么预设的ngx_conf_set_str_array_slot有法可    ┃
 ┃                            ┃以帮我们做到                                                                  ┃
@@ -1758,8 +1743,7 @@ char*(*set)(ngx_conf_t *cf, ngx_commandj 'vcmd,void *conf)
 单位为k、K、m、M时，其意义与ngx_conf_set_size_slot相同。
 
 注意  在ngx_http_mytest_create loc conf创建结构体时，如果想使用ngx_conf_set_
-off_slot，必须把my_off初始化为NGX_CONF_UNSET宏，也就是4.2.1节中的语句mycf-
->my_off= NGX CONF UNSET;，否则ngx_conf_set off slot在解析时会报错。
+off_slot，必须把my_off初始化为NGX_CONF_UNSET宏，否则ngx_conf_set off slot在解析时会报错。
 
 */
 char *
@@ -1798,8 +1782,7 @@ ngx_conf_set sec slot与ngx_conf_set msec slot非常桕似，  只是ngx_conf_set sec sl
 示的时间单位是秒，而ngx_conf_set_msec_slot为毫秒。
 
 注意  在ngx_http_mytest_create_loc_conf创建结构体时，如果想使用ngx_c onf_set_
-sec slot，那么必须把my_sec初始化为NGX CONF UNSET宏，也就是4.2.1节中的语句
-mycf->my_sec= NGX CONF_UNSET;，否则ngx_conf_set_sec_slot在解析时会报错。
+sec slot，那么必须把my_sec初始化为NGX CONF UNSET宏    否则ngx_conf_set_sec_slot在解析时会报错。
 */
 char *
 ngx_conf_set_msec_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
@@ -1833,13 +1816,9 @@ ngx_conf_set_msec_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
 /*
 char*(*set)(ngx_conf_t *cf, ngx_commandj 'vcmd,void *conf)
-    关于set回调方法，在第3章中处理mytest配置项时已经使用过，其中mytest配置项是
-不带参数的。如果处理配置项，我们既可以自己实现一个回调方法来处理配置项（4.2.4节中
-会举例说明如何自定义回调方法），也可以使用Nginx预设的14个解析配置项方法，这会少
-写许多代码，表4-2列出了这些预设的解析配置项方法。我们将在4.2.3节中举例说明这些
-预设方法的使用方式。
-
-表4-2预设的14个配置项解析方法
+    关于set回调方法，在处理mytest配置项时已经使用过，其中mytest配置项是
+不带参数的。如果处理配置项，我们既可以自己实现一个回调方法来处理配置项（），也可以使用Nginx预设的14个解析配置项方法，这会少
+写许多代码
 ┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃    预设方法名              ┃    行为                                                                      ┃
 ┣━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
@@ -1854,7 +1833,7 @@ char*(*set)(ngx_conf_t *cf, ngx_commandj 'vcmd,void *conf)
 ┃                            ┃存这个配置项的参数，则可以使用ngx_conf_set_ str slot方法                      ┃
 ┣━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
 ┃                            ┃  如果这个配置项会出现多次，每个配置项后面都跟着1个参数，而在程序中我们       ┃
-┃                            ┃希望仅用一个ngx_array_t动态数组（用法见7.3节）来存储所有的参数，且数组中      ┃
+┃                            ┃希望仅用一个ngx_array_t动态数组（           ）来存储所有的参数，且数组中      ┃
 ┃ngx_conf_set_str_array_slot ┃                                                                              ┃
 ┃                            ┃的每个参数都以ngx_str_t来存储，那么预设的ngx_conf_set_str_array_slot有法可    ┃
 ┃                            ┃以帮我们做到                                                                  ┃
@@ -2003,8 +1982,7 @@ static ngx_conf_enum_t   test_enums []  =
     { ngx_string("orange") ,  3 },
     { ngx_null_string, O }
     土面这个例子表示，配置项中的参数必须是apple、banana、orange其中之一。注意，必
-须以ngx_null_string结尾。需要用ngx_uint_t来存储解析后的参数，在4.2.1节中是用ngx_
-http_mytest conf t中的ngx_uint_t my_enum_seq;来存储解析后的枚举参数的。在设置ngx_
+须以ngx_null_string结尾。需要用ngx_uint_t来存储解析后的参数，在设置ngx_
 command t时，需要把上面例子中定义的test enums数组传给post指针，如下所示。
 static ngx_command_t ngx_http_mytest_commands []  =  {
     {   ngx_string ( " test_enum" ) ,
@@ -2056,13 +2034,9 @@ ngx_conf_set_enum_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
 /*
 char*(*set)(ngx_conf_t *cf, ngx_commandj 'vcmd,void *conf)
-    关于set回调方法，在第3章中处理mytest配置项时已经使用过，其中mytest配置项是
-不带参数的。如果处理配置项，我们既可以自己实现一个回调方法来处理配置项（4.2.4节中
-会举例说明如何自定义回调方法），也可以使用Nginx预设的14个解析配置项方法，这会少
-写许多代码，表4-2列出了这些预设的解析配置项方法。我们将在4.2.3节中举例说明这些
-预设方法的使用方式。
-
-表4-2预设的14个配置项解析方法
+    关于set回调方法，在处理mytest配置项时已经使用过，其中mytest配置项是
+不带参数的。如果处理配置项，我们既可以自己实现一个回调方法来处理配置项（），也可以使用Nginx预设的14个解析配置项方法，这会少
+写许多代码
 ┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃    预设方法名              ┃    行为                                                                      ┃
 ┣━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
@@ -2077,7 +2051,7 @@ char*(*set)(ngx_conf_t *cf, ngx_commandj 'vcmd,void *conf)
 ┃                            ┃存这个配置项的参数，则可以使用ngx_conf_set_ str slot方法                      ┃
 ┣━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
 ┃                            ┃  如果这个配置项会出现多次，每个配置项后面都跟着1个参数，而在程序中我们       ┃
-┃                            ┃希望仅用一个ngx_array_t动态数组（用法见7.3节）来存储所有的参数，且数组中      ┃
+┃                            ┃希望仅用一个ngx_array_t动态数组（           ）来存储所有的参数，且数组中      ┃
 ┃ngx_conf_set_str_array_slot ┃                                                                              ┃
 ┃                            ┃的每个参数都以ngx_str_t来存储，那么预设的ngx_conf_set_str_array_slot有法可    ┃
 ┃                            ┃以帮我们做到                                                                  ┃

@@ -63,7 +63,7 @@ static ngx_int_t mytest_subrequest_post_handler(ngx_http_request_t *r,
 {
     //当前请求r是子请求，它的parent成员就指向父请求
     ngx_http_request_t          *pr = r->parent;
-    //注意，上下文是保存在父请求中的（参见5.6.5节），所以要由pr中取上下文。
+    //注意，上下文是保存在父请求中的，所以要由pr中取上下文。
 //其实有更简单的方法，即参数data就是上下文，初始化subrequest时
 //我们就对其进行设置了的，这里仅为了说明如何获取到父请求的上下文
     ngx_http_subrequest_mytest_ctx_t* myctx = ngx_http_get_module_ctx(pr, ngx_http_subrequest_mytest_module);
@@ -186,7 +186,7 @@ ngx_http_subrequest_mytest_handler(ngx_http_request_t * r)
         ngx_http_set_ctx(r, myctx, ngx_http_subrequest_mytest_module);
     }
 
-    // ngx_http_post_subrequest_t结构体会决定子请求的回调方法，参见5.4.1节
+    // ngx_http_post_subrequest_t结构体会决定子请求的回调方法   
     ngx_http_post_subrequest_t *psr = ngx_palloc(r->pool, sizeof(ngx_http_post_subrequest_t));
     if (psr == NULL)
     {
@@ -200,8 +200,7 @@ ngx_http_subrequest_mytest_handler(ngx_http_request_t * r)
     psr->data = myctx;
 
     //子请求的URI前缀是/list，这是因为访问新浪服务器的请求必须是类
-//似/list=s_sh000001这样的URI，这与5.6.1节在nginx.conf中
-//配置的子请求location中的URI是一致的
+//似/list=s_sh000001这样的URI，
     ngx_str_t sub_prefix = ngx_string("/list=");
     ngx_str_t sub_location;
     sub_location.len = sub_prefix.len + r->args.len;

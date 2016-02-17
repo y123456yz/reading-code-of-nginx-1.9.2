@@ -224,7 +224,7 @@ slot，如果读操作同时进行，读到的还是之前的slot，并没有被改变，当然这里只能是尽量
 
 /*
 这个缓存时间什么时候会更新呢？对于worker进程而言，除了Nginx启动时更新一次时间外，任何更新时间的操作都只能由ngx_epoll_process_events方法
-（参见9.6.3节）执行。回顾一下ngx_epoll_process_events方法的代码，当flags参数中有NGX_UPDATE_TIME标志位，或者ngx_event_timer_alarm标志
+执行。回顾一下ngx_epoll_process_events方法的代码，当flags参数中有NGX_UPDATE_TIME标志位，或者ngx_event_timer_alarm标志
 位为1时，就会调用ngx_time_update方法更新缓存时间。
 */ //如果没有设置timer_resolution则定时器可能永远不超时，因为epoll_wait不返回，无法更新时间
 void

@@ -88,7 +88,7 @@ struct ngx_shm_zone_s { //初始化见ngx_shared_memory_add，真正的共享内存创建在ngx
 ┃ngx_int_t n, ngx_int_t type)      ┃                                      ┃                                      ┃
 ┃                                  ┃    4) NGX.PROCESS JUST_RESPAWN;      ┃句柄通信机制                          ┃
 ┃                                  ┃    5) NGX_PROCESS—DETACHED.         ┃                                      ┃
-┃                                  ┃type的值将影响8.6节中ngn_process_t    ┃                                      ┃
+┃                                  ┃type的值将影响       ngn_process_t    ┃                                      ┃
 ┃                                  ┃结构体的respawn. detached. just_spawn ┃                                      ┃
 ┃                                  ┃标志位的值                            ┃                                      ┃
 ┣━━━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━┫
@@ -138,11 +138,11 @@ struct ngx_shm_zone_s { //初始化见ngx_shared_memory_add，真正的共享内存创建在ngx
 ┃   void ngx_process_events_         ┃  cycle是当前进程的ngx_cycle_t结  ┃  使用事件模块处理截止到现在已经收  ┃
 ┃                                    ┃                                  ┃集到的事件。该函数由事伴模块实现，  ┃
 ┃and_timers (ngx_cycle_t *cycle)     ┃构体指针                          ┃                                    ┃
-┃                                    ┃                                  ┃详见第9章                           ┃
+┃                                    ┃                                  ┃                                    ┃
 ┗━━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━━┛
 */
 //http://tech.uc.cn/?p=300 参数解析相关数据结构参考
-//初始化参考ngx_init_cycle
+//初始化参考ngx_init_cycle，最终有一个全局类型的ngx_cycle_s，即ngx_cycle
 struct ngx_cycle_s {
     /*     保存着所有模块存储配置项的结构体指针，     它首先是一个数组，数组大小为ngx_max_module，正好与Nginx的module个数一样；     
     每个数组成员又是一个指针，指向另一个存储着指针的数组，因此会看到void ****    请见陶辉所著《深入理解Nginx-模块开发与架构解析》
@@ -151,7 +151,7 @@ struct ngx_cycle_s {
     每个进程中都有一个唯一的ngx_cycle_t核心结构体，它有一个成员conf_ctx维护着所有模块的配置结构体，
   其类型是void ****conf_ctx。conf_ctx意义为首先指向一个成员皆为指针的数组，其中每个成员指针又指向另外一个
   成员皆为指针的数组，第2个子数组中的成员指针才会指向各模块生成的配置结构体。这正是为了事件模
-  块、http模块、mail模块而设计的，第9、10章都有详述，这有利于不同于NGX_CORE_MODULE类型的
+  块、http模块、mail模块而设计的，这有利于不同于NGX_CORE_MODULE类型的
   特定模块解析配置项。然而，NGX_CORE_MODULE类型的核心模块解析配置项时，配置项一定是全局的，
   不会从属于任何{}配置块的，它不需要上述这种双数组设计。解析标识为NGX_DIRECT_CONF类型的配
   置项时，会把void****类型的conf_ctx强制转换为void**，也就是说，此时，在conf_ctx指向的指针数组
@@ -189,10 +189,15 @@ create_loc_conf方法建立的结构体，当然，如果相应的回调方法没有实现，该指针就为NUL
     /*    日志模块中提供了生成基本ngx_log_t日志对象的功能，这里的log实际上是在还没有执行ngx_init_cycle方法前，    
     也就是还没有解析配置前，如果有信息需要输出到日志，就会暂时使用log对象，它会输出到屏幕。    
     在ngx_init_cycle方法执行后，将会根据nginx.conf配置文件中的配置项，构造出正确的日志文件，此时会对log重新赋值。    */
+    //ngx_init_cycle中赋值cycle->log = &cycle->new_log;
     ngx_log_t                *log; //指向ngx_log_init中的ngx_log，如果配置error_log，指向这个配置后面的文件参数，见ngx_error_log。否则在ngx_log_open_default中设置
     
     /* 由nginx.conf配置文件读取到日志文件路径后，将开始初始化error_log日志文件，由于log对象还在用于输出日志到屏幕，    
     这时会用new_log对象暂时性地替代log日志，待初始化成功后，会用new_log的地址覆盖上面的log指针    */
+    // 如果没有配置error_log则在ngx_log_open_default设置为NGX_ERROR_LOG_PATH，如果通过error_log有配置过则通过ngx_log_set_log添加到该new_log->next链表连接起来
+    /* 全局中配置的error_log xxx存储在ngx_cycle_s->new_log，http{}、server{}、local{}配置的error_log保存在ngx_http_core_loc_conf_t->error_log,
+    见ngx_log_set_log,如果只配置全局error_log，不配置http{}、server{}、local{}则在ngx_http_core_merge_loc_conf conf->error_log = &cf->cycle->new_log;  */
+    //ngx_log_insert插入，在ngx_log_error_core找到对应级别的日志配置进行输出，因为可以配置error_log不同级别的日志存储在不同的日志文件中
     ngx_log_t                 new_log;//如果配置error_log，指向这个配置后面的文件参数，见ngx_error_log。否则在ngx_log_open_default中设置
 
     ngx_uint_t                log_use_stderr;  /* unsigned  log_use_stderr:1; */

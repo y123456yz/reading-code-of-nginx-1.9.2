@@ -812,7 +812,8 @@ ngx_output_chain_copy_buf(ngx_output_chain_ctx_t *ctx)
     src = ctx->in->buf;//结合ngx_http_xxx_create_request(ngx_http_fastcgi_create_request)阅读，ctx->in中的数据实际上是从ngx_http_xxx_create_request组成ngx_chain_t来的，数据来源在ngx_http_xxx_create_request
 //ctx->in中的内存数据或者缓存文件数据会拷贝到dst中，也就是ngx_output_chain_ctx_t->buf,然后在ngx_output_chain_copy_buf函数外层会重新把ctx->buf赋值给新的chain，然后write出去
     dst = ctx->buf; 
-
+    
+    /* 例如这里如果从缓存文件中读取，或者nginx本地服务器文件很大，则dst空间最大32768字节，见ngx_output_chain_get_buf，也即是控制了一次最多从文件中获取32768字节 */
     size = ngx_buf_size(src); //如果buf指向的是文件，则是文件中的内容，否则是内存buf中的内容
     size = ngx_min(size, dst->end - dst->pos); //避免dst空间不够，装不了src中的数据大小
 

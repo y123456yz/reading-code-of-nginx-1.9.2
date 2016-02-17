@@ -512,6 +512,72 @@ Pacemaker实践：实现基于Pacemaker的MYSQL高可用方案。
  高性能事件派发机制：线程池模型的性能问题以及不为人知的Disruptor模型
 
 
+ Linux写时拷贝技术(copy-on-write) 
+在Linux程序中，fork（）会产生一个和父进程完全相同的子进程，但子进程在此后多会exec系统调用，出于效率考虑，linux中引入了“写时复制“
+技术，也就是只有进程空间的各段的内容要发生变化时，才会将父进程的内容复制一份给子进程。
+
+ 那么子进程的物理空间没有代码，怎么去取指令执行exec系统调用呢？
+ 在fork之后exec之前两个进程用的是相同的物理空间（内存区），子进程的代码段、数据段、堆栈都是指向父进程的物理空间，也就是说，
+ 两者的虚拟空间不同，但其对应的物理空间是同一个。当父子进程中有更改相应段的行为发生时，再为子进程相应的段分配物理空间，如果
+ 不是因为exec，内核会给子进程的数据段、堆栈段分配相应的物理空间（至此两者有各自的进程空间，互不影响），而代码段继续共享父进
+ 程的物理空间（两者的代码完全相同）。而如果是因为exec，由于两者执行的代码不同，子进程的代码段也会分配单独的物理空间。      
+
+在网上看到还有个细节问题就是，fork之后内核会通过将子进程放在队列的前面，以让子进程先执行，以免父进程执行导致写时复制，
+而后子进程执行exec系统调用，因无意义的复制而造成效率的下降。
+
+
+
+
+{If-None-Match和ETag , If-Modified-Since和Last-Modified
+    If-Modified-Since（浏览器） = Last-Modified（服务器）
+    作用：浏览器端第一次访问获得服务器的Last-Modified，第2次访问把浏览器端缓存页面的最后修改时间发送到服务器去，服务器会把这
+    个时间与服务器上实际文件的最后修改时间进行对比。如果时间一致，那么返回304，客户端就直接使用本地缓存文件。如果时间不一致，就
+    会返回200和新的文件内容。客户端接到之后，会丢弃旧文件，把新文件缓存起来，并显示在浏览器中.
+
+
+    If-None-Match（浏览器） = ETag（服务器）
+    作用: If-None-Match和ETag一起工作，工作原理是在HTTP Response中添加ETag信息。 当用户再次请求该资源时，将在HTTP Request 中加入If-None-Match
+    信息(ETag的值)。如果服务器验证资源的ETag没有改变（该资源没有更新），将返回一个304状态告诉客户端使用本地缓存文件。否则将返回200状态和新的资源和Etag. 
+}
+
+
+{
+    ETags和If-None-Match是一种常用的判断资源是否改变的方法。类似于Last-Modified和HTTP-If-Modified-Since。但是有所不同的是Last-Modified和HTTP-If-Modified-Since只判断资源的最后修改时间，而ETags和If-None-Match可以是资源任何的任何属性。
+    ETags和If-None-Match的工作原理是在HTTPResponse中添加ETags信息。当客户端再次请求该资源时，将在HTTPRequest中加入If-None-Match信息（ETags的值）。如果服务器验证资源的ETags没有改变（该资源没有改变），将返回一个304状态；否则，服务器将返回200状态，并返回该资源和新的ETags。
+}
+
+
+{  
+http响应Last-Modified和ETag
+
+　　基础知识
+1) 什么是”Last-Modified”?
+　　    在浏览器第一次请求某一个URL时，服务器端的返回状态会是200，内容是你请求的资源，同时有一个Last-Modified的属性标记此文件在服务期端
+    最后被修改的时间，格式类似这样：Last-Modified: Fri, 12 May 2006 18:53:33 GMT
+　　客户端第二次请求此URL时，根据 HTTP 协议的规定，浏览器会向服务器传送 If-Modified-Since 报头，询问该时间之后文件是否有被修改过：
+　　If-Modified-Since: Fri, 12 May 2006 18:53:33 GMT
+　　如果服务器端的资源没有变化，则自动返回 HTTP 304 （Not Changed.）状态码，内容为空，这样就节省了传输数据量。当服务器端代码发生改
+    变或者重启服务器时，则重新发出资源，返回和第一次请求时类似。从而保证不向客户端重复发出资源，也保证当服务器有变化时，客户端能够得到最新的资源。
+2) 什么是”Etag”?
+　　HTTP 协议规格说明定义ETag为“被请求变量的实体值”。 另一种说法是，ETag是一个可以与Web资源关联的记号（token）。典型的Web资源可以一个Web页，但也可能是JSON或XML文档。服务器单独负责判断记号是什么及其含义，并在HTTP响应头中将其传送到客户端，以下是服务器端返回的格式：
+　　ETag: "50b1c1d4f775c61:df3"
+　　客户端的查询更新格式是这样的：
+　　If-None-Match: W/"50b1c1d4f775c61:df3"
+　　如果ETag没改变，则返回状态304然后不返回，这也和Last-Modified一样。本人测试Etag主要在断点下载时比较有用。
+　　
+Last-Modified和Etags如何帮助提高性能?
+　　聪明的开发者会把Last-Modified 和ETags请求的http报头一起使用，这样可利用客户端（例如浏览器）的缓存。因为服务器首先产生 
+Last-Modified/Etag标记，服务器可在稍后使用它来判断页面是否已经被修改。本质上，客户端通过将该记号传回服务器要求服务器验证其（客户端）缓存。过程如下:
+1.客户端请求一个页面（A）。
+2.服务器返回页面A，并在给A加上一个Last-Modified/ETag。
+3.客户端展现该页面，并将页面连同Last-Modified/ETag一起缓存。
+4.客户再次请求页面A，并将上次请求时服务器返回的Last-Modified/ETag一起传递给服务器。
+5.服务器检查该Last-Modified或ETag，并判断出该页面自上次客户端请求之后还未被修改，直接返回响应304和一个空的响应体。
+}
+
+
+
+
 #define NGX_CONFIGURE " --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads --add-module=/var/yyz/nginx-1.9.2/src/echo-nginx-module-master --add-module=./src/nginx-requestkey-module-master/ --with-http_secure_link_module --add-module=./src/redis2-nginx-module-master/
 
 

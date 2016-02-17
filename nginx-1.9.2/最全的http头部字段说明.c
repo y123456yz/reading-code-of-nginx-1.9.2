@@ -212,6 +212,8 @@ Warning 警告实体可能存在的问题 Warning: 199 Miscellaneous warning
 WWW-Authenticate 表明客户端请求实体应该使用的授权方案 WWW-Authenticate: Basic 
 
 
+淘宝中文地址:http://tengine.taobao.org/nginx_docs/cn/docs/http/ngx_http_core_module.html
+
 #define NGX_CONFIGURE " --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads --add-module=/var/yyz/nginx-1.9.2/src/echo-nginx-module-master --add-module=./src/nginx-requestkey-module-master/
 
 
@@ -245,6 +247,75 @@ I/O测试工具，iostat  网络接口流量测试工具ifstat
     http://blog.csdn.net/weiyuefei/article/details/35782523  http://www.tuicool.com/articles/QnMNr23
 
     --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads --add-module=/var/yyz/nginx-1.9.2/src/echo-nginx-module-master --add-module=./src/nginx-requestkey-module-master/ --with-http_secure_link_module
-    
+#define NGX_CONFIGURE " --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads --add-module=/var/yyz/nginx-1.9.2/src/echo-nginx-module-master --add-module=./src/nginx-requestkey-module-master/ --with-http_secure_link_module --add-module=./src/redis2-nginx-module-master/ --add-module=./src/lua-nginx-module-master/"
+
+
+
+    推敲分析缓存后端数据的时候为什么需要临时文件，代码详细中做了详细流程分析
+    loader进程，cache manager进程处理过程分析,响应handler定时指向机制分析
+    缓存文件命中发送过程分析
+    缓存文件stat状态信息红黑树存储及老化过程分析  
+    缓存文件红黑树存储过程及老化分析
+    缓存文件loader加载过程分析
+    aio异步文件读取发送分析
+    sendfile流程分析
+    线程池详解分析
+    aio sendfile 线程池分界点详细分析
+
+    推敲为什么每次在发送后端数据最后都会调用ngx_http_send_special的原因分析
+    进一步分析aio异步事件触发流程
+    关键点新增打印，利用分析日志。
+    分析在ngx_http_write_filter的时候，明明从后端接收的数据到了缓存文件，并且理论上出去的数据时in file的，单实际上在out的时候却是in mem而非in file
+    sendfile与普通ngx_writev分界点进一步分析
+    缓存情况下的copy filter执行流程和非缓存情况下的copy filter执行流程进一步分析注释。
+    filter后端数据到客户端的时候，是否需要重新开辟内存空间分界点详细分析。
+    分析直接direct I/O的生效场景，以及结合相关资料分析说明时候使用direct I/O
+    direct I/O和异步AIO结合提升效率代码分析及高压测试
+    directio真正生效过程代码分析
+    同时配置sendfile on;  aio on; dirction xxx;的情况下sendfile和aio选择判断流程详细分析
+    线程池thread_pool_module源码详细分析注释 
+    aio thread执行流程详细分析
+    进一步分析获取缓存文件头部部分和文件后半部包体部分的发送流程。
+    secure_link权限访问模块原理分析，以及代码分析，并举例测试分析
+    从新走到index和static模块，配合secure_link测试。
+    添加第三方模块-防盗链模块，了解原理后走读代码分析
+
+    分析uri中携带的arg_xxx变量的解析形成过程，配合secure link配合使用，起到安全防护作用,对该模块进行详细分析注释
+    aio thread_pool使用流程分析，线程池读取文件过程分析。
+    普通读方式下大文件(10M以上)下载过程流程分析，以及与小文件(小于32768)下载过程不同流程比较分析
+    AIO on方式下大文件(10M以上)下载过程流程分析，以及与小文件(小于32768)下载过程不同流程比较分析
+    AIO thread_pool方式下大文件(10M以上)下载过程流程分析，以及与小文件(小于32768)下载过程不同流程比较分析
+    新增小文件(小于65535/2)下载全过程和大文件下载全过程日志，可以直观得到函数调用流程，完善日志
+    结合refer防盗链模块重新把hash走读理解注释一遍，加深理解
+    重新理解前置通配符后置通配符hash存储过程
+    添加lua库和lua-module 把定时器 事件机制函数相关修改添加到lua模块和redis模块
+
+    缓存文件先存到临时文件还有个原因是防止只缓存一半，后端服务器挂了，缓存文件不是完整的
+
+
+
+
+    分析注释errlog_module模块，研究errlog_module和Ngx_http_core_module中error_log配置的区别，同时分析在这两个模块配置生效前的日志记录过程
+    新增ngx_log_debugall功能，用于自己添加调试代码，以免影响原有代码，减少耦合，便于新增功能代码错误排查。
+    同时配置多条error_log配置信息，每条文件名和等级不一样，也就是不同等级日志输出到不同日志文件的过程分析及注释。
+    ngx_http_log_module详细分析，以及access_log如果是常量路径和变量路径的优化处理过程。
+    NGX_HTTP_LOG_PHASE阶段ngx_http_log_module生效过程及日志记录过程细化分析注释,同时明确ngx_errlog_module和ngx_http_log_module的区别
+    进一步细化分析ngx_http_index_module代码，以及配合rewrite-phase进行内部重定向流程
+    研究分析ngx_http_autoindex_module目录浏览模块源码分析注释，同时发现只有ngx_http_index_module模块不编译到源码中的时候，ngx_http_autoindex_module才会生效，如果index-module
+        模块编译进源码，则要么进行内部重定向要么直接关闭连接，永远不会执行ngx_http_autoindex_module，这里和官网描述不一致，TODO，待后面确认
+    autoindex搭建目录服务器过程源码分析流程
+    结合代码理解If-None-Match和ETag , If-Modified-Since和Last-Modified这几个头部行配合浏览器缓存生效过程,也就是决定是否(304 NOT modified)，
+        并且分析注释ngx_http_not_modified_filter_module实现过程
+    Cache-Control expire 头部行代码实现流程，详细分析expires和add_header配置，分析注释ngx_http_headers_filter_module模块
+    从新结合代码对比分析并总结几种负债均衡算法(hash  ip_hash least_conn rr)
+    结合error_pages配置，对ngx_http_special_response_handler进行分析，同时对内部重定向功能和@new_location进行分析
+
+
+
+
+
+改造点及可疑问题:
+        和后端服务器通过检查套接字连接状态来判断是否失效，如果失效则连接下一个服务器。这种存在缺陷，例如如果后端服务器直接拔掉网线或者后端服务器断
+    电了，则检测套接字是判断不出来的，协议栈需要长时间过后才能判断出，如果关闭掉协议栈的keepalive可能永远检测不出，这是个严重bug。
 */
 

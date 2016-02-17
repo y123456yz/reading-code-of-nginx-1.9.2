@@ -227,7 +227,7 @@ ngx_thread_read_handler(void *data, ngx_log_t *log)
 #endif
 
     ngx_log_debug4(NGX_LOG_DEBUG_CORE, log, 0,
-                   "pread: %z (err: %i) of %uz @%O",
+                   "pread read return read size: %z (err: %i) of buf-size%uz offset@%O",
                    n, ctx->err, ctx->size, ctx->offset);
 }
 

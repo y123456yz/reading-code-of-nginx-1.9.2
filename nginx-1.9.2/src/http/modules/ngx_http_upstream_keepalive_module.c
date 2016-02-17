@@ -117,6 +117,20 @@ static ngx_http_module_t  ngx_http_upstream_keepalive_module_ctx = {
 };
 
 /*
+负载均衡相关配置:
+upstream
+server
+ip_hash:根据客户端的IP来做hash,不过如果squid -- nginx -- server(s)则，ip永远是squid服务器ip,因此不管用,需要ngx_http_realip_module或者第三方模块
+keepalive:配置到后端的最大连接数，保持长连接，不必为每一个客户端都重新建立nginx到后端PHP等服务器的连接，需要保持和后端
+    长连接，例如fastcgi:fastcgi_keep_conn on;       proxy:  proxy_http_version 1.1;  proxy_set_header Connection "";
+least_conn:根据其权重值，将请求发送到活跃连接数最少的那台服务器
+hash:可以按照uri  ip 等参数进行做hash
+
+参考http://tengine.taobao.org/nginx_docs/cn/docs/http/ngx_http_upstream_module.html#ip_hash
+*/
+
+
+/*
 如果要实现upstream长连接，则每个进程需要另外一个connection pool，里面都是长连接。一旦与后端服务器建立连接，则在当前请求连接结
 束之后不会立即关闭连接，而是把用完的连接保存在一个keepalive connection pool里面，以后每次需要建立向后连接的时候，只需要从这个
 连接池里面找，如果找到合适的连接的话，就可以直接来用这个连接，不需要重新创建socket或者发起connect()。这样既省下建立连接时在握

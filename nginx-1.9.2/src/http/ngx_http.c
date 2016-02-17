@@ -723,7 +723,7 @@ NGX_HTTP_FIND_CONFIG_PHASE、NGX_HTTP_POSTREWRITE_PHASE、NGX_HTTP_POST_ACCESS_PHA
 图4-4包括4重循环，第1层（最外层）遍历所有的HTTP模块(在该函数外面)，第2层遍历所有的
 server{．．．)配置块，第3层是遍历某个server{}块中嵌套的所有location{．．．）块，第4层遍历
 某个location{）块中继续嵌套的所有location块（实际上，它会一直递归下去以解析可能被
-层层嵌套的’location块，详见10.2节）。读者可以对照上述4重循环来理解合并配置项的流程图。
+层层嵌套的’location块）。读者可以对照上述4重循环来理解合并配置项的流程图。
 */ //cf->ctx为http{}的上下文ctx,cmcf为server{}中的所有上下文ctx
 //结合ngx_http_core_server与ngx_http_core_location一起阅读该段代码
 static char *
@@ -1132,7 +1132,7 @@ ngx_http_init_locations(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
 之所以要做这样的处理，是为了在处理http请求时能高效的搜索的匹配的location配置。
 */
 /*
-注意，这里的二叉查找树并不是第7章中介绍过的红黑树，不过，为什么不使用红黑树呢？因为location是由nginx.conf中读取到的，它是静态不变的，
+注意，这里的二叉查找树并不是红黑树，不过，为什么不使用红黑树呢？因为location是由nginx.conf中读取到的，它是静态不变的，
 不存在运行过程中在树中添加或者删除location的场景，而且红黑树的查询效率也没有重新构造的静态的完全平衡二叉树高。
 */
 //location tree的建立在ngx_http_init_static_location_trees中进行：
