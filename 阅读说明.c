@@ -129,7 +129,11 @@ nginx的以下功能模块的相关代码已经阅读，并对其源码及相关
     从新结合代码对比分析并总结几种负债均衡算法(hash  ip_hash least_conn rr)
     结合error_pages配置，对ngx_http_special_response_handler进行分析，同时对内部重定向功能和@new_location进行分析
 
-
+16.3.16
+	进一步分析internal对location{}访问权限控制
+    重新为nginx全局核心模块，标准HTTP模块的遗漏的配置项添加中文注释
+    结合types{}配置，对content_type头部行的形成过程进行详细分析
+    从新分析配置解析过程，未完
 	
 	
 	
