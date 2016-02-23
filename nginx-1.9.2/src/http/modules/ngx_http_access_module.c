@@ -96,7 +96,7 @@ static ngx_command_t  ngx_http_access_commands[] = {
      使用字段：http, server, location, limit_except 
      指令指定了允许访问的IP或网络段。
      */
-    { ngx_string("allow"),
+    { ngx_string("allow"), 
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_HTTP_LMT_CONF
                         |NGX_CONF_TAKE1,
       ngx_http_access_rule,
@@ -137,7 +137,7 @@ static ngx_http_module_t  ngx_http_access_module_ctx = {
     ngx_http_access_merge_loc_conf         /* merge location configuration */
 };
 
-
+//访问权限控制相关模块:nginx进行访问限制的有ngx_http_access_module模块和 ngx_http_auth_basic_module模块   ngx_http_secure_link_module
 ngx_module_t  ngx_http_access_module = {
     NGX_MODULE_V1,
     &ngx_http_access_module_ctx,           /* module context */

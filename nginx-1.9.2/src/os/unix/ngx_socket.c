@@ -79,7 +79,7 @@ TCP链接的过程中，默认开启Nagle算法，进行小包发送的优化。
     默认情况下，发送数据采用Negale 算法。这样虽然提高了网络吞吐量，但是实时性却降低了，在一些交互性很强的应用程序来说是不
     允许的，使用TCP_NODELAY选项可以禁止Negale 算法。
     此时，应用程序向内核递交的每个数据包都会立即发送出去。需要注意的是，虽然禁止了Negale 算法，但网络的传输仍然受到TCP确认延迟机制的影响。
-3. TCP_CORK 选项
+3. TCP_CORK 选项 (tcp_nopush = on 会设置调用tcp_cork方法，配合sendfile 选项仅在使用sendfile的时候才开启)
     所谓的CORK就是塞子的意思，形象地理解就是用CORK将连接塞住，使得数据先不发出去，等到拔去塞子后再发出去。设置该选项后，内核
     会尽力把小数据包拼接成一个大的数据包（一个MTU）再发送出去，当然若一定时间后（一般为200ms，该值尚待确认），内核仍然没有组
     合成一个MTU时也必须发送现有的数据（不可能让数据一直等待吧）。
@@ -96,7 +96,7 @@ TCP链接的过程中，默认开启Nagle算法，进行小包发送的优化。
   否则内核会帮你将分散的包发出），即使你是分散发送多个小数据包，你也可以通过使能CORK算法将这些内容拼接在一个包内，如果此时用Nagle
   算法的话，则可能做不到这一点。
 
-  naggle(tcp_nodelay设置)算法，只要发送出去一个包，并且受到应答，内核就会继续把缓冲区的数据发送出去。
+  naggle(tcp_nodelay设置)算法，只要发送出去一个包，并且受到协议栈ACK应答，内核就会继续把缓冲区的数据发送出去。
   core(tcp_core设置)算法，受到对方应答后，内核首先检查当前缓冲区中的包是否有1500，如果有则直接发送，如果受到应答的时候还没有1500，则
   等待200ms，如果200ms内还没有1500字节，则发送
 */ //参考http://m.blog.csdn.net/blog/c_cyoxi/8673645
@@ -111,7 +111,7 @@ ngx_tcp_push(ngx_socket_t s)
                       (const void *) &tcp_nopush, sizeof(int));
 }
 
-#elif (NGX_LINUX)
+#elif (NGX_LINUX)  //linux情况nginx使用NGX_CORK  选项仅在使用sendfile的时候才开启  见配置tcp_nopush on | off;
 
 
 /*
@@ -134,7 +134,7 @@ TCP链接的过程中，默认开启Nagle算法，进行小包发送的优化。
     默认情况下，发送数据采用Negale 算法。这样虽然提高了网络吞吐量，但是实时性却降低了，在一些交互性很强的应用程序来说是不
     允许的，使用TCP_NODELAY选项可以禁止Negale 算法。
     此时，应用程序向内核递交的每个数据包都会立即发送出去。需要注意的是，虽然禁止了Negale 算法，但网络的传输仍然受到TCP确认延迟机制的影响。
-3. TCP_CORK 选项
+3. TCP_CORK 选项  选项仅在使用sendfile的时候才开启
     所谓的CORK就是塞子的意思，形象地理解就是用CORK将连接塞住，使得数据先不发出去，等到拔去塞子后再发出去。设置该选项后，内核
     会尽力把小数据包拼接成一个大的数据包（一个MTU）再发送出去，当然若一定时间后（一般为200ms，该值尚待确认），内核仍然没有组
     合成一个MTU时也必须发送现有的数据（不可能让数据一直等待吧）。
@@ -154,7 +154,7 @@ TCP链接的过程中，默认开启Nagle算法，进行小包发送的优化。
   naggle(tcp_nodelay设置)算法，只要发送出去一个包，并且受到应答，内核就会继续把缓冲区的数据发送出去。
   core(tcp_core设置)算法，受到对方应答后，内核首先检查当前缓冲区中的包是否有1500，如果有则直接发送，如果受到应答的时候还没有1500，则
   等待200ms，如果200ms内还没有1500字节，则发送
-*/ //参考http://m.blog.csdn.net/blog/c_cyoxi/8673645
+*/ //参考http://m.blog.csdn.net/blog/c_cyoxi/8673645  http://blog.csdn.net/zmj_88888888/article/details/9169227
 
 int
 ngx_tcp_nopush(ngx_socket_t s)
@@ -164,12 +164,12 @@ ngx_tcp_nopush(ngx_socket_t s)
     cork = 1;
 
     return setsockopt(s, IPPROTO_TCP, TCP_CORK,
-                      (const void *) &cork, sizeof(int));
+                      (const void *) &cork, sizeof(int)); //选项仅在使用sendfile的时候才开启
 }
 
 
 int
-ngx_tcp_push(ngx_socket_t s)
+ngx_tcp_push(ngx_socket_t s)//选项仅在使用sendfile的时候才开启
 {
     int  cork;
 

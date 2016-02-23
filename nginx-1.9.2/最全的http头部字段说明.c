@@ -212,6 +212,8 @@ Warning 警告实体可能存在的问题 Warning: 199 Miscellaneous warning
 WWW-Authenticate 表明客户端请求实体应该使用的授权方案 WWW-Authenticate: Basic 
 
 
+所有linux版本:http://mirrors.163.com/
+
 淘宝中文地址:http://tengine.taobao.org/nginx_docs/cn/docs/http/ngx_http_core_module.html
 
 #define NGX_CONFIGURE " --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads --add-module=/var/yyz/nginx-1.9.2/src/echo-nginx-module-master --add-module=./src/nginx-requestkey-module-master/
@@ -309,8 +311,12 @@ I/O测试工具，iostat  网络接口流量测试工具ifstat
     Cache-Control expire 头部行代码实现流程，详细分析expires和add_header配置，分析注释ngx_http_headers_filter_module模块
     从新结合代码对比分析并总结几种负债均衡算法(hash  ip_hash least_conn rr)
     结合error_pages配置，对ngx_http_special_response_handler进行分析，同时对内部重定向功能和@new_location进行分析
+   
 
-
+    进一步分析internal对location{}访问权限控制
+    重新为nginx全局核心模块，标准HTTP模块的遗漏的配置项添加中文注释
+    结合types{}配置，对content_type头部行的形成过程进行详细分析
+    从新分析配置解析过程，未完
 
 
 

@@ -75,7 +75,7 @@ static ngx_http_module_t  ngx_http_auth_basic_module_ctx = {
     ngx_http_auth_basic_merge_loc_conf     /* merge location configuration */
 };
 
-
+//访问权限控制相关模块:nginx进行访问限制的有ngx_http_access_module模块和 ngx_http_auth_basic_module模块   ngx_http_secure_link_module
 ngx_module_t  ngx_http_auth_basic_module = {
     NGX_MODULE_V1,
     &ngx_http_auth_basic_module_ctx,       /* module context */

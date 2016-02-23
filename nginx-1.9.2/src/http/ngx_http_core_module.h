@@ -1025,9 +1025,9 @@ location @fallback {
     ngx_array_t  *root_lengths;
     ngx_array_t  *root_values;
 
-    ngx_array_t  *types;
+    ngx_array_t  *types; //types {}配置ngx_http_core_type首先存在与该数组中，然后在ngx_http_core_merge_loc_conf存入types_hash中，真正生效见ngx_http_set_content_type
     ngx_hash_t    types_hash;//mime.type文件中的type类型存到该hash中
-    ngx_str_t     default_type;
+    ngx_str_t     default_type; //"text/plain"  如果uril最后面的后缀，则默认content-type为该字符串
 
     off_t         client_max_body_size;    /* client_max_body_size */ //默认1M 1 * 1024 * 1024
     //生效见ngx_open_and_stat_file  if (of->directio <= ngx_file_size(&fi)) { ngx_directio_on }
@@ -1093,10 +1093,13 @@ lingering_close
 
     ngx_flag_t    client_body_in_single_buffer; //client_body_in_single_buffer on | off;设置
                                            /* client_body_in_singe_buffer */
+    //在location{}中配置了internal，表示匹配该uri的location{}必须是进行重定向后匹配的该location,如果不满足条件直接返回NGX_HTTP_NOT_FOUND，
+    //生效地方见ngx_http_core_find_config_phase                                        
     ngx_flag_t    internal;                /* internal */ //见"internal"配置，ngx_http_core_internal置1
     ngx_flag_t    sendfile;                /* sendfile */ //sendfile on | off
     //aio解析赋值见ngx_http_core_set_aio
     ngx_flag_t    aio;                     /* aio */ //aio on | off;默认off  aio on | off | threads[=pool];
+    // tcp_nopush on | off;只有开启sendfile，nopush才生效，通过设置TCP_CORK实现
     ngx_flag_t    tcp_nopush;              /* tcp_nopush */
     ngx_flag_t    tcp_nodelay;             /* tcp_nodelay */
     ngx_flag_t    reset_timedout_connection; /* reset_timedout_connection */

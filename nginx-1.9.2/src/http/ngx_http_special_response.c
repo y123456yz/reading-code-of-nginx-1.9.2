@@ -298,7 +298,7 @@ static char ngx_http_error_507_page[] =
 ;
 
 
-static ngx_str_t ngx_http_error_pages[] = {
+static ngx_str_t ngx_http_error_pages[] = { //返回码对应的内容从这里面取
 
     ngx_null_string,                     /* 201, 204 */
 
