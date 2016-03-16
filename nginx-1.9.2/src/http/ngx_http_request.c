@@ -17,6 +17,7 @@ static ssize_t ngx_http_read_request_header(ngx_http_request_t *r);
 static ngx_int_t ngx_http_alloc_large_header_buffer(ngx_http_request_t *r,
     ngx_uint_t request_line);
 
+
 static ngx_int_t ngx_http_process_header_line(ngx_http_request_t *r,
     ngx_table_elt_t *h, ngx_uint_t offset);
 static ngx_int_t ngx_http_process_unique_header_line(ngx_http_request_t *r,

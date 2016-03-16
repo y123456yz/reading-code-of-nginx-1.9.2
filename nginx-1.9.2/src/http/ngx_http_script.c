@@ -38,6 +38,7 @@ ngx_http_script_flush_complex_value(ngx_http_request_t *r,
 {
     ngx_uint_t *index;
 
+
     index = val->flushes;
 
     if (index) {
