@@ -2171,7 +2171,7 @@ ngx_http_upstream_reinit(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
 static void
 ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u,
-    ngx_uint_t do_write) //向上游服务器发送请求
+    ngx_uint_t do_write) //向上游服务器发送请求   当一次发送不完，通过ngx_http_upstream_send_request_handler再次触发发送
 {
     ngx_int_t          rc;
     ngx_connection_t  *c;
@@ -2186,7 +2186,7 @@ ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u,
     }
 
     //通过getsockopt测试与上游服务器的tcp连接是否异常
-    if (!u->request_sent && ngx_http_upstream_test_connect(c) != NGX_OK) {//测试连接失败
+    if (!u->request_sent && ngx_http_upstream_test_connect(c) != NGX_OK) { //测试连接失败
         ngx_http_upstream_next(r, u, NGX_HTTP_UPSTREAM_FT_ERROR);//如果测试失败，调用ngx_http_upstream_next函数，这个函数可能再次调用peer.get调用别的连接。
         return;
     }
@@ -2235,6 +2235,11 @@ ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u,
     /* rc == NGX_OK */ 
     //向后端的数据发送完毕
 
+    //当发往后端服务器的数据包过大，需要分多次发送的时候，在上面的if (rc == NGX_AGAIN)中会添加定时器来触发发送，如果协议栈一直不发送数据出去
+    //就会超时，如果数据最终全部发送出去则需要为最后一次time_write添加删除操作。
+
+    //如果发往后端的数据长度后小，则一般不会再上门添加定时器，这里的timer_set肯定为0，所以如果拔掉后端网线，通过ngx_http_upstream_test_connect
+    //是判断不出后端服务器掉线的，上面的ngx_http_upstream_send_request_body还是会返回成功的，所以这里有个bug
     if (c->write->timer_set) { //这里的定时器是ngx_http_upstream_connect中connect返回NGX_AGAIN的时候添加的定时器
         /*
 2025/04/24 02:54:29[             ngx_event_connect_peer,    32]  [debug] 14867#14867: *1 socket 12

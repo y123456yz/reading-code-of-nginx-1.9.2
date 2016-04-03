@@ -118,11 +118,16 @@ struct ngx_event_s {
     /*读客户端连接的数据，在ngx_http_init_connection(ngx_connection_t *c)中的ngx_add_timer(rev, c->listening->post_accept_timeout)把读事件添加到定时器中，如果超时则置1
       每次ngx_unix_recv把内核数据读取完毕后，在重新启动add epoll，等待新的数据到来，同时会启动定时器ngx_add_timer(rev, c->listening->post_accept_timeout);
       如果在post_accept_timeout这么长事件内没有数据到来则超时，开始处理关闭TCP流程*/
+
+    /*
+    读超时是指的读取对端数据的超时时间，写超时指的是当数据包很大的时候，write返回NGX_AGAIN，则会添加write定时器，从而判断是否超时，如果发往
+    对端数据长度小，则一般write直接返回成功，则不会添加write超时定时器，也就不会有write超时，写定时器参考函数ngx_http_upstream_send_request
+     */
     unsigned         timedout:1; //定时器超时标记，见ngx_event_expire_timers
     //标志位，为1时表示这个事件存在于定时器中
-    unsigned         timer_set:1; //ngx_event_add_timer ngx_add_timer中置1   ngx_event_expire_timers置0
+    unsigned         timer_set:1; //ngx_event_add_timer ngx_add_timer 中置1   ngx_event_expire_timers置0
 
-    //标志位，delayed为1时表示需要延迟处理这个事件，它仅用于限速功能
+    //标志位，delayed为1时表示需要延迟处理这个事件，它仅用于限速功能 
     unsigned         delayed:1; //限速见ngx_http_write_filter  
 
     /*
