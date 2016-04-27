@@ -86,7 +86,7 @@ nginx的以下功能模块的相关代码已经阅读，并对其源码及相关
 	推敲为什么每次在发送后端数据最后都会调用ngx_http_send_special的原因分析
     进一步分析aio异步事件触发流程
     关键点新增打印，利用分析日志。
-    分析在ngx_http_write_filter的时候，明明从后端接收的数据到了缓存文件，并且理论上出去的数据时in file的，单实际上在out的时候却是in mem而非in file
+    分析在ngx_http_write_filter的时候，明明从后端接收的数据到了缓存文件，并且理论上出去的数据时in file的，但实际上在out的时候却是in mem而非in file
     sendfile与普通ngx_writev分界点进一步分析
     缓存情况下的copy filter执行流程和非缓存情况下的copy filter执行流程进一步分析注释。
     filter后端数据到客户端的时候，是否需要重新开辟内存空间分界点详细分析。
