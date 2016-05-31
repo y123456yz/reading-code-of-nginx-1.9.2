@@ -1,4 +1,4 @@
-# reading-code-of-nginx-1.9.2
+/*# reading-code-of-nginx-1.9.2
 nginx-1.9.2代码理解及详细注释
 
 为什么阅读nginx源码?
@@ -12,6 +12,9 @@ nginx的以下功能模块的相关代码已经阅读，并对其源码及相关
 的《深入理解Nginx:模块开发与架构解析》，并对书中没有讲到的相关部分功能进行了扩展，通过边阅读边调试的方法
 通读了以下功能模块，并对其进行了详细的注释，同时加了自己的理解在里面，注释比较详细，由于是周末和下班时间阅读，再加上自己
 文采限制，代码及数据结构注释都比较白话，注释中肯定会有理解错误的地方。
+
+阅读工具source insight,如果中文乱码，按照source insight configure目录中说明操作
+
 
 截止15.9.19，已经分析并注释完成的主要功能如下:
 	.配置编译过程中相关脚本调用过程详细注释
@@ -95,16 +98,55 @@ nginx的以下功能模块的相关代码已经阅读，并对其源码及相关
     aio thread执行流程详细分析
     进一步分析获取缓存文件头部部分和文件后半部包体部分的发送流程。
     secure_link权限访问模块原理分析，以及代码分析，并举例测试分析
-    从新走到index和static模块，配合secure_link测试。
+    从新走到index和static模块， 配合secure_link测试。
     添加第三方模块-防盗链模块，了解原理后走读代码分析
 	
 16.1.17
 	分析uri中携带的arg_xxx变量的解析形成过程，配合secure link配合使用，起到安全防护作用,对该模块进行详细分析注释
     aio thread_pool使用流程分析，线程池读取文件过程分析。
-    普通读方式下大文件(10M以上)下载过程流程分析，以及与小文件(小于32768)下载过程不同流程比较分析
-    AIO on方式下大文件(10M以上)下载过程流程分析，以及与小文件(小于32768)下载过程不同流程比较分析
-    AIO thread_pool方式下大文件(10M以上)下载过程流程分析，以及与小文件(小于32768)下载过程不同流程比较分析
+    普通读方式下大文件(10M以上)下载过程流程分析，以及与小文件(小于32768   65535/2)下载过程不同流程比较分析
+    AIO on方式下大文件(10M以上)下载过程流程分析，以及与小文件(小于32768   65535/2)下载过程不同流程比较分析
+    AIO thread_pool方式下大文件(10M 以上)下载过程流程分析，以及与小文件(小于32768)下载过程不同流程比较分析
     新增小文件(小于65535/2)下载全过程和大文件下载全过程日志，可以直观得到函数调用流程，完善日志
     结合refer防盗链模块重新把hash走读理解注释一遍，加深理解
     重新理解前置通配符后置通配符hash存储过程
     添加lua库和lua-module 把定时器 事件机制函数相关修改添加到lua模块和redis模块
+		
+16.2.17
+	分析注释errlog_module模块，研究errlog_module和Ngx_http_core_module中error_log配置的区别，同时分析在这两个模块配置生效前的日志记录过程
+    新增ngx_log_debugall功能，用于自己添加调试代码，以免影响原有代码，减少耦合，便于新增功能代码错误排查。
+    同时配置多条error_log配置信息，每条文件名和等级不一样，也就是不同等级日志输出到不同日志文件的过程分析及注释。
+    ngx_http_log_module详细分析，以及access_log如果是常量路径和变量路径的优化处理过程。
+    NGX_HTTP_LOG_PHASE阶段ngx_http_log_module生效过程及日志记录过程细化分析注释,同时明确ngx_errlog_module和ngx_http_log_module的区别
+    进一步细化分析ngx_http_index_module代码，以及配合rewrite-phase进行内部重定向流程
+	研究分析ngx_http_autoindex_module目录浏览模块源码分析注释，同时发现只有ngx_http_index_module模块不编译到源码中的时候，
+		ngx_http_autoindex_module才会生效，如果index-module模块编译进源码，则要么进行内部重定向要么直接关闭连接，永远不会执
+		行ngx_http_autoindex_module，这里和官网描述不一致，TODO，待后面确认
+    autoindex搭建目录服务器过程源码分析流程
+    结合代码理解If-None-Match和ETag , If-Modified-Since和Last-Modified这几个头部行配合浏览器缓存生效过程,也就是决定是否(304 NOT modified)，
+        并且分析注释ngx_http_not_modified_filter_module实现过程
+    Cache-Control expire 头部行代码实现流程，详细分析expires和add_header配置，分析注释ngx_http_headers_filter_module模块
+    从新结合代码对比分析并总结几种负债均衡算法(hash  ip_hash least_conn rr)
+    结合error_pages配置，对ngx_http_special_response_handler进行分析，同时对内部重定向功能和@new_location进行分析
+
+16.3.16
+	进一步分析internal对location{}访问权限控制
+    重新为nginx全局核心模块，标准HTTP模块的遗漏的配置项添加中文注释
+    结合types{}配置，对content_type头部行的形成过程进行详细分析
+    从新分析配置解析过程， 未完
+
+16.4.3
+	重新分析写超时定时器原理，生效方法，
+	结合写超时定时器重新分析后端服务器拔掉网线或者直接断电情况下的后端服务器异常判断方法，参考ngx_http_upstream_send_request
+	
+	
+	
+	
+	
+	
+改造点及可疑问题:
+        和后端服务器通过检查套接字连接状态来判断后端服务器是否down机，如果失效则连接下一个服务器。这种存在缺陷，例如如果后端服务器直接拔掉网线或者后端服务器断
+    电了，则检测套接字是判断不出来的，协议栈需要长时间过后才能判断出，如果关闭掉协议栈的keepalive可能永远检测不出，这时候nginx还是会把客户端请求发往后端服务器，
+	如果发往后端服务器数据大小很大，可能需要多次write，这时候会由write timeout来判断出后端出现问题。但是如果发往后端数据长度小，则不会添加write定时器，而是通过
+	写定时器超时来判断，这样不能立刻判断出后端异常，因为读写定时器默认都是60s，参考ngx_http_upstream_send_request，
+*/

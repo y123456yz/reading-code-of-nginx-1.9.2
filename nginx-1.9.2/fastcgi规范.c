@@ -986,5 +986,22 @@ http://www.cnblogs.com/jsckdao/archive/2011/05/05/2038265.html nginx+php的配置
 php-cgi连接数多了后挂死原因:http://bbs.csdn.net/topics/380138192  修改源码php-5.3.8\sapi\cgi\cgi_main.c： int max_requests = 500;
 改大点，或者直接修改环境变量PHP_FCGI_MAX_REQUESTS
 
+/*
+
+
+export PATH=/usr/local/php/bin:$PATH
+export PATH=/usr/local/php/sbin:$PATH
+
+注：修改文件后要想马上生效还要运行# source /etc/profile不然只能在下次重进此用户时生效。
+php -m 检查有哪些模块加入
+mem-php要先执行 phpize 然后在config make make install
+PHP Warning:  PHP Startup: memcache: Unable to initialize module  出现这个一般是PHP和mem的版本不一致引起，可以通过看时间得到
+
+PHP-FPM启动:http://www.4wei.cn/archives/1002061
+找不到php-fpm.conf配置文件:http://blog.sina.com.cn/s/blog_ac08ce040101j2vi.html
+测试mem-php是否装成功:http://blog.csdn.net/poechant/article/details/6802312
+
+*/
+
 
 */

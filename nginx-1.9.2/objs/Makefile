@@ -1,6 +1,6 @@
 
 CC =	cc
-CFLAGS =   -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g  -DNDK_SET_VAR
+CFLAGS = -I/usr/local/include/luajit-2.0  -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g  -DNDK_SET_VAR
 CPP =	cc -E
 LINK =	$(CC)
 
@@ -105,7 +105,7 @@ HTTP_INCS = -I src/http \
 	-I src/http/modules
 
 
-ADDON_DEPS = $(CORE_DEPS)  /var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_module.h /var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ddebug.h /var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_handler.h /var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_util.h /var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_sleep.h /var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_filter.h /var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_var.h /var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_location.h /var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_echo.h /var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_request_info.h /var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_subrequest.h /var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_foreach.h ./src/redis2-nginx-module-master//src/ddebug.h ./src/redis2-nginx-module-master//src/ngx_http_redis2_module.h ./src/redis2-nginx-module-master//src/ngx_http_redis2_handler.h ./src/redis2-nginx-module-master//src/ngx_http_redis2_reply.h ./src/redis2-nginx-module-master//src/ngx_http_redis2_util.h                 ./src/lua-nginx-module-master//src/ddebug.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_script.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_log.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_subrequest.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_ndk.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_control.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_time.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_string.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_misc.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_variable.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_output.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_headers.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_uri.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_req_body.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_args.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_ctx.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_regex.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_common.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_directive.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_headers_out.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_headers_in.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_consts.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_exception.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_util.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_cache.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_contentby.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_rewriteby.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_accessby.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_setby.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_capturefilter.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_clfactory.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_pcrefix.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_headerfilterby.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_shdict.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_socket_tcp.h                 ./src/lua-nginx-module-master//src/api/ngx_http_lua_api.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_logby.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_sleep.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_semaphore.h                ./src/lua-nginx-module-master//src/ngx_http_lua_coroutine.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_bodyfilterby.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_initby.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_initworkerby.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_socket_udp.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_req_method.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_phase.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_probe.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_uthread.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_timer.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_config.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_worker.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_ssl_certby.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_lex.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_balancer.h                  $(HTTP_DEPS)
+ADDON_DEPS = $(CORE_DEPS)  ./src/echo-nginx-module-master/src/ngx_http_echo_module.h ./src/echo-nginx-module-master/src/ddebug.h ./src/echo-nginx-module-master/src/ngx_http_echo_handler.h ./src/echo-nginx-module-master/src/ngx_http_echo_util.h ./src/echo-nginx-module-master/src/ngx_http_echo_sleep.h ./src/echo-nginx-module-master/src/ngx_http_echo_filter.h ./src/echo-nginx-module-master/src/ngx_http_echo_var.h ./src/echo-nginx-module-master/src/ngx_http_echo_location.h ./src/echo-nginx-module-master/src/ngx_http_echo_echo.h ./src/echo-nginx-module-master/src/ngx_http_echo_request_info.h ./src/echo-nginx-module-master/src/ngx_http_echo_subrequest.h ./src/echo-nginx-module-master/src/ngx_http_echo_foreach.h ./src/redis2-nginx-module-master//src/ddebug.h ./src/redis2-nginx-module-master//src/ngx_http_redis2_module.h ./src/redis2-nginx-module-master//src/ngx_http_redis2_handler.h ./src/redis2-nginx-module-master//src/ngx_http_redis2_reply.h ./src/redis2-nginx-module-master//src/ngx_http_redis2_util.h                 ./src/lua-nginx-module-master//src/ddebug.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_script.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_log.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_subrequest.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_ndk.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_control.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_time.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_string.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_misc.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_variable.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_output.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_headers.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_uri.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_req_body.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_args.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_ctx.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_regex.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_common.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_directive.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_headers_out.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_headers_in.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_consts.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_exception.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_util.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_cache.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_contentby.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_rewriteby.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_accessby.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_setby.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_capturefilter.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_clfactory.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_pcrefix.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_headerfilterby.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_shdict.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_socket_tcp.h                 ./src/lua-nginx-module-master//src/api/ngx_http_lua_api.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_logby.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_sleep.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_semaphore.h                ./src/lua-nginx-module-master//src/ngx_http_lua_coroutine.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_bodyfilterby.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_initby.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_initworkerby.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_socket_udp.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_req_method.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_phase.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_probe.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_uthread.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_timer.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_config.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_worker.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_ssl_certby.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_lex.h                 ./src/lua-nginx-module-master//src/ngx_http_lua_balancer.h                  $(HTTP_DEPS)
 
 
 objs/nginx:	objs/src/core/nginx.o \
@@ -496,7 +496,7 @@ objs/nginx:	objs/src/core/nginx.o \
 	objs/addon/src/ngx_http_lua_lex.o \
 	objs/addon/src/ngx_http_lua_balancer.o \
 	objs/ngx_modules.o \
-	-Wl,-E -lpthread -lpthread -lcrypt -L/usr/local/lib -lluajit-5.1 -lm -lpcre -lcrypto -lcrypto -lz
+	-L/usr/local/lib -Wl,-E -lpthread -lpthread -lcrypt -L/usr/local/lib -lluajit-5.1 -lm -ldl -lpcre -lcrypto -lcrypto -lz
 	
 
 
@@ -1362,87 +1362,87 @@ objs/addon/sendfile_test/sendfile_test.o:	$(ADDON_DEPS) \
 
 
 objs/addon/src/ngx_http_echo_module.o:	$(ADDON_DEPS) \
-	/var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_module.c
+	./src/echo-nginx-module-master/src/ngx_http_echo_module.c
 	$(CC) -c -g $(CFLAGS)  $(ALL_INCS) \
 		-o objs/addon/src/ngx_http_echo_module.o \
-		/var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_module.c
+		./src/echo-nginx-module-master/src/ngx_http_echo_module.c
 
 
 objs/addon/src/ngx_http_echo_util.o:	$(ADDON_DEPS) \
-	/var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_util.c
+	./src/echo-nginx-module-master/src/ngx_http_echo_util.c
 	$(CC) -c -g $(CFLAGS)  $(ALL_INCS) \
 		-o objs/addon/src/ngx_http_echo_util.o \
-		/var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_util.c
+		./src/echo-nginx-module-master/src/ngx_http_echo_util.c
 
 
 objs/addon/src/ngx_http_echo_timer.o:	$(ADDON_DEPS) \
-	/var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_timer.c
+	./src/echo-nginx-module-master/src/ngx_http_echo_timer.c
 	$(CC) -c -g $(CFLAGS)  $(ALL_INCS) \
 		-o objs/addon/src/ngx_http_echo_timer.o \
-		/var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_timer.c
+		./src/echo-nginx-module-master/src/ngx_http_echo_timer.c
 
 
 objs/addon/src/ngx_http_echo_var.o:	$(ADDON_DEPS) \
-	/var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_var.c
+	./src/echo-nginx-module-master/src/ngx_http_echo_var.c
 	$(CC) -c -g $(CFLAGS)  $(ALL_INCS) \
 		-o objs/addon/src/ngx_http_echo_var.o \
-		/var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_var.c
+		./src/echo-nginx-module-master/src/ngx_http_echo_var.c
 
 
 objs/addon/src/ngx_http_echo_handler.o:	$(ADDON_DEPS) \
-	/var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_handler.c
+	./src/echo-nginx-module-master/src/ngx_http_echo_handler.c
 	$(CC) -c -g $(CFLAGS)  $(ALL_INCS) \
 		-o objs/addon/src/ngx_http_echo_handler.o \
-		/var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_handler.c
+		./src/echo-nginx-module-master/src/ngx_http_echo_handler.c
 
 
 objs/addon/src/ngx_http_echo_filter.o:	$(ADDON_DEPS) \
-	/var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_filter.c
+	./src/echo-nginx-module-master/src/ngx_http_echo_filter.c
 	$(CC) -c -g $(CFLAGS)  $(ALL_INCS) \
 		-o objs/addon/src/ngx_http_echo_filter.o \
-		/var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_filter.c
+		./src/echo-nginx-module-master/src/ngx_http_echo_filter.c
 
 
 objs/addon/src/ngx_http_echo_sleep.o:	$(ADDON_DEPS) \
-	/var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_sleep.c
+	./src/echo-nginx-module-master/src/ngx_http_echo_sleep.c
 	$(CC) -c -g $(CFLAGS)  $(ALL_INCS) \
 		-o objs/addon/src/ngx_http_echo_sleep.o \
-		/var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_sleep.c
+		./src/echo-nginx-module-master/src/ngx_http_echo_sleep.c
 
 
 objs/addon/src/ngx_http_echo_location.o:	$(ADDON_DEPS) \
-	/var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_location.c
+	./src/echo-nginx-module-master/src/ngx_http_echo_location.c
 	$(CC) -c -g $(CFLAGS)  $(ALL_INCS) \
 		-o objs/addon/src/ngx_http_echo_location.o \
-		/var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_location.c
+		./src/echo-nginx-module-master/src/ngx_http_echo_location.c
 
 
 objs/addon/src/ngx_http_echo_echo.o:	$(ADDON_DEPS) \
-	/var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_echo.c
+	./src/echo-nginx-module-master/src/ngx_http_echo_echo.c
 	$(CC) -c -g $(CFLAGS)  $(ALL_INCS) \
 		-o objs/addon/src/ngx_http_echo_echo.o \
-		/var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_echo.c
+		./src/echo-nginx-module-master/src/ngx_http_echo_echo.c
 
 
 objs/addon/src/ngx_http_echo_request_info.o:	$(ADDON_DEPS) \
-	/var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_request_info.c
+	./src/echo-nginx-module-master/src/ngx_http_echo_request_info.c
 	$(CC) -c -g $(CFLAGS)  $(ALL_INCS) \
 		-o objs/addon/src/ngx_http_echo_request_info.o \
-		/var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_request_info.c
+		./src/echo-nginx-module-master/src/ngx_http_echo_request_info.c
 
 
 objs/addon/src/ngx_http_echo_subrequest.o:	$(ADDON_DEPS) \
-	/var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_subrequest.c
+	./src/echo-nginx-module-master/src/ngx_http_echo_subrequest.c
 	$(CC) -c -g $(CFLAGS)  $(ALL_INCS) \
 		-o objs/addon/src/ngx_http_echo_subrequest.o \
-		/var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_subrequest.c
+		./src/echo-nginx-module-master/src/ngx_http_echo_subrequest.c
 
 
 objs/addon/src/ngx_http_echo_foreach.o:	$(ADDON_DEPS) \
-	/var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_foreach.c
+	./src/echo-nginx-module-master/src/ngx_http_echo_foreach.c
 	$(CC) -c -g $(CFLAGS)  $(ALL_INCS) \
 		-o objs/addon/src/ngx_http_echo_foreach.o \
-		/var/yyz/nginx-1.9.2/src/echo-nginx-module-master/src/ngx_http_echo_foreach.c
+		./src/echo-nginx-module-master/src/ngx_http_echo_foreach.c
 
 
 objs/addon/nginx-requestkey-module-master/ngx_http_accesskey_module.o:	$(ADDON_DEPS) \
@@ -1854,47 +1854,47 @@ objs/addon/src/ngx_http_lua_balancer.o:	$(ADDON_DEPS) \
 manpage:	objs/nginx.8
 
 objs/nginx.8:	man/nginx.8 objs/ngx_auto_config.h
-	sed -e "s|%%PREFIX%%|/usr/local/nginx|" \
-		-e "s|%%PID_PATH%%|/usr/local/nginx/logs/nginx.pid|" \
-		-e "s|%%CONF_PATH%%|/usr/local/nginx/conf/nginx.conf|" \
-		-e "s|%%ERROR_LOG_PATH%%|/usr/local/nginx/logs/error.log|" \
+	sed -e "s|%%PREFIX%%|/mnt/data/nginx|" \
+		-e "s|%%PID_PATH%%|/mnt/data/nginx/logs/nginx.pid|" \
+		-e "s|%%CONF_PATH%%|/mnt/data/nginx/conf/nginx.conf|" \
+		-e "s|%%ERROR_LOG_PATH%%|/mnt/data/nginx/logs/error.log|" \
 		< man/nginx.8 > $@
 
 install:	objs/nginx 		
-	test -d '$(DESTDIR)/usr/local/nginx' || mkdir -p '$(DESTDIR)/usr/local/nginx'
+	test -d '$(DESTDIR)/mnt/data/nginx' || mkdir -p '$(DESTDIR)/mnt/data/nginx'
 
-	test -d '$(DESTDIR)/usr/local/nginx/sbin' 		|| mkdir -p '$(DESTDIR)/usr/local/nginx/sbin'
-	test ! -f '$(DESTDIR)/usr/local/nginx/sbin/nginx' 		|| mv '$(DESTDIR)/usr/local/nginx/sbin/nginx' 			'$(DESTDIR)/usr/local/nginx/sbin/nginx.old'
-	cp objs/nginx '$(DESTDIR)/usr/local/nginx/sbin/nginx'
+	test -d '$(DESTDIR)/mnt/data/nginx/sbin' 		|| mkdir -p '$(DESTDIR)/mnt/data/nginx/sbin'
+	test ! -f '$(DESTDIR)/mnt/data/nginx/sbin/nginx' 		|| mv '$(DESTDIR)/mnt/data/nginx/sbin/nginx' 			'$(DESTDIR)/mnt/data/nginx/sbin/nginx.old'
+	cp objs/nginx '$(DESTDIR)/mnt/data/nginx/sbin/nginx'
 
-	test -d '$(DESTDIR)/usr/local/nginx/conf' 		|| mkdir -p '$(DESTDIR)/usr/local/nginx/conf'
+	test -d '$(DESTDIR)/mnt/data/nginx/conf' 		|| mkdir -p '$(DESTDIR)/mnt/data/nginx/conf'
 
-	cp conf/koi-win '$(DESTDIR)/usr/local/nginx/conf'
-	cp conf/koi-utf '$(DESTDIR)/usr/local/nginx/conf'
-	cp conf/win-utf '$(DESTDIR)/usr/local/nginx/conf'
+	cp conf/koi-win '$(DESTDIR)/mnt/data/nginx/conf'
+	cp conf/koi-utf '$(DESTDIR)/mnt/data/nginx/conf'
+	cp conf/win-utf '$(DESTDIR)/mnt/data/nginx/conf'
 
-	test -f '$(DESTDIR)/usr/local/nginx/conf/mime.types' 		|| cp conf/mime.types '$(DESTDIR)/usr/local/nginx/conf'
-	cp conf/mime.types '$(DESTDIR)/usr/local/nginx/conf/mime.types.default'
+	test -f '$(DESTDIR)/mnt/data/nginx/conf/mime.types' 		|| cp conf/mime.types '$(DESTDIR)/mnt/data/nginx/conf'
+	cp conf/mime.types '$(DESTDIR)/mnt/data/nginx/conf/mime.types.default'
 
-	test -f '$(DESTDIR)/usr/local/nginx/conf/fastcgi_params' 		|| cp conf/fastcgi_params '$(DESTDIR)/usr/local/nginx/conf'
-	cp conf/fastcgi_params 		'$(DESTDIR)/usr/local/nginx/conf/fastcgi_params.default'
+	test -f '$(DESTDIR)/mnt/data/nginx/conf/fastcgi_params' 		|| cp conf/fastcgi_params '$(DESTDIR)/mnt/data/nginx/conf'
+	cp conf/fastcgi_params 		'$(DESTDIR)/mnt/data/nginx/conf/fastcgi_params.default'
 
-	test -f '$(DESTDIR)/usr/local/nginx/conf/fastcgi.conf' 		|| cp conf/fastcgi.conf '$(DESTDIR)/usr/local/nginx/conf'
-	cp conf/fastcgi.conf '$(DESTDIR)/usr/local/nginx/conf/fastcgi.conf.default'
+	test -f '$(DESTDIR)/mnt/data/nginx/conf/fastcgi.conf' 		|| cp conf/fastcgi.conf '$(DESTDIR)/mnt/data/nginx/conf'
+	cp conf/fastcgi.conf '$(DESTDIR)/mnt/data/nginx/conf/fastcgi.conf.default'
 
-	test -f '$(DESTDIR)/usr/local/nginx/conf/uwsgi_params' 		|| cp conf/uwsgi_params '$(DESTDIR)/usr/local/nginx/conf'
-	cp conf/uwsgi_params 		'$(DESTDIR)/usr/local/nginx/conf/uwsgi_params.default'
+	test -f '$(DESTDIR)/mnt/data/nginx/conf/uwsgi_params' 		|| cp conf/uwsgi_params '$(DESTDIR)/mnt/data/nginx/conf'
+	cp conf/uwsgi_params 		'$(DESTDIR)/mnt/data/nginx/conf/uwsgi_params.default'
 
-	test -f '$(DESTDIR)/usr/local/nginx/conf/scgi_params' 		|| cp conf/scgi_params '$(DESTDIR)/usr/local/nginx/conf'
-	cp conf/scgi_params 		'$(DESTDIR)/usr/local/nginx/conf/scgi_params.default'
+	test -f '$(DESTDIR)/mnt/data/nginx/conf/scgi_params' 		|| cp conf/scgi_params '$(DESTDIR)/mnt/data/nginx/conf'
+	cp conf/scgi_params 		'$(DESTDIR)/mnt/data/nginx/conf/scgi_params.default'
 
-	test -f '$(DESTDIR)/usr/local/nginx/conf/nginx.conf' 		|| cp conf/nginx.conf '$(DESTDIR)/usr/local/nginx/conf/nginx.conf'
-	cp conf/nginx.conf '$(DESTDIR)/usr/local/nginx/conf/nginx.conf.default'
+	test -f '$(DESTDIR)/mnt/data/nginx/conf/nginx.conf' 		|| cp conf/nginx.conf '$(DESTDIR)/mnt/data/nginx/conf/nginx.conf'
+	cp conf/nginx.conf '$(DESTDIR)/mnt/data/nginx/conf/nginx.conf.default'
 
-	test -d '$(DESTDIR)/usr/local/nginx/logs' 		|| mkdir -p '$(DESTDIR)/usr/local/nginx/logs'
+	test -d '$(DESTDIR)/mnt/data/nginx/logs' 		|| mkdir -p '$(DESTDIR)/mnt/data/nginx/logs'
 
-	test -d '$(DESTDIR)/usr/local/nginx/logs' || 		mkdir -p '$(DESTDIR)/usr/local/nginx/logs'
+	test -d '$(DESTDIR)/mnt/data/nginx/logs' || 		mkdir -p '$(DESTDIR)/mnt/data/nginx/logs'
 
-	test -d '$(DESTDIR)/usr/local/nginx/html' 		|| cp -R html '$(DESTDIR)/usr/local/nginx'
+	test -d '$(DESTDIR)/mnt/data/nginx/html' 		|| cp -R html '$(DESTDIR)/mnt/data/nginx'
 
-	test -d '$(DESTDIR)/usr/local/nginx/logs' || 		mkdir -p '$(DESTDIR)/usr/local/nginx/logs'
+	test -d '$(DESTDIR)/mnt/data/nginx/logs' || 		mkdir -p '$(DESTDIR)/mnt/data/nginx/logs'

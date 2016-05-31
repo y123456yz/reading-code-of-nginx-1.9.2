@@ -1768,7 +1768,7 @@ ngx_notify->ngx_epoll_notifyÖ»»á´¥·¢epoll_in£¬²»»áÍ¬Ê±Òı·¢epoll_out£¬Èç¹ûÊÇÍøÂç¶
             if (c->fd == -1 || wev->instance != instance) { //ÅĞ¶ÏÕâ¸ö¶ÁÊÂ¼şÊÇ·ñÎª¹ıÆÚÊÂ¼ş
                 //µ±fdÌ×½Ó×ÖÃèÊö·ûÎª-1»òÕßinstance±êÖ¾Î»²»ÏàµÈÊ±£¬±íÊ¾Õâ¸öÊÂ¼şÒÑ¾­¹ıÆÚ£¬²»ÓÃ´¦Àí
                 /*
-                 * the stale event from a file descriptor
+                 *  the stale event from a file descriptor
                  * that was just closed in this iteration
                  */
 

@@ -61,7 +61,7 @@ for details.
 .It Fl p Ar prefix
 Set the prefix path.
 The default value is
-.Pa /usr/local/nginx .
+.Pa /mnt/data/nginx .
 .It Fl q
 Suppress non-error messages during configuration testing.
 .It Fl s Ar signal
@@ -164,13 +164,13 @@ environment variable is used internally by
 and should not be set directly by the user.
 .Sh FILES
 .Bl -tag -width indent
-.It Pa /usr/local/nginx/logs/nginx.pid
+.It Pa /mnt/data/nginx/logs/nginx.pid
 Contains the process ID of
 .Nm .
 The contents of this file are not sensitive, so it can be world-readable.
-.It Pa /usr/local/nginx/conf/nginx.conf
+.It Pa /mnt/data/nginx/conf/nginx.conf
 The main configuration file.
-.It Pa /usr/local/nginx/logs/error.log
+.It Pa /mnt/data/nginx/logs/error.log
 Error log file.
 .El
 .Sh EXIT STATUS

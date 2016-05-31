@@ -1880,7 +1880,7 @@ const char* ngx_http_phase_2str(ngx_uint_t phase)
     }
 
     memset(buf, 0, sizeof(buf));
-    snprintf(buf, sizeof(buf), "error phase:%u", phase);
+    snprintf(buf, sizeof(buf), "error phase:%u", (unsigned int)phase);
     return buf;
 }
 
@@ -2936,9 +2936,12 @@ ngx_http_core_find_static_location(ngx_http_request_t *r,
         char buf[NGX_STR2BUF_LEN];
         ngx_str_t_2buf(buf, &r->uri);  
         
-        ngx_log_debug3(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                       "static_locations test location: \"%*s\", client uri:%s", node->len, node->name, buf);
+        //ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0, "static_locations test location: \"%*s\"", node->len, node->name);
         //n是uri的长度和node name长度的最小值，好比较他们的交集
+
+        ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                       "test location: \"%*s\"",
+                       (size_t) node->len, node->name);
         n = (len <= (size_t) node->len) ? len : node->len;
         
         rc = ngx_filename_cmp(uri, node->name, n);

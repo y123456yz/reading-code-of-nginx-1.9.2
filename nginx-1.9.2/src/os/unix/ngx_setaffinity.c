@@ -67,3 +67,4 @@ ngx_setaffinity(uint64_t cpu_affinity, ngx_log_t *log)
 }
 
 #endif
+

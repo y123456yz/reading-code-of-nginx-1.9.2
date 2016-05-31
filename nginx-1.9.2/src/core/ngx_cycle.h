@@ -288,8 +288,9 @@ typedef struct { //从ngx_cycle_s中的conf_ctx指向这里
 
      ngx_int_t                worker_processes;  //创建的worker进程数，通过nginx配置，默认为1  "worker_processes"设置
      ngx_int_t                debug_points;
-
-     ngx_int_t                rlimit_nofile;
+     //修改工作进程的打开文件数的最大值限制(RLIMIT_NOFILE)，用于在不重启主进程的情况下增大该限制。
+     ngx_int_t                rlimit_nofile; 
+     //修改工作进程的core文件尺寸的最大值限制(RLIMIT_CORE)，用于在不重启主进程的情况下增大该限制。
      off_t                    rlimit_core;//worker_rlimit_core 1024k;  coredump文件大小
 
      int                      priority;

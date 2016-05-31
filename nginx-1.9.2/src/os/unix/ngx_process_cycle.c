@@ -313,6 +313,7 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
         exit(2);
     }
 
+    /* 把master process + 参数一起主持主进程名 */
     p = ngx_cpymem(title, master_process, sizeof(master_process) - 1);
     for (i = 0; i < ngx_argc; i++) {
         *p++ = ' ';
@@ -639,7 +640,6 @@ ngx_single_process_cycle(ngx_cycle_t *cycle)
         }
     }
 }
-
 
 static void
 ngx_start_worker_processes(ngx_cycle_t *cycle, ngx_int_t n, ngx_int_t type)
@@ -1095,7 +1095,7 @@ ngx_master_process_exit(ngx_cycle_t *cycle)
 */
 //在Nginx主循环（这里的主循环是ngx_worker_process_cycle方法）中，会定期地调用事件模块，以检查是否有网络事件发生。
 static void
-ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
+ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data) //data表示这是第几个worker进程
 {
     ngx_int_t worker = (intptr_t) data;
 
@@ -1105,7 +1105,7 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
     ngx_process = NGX_PROCESS_WORKER;
     ngx_worker = worker;
 
-    ngx_worker_process_init(cycle, worker);
+    ngx_worker_process_init(cycle, worker); //主要工作是把CPU和进程绑定
 
     ngx_setproctitle("worker process");
 
@@ -1187,7 +1187,7 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
 */
 static void
 ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
-{
+{ //主要工作是把CPU和进程绑定
     sigset_t          set;
     uint64_t          cpu_affinity;
     ngx_int_t         n;
@@ -1203,7 +1203,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
 
     ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx, ngx_core_module);
 
-    if (worker >= 0 && ccf->priority != 0) {
+    if (worker >= 0 && ccf->priority != 0) { /*设置优先级*/
         if (setpriority(PRIO_PROCESS, 0, ccf->priority) == -1) {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           "setpriority(%d) failed", ccf->priority);
@@ -1214,6 +1214,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
         rlmt.rlim_cur = (rlim_t) ccf->rlimit_nofile;
         rlmt.rlim_max = (rlim_t) ccf->rlimit_nofile;
 
+        //RLIMIT_NOFILE指定此进程可打开的最大文件描述词大一的值，超出此值，将会产生EMFILE错误。
         if (setrlimit(RLIMIT_NOFILE, &rlmt) == -1) {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           "setrlimit(RLIMIT_NOFILE, %i) failed",
@@ -1224,7 +1225,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
     if (ccf->rlimit_core != NGX_CONF_UNSET) {
         rlmt.rlim_cur = (rlim_t) ccf->rlimit_core;
         rlmt.rlim_max = (rlim_t) ccf->rlimit_core;
-
+        //修改工作进程的core文件尺寸的最大值限制(RLIMIT_CORE)，用于在不重启主进程的情况下增大该限制。
         if (setrlimit(RLIMIT_CORE, &rlmt) == -1) {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           "setrlimit(RLIMIT_CORE, %O) failed",
