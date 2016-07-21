@@ -1327,7 +1327,7 @@ worker_cpu_affinity 0001 0010 0100 1000; 四个工作进程分别在四个指定的he上面运行
 如果是5he可以这样配置
 worker_cpu_affinity 00001 00010 00100 01000 10000; 其他多核类似
 */ 
-static char *
+static char*
 ngx_set_cpu_affinity(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
 #if (NGX_HAVE_CPU_AFFINITY)

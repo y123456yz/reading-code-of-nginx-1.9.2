@@ -219,7 +219,9 @@ WWW-Authenticate 表明客户端请求实体应该使用的授权方案 WWW-Authenticate: Basic
 #define NGX_CONFIGURE " --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads --add-module=/var/yyz/nginx-1.9.2/src/echo-nginx-module-master --add-module=./src/nginx-requestkey-module-master/
 
 
+"Address already in use"可以通过设置套接字SO_REUSEADDR来解决
 
+http://www.kernel.org/doc/Documentation/networking/ip-sysctl.txt
 
 
 

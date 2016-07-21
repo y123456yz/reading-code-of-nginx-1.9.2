@@ -76,7 +76,7 @@ nginx是原子变量和信号量合作以实现高效互斥锁的
 ┗━━━━━━━━━┻━━━━━━━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━┛
 */
 
-#if (NGX_HAVE_ATOMIC_OPS) //支持原子操作
+#if (NGX_HAVE_ATOMIC_OPS) //支持原子操作  //支持原子操作，则通过原子操作实现锁
 
 
 static void ngx_shmtx_wakeup(ngx_shmtx_t *mtx);
@@ -152,6 +152,7 @@ ngx_shmtx_destroy(ngx_shmtx_t *mtx)
 ngx_uint_t
 ngx_shmtx_trylock(ngx_shmtx_t *mtx)
 {
+    printf("yang test 1111111111111111111111\r\n");
     return (*mtx->lock == 0 && ngx_atomic_cmp_set(mtx->lock, 0, ngx_pid));
 }
 
@@ -307,7 +308,7 @@ ngx_shmtx_wakeup(ngx_shmtx_t *mtx)
 }
 
 
-#else  //else后的锁是文件锁实现的ngx_shmtx_t锁
+#else  //else后的锁是文件锁实现的ngx_shmtx_t锁   //不支持原子操作，则通过文件锁实现
 
 
 ngx_int_t
@@ -364,6 +365,7 @@ ngx_uint_t
 ngx_shmtx_trylock(ngx_shmtx_t *mtx)  //ngx_shmtx_unlock和ngx_shmtx_lock对应
 {
     ngx_err_t  err;
+    printf("yang test xxxxxxxxxxxxxxxxxxxxxx 1111111111111111111111\r\n");
 
     //由14.7节介绍过的ngx_t rylock_fd方法实现非阻塞互斥文件锁的获取
     err = ngx_trylock_fd(mtx->fd);

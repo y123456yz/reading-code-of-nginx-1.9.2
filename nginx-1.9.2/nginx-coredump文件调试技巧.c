@@ -20,6 +20,16 @@ echo /var/corefile/core-%e > /path/core_pattern
 echo 0 > /proc/sys/kernel/core_uses_pid
 echo /var/corefile/core-%e > /proc/sys/kernel/core_pattern
 
+//corefile携带进程号
+echo 1 > /proc/sys/kernel/core_uses_pid
+echo /var/corefile/core-%e-%p-%t > /proc/sys/kernel/core_pattern
+
+四、gdb调试codedump:
+gdb programfile codedumpfile
+(gdb) bt
+
+
+
 上面两句执行后，可以保证coredump文件为core-nginx
 
 执行成功只有打印了:Segmentation fault (core dumped)才会有coredump文件产生
@@ -46,6 +56,9 @@ $grep signal error.log
 $grep signal error.log
 2012/12/24 16:39:56 [alert] 13661#0: worker process 13666 exited on signal 11 (core dumped) 
 
+四、gdb调试codedump:
+gdb programfile codedumpfile
+(gdb) bt
 
 
 
@@ -58,7 +71,7 @@ core文件生成路径:
 
 1）/proc/sys/kernel/core_uses_pid可以控制core文件的文件名中是否添加pid作为扩展。文件内容为1，表示添加pid作为扩展名，生成的core文件格式为core.xxxx；为0则表示生成的core文件同一命名为core。
  可通过以下命令修改此文件：
-echo "1" > /proc/sys/kernel/core_uses_pid
+echo "1" > c
 
 2）proc/sys/kernel/core_pattern可以控制core文件保存位置和文件名格式。
  可通过以下命令修改此文件：
@@ -73,6 +86,10 @@ echo "/corefile/core-%e-%p-%t" > core_pattern，可以将core文件统一生成到/corefile
 %e - insert coredumping executable name into filename 添加命令名
 
 详细出处参考：http://www.nginx.cn/1521.html
+
+四、gdb调试codedump:
+gdb programfile codedumpfile
+(gdb) bt
 
 
 
@@ -649,5 +666,15 @@ bfb67000-bfb7c000 rw-p 00000000 00:00 0 [stack]
 
 2、http://blog.chinaunix.net/space.php?uid=317451&do=blog&id=92412 
 
+
+
+//corefile携带进程号
+echo 1 > /proc/sys/kernel/core_uses_pid
+echo /var/corefile/core-%e-%p-%t > /proc/sys/kernel/core_pattern
+
+
+四、gdb调试codedump:
+gdb programfile codedumpfile
+(gdb) bt
 
 */

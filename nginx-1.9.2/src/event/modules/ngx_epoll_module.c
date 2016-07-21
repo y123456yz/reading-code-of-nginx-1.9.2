@@ -844,7 +844,7 @@ ngx_event_module_t  ngx_epoll_module_ctx = {
         NULL,                            /* trigger a notify */
 #endif
         ngx_epoll_process_events,        /* process the events */
-        ngx_epoll_init,                  /* init the events */
+        ngx_epoll_init,                  /* init the events */ //ÔÚ´´½¨µÄ×Ó½ø³ÌÖÐÖ´ÐÐ
         ngx_epoll_done,                  /* done the events */
     }
 };
@@ -1747,9 +1747,9 @@ ngx_notify->ngx_epoll_notifyÖ»»á´¥·¢epoll_in£¬²»»áÍ¬Ê±Òý·¢epoll_out£¬Èç¹ûÊÇÍøÂç¶
             //flags²ÎÊýÖÐº¬ÓÐNGX_POST_EVENTS±íÊ¾ÕâÅúÊÂ¼þÒªÑÓºó´¦Àí
             if (flags & NGX_POST_EVENTS) {
                 /*
-                    Èç¹ûÒªÔÚpost¶ÓÁÐÖÐÑÓºó´¦Àí¸ÃÊÂ¼þ£¬Ê×ÏÈÒªÅÐ¶ÏËüÊÇÐÂÁ¬½ÓÊÂ¼þ»¹ÊÇÆÕÍ¨ÊÂ¼þ£¬ÒÔ¾ö¶¨°ÑËü¼ÓÈëµ½ngx_posted_accept_events¶Ó
-                    ÁÐ»òÕßngx_postedL events¶ÓÁÐÖÐ¡£¹ØÓÚpost¶ÓÁÐÖÐµÄÊÂ¼þºÎÊ±Ö´ÐÐ
-                    */
+                Èç¹ûÒªÔÚpost¶ÓÁÐÖÐÑÓºó´¦Àí¸ÃÊÂ¼þ£¬Ê×ÏÈÒªÅÐ¶ÏËüÊÇÐÂÁ¬½ÓÊÂ¼þ»¹ÊÇÆÕÍ¨ÊÂ¼þ£¬ÒÔ¾ö¶¨°ÑËü¼ÓÈë
+                µ½ngx_posted_accept_events¶ÓÁÐ»òÕßngx_postedL events¶ÓÁÐÖÐ¡£¹ØÓÚpost¶ÓÁÐÖÐµÄÊÂ¼þºÎÊ±Ö´ÐÐ
+                */
                 queue = rev->accept ? &ngx_posted_accept_events
                                     : &ngx_posted_events;
 

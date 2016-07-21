@@ -147,6 +147,8 @@ ngx_pid_t ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *da
             return NGX_INVALID_PID;
         }
 
+        printf("ynag test ............... %d,     %d\r\n", ngx_processes[s].channel[0], ngx_processes[s].channel[1]);
+
         ngx_log_debug2(NGX_LOG_DEBUG_CORE, cycle->log, 0,
                        "channel %d:%d",
                        ngx_processes[s].channel[0],
@@ -168,7 +170,6 @@ ngx_pid_t ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *da
             ngx_close_channel(ngx_processes[s].channel, cycle->log);
             return NGX_INVALID_PID;
         }
-
         
         /* 
             设置异步模式： 这里可以看下《网络编程卷一》的ioctl函数和fcntl函数 or 网上查询 

@@ -458,7 +458,7 @@ ngx_enable_accept_events(ngx_cycle_t *cycle)
         c = ls[i].connection;
 
         //后面的ngx_add_event->ngx_epoll_add_event中把listening中的c->read->active置1， ngx_epoll_del_event中把listening中置read->active置0
-        if (c == NULL || c->read->active) { //之前本进程已经accept成功的连接，不用再加入epoll事件中，避免重复
+        if (c == NULL || c->read->active) { //之前本进程已经添加过，不用再加入epoll事件中，避免重复
             continue;
         }
 

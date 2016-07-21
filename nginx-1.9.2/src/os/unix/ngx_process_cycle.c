@@ -657,6 +657,7 @@ ngx_start_worker_processes(ngx_cycle_t *cycle, ngx_int_t n, ngx_int_t type)
     /*
     由master进程按照配置文件中worker进程的数目，启动这些子进程（也就是调用表8-2中的ngx_start_worker_processes方法）。
     */
+    printf("yang test worker:%d\r\n", (int)n);
     for (i = 0; i < n; i++) { //n为nginx.conf worker_processes中配置的进程数
 /*
                                  |----------(ngx_worker_process_cycle->ngx_worker_process_init)
@@ -1097,7 +1098,7 @@ ngx_master_process_exit(ngx_cycle_t *cycle)
 static void
 ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data) //data表示这是第几个worker进程
 {
-    ngx_int_t worker = (intptr_t) data;
+    ngx_int_t worker = (intptr_t) data; //worker表示绑定到第几个cpu上
 
     ngx_uint_t         i;
     ngx_connection_t  *c;
@@ -1187,7 +1188,7 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data) //data表示这是第几个wor
 */
 static void
 ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
-{ //主要工作是把CPU和进程绑定
+{ //主要工作是把CPU和进程绑定  创建epoll_crate等
     sigset_t          set;
     uint64_t          cpu_affinity;
     ngx_int_t         n;

@@ -48,7 +48,7 @@ struct ngx_event_s {
     unsigned         write:1; //见ngx_get_connection，可写事件ev默认为1  读ev事件应该默认还是0
 
     //标志位，为1时表示为此事件可以建立新的连接。通常情况下，在ngx_cycle_t中的listening动态数组中，每一个监听对象ngx_listening_t对
-    //应的读事件中的accept标志位才会是l
+    //应的读事件中的accept标志位才会是l  ngx_event_process_init中置1
     unsigned         accept:1;
 
     /*
@@ -109,7 +109,7 @@ struct ngx_event_s {
     //aio on | thread_pool方式下，如果读取数据完成，则在ngx_epoll_eventfd_handler(aio on)或者ngx_thread_pool_handler(aio thread_pool)中置1
     unsigned         complete:1; //表示读取数据完成，通过epoll机制返回获取 ，见ngx_epoll_eventfd_handler
 
-    //标志位，为1时表示当前处理的字符流已经结束
+    //标志位，为1时表示当前处理的字符流已经结束  例如内核缓冲区没有数据，你去读，则会返回0
     unsigned         eof:1; //见ngx_unix_recv
     //标志位，为1时表示事件在处理过程中出现错误
     unsigned         error:1;
@@ -585,7 +585,7 @@ typedef struct {
 
     /*
     事件的available标志位对应着multi_accept配置项。当available为l时，告诉Nginx -次性尽量多地建立新连接，它的实现原理也就在这里
-     */
+     */ //默认0
     ngx_flag_t    multi_accept; //标志位，如果为1，则表示在接收到一个新连接事件时，一次性建立尽可能多的连接
 
     /*

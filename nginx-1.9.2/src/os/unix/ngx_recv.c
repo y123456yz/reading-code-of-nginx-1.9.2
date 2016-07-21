@@ -147,7 +147,13 @@ ngx_unix_recv(ngx_connection_t *c, u_char *buf, size_t size)
         //These calls return the number of bytes received, or -1 if an error occurred.  The return value will be 0 when the peer has performed an orderly shutdown.
         n = recv(c->fd, buf, size, 0);//表示TCP错误，见ngx_http_read_request_header   recv返回0表示对方已经关闭连接
 
-        //读取成功，直接返回    //recv返回0，表示连接断开，send返回0当作正常情况处理
+        //读取成功，直接返回   
+
+
+
+        //recv返回0，本端不应该去关闭连接，如果是因为对端使用了shutdown来关闭半连接，本端还是可以发送数据的，知识不能读数据，所以这里置ready=0
+        //如果不是对端shutdown，那么说明是因为读缓冲区数据读完了，没数据了，读不到数据，所以返回0。返回0不能本端不能关闭套接字
+        //recv返回0，表示对端使用shutdown来实现半关闭或者异步读写的情况下，缓冲区没有数据可读，也会返回0。send返回0当作正常情况处理
         if (n == 0) { //表示TCP错误，见ngx_http_read_request_header   recv返回0表示对方已经关闭连接 The return value will be 0 when the peer has performed an orderly shutdown.
             rev->ready = 0;//数据读取完毕ready置0
             rev->eof = 1;

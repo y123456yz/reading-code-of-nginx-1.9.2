@@ -268,8 +268,6 @@ typedef enum { //各个阶段的http框架check函数见ngx_http_init_phase_handlers      
      */
     NGX_HTTP_POST_REWRITE_PHASE,//该阶段handler方法有:无，不允许用户添加hander方法在该阶段
 
-
-
     /*
     NGXHTTPPREACCESSPHASE、NGX_HTTP_ACCESS_PHASE、NGX HTTPPOST_ACCESS_PHASE，很好理解，做访问权限检查的前期、中期、后期工作，
 其中后期工作是固定的，判断前面访问权限检查的结果（状态码存故在字段r->access_code内），如果当前请求没有访问权限，那么直接返回状
