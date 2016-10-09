@@ -15,7 +15,8 @@ void ngx_setaffinity(uint64_t cpu_affinity, ngx_log_t *log);
 
 #else
 
-#define ngx_setaffinity(cpu_affinity, log)
+#define 
+(cpu_affinity, log)
 
 #endif
 
