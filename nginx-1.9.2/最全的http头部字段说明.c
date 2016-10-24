@@ -224,6 +224,7 @@ WWW-Authenticate 表明客户端请求实体应该使用的授权方案 WWW-Authenticate: Basic
 http://www.kernel.org/doc/Documentation/networking/ip-sysctl.txt
 
 
+简化的nginx多进程模型demo:http://www.cnblogs.com/liuyidiao/p/multi-process-demo.html
 
 #define NGX_CONFIGURE " --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads"
 #define NGX_CONFIGURE " --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads --add-module=/var/yyz/nginx-1.9.2/src/echo-nginx-module-master"
@@ -319,6 +320,7 @@ I/O测试工具，iostat  网络接口流量测试工具ifstat
     重新为nginx全局核心模块，标准HTTP模块的遗漏的配置项添加中文注释
     结合types{}配置，对content_type头部行的形成过程进行详细分析
     从新分析配置解析过程，未完
+
 
 
 

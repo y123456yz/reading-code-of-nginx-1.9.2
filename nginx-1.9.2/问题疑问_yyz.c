@@ -591,6 +591,8 @@ https://github.com/cfsego/nginx-limit-upstream
 nginx日志切割和记录cookie .http://blog.csdn.net/chlaws/article/details/8468080
 
 
+简化的nginx多进程模型demo:http://www.cnblogs.com/liuyidiao/p/multi-process-demo.html
+
 
 */
 
