@@ -325,6 +325,8 @@ static ngx_http_variable_t  ngx_http_core_variables[] = { //²Î¿¼<ÊäÈëÆÊÎönginx-±
     { ngx_string("request_uri"), NULL, ngx_http_variable_request,
       offsetof(ngx_http_request_t, unparsed_uri), 0, 0 },
 
+    //$uri ÇëÇóÖÐµÄµ±Ç°URI(²»´øÇëÇó²ÎÊý£¬²ÎÊýÎ»ÓÚ$args)£¬¿ÉÒÔ²»Í¬ÓÚä¯ÀÀÆ÷´«µÝµÄ$request_uriµÄÖµ£¬
+    //Ëü¿ÉÒÔÍ¨¹ýÄÚ²¿ÖØ¶¨Ïò£¬»òÕßÊ¹ÓÃindexÖ¸Áî½øÐÐÐÞ¸Ä¡£
     { ngx_string("uri"), NULL, ngx_http_variable_request,
       offsetof(ngx_http_request_t, uri),
       NGX_HTTP_VAR_NOCACHEABLE, 0 },

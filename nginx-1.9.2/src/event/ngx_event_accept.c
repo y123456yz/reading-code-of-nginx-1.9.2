@@ -158,7 +158,7 @@ ngx_event_accept(ngx_event_t *ev) //在ngx_process_events_and_timers中执行
 #if (NGX_STAT_STUB)
         (void) ngx_atomic_fetch_add(ngx_stat_accepted, 1);
 #endif
-        //设置负载均衡阀值
+        //设置负载均衡阀值 最开始free_connection_n=connection_n，见ngx_event_process_init
         ngx_accept_disabled = ngx_cycle->connection_n / 8
                               - ngx_cycle->free_connection_n; //判断可用连接的数目和总数目的八分之一大小，如果可用的小于八分之一，为正
 

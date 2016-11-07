@@ -241,6 +241,7 @@ create_loc_conf方法建立的结构体，当然，如果相应的回调方法没有实现，该指针就为NUL
     //创建ngx_shm_zone_t在ngx_init_cycle，在ngx_shared_memory_add也可能创建新的ngx_shm_zone_t，为每个ngx_shm_zone_t真正分配共享内存空间在ngx_init_cycle
     ngx_list_t                shared_memory;// 单链表容器，元素类型是ngx_shm_zone_t结构体，每个元素表示一块共享内存
 
+    //最开始free_connection_n=connection_n，见ngx_event_process_init
     ngx_uint_t                connection_n;// 当前进程中所有链接对象的总数，与成员配合使用
     ngx_uint_t                files_n; //每个进程能够打开的最多文件数  赋值见ngx_event_process_init
 

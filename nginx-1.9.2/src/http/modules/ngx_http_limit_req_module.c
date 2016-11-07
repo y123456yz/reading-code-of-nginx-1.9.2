@@ -34,7 +34,7 @@ typedef struct {
     ngx_http_limit_req_shctx_t  *sh;
     ngx_slab_pool_t             *shpool;
     /* integer value, 1 corresponds to 0.001 r/s */
-    ngx_uint_t                   rate;
+    ngx_uint_t                   rate; //rate实际上扩大了1000倍，例如1r/s，则这里为1000
     ngx_http_complex_value_t     key;
     ngx_http_limit_req_node_t   *node;
 } ngx_http_limit_req_ctx_t;
@@ -43,13 +43,13 @@ typedef struct {
 typedef struct {
     ngx_shm_zone_t              *shm_zone;
     /* integer value, 1 corresponds to 0.001 r/s */
-    ngx_uint_t                   burst;
+    ngx_uint_t                   burst; //实际扩大1000倍，如果配置捅大小为1，这里为1000
     ngx_uint_t                   nodelay; /* unsigned  nodelay:1 */
 } ngx_http_limit_req_limit_t;
 
 
 typedef struct {
-    ngx_array_t                  limits;
+    ngx_array_t                  limits; //成员类型ngx_http_limit_req_limit_t
     ngx_uint_t                   limit_log_level;
     ngx_uint_t                   delay_log_level;
     ngx_uint_t                   status_code;
@@ -176,7 +176,7 @@ static ngx_http_module_t  ngx_http_limit_req_module_ctx = {
     ngx_http_limit_req_merge_conf          /* merge location configuration */
 };
 
-
+//参考https://my.oschina.net/kone/blog/88713
 ngx_module_t  ngx_http_limit_req_module = {
     NGX_MODULE_V1,
     &ngx_http_limit_req_module_ctx,        /* module context */
@@ -441,6 +441,28 @@ ngx_http_limit_req_lookup(ngx_http_limit_req_limit_t *limit, ngx_uint_t hash,
 
             ms = (ngx_msec_int_t) (now - lr->last);
 
+            /*  https://my.oschina.net/kone/blog/88713
+            假设设置rate为500，则rate=500000  配置burst为10，则burst值为10000
+            假设1ms一个请求，则excess取值为
+            第几个请求        excess值           lr->excess值  是否更新lr->last   是否超过burst阈值
+              1                 0-500+1000=500         500             是           否    
+              2                 500-500+1000=1000      1000            是           否
+              3                 1000-500+1000=1500     1500            是           否
+              ...............
+              10                9500-500+1000=10000    10000           是           否
+              11                10000-500+1000=10500   10000           否           是   最后excess没有保存，还是保存上次的，所以还是10000
+              12                10000-2*500+1000=10000 10000           是           否
+              13                10000-2*500+1000=10500 10000           否           是
+              14                10000-2*500+1000=10000 10000           是           否
+              ..............
+              后面循环每隔2ms满足条件
+
+
+
+
+
+              注意:该算法去时间为ms，如果连接多，例如每秒10000个连接，也就是平均1ms 10个连接，这时候now-last可能为=0，从而不能严格的限速了
+            */
             excess = lr->excess - ctx->rate * ngx_abs(ms) / 1000 + 1000;
 
             if (excess < 0) {
