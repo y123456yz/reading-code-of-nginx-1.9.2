@@ -9,7 +9,7 @@
 #include <ngx_core.h>
 #include <ngx_event.h>
 
-/*
+/* http://blog.csdn.net/zhang_shuai_2011/article/details/7678990
 文件异步I/O理解:
 知道异步IO已经很久了，但是直到最近，才真正用它来解决一下实际问题（在一个CPU密集型的应用中，有一些需要处理的数据可能放在磁盘上。预先
 知道这些数据的位置，所以预先发起异步IO读请求。等到真正需要用到这些数据的时候，再等待异步IO完成。使用了异步IO，在发起IO请求到实际使用
@@ -996,7 +996,7 @@ io_getevents(aio_context_t ctx, long min_nr, long nr, struct io_event *events,
     return syscall(SYS_io_getevents, ctx, min_nr, nr, events, tmo);
 }
 
-
+//aio使用可以参考ngx_http_file_cache_aio_read  ngx_output_chain_copy_buf 都是为读取文件准备的
 static void
 ngx_epoll_aio_init(ngx_cycle_t *cycle, ngx_epoll_conf_t *epcf)
 {

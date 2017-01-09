@@ -214,7 +214,7 @@ WWW-Authenticate 表明客户端请求实体应该使用的授权方案 WWW-Authenticate: Basic
 
 所有linux版本:http://mirrors.163.com/
 
-淘宝中文地址:http://tengine.taobao.org/nginx_docs/cn/docs/http/ngx_http_core_module.html
+淘宝中文地址:http://tengine.taobao.org/nginx_docs/cn/docs/http/ngx_http_core_module.html   http://shouce.jb51.net/nginx/left.html
 openresty最佳实践网页在线看:http://xuewb.com/openresty/safe_sql.html
 #define NGX_CONFIGURE " --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads --add-module=/var/yyz/nginx-1.9.2/src/echo-nginx-module-master --add-module=./src/nginx-requestkey-module-master/
 

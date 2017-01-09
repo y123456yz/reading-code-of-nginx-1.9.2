@@ -1104,7 +1104,7 @@ failed:
 }
 
 #else /* !NGX_HAVE_GETADDRINFO || !NGX_HAVE_INET6 */
-
+//域名解析可以参考:http://www.360doc.com/content/14/0102/10/15064667_341883468.shtml  根据请求中的host来解析域名对应的IP
 ngx_int_t
 ngx_inet_resolve_host(ngx_pool_t *pool, ngx_url_t *u)
 {
@@ -1130,7 +1130,7 @@ ngx_inet_resolve_host(ngx_pool_t *pool, ngx_url_t *u)
 
         (void) ngx_cpystrn(host, u->host.data, u->host.len + 1);
 
-        h = gethostbyname((char *) host);
+        h = gethostbyname((char *) host); //域名解析
 
         ngx_free(host);
 

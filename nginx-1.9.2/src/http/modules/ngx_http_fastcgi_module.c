@@ -928,6 +928,12 @@ step1. web 服务器收到客户端（浏览器）的请求Http Request，启动CGI程序，并通过环境
 step2. cgi进程启动解析器、加载配置（如业务相关配置）、连接其它服务器（如数据库服务器）、逻辑处理等
 step3. cgi程将处理结果通过标准输出、标准错误，传递给web 服务器
 step4. web 服务器收到cgi返回的结果，构建Http Response返回给客户端，并杀死cgi进程
+
+http://blog.sina.com.cn/s/blog_4d8cf3140101pa8c.html
+FastCGI 的主要优点是把动态语言和HTTP Server分离开来，所以Nginx与PHP/PHP-FPM
+经常被部署在不同的服务器上，以分担前端Nginx服务器的压力，使Nginx
+专一处理静态请求和转发动态请求，而PHP/PHP-FPM服务器专一解析PHP动态请求。
+
 */ //http://chenzhenianqing.cn/articles/category/%e5%90%84%e7%a7%8dserver/nginx
 ngx_module_t  ngx_http_fastcgi_module = {
     NGX_MODULE_V1,

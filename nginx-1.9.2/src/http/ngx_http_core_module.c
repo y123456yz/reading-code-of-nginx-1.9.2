@@ -1032,7 +1032,7 @@ server {
 
 ´ËÍâ£¬Ò²¿ÉÒÔÍ¨¹ı¡°X-Accel-Limit-Rate¡±ÏìÓ¦Í·À´Íê³ÉËÙÂÊÏŞÖÆ¡£ ÕâÖÖ»úÖÆ¿ÉÒÔÓÃproxy_ignore_headersÖ¸ÁîºÍ fastcgi_ignore_headersÖ¸Áî¹Ø±Õ¡£ 
 */
-    { ngx_string("limit_rate"),
+    { ngx_string("limit_rate"), //limit_rateÏŞÖÆ°üÌåµÄ·¢ËÍËÙ¶È£¬limit_reqÏŞÖÆÁ¬½ÓÇëÇóÁ¬ÀíËÙ¶È
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_HTTP_LIF_CONF
                         |NGX_CONF_TAKE1,
       ngx_conf_set_size_slot,
@@ -1148,10 +1148,12 @@ HTTPÇëÇóÖĞµÄkeepalive¹¦ÄÜÊÇÎªÁËÈÃ¶à¸öÇëÇó¸´ÓÃÒ»¸öHTTP³¤Á¬½Ó£¬Õâ¸ö¹¦ÄÜ¶Ô·şÎñÆ÷µÄĞ
      Ò»¸ö·ÀÖ¹´íÎóÒ³Ãæ±»ÓÃ»§Ö±½Ó·ÃÎÊµÄÀı×Ó£º
      
      error_page 404 /404.html;
-     location  /404.html {
+     location  /404.html {  //±íÊ¾Æ¥Åä/404.htmlµÄlocation±ØĞëuriÊÇÖØ¶¨ÏòºóµÄuri
        internal;
      }
-     */ //ÔÚlocation{}ÖĞÅäÖÃÁËinternal£¬±íÊ¾Æ¥Åä¸ÃuriµÄlocation{}±ØĞëÊÇ½øĞĞÖØ¶¨ÏòºóÆ¥ÅäµÄ¸Ãlocation,Èç¹û²»Âú×ãÌõ¼şÖ±½Ó·µ»ØNGX_HTTP_NOT_FOUND£¬
+     */ 
+     /* ¸Ãlocation{}±ØĞëÊÇÄÚ²¿ÖØ¶¨Ïò(indexÖØ¶¨Ïò ¡¢error_pagesµÈÖØ¶¨Ïòµ÷ÓÃngx_http_internal_redirect)ºóÆ¥ÅäµÄlocation{}£¬·ñÔò²»ÈÃ·ÃÎÊ¸Ãlocation */
+     //ÔÚlocation{}ÖĞÅäÖÃÁËinternal£¬±íÊ¾Æ¥Åä¸ÃuriµÄlocation{}±ØĞëÊÇ½øĞĞÖØ¶¨ÏòºóÆ¥ÅäµÄ¸Ãlocation,Èç¹û²»Âú×ãÌõ¼şÖ±½Ó·µ»ØNGX_HTTP_NOT_FOUND£¬
      //ÉúĞ§µØ·½¼ûngx_http_core_find_config_phase   
     { ngx_string("internal"),
       NGX_HTTP_LOC_CONF|NGX_CONF_NOARGS,
@@ -7195,7 +7197,7 @@ nginxÓĞÁ½¸öÖ¸ÁîÊÇ¹ÜÀí»º´æÎÄ¼şÃèÊö·ûµÄ:Ò»¸ö¾ÍÊÇ±¾ÎÄÖĞËµµ½µÄngx_http_log_moduleÄ£¿
 ÕâÁ½¸öÖ¸ÁîµÄhandler¶¼µ÷ÓÃÁËº¯Êı ngx_open_file_cache_init £¬Õâ¾ÍÊÇÓÃÀ´¹ÜÀí»º´æÎÄ¼şÃèÊö·ûµÄµÚÒ»²½£º³õÊ¼»¯
 */
 
-//open_file_cache max=1000 inactive=20s; Ö´ĞĞ¸Ãº¯Êı
+//open_file_cache max=1000 inactive=20s; Ö´ĞĞ¸Ãº¯Êı   max=numÖĞµÄnum±íÊ¾×î¶à»º´æÕâÃ´¶à¸öÎÄ¼ş
 static char *
 ngx_http_core_open_file_cache(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -7259,7 +7261,7 @@ ngx_http_core_open_file_cache(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_OK;
     }
 
-    if (max == 0) { //±ØĞëĞ¯´ømax²ÎÊı
+    if (max == 0) { //±ØĞëĞ¯´ømax²ÎÊı  
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                         "\"open_file_cache\" must have the \"max\" parameter");
         return NGX_CONF_ERROR;

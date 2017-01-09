@@ -133,7 +133,7 @@ server {
 如果不希望超过的请求被延迟，可以用nodelay参数： 
 limit_req zone=one burst=5 nodelay;
 */
-    { ngx_string("limit_req"),
+    { ngx_string("limit_req"), //limit_rate限制包体的发送速度，limit_req限制连接请求连理速度
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE123,
       ngx_http_limit_req,
       NGX_HTTP_LOC_CONF_OFFSET,
@@ -191,7 +191,6 @@ ngx_module_t  ngx_http_limit_req_module = {
     NULL,                                  /* exit master */
     NGX_MODULE_V1_PADDING
 };
-
 
 static ngx_int_t
 ngx_http_limit_req_handler(ngx_http_request_t *r)
