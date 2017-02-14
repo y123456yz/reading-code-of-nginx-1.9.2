@@ -26,13 +26,13 @@ local function get_ngx_res_useragent_result(useragent_str)
 	
 	local ua = string.lower(useragent_str)
 	
-	local is_beixxxbei_app = find_namedstr_in_str_table({"beixxxbei", "xxx2", "xxx3"}, ua)
+	local is_testxxxtest_app = find_namedstr_in_str_table({"testxxxtest", "xxx2", "xxx3"}, ua)
 	local is_ios = string.find(ua, 'ios', 1, true)
 	local is_android = string.find(ua, 'android', 1, true)
 	
-	if is_beixxxbei_app == 1 and is_ios then
+	if is_testxxxtest_app == 1 and is_ios then
 		return 1
-	elseif is_beixxxbei_app == 1 and is_android then
+	elseif is_testxxxtest_app == 1 and is_android then
 		return 2
 	else
 		return 0
@@ -51,11 +51,11 @@ local function ngx_resp_https_convert(http_str, convert_result)
        return
    end
 
-   local is_beixxxbei_hostname = find_namedstr_in_str_table({"xxx.com"}, low_s)
+   local is_testxxxtest_hostname = find_namedstr_in_str_table({"xxx.com"}, low_s)
     
-   if is_beixxxbei_hostname==1 and convert_result==0 then
+   if is_testxxxtest_hostname==1 and convert_result==0 then
        return string.gsub(low_s, "http%w?://", "//")
-   elseif is_beixxxbei_hostname==1 and convert_result==1 then
+   elseif is_testxxxtest_hostname==1 and convert_result==1 then
        return string.gsub(low_s, "http%w?://", "https://")
    end
 end
