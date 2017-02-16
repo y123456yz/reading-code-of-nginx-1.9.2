@@ -140,7 +140,7 @@ typedef struct {
     //一个对应的缓存文件的目录f/27/46492fbf0d9d35d3753c66851e81627f中的46492fbf0d9d35d3753c66851e81627f，注意f/27就是最尾部的字节,这个由levle=1:2，就是最后面的1个字节+2个字节
     size_t                     level[3];  //把levels=x:y;中的x和y分别存储在level[0]和level[1] level[3]始终为0
     //ngx_http_file_cache_set_slot中设置为ngx_http_file_cache_manager
-    //一般只有涉及到共享内存分配管理的才有该pt，例如fastcgi_cache_path xxx keys_zone=fcgi:10m xxx
+    //一般只有涉及到共享内存分配管理的才有该pt，例如fastcgi_cache_path xxx keys_zone=fcgi:10m xxx 只要有这些配置则会启用cache进程，见ngx_start_cache_manager_processes
     ngx_path_manager_pt        manager; //ngx_cache_manager_process_handler中执行  
     //manger和loader。是cache管理回调函数
     

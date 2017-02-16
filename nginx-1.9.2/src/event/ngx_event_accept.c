@@ -71,7 +71,7 @@ ngx_event_accept(ngx_event_t *ev) //在ngx_process_events_and_timers中执行
     ngx_log_debug2(NGX_LOG_DEBUG_EVENT, ev->log, 0,
                    "accept on %V, ready: %d", &ls->addr_text, ev->available);
 
-    do {
+    do { /* 如果是一次读取一个accept事件的话，循环体只执行一次， 如果是一次性可以读取所有的accept事件，则这个循环体执行次数为accept事件数*/
         socklen = NGX_SOCKADDRLEN;
 
 #if (NGX_HAVE_ACCEPT4) //ngx_close_socket可以关闭套接字
@@ -93,7 +93,8 @@ ngx_event_accept(ngx_event_t *ev) //在ngx_process_events_and_timers中执行
 
         if (s == (ngx_socket_t) -1) {
             err = ngx_socket_errno;
-            
+
+            /* 如果要去一次性读取所有的accept信息，当读取完毕后，通过这里返回。所有的accept事件都读取完毕 */
             if (err == NGX_EAGAIN) { //如果event{}开启multi_accept，则在accept完该listen ip:port对应的ip和端口连接后，会通过这里返回
                 ngx_log_debug0(NGX_LOG_DEBUG_EVENT, ev->log, err,
                                "accept() not ready");

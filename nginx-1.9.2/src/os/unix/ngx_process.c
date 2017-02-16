@@ -147,8 +147,6 @@ ngx_pid_t ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *da
             return NGX_INVALID_PID;
         }
 
-        printf("ynag test ............... %d,     %d\r\n", ngx_processes[s].channel[0], ngx_processes[s].channel[1]);
-
         ngx_log_debug2(NGX_LOG_DEBUG_CORE, cycle->log, 0,
                        "channel %d:%d",
                        ngx_processes[s].channel[0],

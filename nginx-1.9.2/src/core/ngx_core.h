@@ -30,7 +30,7 @@ typedef struct ngx_thread_task_s  ngx_thread_task_t;
 
 /*
 每一个事件最核心的部分是handler回调方法，它将由每一个事件消费模块实现，以此决定这个事件究竟如何“消费”
-*/
+*/ /* 注意ngx_http_event_handler_pt和ngx_event_handler_pt的区别 */
 typedef void (*ngx_event_handler_pt)(ngx_event_t *ev);
 
 //ngx_connection_handler_pt粪型的handler成员表示在这个监听端口上成功建立新的TCP连接后，就会回调handler方法

@@ -729,7 +729,7 @@ upstream_finalize_request·½·¨£¬ÓÉÓÚÎÒÃÇÃ»ÓĞÈÎºÎĞèÒªÊÍ·ÅµÄ×ÊÔ´£¬ËùÒÔ¸Ã·½·¨Ã»ÓĞÍê³
 ÔÚÖØ¶¨ÏòURL½×¶Î£¬Èç¹ûÊµÏÖÁËrewrite_redirect»Øµ÷·½·¨£¬ÄÇÃ´ÕâÊ±»áµ÷ÓÃrewrite_redirect¡£
 ¿ÉÒÔ²é¿´upstreamÄ£¿éµÄngx_http_upstream_rewrite_location·½·¨¡£Èç¹ûupstreamÄ£¿é½ÓÊÕµ½ÍêÕûµÄÉÏÓÎÏìÓ¦Í·²¿£¬
 ¶øÇÒÓÉHTTPÄ£¿éµÄprocess_header»Øµ÷·½·¨½«½âÎö³öµÄ¶ÔÓ¦ÓÚLocationµÄÍ·²¿ÉèÖÃµ½ÁËngx_http_upstream_tÖĞµÄheaders in³ÉÔ±Ê±£¬
-ngx_http_upstream_process_headers·½·¨½«»á×îÖÕµ÷ÓÃrewrite¡ªredirect·½·¨
+ngx_http_upstream_process_headers·½·¨½«»á×îÖÕµ÷ÓÃrewrite_redirect·½·¨
 Òò´Ë£¬rewrite_ redirectµÄÊ¹ÓÃ³¡¾°±È½ÏÉÙ£¬ËüÖ÷ÒªÓ¦ÓÃÓÚHTTP·´Ïò´úÀíÄ£òÌ(ngx_http_proxy_module)¡£ ¸³ÖµÎªngx_http_proxy_rewrite_redirect
 */ 
 //ÔÚÉÏÓÎ·µ»ØµÄÏìÓ¦³öÏÖLocation»òÕßRefreshÍ·²¿±íÊ¾ÖØ¶¨ÏòÊ±£¬»áÍ¨ÓØngx_http_upstream_process_headers·½·¨µ÷ÓÃµ½¿ÉÓÉHTTPÄ£¿éÊµÏÖµÄrewrite redirect·½·¨
@@ -789,6 +789,9 @@ ngx_http_upstream_process_headers·½·¨½«»á×îÖÕµ÷ÓÃrewrite¡ªredirect·½·¨
     /*
      Èç¹û¿ªÆô»º³å£¬ÄÇÃ´Nginx½«¾¡¿ÉÄÜ¶àµØ¶ÁÈ¡ºó¶Ë·şÎñÆ÷µÄÏìÓ¦Êı¾İ£¬µÈ´ïµ½Ò»¶¨Á¿£¨±ÈÈçbufferÂú£©ÔÙ´«ËÍ¸ø×îÖÕ¿Í»§¶Ë¡£Èç¹û¹Ø±Õ£¬
      ÄÇÃ´Nginx¶ÔÊı¾İµÄÖĞ×ª¾ÍÊÇÒ»¸öÍ¬²½µÄ¹ı³Ì£¬¼´´Óºó¶Ë·şÎñÆ÷½ÓÊÕµ½ÏìÓ¦Êı¾İ¾ÍÁ¢¼´½«Æä·¢ËÍ¸ø¿Í»§¶Ë¡£
+
+     buffering±êÖ¾Î»Îª1Ê±£¬½«¿ªÆô¸ü¶àµÄÄÚ´æºÍ´ÅÅÌÎÄ¼şÓÃÓÚ»º´æÉÏÓÎµÄÏìÓ¦°üÌå£¬ÕâÒâÎ¶ÉÏÓÎÍøËÙ¸ü¿ì£»µ±buffering
+     Îª0Ê±£¬½«Ê¹ÓÃ¹Ì¶¨´óĞ¡µÄ»º³åÇø£¨¾ÍÊÇÉÏÃæ½éÉÜµÄbuffer»º³åÇø£©À´×ª·¢ÏìÓ¦°üÌå¡£
      */ //buffering·½Ê½ºÍ·Çbuffering·½Ê½ÔÚº¯Êıngx_http_upstream_send_response·Ö²æ
       //¼ûxxx_bufferingÈçfastcgi_buffering  proxy_buffering  ÊÇ·ñ»º´æºó¶Ë·şÎñÆ÷Ó¦´ğ»ØÀ´µÄ°üÌå
     unsigned                         buffering:1; //ÏòÏÂÓÎ×ª·¢ÉÏÓÎµÄÏìÓ¦°üÌåÊ±£¬ÊÇ·ñ¿ªÆô¸ü´óµÄÄÚ´æ¼°ÁÙÊ±´ÅÅÌÎÄ¼şÓÃÓÚ»º´æÀ´²»¼°·¢ËÍµ½ÏÂÓÎµÄÏìÓ¦

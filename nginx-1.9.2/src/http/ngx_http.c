@@ -199,7 +199,7 @@ cf空间始终在一个地方，就是ngx_init_cycle中的conf，使用中只是简单的修改conf中的ct
 static char *
 ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) 
 //这里的cf是从ngx_conf_handler里面的if (cmd->type & NGX_DIRECT_CONF)判断里面确定了该cf为
-{
+{//图形化参考:深入理解NGINX中的图9-2  图10-1  图4-2，结合图看,并可以配合http://tech.uc.cn/?p=300看
     char                        *rv;
     ngx_uint_t                   mi, m, s;
     ngx_conf_t                   pcf;
@@ -217,7 +217,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
 //conf为ngx_conf_handler中的conf = confp[ngx_modules[i]->ctx_index];也就是conf指向的是ngx_cycle_s->conf_ctx[]，
 //所以对conf赋值就是对ngx_cycle_s中的conf_ctx赋值
-    *(ngx_http_conf_ctx_t **) conf = ctx; 
+    *(ngx_http_conf_ctx_t **) conf = ctx; //图形化参考:深入理解NGINX中的图9-2  图10-1  图4-2，结合图看,并可以配合http://tech.uc.cn/?p=300看
 
     /* count the number of the http modules and set up their indices */
 

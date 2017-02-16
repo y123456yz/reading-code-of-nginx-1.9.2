@@ -60,7 +60,7 @@ static ngx_uint_t argument_number[] = {
     NGX_CONF_TAKE7
 };
 
-
+/* 解析命令行参数信息到内存结构中 */
 char *
 ngx_conf_param(ngx_conf_t *cf)
 {
@@ -254,7 +254,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)  //参考:http://blog.chinauni
         type = parse_block;
 
     } else {
-        type = parse_param;
+        type = parse_param; //解析命令行参数
     }
 
     for ( ;; ) {
@@ -334,7 +334,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)  //参考:http://blog.chinauni
         }
 
         /*
-        这个功能是在函数ngx_conf_handle中实现的，整个过程中需要遍历所有模块中的所有指令，如果找到一个，就直接调用指令的set 函数，
+        这个功能是在函数ngx_conf_handle中实现的，整个过程中需要遍历所有模块中的所有指令，如果找到一个，就直接调用指令的set函数，
         完成对模块的配置信息的设置。 这里主要的过程就是判断是否是找到，需要判断下面一些条件： 
           a  名字一致。配置文件中指令的名字和模块指令中的名字需要一致
           b  模块类型一致。配置文件指令处理的模块类型和当前模块一致
@@ -492,39 +492,39 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
 
             conf = NULL;
 
-            /* 例如执行到http行，会走第一个if，确定http一级NGX_CORE_MODULE类型在ngx_cycle_s->conf_ctx中的位置，然后在继续后面的set函数，在
+            /* 例如执行到http行，会走第二个if，确定http一级NGX_CORE_MODULE类型在ngx_cycle_s->conf_ctx中的位置，然后在继续后面的set函数，在
                 该函数中开辟空间，并让conf_ctx[]数组里面的具体成员指针指向该空间，从而使http{}空间和ngx_cycle_s关联起来 */
 
-            /* 属于NGX_CORE_MODULE的一级类型在第一个if里面执行，属于NGX_HTTP_MODULE的二级类型在第三个if执行  */
+            /*
+            第一个if中执行的命令主要有(NGX_DIRECT_CONF):ngx_core_commands  ngx_openssl_commands  ngx_google_perftools_commands   ngx_regex_commands  ngx_thread_pool_commands
+            第二个if中执行的命令主要有(NGX_MAIN_CONF):http   events include等
+            第三个if中执行的命令主要有(其他):http{}   events{} server server{} location及其location{}内部的命令
+            */
             
             //conf为开辟的main_conf  srv_conf loc_conf空间指针，真正的空间为各个模块module的ctx成员中,
             //可以参考ngx_http_mytest_config_module_ctx, http{}对应的空间开辟在ngx_http_block
             //注意:通过在ngx_init_cycle中打印conf.ctx以及在这里打印cf->cxt，发现所有第一层(http{}外的配置，包括http这一行)的地址是一样的，也就是这里的conf.ctx始终等于cycle->conf_ctx;
-            //每到一层新的{}，cf->cxt地址就会执行这一层中对应的ngx_http_conf_ctx_t。退出{}中后，会把cf->cxt恢复到上层的ngx_http_conf_ctx_t地址
+            //每到一层新的{}，cf->cxt地址就会指向这一层中对应的ngx_http_conf_ctx_t。退出{}中后，会把cf->cxt恢复到上层的ngx_http_conf_ctx_t地址
             //这时的cf->ctx一定等于ngx_cycle_s->conf_ctx，见ngx_init_cycle
             if (cmd->type & NGX_DIRECT_CONF) {//使用全局配置，主要包括以下命令//ngx_core_commands  ngx_openssl_commands  ngx_google_perftools_commands   ngx_regex_commands  ngx_thread_pool_commands
-                //http{]这一行的时候，也走这里，从而确定http{}内部解析项在cf->ctx数组中的位置，从而确定了在一级NGX_CORE_MODULE类型cf->ctx的数组位置，并在后面的set函数中创建空间，使具体数组[]成员指向这部分空间
-                //当解析到http{}内部的第一行的时候，将走下面的第三个if语句，从而确定在NGX_HTTP_MODULE类型在
                 conf = ((void **) cf->ctx)[ngx_modules[i]->index]; //ngx_core_commands对应的空间分配的地方参考ngx_core_module->ngx_core_module_ctx
-                
-            } else if (cmd->type & NGX_MAIN_CONF) { //例如ngx_errlog_commands  ngx_events_commands  ngx_conf_commands  这些配置command一般只有一个参数
+            } else if (cmd->type & NGX_MAIN_CONF) { //例如ngx_http_commands ngx_errlog_commands  ngx_events_commands  ngx_conf_commands  这些配置command一般只有一个参数
                 conf = &(((void **) cf->ctx)[ngx_modules[i]->index]); //指向ngx_cycle_s->conf_ctx
-                 
-            } else if (cf->ctx) { //大部分走这里，例如http{}内部行走这里，http本行走上面的第一个if
+            } else if (cf->ctx) {
      /*http{}内部行相关命令可以参考:ngx_http_core_commands,通过这些命令里面的NGX_HTTP_MAIN_CONF_OFFSET NGX_HTTP_SRV_CONF_OFFSET NGX_HTTP_LOC_CONF_OFFSET
      可以确定出该命令行的地址对应在ngx_http_conf_ctx_t中的地址空间头部指针位置, 就是确定出该命令为ngx_http_conf_ctx的成员main srv loc中的那一个
-       如果进入的是server{}，则指向的是在server里面开辟的ngx_http_conf_ctx_t空间
-     */
+     */      
                 confp = *(void **) ((char *) cf->ctx + cmd->conf);   //如果是http{}内部的行，则cf->ctx已经在ngx_http_block中被重新赋值为新的ngx_http_conf_ctx_t空间
                 //这里的cf->ctx为二级或者三级里面分配的空间了，而不是ngx_cycle_s->conf_ctx,例如为存储http{}内部配置项的空间，见ngx_http_block分配的空间
 
-                if (confp) {
+                if (confp) { //图形化参考:深入理解NGINX中的图9-2  图10-1  图4-2，结合图看,并可以配合http://tech.uc.cn/?p=300看
                     conf = confp[ngx_modules[i]->ctx_index]; //上一行是确定在ngx_http_conf_ctx_t中main srv loc中的那个成员头，这个则是对应头部下面的数组指针中的具体那一个
                 }
             }
 
-            rv = cmd->set(cf, cmd, conf);
-
+            /* 例如解析到http {，则执行ngx_http_block，在该函数中会把http模块对应的srv local main配置空间赋值给conf,也就是ngx_cycle_s->conf_ctx[]对应的模块 */
+            rv = cmd->set(cf, cmd, conf); 
+ ,                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
             if (rv == NGX_CONF_OK) {
                 return NGX_OK;
             }
@@ -995,9 +995,9 @@ ngx_conf_full_name(ngx_cycle_t *cycle, ngx_str_t *name, ngx_uint_t conf_prefix)
     return ngx_get_full_name(cycle->pool, prefix, name);
 }
 
-//查找cycle->open_files链表中的所有文件名，看是否有name文件名存在，如果存在直接返回该文件名对应的项，否则从链表数组中从新获取一个file
+//查找cycle->open_files链表中的所有文件名，看是否有name文件名存在，如果存在直接返回该文件名对应的项，否则从链表数组中从新获取一个file,把name文件加入到其中
 ngx_open_file_t *
-ngx_conf_open_file(ngx_cycle_t *cycle, ngx_str_t *name)
+ngx_conf_open_file(ngx_cycle_t *cycle, ngx_str_t *name) //access_log error_log配置都在这里创建ngx_open_file_t数组结构，由数组cycle->open_files统一管理
 {
     ngx_str_t         full;
     ngx_uint_t        i;

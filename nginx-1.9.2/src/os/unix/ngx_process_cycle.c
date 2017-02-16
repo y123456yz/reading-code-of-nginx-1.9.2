@@ -657,7 +657,6 @@ ngx_start_worker_processes(ngx_cycle_t *cycle, ngx_int_t n, ngx_int_t type)
     /*
     由master进程按照配置文件中worker进程的数目，启动这些子进程（也就是调用表8-2中的ngx_start_worker_processes方法）。
     */
-    printf("yang test worker:%d\r\n", (int)n);
     for (i = 0; i < n; i++) { //n为nginx.conf worker_processes中配置的进程数
 /*
                                  |----------(ngx_worker_process_cycle->ngx_worker_process_init)
@@ -818,8 +817,8 @@ NGX_PROCESS_JUST_RESPAWN标识最终会在ngx_spawn_process()创建worker进程时，将ngx_p
 ngx_signal_worker_processes(cycle, ngx_signal_value(NGX_SHUTDOWN_SIGNAL));  
 以此关闭旧的worker进程。进入该函数，你会发现它也是循环向所有worker进程发送信号，所以它会先把旧worker进程关闭，然后再管理新的worker进程。
 */
-static void
-ngx_signal_worker_processes(ngx_cycle_t *cycle, int signo)
+static void     //ngx_reap_children和ngx_signal_worker_processes对应
+ngx_signal_worker_processes(ngx_cycle_t *cycle, int signo) //向进程发送signo信号
 {
     ngx_int_t      i;
     ngx_err_t      err;
@@ -921,7 +920,7 @@ ngx_signal_worker_processes(ngx_cycle_t *cycle, int signo)
 
 ///这个里面处理退出的子进程(有的worker异常退出，这时我们就需要重启这个worker )，如果所有子进程都退出则会返回0. 
 static ngx_uint_t
-ngx_reap_children(ngx_cycle_t *cycle)
+ngx_reap_children(ngx_cycle_t *cycle) //ngx_reap_children和ngx_signal_worker_processes对应
 {
     ngx_int_t         i, n;
     ngx_uint_t        live;

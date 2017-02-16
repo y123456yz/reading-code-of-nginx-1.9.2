@@ -42,6 +42,7 @@ NginxÖÐ¶¨ÒåÁË»ù±¾µÄÊý¾Ý½á¹¹ngx_connection_tÀ´±íÊ¾Á¬½Ó£¬Õâ¸öÁ¬½Ó±íÊ¾ÊÇ¿Í»§¶ËÖ÷¶¯·
 ÒÔngx_connection-t½á¹¹ÌåÎª»ù´¡ÊµÏÖµÄ¡£±¾½Ú½«ËµÃ÷ÕâÁ½ÖÖÁ¬½ÓÖÐ¸÷×Ö¶ÎµÄÒâÒå£¬Í¬Ê±ÐèÒª×¢ÒâµÄÊÇ£¬ÕâÁ½ÖÖÁ¬½Ó¶¼²»¿ÉÒÔËæÒâ´´½¨£¬±ØÐë´Ó
 Á¬½Ó³ØÖÐ»ñÈ¡£¬
 */
+//±»¶¯Á¬½Ó(¿Í»§¶ËÁ¬½Ónginx)¶ÔÓ¦µÄÊý¾Ý½á¹¹ÊÇngx_connection_s£¬Ö÷¶¯Á¬½Ó(nginxÁ¬½Óºó¶Ë·þÎñÆ÷)¶ÔÓ¦µÄÊý¾Ý½á¹¹ÊÇngx_peer_connection_s
 struct ngx_peer_connection_s {
     /* Ò»¸öÖ÷¶¯Á¬½ÓÊµ¼ÊÉÏÒ²ÐèÒªngx_connection_t½á¹¹ÌåÖÐµÄ´ó²¿·Ö³ÉÔ±£¬²¢ÇÒ³öÓÚÖØÓÃµÄ¿¼ÂÇ¶ø¶¨ÒåÁËconnection³ÉÔ± */
     ngx_connection_t                *connection; //¸³³õÖµ¼ûngx_event_connect_peer

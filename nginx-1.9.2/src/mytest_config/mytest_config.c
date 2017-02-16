@@ -254,6 +254,9 @@ static ngx_http_module_t  ngx_http_mytest_config_module_ctx =
 见ngx_http_core_server， location{}中会创建loc_conf空间,见ngx_http_core_location
 */
     ngx_http_mytest_config_create_loc_conf, /* create location configuration */ 
+/* 
+
+*/
     ngx_http_mytest_config_merge_loc_conf   /* merge location configuration */
 };
 

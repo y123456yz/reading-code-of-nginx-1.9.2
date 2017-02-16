@@ -394,8 +394,8 @@ epoll_wait返回，可以是读写事件触发返回，也可能是因为没获取到共享锁，从而等待0.5s
 
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0, "epoll_wait timer range(delta): %M", delta);
              
-    //来自于客户端的accept事件立epoll_wait返回后马执行，之行为accpet事件后，立马释放ngx_accept_mutex锁，这样其他进程就可以立马获得锁accept客户端连接
-    ngx_event_process_posted(cycle, &ngx_posted_accept_events); 
+    //当感应到来自于客户端的accept事件，epoll_wait返回后加入到post队列，执行完所有accpet连接事件后，立马释放ngx_accept_mutex锁，这样其他进程就可以立马获得锁accept客户端连接
+    ngx_event_process_posted(cycle, &ngx_posted_accept_events); //一般执行ngx_event_accept
     
     //释放锁后再处理下面的EPOLLIN EPOLLOUT请求   
     if (ngx_accept_mutex_held) {

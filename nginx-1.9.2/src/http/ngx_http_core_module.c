@@ -1650,7 +1650,7 @@ http {
 },
 ÆäÖÐµÄxxx¿ÉÒÔÍ¬Ê±³öÏÖÔÚhttp server ºÍlocationÖÐ£¬ËùÒÔÔÚ½âÎöµ½http{}ÐÐµÄÊ±ºòÐèÒª´´½¨mainÀ´´æ´¢NGX_HTTP_MAIN_CONFÅäÖÃ¡£
 ÄÇÃ´ÎªÊ²Ã´»¹ÐèÒªµ÷ÓÃsevºÍloc¶ÔÓ¦µÄcreateÄØ?
-ÒòÎªserverÀàÅäÖÃ¿ÉÄÜÍ¬Ê±³öÏÖÔÚmainÖÐ£¬ËùÒÔÐèÒª´æ´¢ÕâÐ´ÅäÖÃ£¬ËùÒÔÒª´´½¨srcÀ´´æ´¢ËûÃÇ£¬¾ÍÊÇÉÏÃæµÄsssÅäÖÃ¡£
+ÒòÎªserverÀàÅäÖÃ¿ÉÄÜÍ¬Ê±³öÏÖÔÚmainÖÐ£¬ËùÒÔÐèÒª´æ´¢ÕâÐ´ÅäÖÃ£¬ËùÒÔÒª´´½¨srvÀ´´æ´¢ËûÃÇ£¬¾ÍÊÇÉÏÃæµÄsssÅäÖÃ¡£
 Í¬ÀílocationÀàÅäÖÃ¿ÉÄÜÍ¬Ê±³öÏÖÔÚmainÖÐ£¬ËùÒÔÐèÒª´æ´¢ÕâÐ´ÅäÖÃ£¬ËùÒÔÒª´´½¨locÀ´´æ´¢ËûÃÇ£¬¾ÍÊÇÉÏÃæµÄsssÅäÖÃ¡£
 
 ÔÚ½âÎöµ½server{}µÄÊ±ºò£¬ÓÉÓÚlocationÅäÖÃÒ²¿ÉÄÜ³öÏÖÔÚserver{}ÄÚ£¬¾ÍÊÇÉÏÃæserver{}ÖÐµÄxxx;ËùÒÔ½âÎöµ½server{}µÄÊ±ºò
@@ -1662,7 +1662,7 @@ static ngx_http_module_t  ngx_http_core_module_ctx = {
     ngx_http_core_preconfiguration,        /* preconfiguration */ //ÔÚ½âÎöhttp{}ÄÚµÄÅäÖÃÏîÇ°»Øµ÷
     ngx_http_core_postconfiguration,       /* postconfiguration */ //½âÎöÍêhttp{}ÄÚµÄËùÓÐÅäÖÃÏîºó»Øµ÷
 
-    ////½âÎöµ½http{}ÐÐÊ±£¬ÔÚngx_http_blockÖ´ÐÐ¡£¸Ãº¯Êý´´½¨µÄ½á¹¹Ìå³ÉÔ±Ö»»á³öÏÖÔÚhttpÖÐ£¬²»»á³öÏÖÔÚserverºÍlocationÖÐ
+    ////½âÎöµ½http{}ÐÐÊ±£¬ÔÚngx_http_blockÖ´ÐÐ¡£¸Ãº¯Êý´´½¨µÄ½á¹¹Ìå³ÉÔ±Ö»ÄÜ³öÏÖÔÚhttpÖÐ£¬²»»á³öÏÖÔÚserverºÍlocationÖÐ
     ngx_http_core_create_main_conf,        /* create main configuration */
     //http{}µÄËùÓÐÏî½âÎöÍêºóÖ´ÐÐ
     ngx_http_core_init_main_conf,          /* init main configuration */ //½âÎöÍêmainÅäÖÃÏîºó»Øµ÷
@@ -3872,31 +3872,6 @@ ngx_http_gzip_quantity(u_char *p, u_char *last)
 
 #endif
 
-/*
-    (1)  ngx_http_request_t *r
-ngx_http_request_t *rÊÇµ±Ç°µÄÇëÇó£¬Ò²¾ÍÊÇ¸¸ÇëÇó¡£
-    (2) uri
-    ngx_str_t *uriÊÇ×ÓÇëÇóµÄURI£¬Ëü¶Ô¾¿¾ºÑ¡ÓÃnginx.confÅäÖÃÎÄ¼þÖÐµÄÄÄ¸öÄ£¿éÀ´´¦Àí
-×ÓÇëÇóÆð¾ö¶¨ÐÔ×÷ÓÃ¡£
-    (3) ngx_str_t *args
-    ngx_str_t *argsÊÇ×ÓÇëÇóµÄURI²ÎÊý£¬Èç¹ûÃ»ÓÐ²ÎÊý£¬¿ÉÒÔ´«ËÍNULL¿ÕÖ¸Õë¡£
-    (4) ngx_http_request_t **psr
-    psrÊÇÊä³ö²ÎÊý¶ø²»ÊÇÊäÈë²ÎÊý£¬Ëü½«°Ñngx_http_subrequestÉú³ÉµÄ×ÓÇëÇó´«³öÀ´¡£Ò»
-°ã£¬ÎÒÃÇÏÈ½¨Á¢Ò»¸ö×ÓÇëÇóµÄ¿ÕÖ¸Õëngx_http_request_t *psr£¬ÔÙ°ÑËüµÄµØÖ·&psr´«ÈËµ½ngx_
-http_subrequest·½·¨ÖÐ£¬Èç¹ûngx_http_subrequest·µ»Ø³É¹¦£¬psr¾ÍÖ¸Ïò½¨Á¢ºÃµÄ×ÓÇëÇó¡£
-    (5)  ngx_http_post_subrequest_t *ps
-    ÕâÀï´«È´´½¨µÄngx_http_post_subrequest_t½á¹¹ÌåµØÖ·£¬ËüÖ¸³ö×ÓÇëÇó½áÊø
-Ê±±ØÐë»Øµ÷µÄ´¦Àí·½·¨¡£
-    (6) ngx_uint_t flags
-    flagµÄÈ¡Öµ·¶Î§°üÀ¨£º¢Ù0¡£ÔÚÃ»ÓÐÌØÊâÐèÇóµÄÇé¿öÏÂ¶¼Ó¦¸ÃÌîÐ´Ëü£»¢ÚNGX¡ªHTTPÒ»
-SUBREQUEST_IN_MEMORY¡£Õâ¸öºê»á½«×ÓÇëÇóµÄsubrequest_in_memory±êÖ¾Î»ÖÃÎª1£¬
-ÕâÒâÎ¶×ÅÈç¹û×ÓÇëÇóÊ¹ÓÃupstream·ÃÎÊÉÏÓÎ·þÎñÆ÷£¬ÄÇÃ´ÉÏÓÎ·þÎñÆ÷µÄÏìÓ¦¶¼½«»áÔÚÄÚ´æÖÐ
-´¦Àí£»¢ÛNGX- HTTP¡ªSUBREQUEST¡ªWAITED¡£Õâ¸öºê»á½«×ÓÇëÇóµÄwaited±êÖ¾Î»ÖÃÎª1£¬
-µ±×ÓÇëÇóÌáÇ°½áÊøÊ±£¬ÓÐ¸ödone±êÖ¾Î»»áÖÃÎª1£¬µ«Ä¿Ç°HTTP¿ò¼Ü²¢Ã»ÓÐÕë¶ÔÕâÁ½¸ö±êÖ¾
-Î»×öÈÎºÎÊµÖÊÐÔ´¦Àí¡£×¢Òâ£¬flagÊÇ°´±ÈÌØÎ»²Ù×÷µÄ£¬ÕâÑù¿ÉÒÔÍ¬Ê±º¬ÓÐÉÏÊö3¸öÖµ¡£
-    (7)·µ»ØÖµ
-    ·µ»ØNGX OK±íÊ¾³É¹¦½¨Á¢×ÓÇëÇó£»·µ»ØNGX¡ªERROR±íÊ¾½¨Á¢×ÓÇëÇóÊ§°Ü¡£
-*/
 
 /*
 ÔÚ¿ª·¢nginx moduleÊ±£¬ÎÒÃÇ×îÓÐ¿ÉÄÜÓöµ½µÄÒ»¼þÊÂ¾ÍÊÇ£¬ÔÚ´¦ÀíÒ»¸öÇëÇóÊ±£¬ÎÒÃÇÐèÒª·ÃÎÊÆäËû¶à¸öbackend serverÍøÂç×ÊÔ´£¬À­È¡µ½½á¹ûºó
@@ -3917,7 +3892,7 @@ rÊÇÎÒÃÇµÄmodule handlerÖÐ£¬nginxµ÷ÓÃÊ±´«¸øÎÒÃÇµÄÇëÇó£¬ÕâÊ±ÎÒÃÇÖ±½Ó´«¸øsubrequest
 */ 
 
 /*
-    ºÃÁË£¬×ÓÇëÇó´´½¨Íê±Ï£¬Ò»°ãÀ´Ëµ×ÓÇëÇóµÄ´´½¨¶¼·¢ÉúÔÚÄ³¸öÇëÇóµÄcontent handler»òÕßÄ³¸öfilterÄÚ£¬´ÓÉÏÃæµÄº¯Êý¿ÉÒÔ¿´µ½×ÓÇëÇó²¢Ã»ÓÐÂíÉÏ±»Ö´ÐÐ£¬
+    Ò»°ãÀ´Ëµ×ÓÇëÇóµÄ´´½¨¶¼·¢ÉúÔÚÄ³¸öÇëÇóµÄcontent handler»òÕßÄ³¸öfilterÄÚ£¬´ÓÉÏÃæµÄº¯Êý¿ÉÒÔ¿´µ½×ÓÇëÇó²¢Ã»ÓÐÂíÉÏ±»Ö´ÐÐ£¬
 Ö»ÊÇ±»¹ÒÔØÔÚÁËÖ÷ÇëÇóµÄposted_requestsÁ´±íÖÐ£¬ÄÇËüÊ²Ã´Ê±ºò¿ÉÒÔÖ´ÐÐÄØ£¿Ö®Ç°Ëµµ½posted_requestsÁ´±íÊÇÔÚngx_http_run_posted_requestsº¯ÊýÖÐ
 ±éÀú£¬ÄÇÃ´ngx_http_run_posted_requestsº¯ÊýÓÖÊÇÔÚÊ²Ã´Ê±ºòµ÷ÓÃ£¿ËüÊµ¼ÊÉÏÊÇÔÚÄ³¸öÇëÇóµÄ¶Á£¨Ð´£©ÊÂ¼þµÄhandlerÖÐ£¬Ö´ÐÐÍê¸ÃÇëÇóÏà¹ØµÄ´¦Àíºó
 ±»µ÷ÓÃ£¬±ÈÈçÖ÷ÇëÇóÔÚ×ßÍêÒ»±éPHASEµÄÊ±ºò»áµ÷ÓÃngx_http_run_posted_requests£¬ÕâÊ±×ÓÇëÇóµÃÒÔÔËÐÐ¡£
@@ -3973,6 +3948,29 @@ DATA11£¬µ«ÊÇ¸Ã½ÚµãÊµ¼ÊÉÏ±£´æµÄÊÇÊý¾Ý£¬¶ø²»ÊÇ×ÓÇëÇó£¬ËùÒÔc->dataÕâÊ±Ó¦¸ÃÖ¸ÏòµÄÊÇÓ
 
 //subrequest×¢Òângx_http_run_posted_requestsÓëngx_http_subrequest ngx_http_postpone_filter ngx_http_finalize_requestÅäºÏÔÄ¶Á
 //subrequest²Î¿¼http://blog.csdn.net/fengmo_q/article/details/6685840  nginx subrequestµÄÊµÏÖ½âÎö
+
+/*
+    (1)  ngx_http_request_t *r
+    ngx_http_request_t *rÊÇµ±Ç°µÄÇëÇó£¬Ò²¾ÍÊÇ¸¸ÇëÇó¡£
+    (2) uri
+    ngx_str_t *uriÊÇ×ÓÇëÇóµÄURI£¬Ëü¶Ô¾¿¾ºÑ¡ÓÃnginx.confÅäÖÃÎÄ¼þÖÐµÄÄÄ¸öÄ£¿éÀ´´¦Àí×ÓÇëÇóÆð¾ö¶¨ÐÔ×÷ÓÃ¡£
+    (3) ngx_str_t *args
+    ngx_str_t *argsÊÇ×ÓÇëÇóµÄURI²ÎÊý£¬Èç¹ûÃ»ÓÐ²ÎÊý£¬¿ÉÒÔ´«ËÍNULL¿ÕÖ¸Õë¡£
+    (4) ngx_http_request_t **psr
+        psrÊÇÊä³ö²ÎÊý¶ø²»ÊÇÊäÈë²ÎÊý£¬Ëü½«°Ñngx_http_subrequestÉú³ÉµÄ×ÓÇëÇó´«³öÀ´¡£Ò»°ã£¬ÎÒÃÇÏÈ½¨Á¢Ò»¸ö×Ó
+    ÇëÇóµÄ¿ÕÖ¸Õëngx_http_request_t *psr£¬ÔÙ°ÑËüµÄµØÖ·&psr´«ÈËµ½ngx_http_subrequest·½·¨ÖÐ£¬Èç¹ûngx_http_subrequest
+    ·µ»Ø³É¹¦£¬psr¾ÍÖ¸Ïò½¨Á¢ºÃµÄ×ÓÇëÇó¡£
+    (5)  ngx_http_post_subrequest_t *ps
+    ngx_http_post_subrequest_t½á¹¹ÌåµØÖ·£¬ËüÖ¸³ö×ÓÇëÇó½áÊøÊ±±ØÐë»Øµ÷µÄ´¦Àí·½·¨¡£
+    (6) ngx_uint_t flags
+        flagµÄÈ¡Öµ·¶Î§°üÀ¨£º¢Ù0ÔÚÃ»ÓÐÌØÊâÐèÇóµÄÇé¿öÏÂ¶¼Ó¦¸ÃÌîÐ´Ëü£»¢ÚNGX_HTTP_SUBREQUEST_IN_MEMORY¡£
+    Õâ¸öºê»á½«×ÓÇëÇóµÄsubrequest_in_memory±êÖ¾Î»ÖÃÎª1£¬ÕâÒâÎ¶×ÅÈç¹û×ÓÇëÇóÊ¹ÓÃupstream·ÃÎÊÉÏÓÎ·þÎñÆ÷£¬
+    ÄÇÃ´ÉÏÓÎ·þÎñÆ÷µÄÏìÓ¦¶¼½«»áÔÚÄÚ´æÖÐ´¦Àí£»¢ÛNGX_HTTP_SUBREQUEST_WAITED¡£Õâ¸öºê»á½«×ÓÇëÇóµÄwaited±êÖ¾Î»ÖÃÎª1£¬
+    µ±×ÓÇëÇóÌáÇ°½áÊøÊ±£¬ÓÐ¸ödone±êÖ¾Î»»áÖÃÎª1£¬µ«Ä¿Ç°HTTP¿ò¼Ü²¢Ã»ÓÐÕë¶ÔÕâÁ½¸ö±êÖ¾Î»×öÈÎºÎÊµÖÊÐÔ´¦Àí¡£×¢Òâ£¬
+    flagÊÇ°´±ÈÌØÎ»²Ù×÷µÄ£¬ÕâÑù¿ÉÒÔÍ¬Ê±º¬ÓÐÉÏÊö3¸öÖµ¡£
+    (7)·µ»ØÖµ
+    ·µ»ØNGX OK±íÊ¾³É¹¦½¨Á¢×ÓÇëÇó£»·µ»ØNGX_ERROR±íÊ¾½¨Á¢×ÓÇëÇóÊ§°Ü¡£
+*/
 ngx_int_t
 ngx_http_subrequest(ngx_http_request_t *r,
     ngx_str_t *uri, ngx_str_t *args, ngx_http_request_t **psr,
@@ -4532,7 +4530,7 @@ cf¿Õ¼äÊ¼ÖÕÔÚÒ»¸öµØ·½£¬¾ÍÊÇngx_init_cycleÖÐµÄconf£¬Ê¹ÓÃÖÐÖ»ÊÇ¼òµ¥µÄÐÞ¸ÄconfÖÐµÄct
 //¼ûngx_http_core_server server{}ÅäÖÃµÄctx->srv_conf´æ´¢ÔÚ¸¸¼¶http{}ctx¶ÔÓ¦µÄctx->main_conf[ngx_http_core_module.ctx_index]->serversÖÐ£¬Í¨¹ýÕâ¸ösrv_conf[]->ctx¾ÍÄÜ»ñÈ¡µ½server{}µÄÉÏÏÂÎÄctx
 static char *
 ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
-{ 
+{ //Í¼ÐÎ»¯²Î¿¼:ÉîÈëÀí½âNGINXÖÐµÄÍ¼9-2  Í¼10-1  Í¼4-2£¬½áºÏÍ¼¿´,²¢¿ÉÒÔÅäºÏhttp://tech.uc.cn/?p=300¿´
     char                        *rv;
     void                        *mconf;
     ngx_uint_t                   i;
@@ -4555,7 +4553,7 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
     /*
     server¿éÏÂngx_http_conf ctx_t½á¹¹ÖÐµÄmain confÊý×é½«Í¨¹ýÖ±½ÓÖ¸ÏòÀ´¸´ÓÃËùÊôµÄhttp¿éÏÂµÄ
     main_confÊý×é£¨ÆäÊµÊÇËµserver¿éÏÂÃ»ÓÐmain¼¶±ðÅäÖÃ£¬ÕâÊÇÏÔÈ»µÄ£©
-    */
+    */ //Í¼ÐÎ»¯²Î¿¼:ÉîÈëÀí½âNGINXÖÐµÄÍ¼9-2  Í¼10-1  Í¼4-2£¬½áºÏÍ¼¿´,²¢¿ÉÒÔÅäºÏhttp://tech.uc.cn/?p=300¿´
     ctx->main_conf = http_ctx->main_conf;
 
     /* the server{}'s srv_conf */
@@ -5075,7 +5073,7 @@ cf¿Õ¼äÊ¼ÖÕÔÚÒ»¸öµØ·½£¬¾ÍÊÇngx_init_cycleÖÐµÄconf£¬Ê¹ÓÃÖÐÖ»ÊÇ¼òµ¥µÄÐÞ¸ÄconfÖÐµÄct
 //¼ûngx_http_core_server server{}ÅäÖÃµÄctx->srv_conf´æ´¢ÔÚ¸¸¼¶http{}ctx¶ÔÓ¦µÄctx->main_conf[ngx_http_core_module.ctx_index]->serversÖÐ£¬Í¨¹ýÕâ¸ösrv_conf[]->ctx¾ÍÄÜ»ñÈ¡µ½server{}µÄÉÏÏÂÎÄctx
 static char *
 ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
-{
+{//Í¼ÐÎ»¯²Î¿¼:ÉîÈëÀí½âNGINXÖÐµÄÍ¼9-2  Í¼10-1  Í¼4-2£¬½áºÏÍ¼¿´,²¢¿ÉÒÔÅäºÏhttp://tech.uc.cn/?p=300¿´
     char                      *rv;
     u_char                    *mod;
     size_t                     len;
@@ -5094,7 +5092,7 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 
     pctx = cf->ctx;//ÁãÊ±´æ´¢¸¸¼¶µÄctx,Ò²¾ÍÊÇserver{}ÉÏÏÂÎÄ
     ctx->main_conf = pctx->main_conf; //Ö¸Ïò¸¸µÄmain
-    ctx->srv_conf = pctx->srv_conf; //Ö¸Ïò¸¸µÄsrv
+    ctx->srv_conf = pctx->srv_conf; //Ö¸Ïò¸¸µÄsrv //Í¼ÐÎ»¯²Î¿¼:ÉîÈëÀí½âNGINXÖÐµÄÍ¼9-2  Í¼10-1  Í¼4-2£¬½áºÏÍ¼¿´,²¢¿ÉÒÔÅäºÏhttp://tech.uc.cn/?p=300¿´
 
     ctx->loc_conf = ngx_pcalloc(cf->pool, sizeof(void *) * ngx_http_max_module);
     if (ctx->loc_conf == NULL) {

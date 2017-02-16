@@ -362,8 +362,8 @@ NGX_HTTP_LMT_CONF: 配置项可以出现在limit_except{}块内,该limit_except块必须属于ht
 //这些一般是一级配置里面的配置项，http{}外的
 
 /*
-总结，一般一级配置(http{}外的配置项)一般属性包括NGX_MAIN_CONF|NGX_DIRECT_CONF。http events等这一行的配置属性包括NGX_MAIN_CONF不包括NGX_DIRECT_CONF
-
+总结，一般一级配置(http{}外的配置项)一般属性包括NGX_MAIN_CONF|NGX_DIRECT_CONF。http events等这一行的配置属性,全局配置项worker_priority等也属于这个行列
+包括NGX_MAIN_CONF不包括NGX_DIRECT_CONF
 */
 #define NGX_MAIN_CONF        0x01000000  
 
@@ -821,9 +821,9 @@ struct ngx_command_s { //所有配置的最初源头在ngx_init_cycle
     /*配置项类型，type将指定配置项可以出现的位置。例如，出现在server{}或location{}中，以及它可以携带的参数个数*/
     /*
     type决定这个配置项可以在哪些块（如http、server、location、if、upstream块等）
-中出现，以及可以携带的参数类型和个数等。表4-1列出了设置http配置项时type可以取的
-值。注意，type可以同时取表4-1中的多个值，各值之间用I符号连接，例如，type可以取
-值为NGX_TTP_MAIN_CONF | NGX_HTTP_SRV_CONFI | NGX_HTTP_LOC_CONF | NGX_CONF_TAKE。取值可以参考上面表4-1
+中出现，以及可以携带的参数类型和个数等。
+注意，type可以同时取多个值，各值之间用|符号连接，例如，type可以取
+值为NGX_TTP_MAIN_CONF | NGX_HTTP_SRV_CONFI | NGX_HTTP_LOC_CONF | NGX_CONF_TAKE。 
     */
     ngx_uint_t            type; //取值可能为NGX_HTTP_LOC_CONF | NGX_CONF_TAKE2等
 
@@ -846,7 +846,7 @@ struct ngx_command_s { //所有配置的最初源头在ngx_init_cycle
     void                 *post; 
 };
 
-//ngx_null_command只是一个空的ngx_command_t，如下所示：
+//ngx_null_command只是一个空的ngx_command_t，表示模块的命令数组解析完毕，如下所示：
 #define ngx_null_command  { ngx_null_string, 0, NULL, 0, 0, NULL }
 
 struct ngx_open_file_s {
@@ -969,7 +969,8 @@ struct ngx_module_s {//相关空间初始化，赋值等可以参考ngx_http_block
     /*
     ctx用于指向一类模块的上下文结构体，为什么需要ctx呢？因为前面说过，Nginx模块有许多种类，不同类模块之间的功能差别很大。例如，
     事件类型的模块主要处理I/O事件相关的功能，HTTP类型的模块主要处理HTTP应用层的功能。这样，每个模块都有了自己的特性，而ctx将会
-    指向特定类型模块的公共接口。例如，在HTTP模块中，ctx需要指向ngx_http_module_t结构体, event模块中，指向ngx_event_module_t
+    指向特定类型模块的公共接口。例如，在HTTP模块中，ctx需要指向ngx_http_module_t结构体,可以参考例如ngx_http_core_module, 
+    event模块中，指向ngx_event_module_t
     */
     void                 *ctx; //HTTP框架初始化时完成的
     ngx_command_t        *commands; //commands将处理nginx.conf中的配置项
@@ -1092,6 +1093,8 @@ struct ngx_conf_s {
     ngx_pool_t           *temp_pool; //用该poll的空间都是临时空间，最终在ngx_init_cycle->ngx_destroy_pool(conf.temp_pool);中释放
     ngx_conf_file_t      *conf_file; //nginx.conf
     ngx_log_t            *log;
+
+    //cycle->conf_ctx = ngx_pcalloc(pool, ngx_max_module * sizeof(void *));
 
     //指向ngx_cycle_t->conf_ctx 有多少个模块，就有多少个ctx指针数组成员  conf.ctx = cycle->conf_ctx;见ngx_init_cycle
     //这个ctx每次在在进入对应的server{}  location{}前都会指向零时保存父级的ctx，该{}解析完后在恢复到父的ctx。可以参考ngx_http_core_server，ngx_http_core_location

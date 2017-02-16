@@ -58,6 +58,7 @@ ngx_module_t  ngx_http_subrequest_mytest_module =
     NGX_MODULE_V1_PADDING
 };
 
+//子请求处理自己负责的后端响应读取，读取处理完毕后，触发父请求进行相应的合并等操作
 static ngx_int_t mytest_subrequest_post_handler(ngx_http_request_t *r,
                                                 void *data, ngx_int_t rc)
 {
@@ -99,7 +100,8 @@ static ngx_int_t mytest_subrequest_post_handler(ngx_http_request_t *r,
     }
 
     
-    //这一步很重要，设置接下来父请求的回调方法
+    //这一步很重要，设置接下来父请求的回调方法   子请求接收完自己负责的那部分后端响应后，就通知父请求进行相应的处理
+    //(例如多个不同的子请求分别对应后端多个不同的服务器，各个后端应答回来后就需要通知父请求就行合并等操作，就和twemproxy的mget一样)
     pr->write_event_handler = mytest_post_handler;
 
     return NGX_OK;

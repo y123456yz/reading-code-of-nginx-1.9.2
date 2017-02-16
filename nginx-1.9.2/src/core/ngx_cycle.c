@@ -137,6 +137,12 @@ static ngx_connection_t  dumb;
 ┗━━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━━┛
 */
 
+/*
+为什么这里需要有old_cycle???
+    旧的ngx_cycle_t对象用于引用上一个ngx_cycle_t对象中的成员。例如ngx_init_cycle方法，在启动初期，需要建
+立一个临时的ngx_cycle_t对象保存一些变量(如ngx_process_options中的安装路径，新cycle建立起来前提前写日志的log),
+再调用ngx_init_cycle 方法时就可以把旧的ngx_cycle_t对象传进去
+*/
 ngx_cycle_t *
 ngx_init_cycle(ngx_cycle_t *old_cycle)
 {
@@ -165,10 +171,10 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
     ngx_time_update();
 
-
+    //在解析配置文件的error_log前，使用这个旧的默认log,后面解析完配置文件后，会重新按照error_log配置文件来写日志
     log = old_cycle->log;
 
-    pool = ngx_create_pool(NGX_CYCLE_POOL_SIZE, log);
+    pool = ngx_create_pool(NGX_CYCLE_POOL_SIZE, log); /*16K */
     if (pool == NULL) {
         return NULL;
     }
@@ -318,12 +324,12 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     ngx_strlow(cycle->hostname.data, (u_char *) hostname, cycle->hostname.len);
 
 /*
-第3步～第8步，都是在ngx_init_cycle方法中执行的。在初始化ngx_cycle_t中的所有容器后，会为读取、解析配置文件做准备工作。因为每
-个模块都必须有相应的数据结构来存储配置文件中的各配置项，创建这些数据结构的工作都需要在这一步进行。Nginx框架只关心NGX_CORE_MODULE核
-心模块，这也是为了降低框架的复杂度。这里将会调用所有核心模块的create conf方法（也只有核心模块才有这个方法），这意味着需要所有的核心
-模块开始构造用于存储配置项的结构体。其他非核心模块怎么办呢？其实很简单。这些模块大都从属于一个核心模块，如每个HTTP模块都由ngx_http_module
-管理（如图8-2所示），这样ngx_http_module在解析自己感兴趣的“http”配置项时，将会调用所有HTTP模块约定的方法来创建存储配置项的结构体
-（如第4章中介绍过的xxx_create_main_conf、xxx_create_srv_conf、xxx_create_loc_conf方法）。
+在初始化ngx_cycle_t中的所有容器后，会为读取、解析配置文件做准备工作。因为每个模块都必须有相应的数据
+结构来存储配置文件中的各配置项，创建这些数据结构的工作都需要在这一步进行。Nginx框架只关心NGX_CORE_MODULE核
+心模块，这也是为了降低框架的复杂度。这里将会调用所有核心模块的create conf方法（也只有核心模块才有这个方法），
+这意味着需要所有的核心模块开始构造用于存储配置项的结构体。其他非核心模块怎么办呢？其实很简单。这些模块大都
+从属于一个核心模块，如每个HTTP模块都由ngx_http_module管理（如图8-2所示），这样ngx_http_module在解析自己感兴
+趣的“http”配置项时，将会调用所有HTTP模块约定的方法来创建存储配置项的结构体（xxx_create_main_conf、xxx_create_srv_conf、xxx_create_loc_conf方法）。
 */
     for (i = 0; ngx_modules[i]; i++) {
         if (ngx_modules[i]->type != NGX_CORE_MODULE) {
@@ -359,8 +365,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         return NULL;
     }
 
-    //这时候的conf指向的是cycle
-    conf.ctx = cycle->conf_ctx; //这样下面的ngx_conf_param解析配置的时候，里面对conf.ctx赋值操作，实际上就是对cycle->conf_ctx[i]
+    conf.ctx = cycle->conf_ctx; //这样下面的ngx_conf_param解析配置的时候，里面对conf.ctx赋值操作，实际上就是对cycle->conf_ctx[i]赋值
     conf.cycle = cycle;
     conf.pool = pool;
     conf.log = log;
@@ -389,7 +394,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     }
 
     /*
-    调用所有NGX—CORE—MODULE核心模块的init_ conf方法。这一步骤的目的在于让所有核心模块在解析完配置项后可以做综合性处理，
+    调用所有NGX_CORE_MODULE核心模块的init_conf方法。这一步骤的目的在于让所有核心模块在解析完配置项后可以做综合性处理，
     */
     for (i = 0; ngx_modules[i]; i++) {
         if (ngx_modules[i]->type != NGX_CORE_MODULE) {
@@ -503,6 +508,9 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 #endif
     }
 
+    /**/
+    //在解析配置文件的error_log前，使用这个旧的默认log,解析完配置文件后，会重新按照error_log配置文件来写日志
+    //new_log信息通过前面的ngx_log_open_default设置new_log信息，并在上面的part = &cycle->open_files.part;中打开了这个文件获得了fd
     cycle->log = &cycle->new_log;
     pool->log = &cycle->new_log;
 
@@ -1329,7 +1337,8 @@ ngx_reopen_files(ngx_cycle_t *cycle, ngx_uid_t user)
     (void) ngx_log_redirect_stderr(cycle);
 }
 
-
+//先创建链表结构，用来存储配置文件中指定的需要的共享内存空间信息到cycle->shared_memory，然后在ngx_init_cycle中解析完配置文件后，把配置文件中
+//指定的需要共享内存信息从cycle->shared_memory链表取出来，在ngx_init_cycle解析完配置文件后统一进行共享内存分配创建
 ngx_shm_zone_t *
 ngx_shared_memory_add(ngx_conf_t *cf, ngx_str_t *name, size_t size, void *tag)
 {

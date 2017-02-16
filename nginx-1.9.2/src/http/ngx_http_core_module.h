@@ -246,13 +246,14 @@ NGX_HTTP_FIND_CONFIG_PHASE、NGX_HTTP_POSTREWRITE_PHASE、NGX_HTTP_POST_ACCESS_PHA
 加入自己的ngx_http_handler_pt方法处理用户请求,但是他们的会占用cmcf->phase_engine.handlers[]数组中的一个成员，见ngx_http_init_phase_handlers
 */
 typedef enum { //各个阶段的http框架check函数见ngx_http_init_phase_handlers           //所有阶段的checker在ngx_http_core_run_phases中调用
-    //在接收到完整的HTTP头部后处理的HTTP阶段 
+    //在接收到完整的HTTP头部后处理的HTTP阶段   主要是获取客户端真实IP，因为客户端到nginx可能通过了vanish等缓存，
+    //ngx_http_realip_module(ngx_http_realip_init->ngx_http_realip_handler)
     NGX_HTTP_POST_READ_PHASE = 0, //该阶段方法有:ngx_http_realip_handler  POST有"在....后"的意思，POST_READ应该就是在解析完请求行和头部行后
 
 
 
     /*在还没有查询到URI匹配的location前，这时rewrite重写URL也作为一个独立的HTTP阶段   Server内请求地址重写阶段 */
-    NGX_HTTP_SERVER_REWRITE_PHASE, //该阶段handler方法有:ngx_http_rewrite_handler 
+    NGX_HTTP_SERVER_REWRITE_PHASE, //该阶段handler方法有:ngx_http_rewrite_module(ngx_http_rewrite_init->ngx_http_rewrite_handler) 
 
     /*根据URI寻找匹配的location，这个阶段通常由ngx_http_core_module模块实现，不建议其他HTTP模块重新定义这一阶段的行为*/
     NGX_HTTP_FIND_CONFIG_PHASE,//该阶段handler方法有:无，不允许用户添加hander方法在该阶段  该阶段完成的是Nginx的特定任务，即进行Location定位
@@ -403,7 +404,15 @@ typedef struct { //存储在ngx_http_core_main_conf_t->phases[]
     ngx_array_t                handlers; //数组中存储的是ngx_http_handler_pt   ngx_http_init_phase_handlers
 } ngx_http_phase_t;
 
-//参考:http://tech.uc.cn/?p=300
+/*ngx_http_core_main_conf_t(ngx_http_core_create_main_conf中创建) ngx_http_core_srv_conf_t(ngx_http_core_create_srv_conf创建)  
+ngx_http_core_loc_conf_s(ngx_http_core_create_loc_conf创建) */
+/*
+图形化参考:深入理解NGINX中的图9-2(P302)  图10-1(P353) 图10-1(P356) 图10-1(P359)  图4-2(P145)
+
+ngx_http_conf_ctx_t、ngx_http_core_main_conf_t、ngx_http_core_srv_conf_t、ngx_http_core_loc_conf_s和ngx_cycle_s->conf_ctx的关系见:
+Nginx的http配置结构体的组织结构:http://tech.uc.cn/?p=300
+*/ 
+
 typedef struct {//初始化赋值参考ngx_http_core_module_ctx
 /*
 servers动态数组中的每一个元素都是一个指针，它指向用于表示server块的ngx_http_core_srv_conf_t结构体的地址（属于ngx_http_core_module模块）。
@@ -585,6 +594,15 @@ proxy_pass http://fetch;
 )
 */
 
+/*ngx_http_core_main_conf_t(ngx_http_core_create_main_conf中创建) ngx_http_core_srv_conf_t(ngx_http_core_create_srv_conf创建)  
+ngx_http_core_loc_conf_s(ngx_http_core_create_loc_conf创建) */
+
+/*
+图形化参考:深入理解NGINX中的图9-2(P302)  图10-1(P353) 图10-1(P356) 图10-1(P359)  图4-2(P145)
+
+ngx_http_conf_ctx_t、ngx_http_core_main_conf_t、ngx_http_core_srv_conf_t、ngx_http_core_loc_conf_s和ngx_cycle_s->conf_ctx的关系见:
+Nginx的http配置结构体的组织结构:http://tech.uc.cn/?p=300
+*/ 
 typedef struct {
     /*
 用于设置监听socket的指令主要有两个：server_name和listen。server_name指令用于实现虚拟主机的功能，会设置每个server块的虚拟主机名，
@@ -919,7 +937,16 @@ location @fetch(
 proxy_pass http://fetch;
 )
 */
-//拆分过程见ngx_http_init_locations
+/*ngx_http_core_main_conf_t(ngx_http_core_create_main_conf中创建) ngx_http_core_srv_conf_t(ngx_http_core_create_srv_conf创建)  
+ngx_http_core_loc_conf_s(ngx_http_core_create_loc_conf创建) */
+
+/*
+图形化参考:深入理解NGINX中的图9-2(P302)  图10-1(P353) 图10-1(P356) 图10-1(P359)  图4-2(P145)
+
+ngx_http_conf_ctx_t、ngx_http_core_main_conf_t、ngx_http_core_srv_conf_t、ngx_http_core_loc_conf_s和ngx_cycle_s->conf_ctx的关系见:
+Nginx的http配置结构体的组织结构:http://tech.uc.cn/?p=300
+*/ 
+
 //参考ngx_http_core_location
 struct ngx_http_core_loc_conf_s {
     //ngx_http_add_location中把精确匹配 正则表达式 name  noname配置以外的其他配置都算做前缀匹配  例如//location ^~  xxx{}      location /XXX {}

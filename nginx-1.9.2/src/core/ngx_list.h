@@ -23,6 +23,7 @@ struct ngx_list_part_s { //ngx_list_part_tÖ»ÃèÊöÁ´±íµÄÒ»¸öÔªËØ   Êı¾İ²¿·Ö×ÜµÄ¿Õ¼
     ngx_list_part_t  *next; //ÏÂÒ»¸öÁ´±íÔªËØngx_list_part_tµÄµØÖ·¡£
 };
 
+/* ngx_list_tºÍngx_queue_tµÄÈ´±ğÔÚÓÚ:ngx_list_tĞèÒª¸ºÔğÈİÆ÷ÄÚ³ÉÔ±½ÚµãÄÚ´æ·ÖÅä£¬¶øngx_queue_t²»ĞèÒª */
 //ÓÃ·¨ºÍÊı×é±éÀú·½·¨¿ÉÒÔ²Î¿¼//ngx_http_request_s->headers_in.headers£¬ÀıÈç¿ÉÒÔ²Î¿¼º¯Êıngx_http_fastcgi_create_request
 typedef struct { //ngx_list_tÃèÊöÕû¸öÁ´±í
     ngx_list_part_t  *last; //Ö¸ÏòÁ´±íµÄ×îºóÒ»¸öÊı×éÔªËØ¡£

@@ -469,6 +469,11 @@ socket监听状况，还是需要写到日志文件中去的。在nginx的main函数中，首先会调用ngx_l
 ?调用ngx_set_inherited_sockets()逐一对ngx_cycle.listening数组中的sockets进行设置；
 ?具体可参考<nginx源码分析—初始化过程中处理继承的sockets>
 */
+
+/*
+在执行不重启服务升级Nginx的操作时，老的Nginx进程会通过环境变量“NGINX”来传递需要打开的监听端口，
+新的Nginx进程会通过ngx_add_inherited_sockets方法来使用已经打开的TCP监听端口   
+*/
 /*
 ngx_add_inherited_sockets 函数通过环境变量NGINX完成socket的继承，继承来的socket将会放到init_cycle的listening数组中。在NGINX环
 境变量中，每个socket中间用冒号或分号隔开。完成继承同时设置全局变量ngx_inherited为1

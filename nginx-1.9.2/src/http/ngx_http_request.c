@@ -391,7 +391,7 @@ ngx_http_init_connection(ngx_connection_t *c)
 
 /*
 在有些情况下，当TCP连接建立成功时同时也出现了可读事件（例如，在套接字listen配置时设置了deferred选项时，内核仅在套接字上确实收到请求时才会通知epoll
-调度事件的回调方法），这时ngx_http_init_request方法是在图11-1的第2步中执行的。当然，在大部分情况下，ngx_http_init_request方法和
+调度事件的回调方法。当然，在大部分情况下，ngx_http_init_request方法和
 ngx_http_init_connection方法都是由两个事件（TCP连接建立成功事件和连接上的可读事件）触发调用的
 */
 
@@ -2396,7 +2396,7 @@ ngx_http_process_request方法负责在接收完HTTP头部后，第一次与各个HTTP模块共同按阶
 HTTP框架无论是调用ngx_http_process_request方法（首次从业务上处理请求）还是ngx_http_request_handler方法（TCP连接上后续的事件触发时）处理
 请求，最后都有一个步骤，就是调用ngx_http_run_posted_requests方法处理post请求
 */ 
-//客户端事件处理handler一般(write(read)->handler)一般为ngx_http_request_handler， 和后端的handler一般(write(read)->handler)一般为ngx_http_upstream_handler， 和后端的
+//客户端事件处理handler一般(write(read)->handler)一般为ngx_http_request_handler， 和后端的handler一般(write(read)->handler)一般为ngx_http_upstream_handler
 static void
 ngx_http_request_handler(ngx_event_t *ev)
 {
@@ -2404,7 +2404,7 @@ ngx_http_request_handler(ngx_event_t *ev)
     ngx_http_request_t  *r;
 
 /*
-ngx_http_request_ handler是HTTP请求上读／写事件的回调方法。在ngx_event_t结构体表示的事件中，data成员指向了这个事件对应的ngx_connection_t连接，
+ngx_http_request_handler是HTTP请求上读/写事件的回调方法。在ngx_event_t结构体表示的事件中，data成员指向了这个事件对应的ngx_connection_t连接，
 在HTTP框架的ngx_connection_t结构体中的data成员则指向了ngx_http_request_t结构体
 */
     c = ev->data;

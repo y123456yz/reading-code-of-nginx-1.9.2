@@ -110,7 +110,7 @@ ngx_queue_t驭向链表中的元素所支持的方法
 
 */
 typedef struct ngx_queue_s  ngx_queue_t;
-
+/* ngx_list_t和ngx_queue_t的却别在于:ngx_list_t需要负责容器内成员节点内存分配，而ngx_queue_t不需要 */
 struct ngx_queue_s {
     ngx_queue_t  *prev;
     ngx_queue_t  *next;

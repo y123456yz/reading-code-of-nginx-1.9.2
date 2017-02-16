@@ -110,7 +110,7 @@ typedef void (*ngx_log_writer_pt) (ngx_log_t *log, ngx_uint_t level,
 
 struct ngx_log_s {  
     //如果设置的log级别为debug，则会在ngx_log_set_levels把level设置为NGX_LOG_DEBUG_ALL
-    //ngx_log_set_levels
+    //赋值见ngx_log_set_levels
     ngx_uint_t           log_level;//日志级别或者日志类型  默认为NGX_LOG_ERR  如果通过error_log  logs/error.log  info;则为设置的等级  比该级别下的日志可以打印
     ngx_open_file_t     *file; //日志文件
 

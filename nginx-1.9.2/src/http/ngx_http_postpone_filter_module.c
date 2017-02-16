@@ -88,7 +88,11 @@ static ngx_http_module_t  ngx_http_postpone_filter_module_ctx = {
 ©§ngx_http_write_filter_module        ©§  ½ö¶ÔHTTP°üÌå×ö´¦Àí¡£¸ÃÄ£¿é¸ºÔğÏò¿Í»§¶Ë·¢ËÍHTTPÏìÓ¦              ©§
 ©»©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©ß©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¿
 
-*/ngx_module_t  ngx_http_postpone_filter_module = {
+*/ngx_module_t  ngx_http_postpone_filter_module = { 
+/* 
+¸ÃÄ£¿éÊµ¼ÊÉÏÊÇÎªsubrequest¹¦ÄÜ½¨Á¢µÄ£¬Ö÷ÒªÓÃ»§±£Ö¤µ½ºó¶Ë¶à¸ö½ÚµãµÄÓ¦´ğÓĞĞòµÄ·¢ËÍµ½¿Í»§¶Ë£¬±£Ö¤ÊÇÎÒÃÇÆÚ´ıµÄË³Ğò£¬
+Õâ¾ÍºÍtwemproxy»º´æÖĞ¼ä¼şµÄmget¹¦ÄÜÀàËÆ
+*/
     NGX_MODULE_V1,
     &ngx_http_postpone_filter_module_ctx,  /* module context */
     NULL,                                  /* module directives */
@@ -160,7 +164,8 @@ DATA11£¬µ«ÊÇ¸Ã½ÚµãÊµ¼ÊÉÏ±£´æµÄÊÇÊı¾İ£¬¶ø²»ÊÇ×ÓÇëÇó£¬ËùÒÔc->dataÕâÊ±Ó¦¸ÃÖ¸ÏòµÄÊÇÓ
 ·¢ËÍÊı¾İµ½¿Í»§¶ËË³Ğò¿ØÖÆ¼ûngx_http_postpone_filter
 */
 
-
+/* ¸Ãº¯Êı¾ÍºÍ»º´æÖĞ¼ä¼ştwemproxyµÄmgetÅúÁ¿»ñÈ¡Ò»Ñù£¬µ±ĞèÒª´Óºó¶Ë¶à¸ö·şÎñÆ÷»ñÈ¡ĞÅÏ¢µÄÊ±ºò£¬¾ÍĞèÒªµÈºó¶ËµÄ
+ËùÓĞÏìÓ¦¶¼ÊÕµ½ºó£¬²¢¶ÔÕâĞ©Ó¦´ğ½øĞĞºÏÊÊµÄË³Ğò²ÅÄÜ·¢Íù¿Í»§¶Ë£¬²ÅÄÜ±£Ö¤ÓĞĞòµÄ·¢ËÍ¸ø¿Í»§¶Ë*/
 //ÅäºÏhttp://blog.csdn.net/fengmo_q/article/details/6685840Í¼ĞÎ»¯ÔÄ¶Á
 //ÕâÀïµÄ²ÎÊıin¾ÍÊÇ½«Òª·¢ËÍ¸ø¿Í»§¶ËµÄÒ»¶Î°üÌå£¬
 static ngx_int_t //subrequest×¢Òângx_http_run_posted_requestsÓëngx_http_subrequest ngx_http_postpone_filter ngx_http_finalize_requestÅäºÏÔÄ¶Á
@@ -193,7 +198,7 @@ ngx_http_postpone_filter(ngx_http_request_t *r, ngx_chain_t *in)
             |               |
             -----data11     -----data12(ÊôÓÚsub12_rÊı¾İ)
 
-          ÏÂÃæµÄifÅĞ¶ÏÖ»ÓĞrÎªsub11_r²ÅÂú×ãr == c->data£¬Èç¹ûµ±Ç°r²»ÊÇsub11_r£¬Ôò°Ñ
+          ÏÂÃæµÄifÅĞ¶ÏÖ»ÓĞrÎªsub11_r²ÅÂú×ãr == c->data£¬Èç¹ûµ±Ç°r²»ÊÇsub11_r 
      */
     //Èç¹ûµ±Ç°ÇëÇórÊÇÒ»¸ö×ÓÇëÇó£¨ÒòÎªc->dataÖ¸ÏòÔ­Ê¼ÇëÇó£©
     //ËµÃ÷rÊÇÉÏ¼¶rµÄµÚÒ»¸ö×ÓÇëÇó£¬Ò²¾ÍÊÇhttp://blog.csdn.net/fengmo_q/article/details/6685840Í¼ÀïÃæµÄSUB1  SUB11 SUB21
@@ -290,7 +295,7 @@ ngx_http_postpone_filter(ngx_http_request_t *r, ngx_chain_t *in)
 }
 
 /*
-    ºÃÁË£¬×ÓÇëÇó´´½¨Íê±Ï£¬Ò»°ãÀ´Ëµ×ÓÇëÇóµÄ´´½¨¶¼·¢ÉúÔÚÄ³¸öÇëÇóµÄcontent handler»òÕßÄ³¸öfilterÄÚ£¬´ÓÉÏÃæµÄº¯Êı¿ÉÒÔ¿´µ½×ÓÇëÇó²¢Ã»ÓĞÂíÉÏ±»Ö´ĞĞ£¬
+    Ò»°ãÀ´Ëµ×ÓÇëÇóµÄ´´½¨¶¼·¢ÉúÔÚÄ³¸öÇëÇóµÄcontent handler»òÕßÄ³¸öfilterÄÚ£¬´ÓÉÏÃæµÄº¯Êı¿ÉÒÔ¿´µ½×ÓÇëÇó²¢Ã»ÓĞÂíÉÏ±»Ö´ĞĞ£¬
 Ö»ÊÇ±»¹ÒÔØÔÚÁËÖ÷ÇëÇóµÄposted_requestsÁ´±íÖĞ£¬ÄÇËüÊ²Ã´Ê±ºò¿ÉÒÔÖ´ĞĞÄØ£¿Ö®Ç°Ëµµ½posted_requestsÁ´±íÊÇÔÚngx_http_run_posted_requestsº¯ÊıÖĞ
 ±éÀú£¬ÄÇÃ´ngx_http_run_posted_requestsº¯ÊıÓÖÊÇÔÚÊ²Ã´Ê±ºòµ÷ÓÃ£¿ËüÊµ¼ÊÉÏÊÇÔÚÄ³¸öÇëÇóµÄ¶Á£¨Ğ´£©ÊÂ¼şµÄhandlerÖĞ£¬Ö´ĞĞÍê¸ÃÇëÇóÏà¹ØµÄ´¦Àíºó
 ±»µ÷ÓÃ£¬±ÈÈçÖ÷ÇëÇóÔÚ×ßÍêÒ»±éPHASEµÄÊ±ºò»áµ÷ÓÃngx_http_run_posted_requests£¬ÕâÊ±×ÓÇëÇóµÃÒÔÔËĞĞ¡£

@@ -46,7 +46,7 @@ struct ngx_listening_s { //³õÊ¼»¯¼°¸³Öµ¼ûngx_http_add_listening
     ngx_connection_handler_pt   handler; //¸³ÖµÎªngx_http_init_connection£¬¼ûngx_http_add_listening¡£¸ÃhandlerÔÚngx_event_acceptÖÐÖ´ÐÐ
     /*
     Êµ¼ÊÉÏ¿ò¼Ü²¢²»Ê¹ÓÃserversÖ¸Õë£¬Ëü¸ü¶àÊÇ×÷ÎªÒ»¸ö±£ÁôÖ¸Õë£¬Ä¿Ç°Ö÷ÒªÓÃÓÚHTTP»òÕßmailµÈÄ£¿é£¬ÓÃÓÚ±£´æµ±Ç°¼àÌý¶Ë¿Ú¶ÔÓ¦×ÅµÄËùÓÐÖ÷»úÃû
-    */ //lsopt.bind = 1;ÕâÀïÃæ´æµÄÊÇbindÎª1µÄÅäÖÃ²Å»áÓÐ´´½¨ngx_http_port_t
+    */ 
     void               *servers;  /* array of ngx_http_in_addr_t  ngx_http_port_t, for example */ //¸³Öµ¼ûngx_http_init_listening£¬Ö¸Ïòngx_http_port_t½á¹¹
 
     //logºÍlogp¶¼ÊÇ¿ÉÓÃµÄÈÕÖ¾¶ÔÏóµÄÖ¸Õë
@@ -91,6 +91,7 @@ struct ngx_listening_s { //³õÊ¼»¯¼°¸³Öµ¼ûngx_http_add_listening
     /* ±íÊ¾µ±Ç°¼àÌý¾ä±úÊÇ·ñÀ´×ÔÇ°Ò»¸ö½ø³Ì£¨ÈçÉý¼¶Nginx³ÌÐò£©£¬Èç¹ûÎª1£¬Ôò±íÊ¾À´×ÔÇ°Ò»¸ö½ø³Ì¡£Ò»°ã»á±£ÁôÖ®Ç°ÒÑ¾­ÉèÖÃºÃµÄÌ×½Ó×Ö£¬²»×ö¸Ä±ä */
     unsigned            inherited:1;   /* inherited from previous process */
     unsigned            nonblocking_accept:1;  //Ä¿Ç°Î´Ê¹ÓÃ
+    //lsopt.bind = 1;ÕâÀïÃæ´æµÄÊÇbindÎª1µÄÅäÖÃ²Å»áÓÐ´´½¨ngx_http_port_t
     unsigned            listen:1; //±êÖ¾Î»£¬Îª1Ê±±íÊ¾µ±Ç°½á¹¹Ìå¶ÔÓ¦µÄÌ×½Ó×ÖÒÑ¾­¼àÌý  ¸³Öµ¼ûngx_open_listening_sockets
     unsigned            nonblocking:1;//±íËØÌ×½Ó×ÖÊÇ·ñ×èÈû£¬Ä¿Ç°¸Ã±êÖ¾Î»Ã»ÓÐÒâÒå
     unsigned            shared:1;    /* shared between threads or processes */ //Ä¿Ç°¸Ã±êÖ¾Î»Ã»ÓÐÒâÒå
@@ -220,7 +221,10 @@ NginxÖÐ¶¨ÒåÁË»ù±¾µÄÊý¾Ý½á¹¹ngx_connection_tÀ´±íÊ¾Á¬½Ó£¬Õâ¸öÁ¬½Ó±íÊ¾ÊÇ¿Í»§¶ËÖ÷¶¯·
 ©§(ngx_connection_t)                    ©§                            ©§                                      ©§
 ©»©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©ß©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©ß©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¥©¿
 */
+/*Ò»¸öngx_connection_s¶ÔÓ¦Ò»¸öngx_event_s readºÍÒ»¸öngx_event_s write,ÆäÖÐÊÂ¼þµÄfdÊÇ´Óngx_connection_s->fd»ñÈ¡£¬ËûÃÇ
+ÔÚngx_worker_process_init->ngx_event_process_initÖÐ¹ØÁªÆðÀ´ */
 //ngx_event_tÊÂ¼þºÍngx_connection_tÁ¬½ÓÊÇ´¦ÀíTCPÁ¬½ÓµÄ»ù´¡Êý¾Ý½á¹¹, Í¨¹ýngx_get_connection´ÓÁ¬½Ó³ØÖÐ»ñÈ¡Ò»¸öngx_connection_s½á¹¹£¬
+//±»¶¯Á¬½Ó(¿Í»§¶ËÁ¬½Ónginx)¶ÔÓ¦µÄÊý¾Ý½á¹¹ÊÇngx_connection_s£¬Ö÷¶¯Á¬½Ó(nginxÁ¬½Óºó¶Ë·þÎñÆ÷)¶ÔÓ¦µÄÊý¾Ý½á¹¹ÊÇngx_peer_connection_s
 struct ngx_connection_s {  //cycle->read_eventsºÍcycle->write_eventsÕâÁ½¸öÊý×é´æ·ÅµÄÊÇngx_event_s,ËûÃÇÊÇ¶ÔÓ¦µÄ£¬¼ûngx_event_process_init
     /*
     Á¬½ÓÎ´Ê¹ÓÃÊ±£¬data³ÉÔ±ÓÃÓÚ³äµ±Á¬½Ó³ØÖÐ¿ÕÏÐÁ¬½ÓÁ´±íÖÐµÄnextÖ¸Õë(ngx_event_process_init)¡£µ±Á¬½Ó±»Ê¹ÓÃÊ±£¬dataµÄÒâÒåÓÉÊ¹ÓÃËüµÄNginxÄ£¿é¶ø¶¨£¬
@@ -237,11 +241,13 @@ struct ngx_connection_s {  //cycle->read_eventsºÍcycle->write_eventsÕâÁ½¸öÊý×é´æ
 
  µ±½ÓÊÕµ½¿Í»§¶ËµÄµÚÒ»¸öÇëÇóÊý¾ÝµÄÊ±ºò£¬ÔÚngx_http_wait_request_handlerÖÐ»áÖØÐÂÈÃdataÖ¸ÏòÐÂ´´½¨µÄngx_http_request_t½á¹¹£¬Ö®Ç°dataÖ¸ÏòµÄ
  ngx_http_connection_t½á¹¹£¬´ÓÐÂÓÃngx_http_request_t->connectionÖ¸Ïò¸Ãngx_http_connection_t
- */  //ÉÏ²ã¸¸ÇëÇórµÄdataÖ¸ÏòµÚÒ»¸örÏÂ²ãµÄ×ÓÇëÇó£¬ÀýÈçµÚ¶þ²ãµÄr->connection->dataÖ¸ÏòÆäµÚÈý²ãµÄµÚÒ»¸ö´´½¨µÄ×ÓÇëÇór£¬c->data = sr¼ûngx_http_subrequest
-    void               *data;//listen¹ý³ÌÖÐ£¬Ö¸ÏòÔ­Ê¼ÇëÇóngx_http_connection_t(ngx_http_init_connection)  
-//Èç¹ûÊÇÎÄ¼þÒì²½i/oÖÐµÄngx_event_aio_t£¬ÔòËüÀ´×Ôngx_event_aio_t->ngx_event_t(Ö»ÓÐ¶Á),Èç¹ûÊÇÍøÂçÊÂ¼þÖÐµÄevent,ÔòÎªngx_connection_sÖÐµÄevent(°üÀ¨¶ÁºÍÐ´)
-    ngx_event_t        *read;//Á¬½Ó¶ÔÓ¦µÄ¶ÁÊÂ¼þ   ¸³ÖµÔÚngx_event_process_init
-    ngx_event_t        *write; //Á¬½Ó¶ÔÓ¦µÄÐ´ÊÂ¼þ  ¸³ÖµÔÚngx_event_process_init  Ò»°ãÔÚngx_handle_write_eventÖÐÌí¼ÓÐ©ÊÂ¼þ
+ */  
+ //ÉÏ²ã¸¸ÇëÇórµÄdataÖ¸ÏòµÚÒ»¸örÏÂ²ãµÄ×ÓÇëÇó£¬ÀýÈçµÚ¶þ²ãµÄr->connection->dataÖ¸ÏòÆäµÚÈý²ãµÄµÚÒ»¸ö´´½¨µÄ×ÓÇëÇór£¬c->data = sr¼ûngx_http_subrequest
+ //listen¹ý³ÌÖÐ£¬Ö¸ÏòÔ­Ê¼ÇëÇóngx_http_connection_t(ngx_http_init_connection),½ÓÊÕµ½¿Í»§¶ËÊý¾ÝºóÖ¸Ïòngx_http_request_t(ngx_http_wait_request_handler)
+    void               *data;
+    //Èç¹ûÊÇÎÄ¼þÒì²½i/oÖÐµÄngx_event_aio_t£¬ÔòËüÀ´×Ôngx_event_aio_t->ngx_event_t(Ö»ÓÐ¶Á),Èç¹ûÊÇÍøÂçÊÂ¼þÖÐµÄevent,ÔòÎªngx_connection_sÖÐµÄevent(°üÀ¨¶ÁºÍÐ´)
+    ngx_event_t        *read;//Á¬½Ó¶ÔÓ¦µÄ¶ÁÊÂ¼þ   ¸³ÖµÔÚngx_event_process_init£¬¿Õ¼äÊÇ´Óngx_cycle_t->read_event³Ø×ÓÖÐ»ñÈ¡µÄ
+    ngx_event_t        *write; //Á¬½Ó¶ÔÓ¦µÄÐ´ÊÂ¼þ  ¸³ÖµÔÚngx_event_process_init Ò»°ãÔÚngx_handle_write_eventÖÐÌí¼ÓÐ©ÊÂ¼þ£¬¿Õ¼äÊÇ´Óngx_cycle_t->read_event³Ø×ÓÖÐ»ñÈ¡µÄ
 
     ngx_socket_t        fd;//Ì×½Ó×Ö¾ä±ú
 
@@ -264,7 +270,7 @@ struct ngx_connection_s {  //cycle->read_eventsºÍcycle->write_eventsÕâÁ½¸öÊý×é´æ
 
     /*
     ÄÚ´æ³Ø¡£Ò»°ãÔÚaccept -¸öÐÂÁ¬½ÓÊ±£¬»á´´½¨Ò»¸öÄÚ´æ³Ø£¬¶øÔÚÕâ¸öÁ¬½Ó½áÊøÊ±»áÏú»ÙÄÚ´æ³Ø¡£×¢Òâ£¬ÕâÀïËùËµµÄÁ¬½ÓÊÇÖ¸³É¹¦½¨Á¢µÄ
-    TCPÁ¬½Ó£¬ËùÓÐµÄngx_connection_t½á¹¹Ìå¶¼ÊÇÔ¤·ÖÅäµÄ¡£Õâ¸öÄÚ´æ³ØµÄ´óÐ¡½«ÓÉÉÏÃæµÄlistening¼àÌý¶ÔÏóÖÐµÄpool_size³ÉÔ±¾ö¶¨
+    TCPÁ¬½Ó£¬ËùÓÐµÄngx_connection_t½á¹¹Ìå¶¼ÊÇÔ¤·ÖÅäµÄ¡£Õâ¸öÄÚ´æ³ØµÄ´óÐ¡½«ÓÉlistening¼àÌý¶ÔÏóÖÐµÄpool_size³ÉÔ±¾ö¶¨
      */
     ngx_pool_t         *pool; //ÔÚaccept·µ»Ø³É¹¦ºó´´½¨poll,¼ûngx_event_accept£¬ Á¬½ÓÉÏÓÎ·þÎñÇøµÄÊ±ºòÔÚngx_http_upstream_connect´´½¨
 

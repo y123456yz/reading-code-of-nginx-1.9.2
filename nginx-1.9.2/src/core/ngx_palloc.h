@@ -44,7 +44,7 @@ ngx_pool_cleanup_tÓëngx_http_cleanup_ptÊÇ²»Í¬µÄ£¬ngx_pool_cleanup_t½öÔÚËùÓÃµÄÄÚ´
 */
 //ÄÚ´æ³ØpoolÖĞÇåÀíÊı¾İµÄÓÃµÄ£¬¼ûngx_pool_s  ngx_destroy_pool
 struct ngx_pool_cleanup_s { //Õâ¸öÊÇÌí¼Óµ½ngx_pool_sÖĞµÄcleanupÉÏµÄ£¬¼ûngx_pool_cleanup_add
-    ngx_pool_cleanup_pt   handler;// µ±Ç° cleanup Êı¾İµÄ»Øµ÷º¯Êı  ngx_destroy_poolÖĞÖ´ĞĞ
+    ngx_pool_cleanup_pt   handler;// µ±Ç° cleanup Êı¾İµÄ»Øµ÷º¯Êı  ngx_destroy_poolÖĞÖ´ĞĞ    ÀıÈçÇåÀíÎÄ¼ş¾ä±úngx_pool_cleanup_fileµÈ
     void                 *data;// ÄÚ´æµÄÕæÕıµØÖ·     »Øµ÷Ê±£¬½«´ËÊı¾İ´«Èë»Øµ÷º¯Êı£»  ngx_pool_cleanup_addÖĞ¿ª±Ù¿Õ¼ä
     
     ngx_pool_cleanup_t   *next;// Ö¸ÏòÏÂÒ»¿é cleanup ÄÚ´æµÄÖ¸Õë
@@ -97,7 +97,7 @@ pool ÖĞµÄ chain Ö¸ÏòÒ»¸ö ngx_chain_t Êı¾İ£¬ÆäÖµÊÇÓÉºê ngx_free_chain ½øĞĞ¸³ÓèµÄ£
     ngx_chain_t          *chain;// pool µ±Ç°¿ÉÓÃµÄ ngx_chain_t Êı¾İ£¬×¢Òâ£ºÓÉ ngx_free_chain ¸³Öµ   ngx_alloc_chain_link
     ngx_pool_large_t     *large;//½ÚµãÖĞ´óÄÚ´æ¿éÖ¸Õë   // pool ÖĞÖ¸Ïò´óÊı¾İ¿ìµÄÖ¸Õë£¨´óÊı¾İ¿ìÊÇÖ¸ size > max µÄÊı¾İ¿é£©
     ngx_pool_cleanup_t   *cleanup;// pool ÖĞÖ¸Ïò ngx_pool_cleanup_t Êı¾İ¿éµÄÖ¸Õë //cleanupÔÚngx_pool_cleanup_add¸³Öµ
-    ngx_log_t            *log; // pool ÖĞÖ¸Ïò ngx_log_t µÄÖ¸Õë£¬ÓÃÓÚĞ´ÈÕÖ¾µÄ
+    ngx_log_t            *log; // pool ÖĞÖ¸Ïò ngx_log_t µÄÖ¸Õë£¬ÓÃÓÚĞ´ÈÕÖ¾µÄ  ngx_event_accept»á¸³Öµ
 };
 
 typedef struct {//ngx_open_cached_fileÖĞ´´½¨¿Õ¼äºÍ¸³Öµ

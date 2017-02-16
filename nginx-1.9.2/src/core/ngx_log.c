@@ -90,7 +90,8 @@ static ngx_str_t err_levels[] = { //¶ÔÓ¦ÈÕÖ¾¼¶±ğNGX_LOG_STDERR--NGX_LOG_DEBUG£¬²
     ngx_string("debug")
 };
 
-static const char *debug_levels[] = { //¶ÔÓ¦Î»Í¼NGX_LOG_DEBUG_FIRST---NGX_LOG_DEBUG_LAST  ²Î¿¼ngx_log_set_levels
+//debug_levels´ú±íµÄÊÇÈÕÖ¾ÀàĞÍ     err_levels´ú±íµÄÊÇÈÕÖ¾¼¶±ğ  
+static const char *debug_levels[] = { //¶ÔÓ¦Î»Í¼NGX_LOG_DEBUG_CORE---NGX_LOG_DEBUG_LAST  ²Î¿¼ngx_log_set_levels
     "debug_core", "debug_alloc", "debug_mutex", "debug_event",
     "debug_http", "debug_mail", "debug_mysql", "debug_stream"
 };

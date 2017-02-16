@@ -27,12 +27,12 @@ local function get_ngx_res_useragent_result(useragent_str)
 	local ua = string.lower(useragent_str)
 	
 	local is_testxxxtest_app = find_namedstr_in_str_table({"testxxxtest", "xxx2", "xxx3"}, ua)
-	local is_ios = string.find(ua, 'ios', 1, true)
-	local is_android = string.find(ua, 'android', 1, true)
+	local is_xxx3 = string.find(ua, 'xxx3', 1, true)
+	local is_xxx2 = string.find(ua, 'xxx2', 1, true)
 	
-	if is_testxxxtest_app == 1 and is_ios then
+	if is_testxxxtest_app == 1 and is_xxx3 then
 		return 1
-	elseif is_testxxxtest_app == 1 and is_android then
+	elseif is_testxxxtest_app == 1 and is_xxx2 then
 		return 2
 	else
 		return 0
@@ -128,7 +128,7 @@ if ngx.ctx.host_convert_str then
 end
 
 if ngx.ctx.uri_args then
-    local uri_args_list = {"os=web", "os=android", "os=ios"}
+    local uri_args_list = {"os=xxx1", "os=xxx2", "os=xxx3"}
     uri_arg_kv = ngx_check_uri_args(uri_args_list, ngx.ctx.uri_args)
 end
 
@@ -139,15 +139,15 @@ if ngx.ctx.useragent_convert_str and notcdn_host_match==1 then
 end
 
 
-if cdn_host_match == 1 and uri_arg_kv == "os=web" then
+if cdn_host_match == 1 and uri_arg_kv == "os=xxx1" then
    convert_result=0
 end
 
-if cdn_host_match == 1 and uri_arg_kv == "os=android" then
+if cdn_host_match == 1 and uri_arg_kv == "os=xxx2" then
    convert_result=1
 end
 
-if cdn_host_match == 1 and uri_arg_kv == "os=ios" then
+if cdn_host_match == 1 and uri_arg_kv == "os=xxx3" then
    convert_result=2
 end
 

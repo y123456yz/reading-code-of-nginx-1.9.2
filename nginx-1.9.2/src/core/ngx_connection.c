@@ -385,7 +385,7 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
 
     /* TODO: configurable try number */
 
-    for (tries = 5; tries; tries--) { //bind和listen最多从实5次
+    for (tries = 5; tries; tries--) { //bind和listen最多重试5次
         failed = 0;
 
         /* for each listening socket */
@@ -406,7 +406,7 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
                  * to multiple sockets with SO_REUSEPORT, we have to set
                  * SO_REUSEPORT on the old socket before opening new ones
                  */
-
+                
                 int  reuseport = 1;
 
                 if (setsockopt(ls[i].fd, SOL_SOCKET, SO_REUSEPORT,

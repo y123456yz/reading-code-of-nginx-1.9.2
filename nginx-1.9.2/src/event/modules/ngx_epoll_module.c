@@ -996,6 +996,13 @@ io_getevents(aio_context_t ctx, long min_nr, long nr, struct io_event *events,
     return syscall(SYS_io_getevents, ctx, min_nr, nr, events, tmo);
 }
 
+/*
+ngx_epoll_aio_init初始化aio事件列表， ngx_file_aio_read添加读文件事件，当读取完毕后epoll会触发
+ngx_epoll_eventfd_handler->ngx_file_aio_event_handler 
+nginx file aio只提供了read接口，不提供write接口，因为异步aio只从磁盘读和写，而非aio方式一般写会落到
+磁盘缓存，所以不提供该接口，如果异步io写可能会更慢
+*/
+
 //aio使用可以参考ngx_http_file_cache_aio_read  ngx_output_chain_copy_buf 都是为读取文件准备的
 static void
 ngx_epoll_aio_init(ngx_cycle_t *cycle, ngx_epoll_conf_t *epcf)
@@ -1385,9 +1392,7 @@ ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags) //该函数
     }
 
     ee.events = events | (uint32_t) flags; //加入flags参数到events标志位中
-    /*
-    ptr成员存储的是ngx_connection_t连接，可参见epoll的使用方式。
-     */
+    /* ptr成员存储的是ngx_connection_t连接，可参见epoll的使用方式。*/
     ee.data.ptr = (void *) ((uintptr_t) c | ev->instance);
 
     if (e->active) {//modify
@@ -1802,6 +1807,12 @@ ngx_epoll_eventfd_handler方法将当前事件放入到ngx_posted_events队列中，在延后执行
 handler回调方法，并与文件异步I/O事件结合起来的。
     那么，怎样向异步I/O上下文中提交异步I/O操作呢？看看ngx_linux_aio read.c文件中
 的ngx_file_aio_read方法，在打开文件异步I/O后，这个方法将会负责磁盘文件的读取
+*/
+/*
+ngx_epoll_aio_init初始化aio事件列表， ngx_file_aio_read添加读文件事件，当读取完毕后epoll会触发
+ngx_epoll_eventfd_handler->ngx_file_aio_event_handler 
+nginx file aio只提供了read接口，不提供write接口，因为异步aio只从磁盘读和写，而非aio方式一般写会落到
+磁盘缓存，所以不提供该接口，如果异步io写可能会更慢
 */
 
 //该函数在ngx_process_events_and_timers中执行

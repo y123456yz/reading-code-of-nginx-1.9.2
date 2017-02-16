@@ -38,6 +38,9 @@ epoll_wait返回，可以是读写事件触发返回，也可能是因为没获取到共享锁，从而等待0.5s
 
 3.也可以是利用定时器expirt实现的读写事件(参考ngx_http_set_write_handler->ngx_add_timer(ngx_event_add_timer)),触发过程见2，只是在handler中不会执行write_event_handler  read_event_handler
 */
+
+/*一个ngx_connection_s对应一个ngx_event_s read和一个ngx_event_s write,其中事件的fd是从ngx_connection_s->fd获取，他们
+在ngx_worker_process_init->ngx_event_process_init中关联起来 */
 struct ngx_event_s {
     /*
     事件相关的对象。通常data都是指向ngx_connection_t连接对象,见ngx_get_connection。开启文件异步I/O时，它可能会指向ngx_event_aio_t(ngx_file_aio_init)结构体
@@ -57,9 +60,9 @@ struct ngx_event_s {
     可通过instance标志位来避免处理后面的已经过期的事件。将详细描述ngx_epoll_module是如何使用instance标志位区分
     过期事件的，这是一个巧妙的设计方法
 
-        instance标志位为什么可以判断事件是否过期？从上面的代码可以看出，instance标志位的使用其实很简单，它利用了指针的最后一位一定
-    是0这一特性。既然最后一位始终都是0，那么不如用来表示instance。这样，在使用ngx_epoll_add_ event方法向epoll中添加事件时，就把epoll_event中
-    联合成员data的ptr成员指向ngx_connection—t连接的地址，同时把最后一位置为这个事件的instance标志。而在ngx_epoll_process_events方法中取出指向连接的
+        instance标志位为什么可以判断事件是否过期？instance标志位的使用其实很简单，它利用了指针的最后一位一定
+    是0这一特性。既然最后一位始终都是0，那么不如用来表示instance。这样，在使用ngx_epoll_add_event方法向epoll中添加事件时，就把epoll_event中
+    联合成员data的ptr成员指向ngx_connection_t连接的地址，同时把最后一位置为这个事件的instance标志。而在ngx_epoll_process_events方法中取出指向连接的
     ptr地址时，先把最后一位instance取出来，再把ptr还原成正常的地址赋给ngx_connection_t连接。这样，instance究竟放在何处的问题也就解决了。
     那么，过期事件又是怎么回事呢？举个例子，假设epoll_wait -次返回3个事件，在第
         1个事件的处理过程中，由于业务的需要，所以关闭了一个连接，而这个连接恰好对应第3个事件。这样的话，在处理到第3个事件时，这个事件就
@@ -210,10 +213,9 @@ struct ngx_event_s {
      在解析完客户端发送来的请求的请求行和头部行后，设置handler为ngx_http_request_handler
      */ //一般与客户端的数据读写是 ngx_http_request_handler;  与后端服务器读写为ngx_http_upstream_handler(如fastcgi proxy memcache gwgi等)
     
-    //监听sock:ngx_event_accept，ngx_http_request_handler,ngx_http_upstream_handler ngx_file_aio_event_handler
+    //监听sock:ngx_event_accept，ngx_http_wait_request_handler ngx_http_request_handler,ngx_http_upstream_handler ngx_file_aio_event_handler
     ngx_event_handler_pt  handler; //由epoll读写事件在ngx_epoll_process_events触发
    
-
 
 #if (NGX_HAVE_IOCP)
     ngx_event_ovlp_t ovlp;

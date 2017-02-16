@@ -13,11 +13,11 @@
 而在子进程中是如何处理的呢，子进程的管道可读事件捕捉函数是ngx_channel_handler(ngx_event_t *ev)，在这个函数中，会读取mseeage，
 然后解析，并根据不同的命令做不同的处理，来看它的代码片断： 
 */
-/* 给每个进程的父进程发送刚创建worker进程的信息，IPC方式以后再搞 */  
+/* 给每个进程的父进程发送刚创建worker进程的信息 */  
 /*
 这里的s参数是要使用的TCP套接字，ch参数是ngx_channel_t粪型的消息，size参数是ngx_channel_t结构体的大小，109参数是日志对象。
 */
-//ngx_write_channel和ngx_read_channel配对
+//ngx_write_channel和ngx_read_channel配对   用于父子进程之间通信，通信报文见NGX_CMD_QUIT等
 ngx_int_t
 ngx_write_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size,
     ngx_log_t *log)
@@ -106,7 +106,7 @@ ngx_write_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size,
 
 
 */
-//ngx_write_channel和ngx_read_channel配对
+//ngx_write_channel和ngx_read_channel配对  用于父子进程之间通信，通信报文见NGX_CMD_QUIT等
 ngx_int_t
 ngx_read_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size, ngx_log_t *log)
 {

@@ -62,6 +62,13 @@ ngx_file_aio_init(ngx_file_t *file, ngx_pool_t *pool)
 handler回调方法，并与文件异步I/O事件结合起来的。
     那么，怎样向异步I/O上下文中提交异步I/O操作呢？看看ngx_linux_aio read.c文件中
 的ngx_file_aio_read方法，在打开文件异步I/O后，这个方法将会负责磁盘文件的读取
+*/ 
+
+/*
+ngx_epoll_aio_init初始化aio事件列表， ngx_file_aio_read添加读文件事件，当读取完毕后epoll会触发
+ngx_epoll_eventfd_handler->ngx_file_aio_event_handler 
+nginx file aio只提供了read接口，不提供write接口，因为异步aio只从磁盘读和写，而非aio方式一般写会落到
+磁盘缓存，所以不提供该接口，如果异步io写可能会更慢
 */
 ssize_t
 ngx_file_aio_read(ngx_file_t *file, u_char *buf, size_t size, off_t offset,
@@ -204,6 +211,12 @@ ngx_file_aio_result(ngx_file_t *file, ngx_event_aio_t *aio, ngx_event_t *ev)
 }
 
 
+/*
+ngx_epoll_aio_init初始化aio事件列表， ngx_file_aio_read添加读文件事件，当读取完毕后epoll会触发
+ngx_epoll_eventfd_handler->ngx_file_aio_event_handler 
+nginx file aio只提供了read接口，不提供write接口，因为异步aio只从磁盘读和写，而非aio方式一般写会落到
+磁盘缓存，所以不提供该接口，如果异步io写可能会更慢
+*/
 static void
 ngx_file_aio_event_handler(ngx_event_t *ev)
 {

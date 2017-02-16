@@ -161,7 +161,7 @@ conf等方法返回的指针地址。ngx_http_conf_ctx_t是了解http配置块的基础
             }
        }
   }
-  这种情况的配置文件，在执行到http的时候开辟ngx_http_conf_ctx_t会分别调用一次main crv loc_creat，执行到server时开辟ngx_http_conf_ctx_t会调用srv_creat loc_creat, 执行到location时开辟ngx_http_conf_ctx_t会调用一次loc_creat
+  这种情况的配置文件，在执行到http的时候开辟ngx_http_conf_ctx_t会分别调用一次main srv loc_creat，执行到server时开辟ngx_http_conf_ctx_t会调用srv_creat loc_creat, 执行到location时开辟ngx_http_conf_ctx_t会调用一次loc_creat
   所以这种情况会调用1次main_creat 2才srv_creat 3次loc_creat。
 
   http {
@@ -176,11 +176,18 @@ conf等方法返回的指针地址。ngx_http_conf_ctx_t是了解http配置块的基础
             }
        }
   }
-  这种情况的配置文件，在执行到http的时候开辟ngx_http_conf_ctx_t会分别调用一次main crv loc_creat，执行到server时开辟ngx_http_conf_ctx_t会调用srv_creat loc_creat, 执行到location时开辟ngx_http_conf_ctx_t会调用一次loc_creat
+  这种情况的配置文件，在执行到http的时候开辟ngx_http_conf_ctx_t会分别调用一次main srv loc_creat，执行到server时开辟ngx_http_conf_ctx_t会调用srv_creat loc_creat, 执行到location时开辟ngx_http_conf_ctx_t会调用一次loc_creat
   所以这种情况会调用1次main_creat 1+2才srv_creat 1+2+2次loc_creat。
 */
 
-//http{}中会调用main_conf srv_conf loc_conf分配空间，见ngx_http_core_server。server{}中会调用srv_conf loc_conf创建空间,见ngx_http_core_server， location{}中会创建loc_conf空间,见ngx_http_core_location
+/*
+http{}中会调用main_conf srv_conf loc_conf分配空间，见ngx_http_block。server{}中会调用srv_conf loc_conf创
+建空间,见ngx_http_core_server， location{}中会创建loc_conf空间,见ngx_http_core_location
+图形化参考:深入理解NGINX中的图9-2(P302)  图10-1(P353) 图10-1(P356) 图10-1(P359)  图4-2(P145)
+
+ngx_http_conf_ctx_t、ngx_http_core_main_conf_t、ngx_http_core_srv_conf_t、ngx_http_core_loc_conf_s和ngx_cycle_s->conf_ctx的关系见:
+Nginx的http配置结构体的组织结构:http://tech.uc.cn/?p=300
+*/ 
 typedef struct { //相关空间创建和赋值见ngx_http_block, 该结构是ngx_conf_t->ctx成员。所有的配置所处内存的源头在ngx_cycle_t->conf_ctx,见ngx_init_cycle
 /* 指向一个指针数组，数组中的每个成员都是由所有HTTP模块的create_main_conf方法创建的存放全局配置项的结构体，它们存放着解析直属http{}块内的main级别的配置项参数 */
     void        **main_conf;  /* 指针数组，数组中的每个元素指向所有HTTP模块ngx_http_module_t->create_main_conf方法产生的结构体 */
@@ -295,17 +302,29 @@ HTTP框架在读取、重载配置文件时定义了由ngx_http_module_t接口描述的8个阶段，HTTP框
 6）merge_srv_conf
 7）merge_loc_conf
 8）postconfiguration
-当遇到http{．．．)配置块时，HTTP框架会调用所有HTTP模块可能实现的create main conf、create_srv_conf、
-create_ loc_conf方法生成存储main级别配置参数的结构体；在遇到servero）块
-时会再次调用所有HTTP模块的create_srv conf、create loc_conf回调方法生成存储srv级
-别配置参数的结构体；在遇到location{．．．）时则会再次调用create_loc_conf回调方法生成存
-储loc级别配置参数的结构体
+当遇到http{}配置块时，HTTP框架会调用所有HTTP模块可能实现的create main conf、create_srv_conf、
+create_loc_conf方法生成存储main级别配置参数的结构体；在遇到servero{}块时会再次调用所有HTTP模
+块的create_srv conf、create loc_conf回调方法生成存储srv级别配置参数的结构体；在遇到location{}时
+则会再次调用create_loc_conf回调方法生成存储loc级别配置参数的结构体。
+例如如下配置:
+{
+  http {
+     server{
+        location xx {
+            mytest;
+        }
+     }
+  }
+}
+则在解析到http{}的时候会调用一次
+location{}中，则在解析到http{}的时候调用一次create_loc_conf，解析到server{}的时候会调用一次create_loc_conf
+解析到location{}的时候还会调用一次create_loc_conf
 
 事实上，Nginx预设的配置项合并方法有10个，它们的行为与上述的ngx_conf_merge_
-str- value是相似的。参见表4-5中Nginx已经实现好的10个简单的配置项合并宏，它们的
+str- value是相似的。Nginx已经实现好的10个简单的配置项合并宏，它们的
 参数类型与ngx_conf_merge_str_ value -致，而且除了ngx_conf_merge_bufs value外，它们
 都将接收3个参数，分别表示父配置块参数、子配置块参数、默认值。
-表4-5  Nginx预设的10种配置项合并宏
+  Nginx预设的10种配置项合并宏
 ┏━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃    配置项合并塞          ┃    意义                                                                  ┃
 ┣━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
@@ -349,6 +368,31 @@ str- value是相似的。参见表4-5中Nginx已经实现好的10个简单的配置项合并宏，它们的
 ┃value                     ┃value合并宏                                                               ┃
 ┗━━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 */ 
+
+/*
+当遇到http{}配置块时，HTTP框架会调用所有HTTP模块可能实现的create main conf、create_srv_conf、
+create_loc_conf方法生成存储main级别配置参数的结构体；在遇到servero{}块时会再次调用所有HTTP模
+块的create_srv conf、create loc_conf回调方法生成存储srv级别配置参数的结构体；在遇到location{}时
+则会再次调用create_loc_conf回调方法生成存储loc级别配置参数的结构体。
+例如如下配置:
+{
+  http {
+     server{
+        location xx { //location主要用于uri请求匹配
+            mytest;
+        }
+     }
+  }
+}
+则在解析到http{}的时候会调用一次
+location{}中，则在解析到http{}的时候调用一次create_loc_conf，解析到server{}的时候会调用一次create_loc_conf
+解析到location{}的时候还会调用一次create_loc_conf
+
+以ngx_http_mytest_config_module为例:
+HTTP框架在解析nginx.conf文件时只要遇到http{}、server{}、location{}配置块就会立刻分配一个
+http_mytest_conf_t结构体。
+*/
+
 //所有的核心模块NGX_CORE_MODULE对应的上下文ctx为ngx_core_module_t，子模块，例如http{} NGX_HTTP_MODULE模块对应的为上下文为ngx_http_module_t
 //events{} NGX_EVENT_MODULE模块对应的为上下文为ngx_event_module_t
 
@@ -356,7 +400,8 @@ str- value是相似的。参见表4-5中Nginx已经实现好的10个简单的配置项合并宏，它们的
 //成员中的create一般在解析前执行函数，merge在函数后执行
 typedef struct { //注意和ngx_http_conf_ctx_t结构配合        初始化赋值执行，如果为"http{}"中的配置，在ngx_http_block中, ,所有的NGX_HTTP_MODULE模块都在ngx_http_block中执行
     ngx_int_t   (*preconfiguration)(ngx_conf_t *cf); //解析配置文件前调用
-    ngx_int_t   (*postconfiguration)(ngx_conf_t *cf); //完成配置文件的解析后调用
+    //一般用来把对应的模块加入到11个阶段对应的阶段去ngx_http_phases,例如ngx_http_realip_module的ngx_http_realip_init
+    ngx_int_t   (*postconfiguration)(ngx_conf_t *cf); //完成配置文件的解析后调用  
 
 /*当需要创建数据结构用于存储main级别（直属于http{...}块的配置项）的全局配置项时，可以通过create_main_conf回调方法创建存储全局配置项的结构体*/
     void       *(*create_main_conf)(ngx_conf_t *cf);
@@ -371,10 +416,6 @@ typedef struct { //注意和ngx_http_conf_ctx_t结构配合        初始化赋值执行，如果
     void       *(*create_loc_conf)(ngx_conf_t *cf);
 
     /*
-    回顾一下4.1节中的例子，一个test_str配置同时在httpk）、server{．．．）、location /urll
-    {．．．)中出现时，到底以哪一个为准？本节将讨论如何合并不同配置块间的同名配置项，首先
-    回顾一下4.2.1节中ngx_http_modulej昀结构。
-    
     typedef struct {
            void * (*create_loc_conf) (ngx_conf_t *cf) ;
           char*(*merge_loc_conf) (ngx_conf_t *cf, void *prev,
