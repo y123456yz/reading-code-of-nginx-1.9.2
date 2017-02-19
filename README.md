@@ -118,9 +118,6 @@ nginx的以下功能模块的相关代码已经阅读，并对其源码及相关
     ngx_http_log_module详细分析，以及access_log如果是常量路径和变量路径的优化处理过程。  
     NGX_HTTP_LOG_PHASE阶段ngx_http_log_module生效过程及日志记录过程细化分析注释,同时明确ngx_errlog_module和ngx_http_log_module的区别  
     进一步细化分析ngx_http_index_module代码，以及配合rewrite-phase进行内部重定向流程  
-	研究分析ngx_http_autoindex_module目录浏览模块源码分析注释，同时发现只有ngx_http_index_module模块不编译到源码中的时候，  
-		ngx_http_autoindex_module才会生效，如果index-module模块编译进源码，则要么进行内部重定向要么直接关闭连接，永远不会执  
-		行ngx_http_autoindex_module，这里和官网描述不一致，TODO，待后面确认  
     autoindex搭建目录服务器过程源码分析流程  
     结合代码理解If-None-Match和ETag , If-Modified-Since和Last-Modified这几个头部行配合浏览器缓存生效过程,也就是决定是否(304 NOT modified)，  
         并且分析注释ngx_http_not_modified_filter_module实现过程
