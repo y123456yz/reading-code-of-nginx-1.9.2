@@ -1759,7 +1759,7 @@ ngx_http_handler(ngx_http_request_t *r)
 #endif
 
     r->write_event_handler = ngx_http_core_run_phases;
-    ngx_http_core_run_phases(r);
+    ngx_http_core_run_phases(r);  
 }
 
 /*  
@@ -1810,7 +1810,7 @@ ngx_http_process_request·½·¨¿ªÊ¼´¦ÀíÇëÇó£¬Èç¹ûÄ³¸öchecker·½·¨·µ»ØÁËNGX_OK£¬Ôò½«»
 //Í¨¹ıÖ´ĞĞµ±Ç°r->phase_handlerËùÖ¸ÏòµÄ½×¶ÎµÄcheckerº¯Êı
 //ngx_http_process_request->ngx_http_handler->ngx_http_core_run_phases
 void
-ngx_http_core_run_phases(ngx_http_request_t *r)
+ngx_http_core_run_phases(ngx_http_request_t *r) //Ö´ĞĞ¸ÃÇëÇó¶ÔÓÚµÄ½×¶ÎµÄchecker(),²¢»ñÈ¡·µ»ØÖµ
 {
     ngx_int_t                   rc;
     ngx_http_phase_handler_t   *ph;

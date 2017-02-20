@@ -332,7 +332,7 @@ struct ngx_http_phase_handler_s { //ngx_http_phase_engine_t结构体就是所有ngx_htt
 ┏━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┓
 ┃    阶段名称                  ┃    checker方法                   ┃
 ┏━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┓
-┃   NGX_HTTP_POST_READ_PHASE   ┃    ngx_http_core_generic_phase   ┃
+┃   NGX_HTTP_POST_READ_PHASE   ┃ngx_http_core_generic_phase       ┃
 ┣━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━┫
 ┃NGX HTTP SERVER REWRITE PHASE ┃ngx_http_core_rewrite_phase       ┃
 ┣━━━━━━━━━━━━━━━╋━━━━━━━━━━━━━━━━━┫
@@ -359,6 +359,7 @@ struct ngx_http_phase_handler_s { //ngx_http_phase_engine_t结构体就是所有ngx_htt
      //ngx_http_phases阶段中的每一个阶段都有对应的checker函数，通过该checker函数来执行各自对应的。该checker函数在ngx_http_core_run_phases中执行
     ngx_http_phase_handler_pt  checker; //各个阶段的初始化赋值在ngx_http_init_phase_handlers中的checker函数中执行各自的handler方法,cheker是http框架函数，handler是对应的用户具体模块函数
 //除ngx_http_core module模块以外的HTTP模块，只能通过定义handler方法才能介入某一个HTTP处理阶段以处理请求
+//ngx_http_init_phase_handlers中ngx_http_phase_handler_s->handle指向了ngx_http_phase_t->handlers[i]
     ngx_http_handler_pt        handler; //只有在checker方法中才会去调用handler方法,见ngx_http_core_run_phases
 /*
 将要执行的下一个HTTP处理阶段的序号
@@ -401,8 +402,9 @@ typedef struct { //ngx_http_phase_engine_t结构体是保存在全局的ngx_http_core_main
 typedef struct { //存储在ngx_http_core_main_conf_t->phases[]
     //handlers动态数组保存着每一个HTTP模块初始化时添加到当前阶段的处理方法
     ////注意:每一个阶段中最后加入到handlers[]中的会首先添加到cmcf->phase_engine.handlers, 见ngx_http_init_phase_handlers
-    ngx_array_t                handlers; //数组中存储的是ngx_http_handler_pt   ngx_http_init_phase_handlers
-} ngx_http_phase_t;
+    //各个模块通过postconfiguration()接口加入到各自阶段的该数组中，例如参考ngx_http_realip_init
+    ngx_array_t                handlers; //数组中存储的是ngx_http_handler_pt   ngx_http_init_phase_handlers中ngx_http_phase_handler_s->handle指向了ngx_http_phase_t->handlers[i]
+} ngx_http_phase_t; 
 
 /*ngx_http_core_main_conf_t(ngx_http_core_create_main_conf中创建) ngx_http_core_srv_conf_t(ngx_http_core_create_srv_conf创建)  
 ngx_http_core_loc_conf_s(ngx_http_core_create_loc_conf创建) */
@@ -630,7 +632,7 @@ typedef struct {
     size_t                      request_pool_size; //默认4096，见ngx_http_core_merge_srv_conf
     size_t                      client_header_buffer_size;
 
-    //client_header_timeout为读取客户端数据时默认分配的空间，如果该空间不够存储http头部行和请求行，则会调用large_client_header_buffers
+    //client_header_buffer_size为读取客户端数据时默认分配的空间，如果该空间不够存储http头部行和请求行，则会调用large_client_header_buffers
     //从新分配空间，并把之前的空间内容拷贝到新空间中，所以，这意味着可变长度的HTTP请求行加上HTTP头部的长度总和不能超过large_client_ header_
     //buffers指定的字节数，否则Nginx将会报错。
     ngx_bufs_t                  large_client_header_buffers; 

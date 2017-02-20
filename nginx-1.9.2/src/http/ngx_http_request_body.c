@@ -48,7 +48,10 @@ ngx_int_t  //一般都是需要访问上游服务器的时候才会读取包体，例如ngx_http_proxy_ha
 
 /*
 一般都是如果解析头部行后，后面有携带包体，则会走到这里，如果包体还没读完，下次也不会走到该函数，而是走ngx_http_do_read_client_request_body
-实际上走到这里面的包体内容是在读取头部的时候，一起读出来的，读取地方见ngx_http_wait_request_handler*/
+实际上走到这里面的包体内容是在读取头部的时候，一起读出来的，读取地方见ngx_http_wait_request_handler
+
+在NGX_HTTP_CONTENT_PHASE阶段通过ngx_http_core_content_phase调用content阶段的handler从而执行ngx_http_proxy_handler  ngx_http_redis2_handler  ngx_http_fastcgi_handler等，在这些函数中开始读取包体
+*/
 ngx_http_read_client_request_body(ngx_http_request_t *r,  //只有在连接后端服务器的时候才会读取客户端请求包体，见ngx_http_xxx_handler(proxy fastcgi等)
     ngx_http_client_body_handler_pt post_handler) //post_handler在ngx_http_do_read_client_request_body接收完所有包体后执行，或者在本函数能读取完包体后也会执行
     //post_handler方法被回调时，务必调用类似ngx_http_finalize_request的方法去结束请求，否则引用计数会始终无法清零，从而导致请求无法释放。
@@ -763,7 +766,6 @@ HTTP模块调用的ngx_http_discard_request_body方法用于第一次启动丢弃包体动作，而ngx
 求的read_event_handler方法的，在有新的可读事件时会调用它处理包体。ngx_http_read discarded_request_body方法则是根据上述两个方法
 通用部分提取出的公共方法，用来读取包体且不做任何处理。
 */
-
 ngx_int_t
 ngx_http_discard_request_body(ngx_http_request_t *r)
 {
@@ -779,7 +781,7 @@ ngx_http_discard_request_body(ngx_http_request_t *r)
 #endif
 
     /*
-     首先检查当前请求是一个子请求还是原始请求。为什么要检查这个呢？因为对于子请求而言，它木是来自客户端的请求，所以不存在处理HTTP
+     首先检查当前请求是一个子请求还是原始请求。为什么要检查这个呢？因为对于子请求而言，它不是来自客户端的请求，所以不存在处理HTTP
      请求包体的概念。如果当前请求是原始请求，则继续执行；如果它是子请求，则直接返回NGX_OK表示丢弃包体成功。检查ngx_http_request_t结构
      体的request_body成员，如果它已经被赋值过且不再为NULL空指针，则说明已经接收过包体了，这时也需要返回NGX_OK表示成功。
      */
@@ -823,7 +825,7 @@ ngx_http_discard_request_body(ngx_http_request_t *r)
     }
 
     /*
-      在接收HTTP头部时，还是要检查是否凑巧已经接收到完整的包体（如果包体很小，那么这是非常可能发生的事），如果已经接收到完整的包
+        在接收HTTP头部时，还是要检查是否凑巧已经接收到完整的包体（如果包体很小，那么这是非常可能发生的事），如果已经接收到完整的包
     体，则直接返回NGX OK，表示丢弃包体成功，否则，说明需要多次的调度才能完成丢弃包体这一动作，此时把请求的read_event_handler
     成员设置为ngx_http_discarded_request_body_handler方法。
       */
@@ -845,15 +847,15 @@ ngx_http_discard_request_body(ngx_http_request_t *r)
     /* rc == NGX_AGAIN */
     
     r->read_event_handler = ngx_http_discarded_request_body_handler; //下次读事件到来时通过ngx_http_request_handler来调用
-
-    if (ngx_handle_read_event(rev, 0, NGX_FUNC_LINE) != NGX_OK) { //调用ngx_handle_read_event方法把读事件添加到epoll中  handle为ngx_http_request_handler
+    /* 有可能执行了ngx_http_block_reading->ngx_http_block_reading，所以如果需要继续读取客户端请求，需要add event */
+    if (ngx_handle_read_event(rev, 0, NGX_FUNC_LINE) != NGX_OK) { //调用ngx_handle_read_event方法把读事件添加到epoll中handle为ngx_http_request_handler
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
     /*
-    返回非NGX_ OK表示Nginx的事件框架触发事件需要多次调度才能完成丢弃包体这一动作，于是先把引用计数加1，防止这边还在丢弃包体，
+    返回非NGX_OK表示Nginx的事件框架触发事件需要多次调度才能完成丢弃包体这一动作，于是先把引用计数加1，防止这边还在丢弃包体，
     而其他事件却已让请求意外销毁，引发严重错误。同时把ngx_http_request_t结构体的discard_body标志位置为1，表示正在丢弃包体，并
-    返回NGX—OK，当然，达时的NGX OK绝不表示已经成功地接收完包体，只是说明ngx_http_discard_request_body执行完毕而已。
+    返回NGX_OK，当然，达时的NGX_OK绝不表示已经成功地接收完包体，只是说明ngx_http_discard_request_body执行完毕而已。
      */
     r->count++;
     r->discard_body = 1;
@@ -962,7 +964,7 @@ ngx_http_read_discarded_request_body(ngx_http_request_t *r)
     for ( ;; ) {
 /*
     丢弃包体时请求的request_body成员实际上是NULL室指针，那么用什么变量来表示已经丢弃的包体有多大呢？实际上这时使用
-了请求ngx_http_request_t结构体headers- in成员里的content length_n，最初它等于content-length头部，而每丢弃一部分包体，就会在
+了请求ngx_http_request_t结构体headers_in成员里的content_length_n，最初它等于content-length头部，而每丢弃一部分包体，就会在
 content_length_n变量中减去相应的大小。因此，content_length_n表示还需要丢弃的包体长度，这里首先检查请求的content_length_n成员，
 如果它已经等于0，则表示已经接收到完整的包体，这时要把read event_handler重置为ngx_http_block_reading方法，表示如果再有可读
 事件被触发时，不做任何处理。同时返回NGX_OK，告诉上层的方法已经丢弃了所有包体。

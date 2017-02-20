@@ -72,8 +72,6 @@ ngx_uint_t   ngx_http_max_module; //二级模块类型http模块个数，见ngx_http_block  
 当执行ngx_http_send_header发送HTTP头部时，就从ngx_http_top_header_filter指针开始遍历所有的HTTP头部过滤模块，
 而在执行ngx_http_output_filter发送HTTP包体时，就从ngx_http_top_body_filter指针开始遍历所有的HTTP包体过滤模块
 */
-//处理流程ngx_http_send_header中执行ngx_http_myfilter_header_filter，然后在ngx_http_myfilter_header_filter中执行下一个filter，也就是
-//ngx_http_next_header_filter中存储之前的filter，这样依次循环下去，那么所有的filter函数都会得到执行
 
 //包体通过ngx_http_output_filter循环发送
 
@@ -618,7 +616,7 @@ ngx_http_init_phase_handlers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
 
         switch (i) { //所有阶段的checker在ngx_http_core_run_phases中调用
         /*
-        NGX__HTTP_SERVERREWRITEPHASE阶段，和第3阶段NGXHTTPREWRITE_PHASE都属于地址重写，也都是针对rewrite模块而设定的阶段，前
+        NGX_HTTP_SERVERREWRITEPHASE阶段，和第3阶段NGXHTTPREWRITE_PHASE都属于地址重写，也都是针对rewrite模块而设定的阶段，前
         者用于server上下文里的地址重写，而后者用于location上下文里的地址重写。为什么要设置两个地址重写阶段，原因在于rewrite模块
         的相关指令（比如rewrite、if、set等）既可用于server上下文．又可用于location上下文。在客户端请求被Nginx接收后，首先做server
         查找与定位，在定位到server（如果没查找到就是默认server）后执行NGXHTTP_SERVER_REWRITEPHASE阶段上的回调函数，然后再进入到下

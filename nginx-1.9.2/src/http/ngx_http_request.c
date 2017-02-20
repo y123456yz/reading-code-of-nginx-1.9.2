@@ -76,7 +76,7 @@ static char *ngx_http_client_errors[] = {
     "client sent invalid method in HTTP/0.9 request"
 };
 
-//把ngx_http_headers_in中的所有成员做hash运算，然后存放到cmcf->headers_in_hash中
+//把ngx_http_headers_in中的所有成员做hash运算，然后存放到cmcf->headers_in_hash中，见ngx_http_init_headers_in_hash
 ngx_http_header_t  ngx_http_headers_in[] = {  
 //通过ngx_http_variable_header函数获取ngx_http_core_variables中相关变量的值，这些值的来源就是ngx_http_headers_in中的hander解析的客户端请求头部
 
@@ -957,7 +957,7 @@ epoll这个事件驱动机制多次调度，反复地接收TCP流并使用状态机解析它们，直到确认接收
 理完该请求的全部业务，在归还控制权到epoll事件模块后，该请求再次被回调时，将通过ngx_http_request_handler方法来处理
 */
 static void
-ngx_http_process_request_line(ngx_event_t *rev) //gx_http_process_request_line方法来接收HTTP请求行
+ngx_http_process_request_line(ngx_event_t *rev) //ngx_http_process_request_line方法来接收HTTP请求行
 {
     ssize_t              n;
     ngx_int_t            rc, rv;
@@ -1096,7 +1096,7 @@ ngx_http_process_request_line(ngx_event_t *rev) //gx_http_process_request_line方
         /* NGX_AGAIN: a request line parsing is still incomplete */
         /*
              如果ngx_http_parse_request_line方法返回NGX_AGAIN，则表示需要接收更多的字符流，这时需要对header_in缓冲区做判断，检查
-         是否还有空闲的内存，如果还有未使用的内存可以继续接收字符流，则跳转到第2步，检查缓冲区是否有未解析的字符流，否则调用
+         是否还有空闲的内存，如果还有未使用的内存可以继续接收字符流，检查缓冲区是否有未解析的字符流，否则调用
          ngx_http_alloc_large_header_buffer方法分配更大的接收缓冲区。到底分配多大呢？这由nginx.conf文件中的large_client_header_buffers配置项指定。
           */
         if (r->header_in->pos == r->header_in->end) {
@@ -1370,7 +1370,7 @@ ngx_http_process_request_headers(ngx_event_t *rev)
             }
 
             /* a header line has been parsed successfully */
-
+            /* 解析的头不会KEY:VALUE存入到headers_in中 */
             h = ngx_list_push(&r->headers_in.headers);
             if (h == NULL) {
                 ngx_http_close_request(r, NGX_HTTP_INTERNAL_SERVER_ERROR);
@@ -1536,7 +1536,7 @@ ngx_http_read_request_header(ngx_http_request_t *r)
 }
 
 /*
-//client_header_timeout为读取客户端数据时默认分配的空间，如果该空间不够存储http头部行和请求行，则会调用large_client_header_buffers
+//client_header_buffer_size为读取客户端数据时默认分配的空间，如果该空间不够存储http头部行和请求行，则会调用large_client_header_buffers
 //从新分配空间，并把之前的空间内容拷贝到新空间中，所以，这意味着可变长度的HTTP请求行加上HTTP头部的长度总和不能超过large_client_ header_
 //buffers指定的字节数，否则Nginx将会报错。
 */
@@ -2049,12 +2049,12 @@ ngx_http_process_request(ngx_http_request_t *r)
 处理请求。而这里将它设置为ngx_http_block_reading方法，这个方法可认为不做任何事，它的意义在于，目前已经开始处理HTTP请求，除非某个HTTP模块重新
 设置了read_event_handler方法，否则任何读事件都将得不到处理，也可似认为读事件被阻 塞了。
 */
-    r->read_event_handler = ngx_http_block_reading;
+    r->read_event_handler = ngx_http_block_reading; //表示暂时不要读取客户端请求    
 
     /* ngx_http_process_request和ngx_http_request_handler这两个方法的共通之处在于，它们都会先按阶段调用各个HTTP模块处理请求，再处理post请求 */
     ngx_http_handler(r); //这里面会执行ngx_http_core_run_phases
 
-    /*
+/*
 HTTP框架无论是调用ngx_http_process_request方法（首次从业务上处理请求）还是ngx_http_request_handler方法（TCP连接上后续的事件触发时）处理
 请求，最后都有一个步骤，就是调用ngx_http_run_posted_requests方法处理post请求
 */
@@ -3182,8 +3182,12 @@ ngx_http_request_finalizer(ngx_http_request_t *r)
     ngx_http_finalize_request(r, 0);
 }
 
-//把读事件从epoll中移除。只对epoll lt模式其作用
-//它的意义在于，目前已经开始处理HTTP请求，除非某个HTTP模块重新设置了read_event_handler方法，否则任何读事件都将得不到处理，也可似认为读事件被阻 塞了。
+/*
+把读事件从epoll中移除。只对epoll lt模式其作用它的意义在于，目前已经开始处理HTTP请求，除非某个HTTP模块重新设置了read_event_handler方法，
+否则任何读事件都将得不到处理，也可似认为读事件被阻 塞了。
+
+注意这里面会调用ngx_del_event，因此如果需要继续读取客户端请求内容，需要加上ngx_add_event，例如可以参考下ngx_http_discard_request_body
+*/
 void
 ngx_http_block_reading(ngx_http_request_t *r)
 {

@@ -28,7 +28,17 @@ ngx_http_module_t  ngx_http_static_module_ctx = {
     NULL                                   /* merge location configuration */
 };
 
+/*
+location / {			
+    index index11.html	#必须保证新uri所在目录存在并且该目录下面没有index11.html，autoindex对应的ngx_http_autoindex_handler才会生效		
+    autoindex on;		
+}
+只有在index11.html文件不存在的时候才会执行autoindex，如果没有设置index则默认打开index.html，必须保证index.html的uri目录存在，如果不存在，是一个不存在的目录也不会执行autoindex
 
+Nginx 一般会在 content 阶段安排三个这样的静态资源服务模块:ngx_index 模块， ngx_autoindex 模块、ngx_static 模块
+ngx_index 和 ngx_autoindex 模块都只会作用于那些 URI 以 / 结尾的请求，例如请求 GET /cats/，而对于不以 / 结尾的请求则会直接忽略，
+同时把处理权移交给 content 阶段的下一个模块。而 ngx_static 模块则刚好相反，直接忽略那些 URI 以 / 结尾的请求。 
+*/
 ngx_module_t  ngx_http_static_module = {
     NGX_MODULE_V1,
     &ngx_http_static_module_ctx,           /* module context */
@@ -44,6 +54,17 @@ ngx_module_t  ngx_http_static_module = {
     NGX_MODULE_V1_PADDING
 };
 
+/*
+location / {			
+    index index11.html	#必须保证新uri所在目录存在并且该目录下面没有index11.html，autoindex对应的ngx_http_autoindex_handler才会生效		
+    autoindex on;		
+}
+只有在index11.html文件不存在的时候才会执行autoindex，如果没有设置index则默认打开index.html，必须保证index.html的uri目录存在，如果不存在，是一个不存在的目录也不会执行autoindex
+
+Nginx 一般会在 content 阶段安排三个这样的静态资源服务模块:ngx_index 模块， ngx_autoindex 模块、ngx_static 模块
+ngx_index 和 ngx_autoindex 模块都只会作用于那些 URI 以 / 结尾的请求，例如请求 GET /cats/，而对于不以 / 结尾的请求则会直接忽略，
+同时把处理权移交给 content 阶段的下一个模块。而 ngx_static 模块则刚好相反，直接忽略那些 URI 以 / 结尾的请求。 
+*/
 //ngx_http_static_module模块主要是在nginx系统中查找uri指定文件是否存在，存在则直接返回给客户端
 static ngx_int_t
 ngx_http_static_handler(ngx_http_request_t *r)

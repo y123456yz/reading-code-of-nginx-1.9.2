@@ -85,6 +85,10 @@ location / {
     autoindex on;		
 }
 只有在index11.html文件不存在的时候才会执行autoindex，如果没有设置index则默认打开index.html，必须保证index.html的uri目录存在，如果不存在，是一个不存在的目录也不会执行autoindex
+
+Nginx 一般会在 content 阶段安排三个这样的静态资源服务模块:ngx_index 模块， ngx_autoindex 模块、ngx_static 模块
+ngx_index 和 ngx_autoindex 模块都只会作用于那些 URI 以 / 结尾的请求，例如请求 GET /cats/，而对于不以 / 结尾的请求则会直接忽略，
+同时把处理权移交给 content 阶段的下一个模块。而 ngx_static 模块则刚好相反，直接忽略那些 URI 以 / 结尾的请求。 
 */
 ngx_module_t  ngx_http_index_module = {
     NGX_MODULE_V1,

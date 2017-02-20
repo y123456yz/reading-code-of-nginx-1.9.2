@@ -159,14 +159,12 @@ ngx_open_cached_file(ngx_open_file_cache_t *cache, ngx_str_t *name,
     of->fd = NGX_INVALID_FILE;
     of->err = 0;
 
-    if (cache == NULL) { 
+    if (cache == NULL) { // 如果cache结构没有被初始化， 则获取name文件stat信息。
     /* 
     如果没有配置open_file_cache max=1000 inactive=20s;，也就是说没有缓存cache缓存文件对应的文件stat信息，则每次都要从新打开文件获取文件stat信息，
     如果有配置open_file_cache，则会把打开的cache缓存文件stat信息按照ngx_crc32_long做hash后添加到ngx_cached_open_file_t->rbtree中，这样下次在请求该
     uri，则就不用再次open文件后在stat获取文件属性了，这样可以提高效率,参考ngx_open_cached_file 
     */ 
-    // 如果cache结构没有被初始化， 则获取name文件stat信息。
-
         if (of->test_only) {//如果只是测试用  例如进入index module的时候，就走这里
 
             if (ngx_file_info_wrapper(name, of, &fi, pool->log) //对该文件的文件信息进行查询就返回，并不实际打开它

@@ -516,7 +516,7 @@ struct ngx_http_upstream_s { //该结构中的部分成员是从upstream{}中的相关配置里面(
 
     /* request_bufs决定发送什么样的请求给上游服务器，在实现create_request方法时需要设置它 
     request_bufs以链表的方式把ngx_buf_t缓冲区链接起来，它表示所有需要发送到上游服务器的请求内容。
-    所以，HTTP模块实现的create_request回调方法就在于构造reque st_bufg链表
+    所以，HTTP模块实现的create_request回调方法就在于构造request_bufg链表
     */ /* 这上面的fastcgi_param参数和客户端请求头key公用一个cl，客户端包体另外占用一个或者多个cl，他们通过next连接在一起，最终前部连接到u->request_bufs
         所有需要发往后端的数据就在u->request_bufs中了，发送的时候从里面取出来即可，参考ngx_http_fastcgi_create_request*/
     /*

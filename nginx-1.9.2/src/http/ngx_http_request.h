@@ -357,14 +357,14 @@ Nginx»áÒ»Ö±ÈÏÎªÓĞHTTPÄ£¿é»¹ĞèÒª´¦ÀíÕâ¸öÇëÇó£¬±ØĞëµÈ´ıHTTPÄ£¿é½«µÍ4Î»È«ÖÃÎª0²Å»áÕ
 
 typedef enum {
     NGX_HTTP_INITING_REQUEST_STATE = 0,
-    NGX_HTTP_READING_REQUEST_STATE,
-    NGX_HTTP_PROCESS_REQUEST_STATE,
+    NGX_HTTP_READING_REQUEST_STATE,   /* ngx_http_create_requestÖĞ¸³Öµ */
+    NGX_HTTP_PROCESS_REQUEST_STATE, /* ½âÎöÍæÍ·²¿ĞĞºóÔÚngx_http_process_request_headersÖĞ¸³Öµ */
 
     NGX_HTTP_CONNECT_UPSTREAM_STATE,
     NGX_HTTP_WRITING_UPSTREAM_STATE,
     NGX_HTTP_READING_UPSTREAM_STATE,
 
-    NGX_HTTP_WRITING_REQUEST_STATE,
+    NGX_HTTP_WRITING_REQUEST_STATE, /* ngx_http_set_write_handler */
     NGX_HTTP_LINGERING_CLOSE_STATE,
     NGX_HTTP_KEEPALIVE_STATE
 } ngx_http_state_e;
@@ -1175,7 +1175,7 @@ struct ngx_http_request_s { //µ±½ÓÊÕµ½¿Í»§¶ËÇëÇóÊı¾İºó£¬µ÷ÓÃngx_http_create_requ
      //ÔÚ¶ÁÈ¡¿Í»§¶ËÀ´µÄ°üÌåÊ±£¬¸³ÖµÎªngx_http_read_client_request_body_handler
      ¶ªÆú¿Í»§¶ËµÄ°üÌåÊ±£¬¸³ÖµÎªngx_http_discarded_request_body_handler
      */ //×¢Òângx_http_upstream_tºÍngx_http_request_t¶¼ÓĞ¸Ã³ÉÔ± ·Ö±ğÔÚngx_http_request_handlerºÍngx_http_upstream_handlerÖĞÖ´ĞĞ
-    ngx_http_event_handler_pt         read_event_handler; //ngx_http_request_handlerº¯ÊıÖĞÖ´ĞĞ
+    ngx_http_event_handler_pt         read_event_handler;  
 
     /* Óëread_event_handler»Øµ÷·½·¨ÀàËÆ£¬Èç¹ûngx_http_request_handler·½·¨ÅĞ¶Ïµ±Ç°ÊÂ¼şÊÇ¿ÉĞ´ÊÂ¼ş£¬Ôòµ÷ÓÃwrite_event_handler´¦ÀíÇëÇó */
     /*ÇëÇóĞĞºÍÇëÇóÍ·²¿½âÎöÍê³Éºó£¬»áÔÚngx_http_handlerÖĞ¸³ÖµÎªngx_http_core_run_phases
@@ -1348,6 +1348,7 @@ ngx_http_run_posted_requests·½·¨¾ÍÊÇÍ¨¹ı±éÀú¸Ãµ¥Á´±íÀ´Ö´ĞĞ×ÓÇëÇóµÄ */
 *///phase_handlerÊµ¼ÊÉÏÊÇ¸Ã½×¶ÎµÄ´¦Àí·½·¨º¯ÊıÔÚngx_http_phase_engine_t->handlersÊı×éÖĞµÄÎ»ÖÃ
     ngx_int_t                         phase_handler; 
     //±íÊ¾NGX HTTP CONTENT PHASE½×¶ÎÌá¹©¸øHTTPÄ£¿é´¦ÀíÇëÇóµÄÒ»ÖÖ·½Ê½£¬content handlerÖ¸ÏòHTTPÄ£¿éÊµÏÖµÄÇëÇó´¦Àí·½·¨,ÔÚngx_http_core_content_phaseÖĞÖ´ĞĞ
+    //ngx_http_proxy_handler  ngx_http_redis2_handler  ngx_http_fastcgi_handlerµÈ
     ngx_http_handler_pt               content_handler; ////ÔÚngx_http_update_location_configÖĞ¸³Öµ¸ør->content_handler = clcf->handler;
 /*
     ÔÚNGX_HTTP_ACCESS_PHASE½×¶ÎĞèÒªÅĞ¶ÏÇëÇóÊÇ·ñ¾ßÓĞ·ÃÎÊÈ¨ÏŞÊ±£¬Í¨¹ıaccess_codeÀ´´«µİHTTPÄ£¿éµÄhandler»Øµ÷·½·¨µÄ·µ»ØÖµ£¬Èç¹ûaccess_codeÎª0£¬

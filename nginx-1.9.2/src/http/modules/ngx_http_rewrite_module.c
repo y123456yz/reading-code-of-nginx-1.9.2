@@ -1153,7 +1153,7 @@ ngx_http_rewrite_handler(ngx_http_request_t *r)
     e->status = NGX_DECLINED;
 
     /*
-    依次对e->ip 数组中的不同结构进行处理，在处理时通过将当前结构进行强转，就   可以得到具体的处理handler，因为每个结构的第一个
+    依次对e->ip 数组中的不同结构进行处理，在处理时通过将当前结构进行强转，就可以得到具体的处理handler，因为每个结构的第一个
     变量就是一个handler。我们看   的出来这些结构成员的设计都是有它的意图的。
      */
     while (*(uintptr_t *) e->ip) {

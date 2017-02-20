@@ -4441,7 +4441,7 @@ server {
 //proxy_pass解析 //这个函数会在nginx碰到proxy_pass指令的时候，就调用，然后设置相关的回调函数到对应的模块中去
 static char *
 ngx_http_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
-{
+{//在NGX_HTTP_CONTENT_PHASE里面调用这个handler，即ngx_http_proxy_handler。  
     ngx_http_proxy_loc_conf_t *plcf = conf;
 
     size_t                      add;
@@ -4460,7 +4460,7 @@ ngx_http_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
 
     //设置loc的handler，这个clcf->handler会在ngx_http_update_location_config()里面赋予r->content_handler，从
-    // 而在NGX_HTTP_CONTENT_PHASE里面调用这个handler，即ngx_http_fastcgi_handler。  
+    // 而在NGX_HTTP_CONTENT_PHASE里面调用这个handler，即ngx_http_proxy_handler。  
     clcf->handler = ngx_http_proxy_handler;
 
     if (clcf->name.data[clcf->name.len - 1] == '/') {
