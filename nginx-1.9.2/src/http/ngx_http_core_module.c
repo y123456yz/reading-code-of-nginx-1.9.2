@@ -3589,13 +3589,6 @@ ngx_http_gzip_ok(ngx_http_request_t *r)
         return NGX_DECLINED;
     }
 
-#if (NGX_HTTP_SPDY)
-    if (r->spdy_stream) {
-        r->gzip_ok = 1;
-        return NGX_OK;
-    }
-#endif
-
     ae = r->headers_in.accept_encoding;
     if (ae == NULL) {
         return NGX_DECLINED;
@@ -4028,8 +4021,8 @@ ngx_http_subrequest(ngx_http_request_t *r,
 
     sr->request_body = r->request_body;
 
-#if (NGX_HTTP_SPDY)
-    sr->spdy_stream = r->spdy_stream;
+#if (NGX_HTTP_V2)
+    sr->stream = r->stream;
 #endif
 
     sr->method = NGX_HTTP_GET;
@@ -6374,16 +6367,24 @@ deferred, ipv6only, or so_keepalive parameters are used then for a given address
 #endif
         }
 
-        if (ngx_strcmp(value[n].data, "spdy") == 0) {
-#if (NGX_HTTP_SPDY)
-            lsopt.spdy = 1;
+        if (ngx_strcmp(value[n].data, "http2") == 0) {
+#if (NGX_HTTP_V2)
+            lsopt.http2 = 1;
             continue;
 #else
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                               "the \"spdy\" parameter requires "
-                               "ngx_http_spdy_module");
+                               "the \"http2\" parameter requires "
+                               "ngx_http_v2_module");
             return NGX_CONF_ERROR;
 #endif
+        }
+
+        if (ngx_strcmp(value[n].data, "spdy") == 0) {
+            ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                               "invalid parameter \"spdy\": "
+                               "the SPDY module was deprecated, "
+                               "use the HTTP/2 module instead");
+            return NGX_CONF_ERROR;
         }
 
         if (ngx_strncmp(value[n].data, "so_keepalive=", 13) == 0) {

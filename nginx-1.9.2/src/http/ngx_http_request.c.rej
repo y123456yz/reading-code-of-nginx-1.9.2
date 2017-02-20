@@ -1,0 +1,15 @@
+--- src/http/ngx_http_request.c	Tue Aug 18 18:16:17 2015 +0300
++++ src/http/ngx_http_request.c	Fri Sep 11 20:13:06 2015 +0300
+@@ -3399,9 +3398,9 @@
+         return;
+     }
+ 
+-#if (NGX_HTTP_SPDY)
+-    if (r->spdy_stream) {
+-        ngx_http_spdy_close_stream(r->spdy_stream, rc);
++#if (NGX_HTTP_V2)
++    if (r->stream) {
++        ngx_http_v2_close_stream(r->stream, rc);
+         return;
+     }
+ #endif

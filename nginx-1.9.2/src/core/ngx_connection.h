@@ -199,6 +199,8 @@ typedef enum {
 #define NGX_LOWLEVEL_BUFFERED  0x0f
 #define NGX_SSL_BUFFERED       0x01
 #define NGX_SPDY_BUFFERED      0x02
+#define NGX_HTTP_V2_BUFFERED   0x02
+
 /*
 Nginx中定义了基本的数据结构ngx_connection_t来表示连接，这个连接表示是客户端主动发起的、Nginx服务器被动接受的TCP连接，我们可以简单称
 其为被动连接。同时，在有些请求的处理过程中，Nginx会试图主动向其他上游服务器建立连接，并以此连接与上游服务器通信，因此，这样的

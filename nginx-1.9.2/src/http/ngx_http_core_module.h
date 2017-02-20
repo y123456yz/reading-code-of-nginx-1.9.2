@@ -123,8 +123,8 @@ deferred, ipv6only, or so_keepalive parameters are used then for a given address
 */
     unsigned                   ssl:1;
 #endif
-#if (NGX_HTTP_SPDY)
-    unsigned                   spdy:1;
+#if (NGX_HTTP_V2)
+    unsigned                   http2:1;
 #endif
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
     unsigned                   ipv6only:1;
@@ -710,8 +710,8 @@ struct ngx_http_addr_conf_s {//创建空间赋值在ngx_http_add_addrs。 该结构体是ngx_
 #if (NGX_HTTP_SSL)
     unsigned                   ssl:1;
 #endif
-#if (NGX_HTTP_SPDY)
-    unsigned                   spdy:1;
+#if (NGX_HTTP_V2)
+    unsigned                   http2:1;
 #endif
     unsigned                   proxy_protocol:1;
 };

@@ -27,6 +27,7 @@ HTTP 1.0¼°HTTP0.9¹æ¶¨ä¯ÀÀÆ÷Óë·şÎñÆ÷Ö»±£³Ö¶ÌÔİµÄÁ¬½Ó£¬ä¯ÀÀÆ÷µÄÃ¿´ÎÇëÇó¶¼ĞèÒªÓë·şÎ
 #define NGX_HTTP_VERSION_9                 9    //HTTP 0/9
 #define NGX_HTTP_VERSION_10                1000 //HTTP 1/0
 #define NGX_HTTP_VERSION_11                1001 //HTTP 1/1
+#define NGX_HTTP_VERSION_20                2000
 
 /*
 HTTP PUT·½·¨ºÍPOST·½·¨µÄÇø±ğ
@@ -1400,9 +1401,15 @@ ngx_http_run_posted_requests·½·¨¾ÍÊÇÍ¨¹ı±éÀú¸Ãµ¥Á´±íÀ´Ö´ĞĞ×ÓÇëÇóµÄ */
     //¸Ãngx_http_request_t»áÒ»Ö±ÓĞĞ§£¬³ı·Ç¹Ø±ÕÁ¬½Ó¡£Òò´Ë¸Ãº¯ÊıÖ»»áµ÷ÓÃÒ»´Î£¬Ò²¾ÍÊÇµÚÒ»¸ö¿Í»§¶ËÇëÇó±¨ÎÄ¹ıÀ´µÄÊ±ºò´´½¨£¬Ò»Ö±³ÖĞøµ½Á¬½Ó¹Ø±Õ
     //¸Ã½á¹¹´æ´¢ÁË·şÎñÆ÷¶Ë½ÓÊÕ¿Í»§¶ËÁ¬½ÓÊ±£¬·şÎñÆ÷¶ËËùÔÚµÄserver{]ÉÏÏÂÎÄctx  server_nameµÈÅäÖÃĞÅÏ¢
     ngx_http_connection_t            *http_connection; //´æ´¢ngx_connection_t->dataÖ¸ÏòµÄngx_http_connection_t£¬¼ûngx_http_create_request
+
 #if (NGX_HTTP_SPDY)
     ngx_http_spdy_stream_t           *spdy_stream;
 #endif
+
+    #if (NGX_HTTP_V2)
+        ngx_http_v2_stream_t             *stream;
+    #endif
+
 
     ngx_http_log_handler_pt           log_handler;
     //ÔÚÕâ¸öÇëÇóÖĞÈç¹û´ò¿ªÁËÄ³Ğ©×ÊÔ´£¬²¢ĞèÒªÔÚÇëÇó½áÊøÊ±ÊÍ·Å£¬ÄÇÃ´¶¼ĞèÒªÔÚ°Ñ¶¨ÒåµÄÊÍ·Å×ÊÔ´·½·¨Ìí¼Óµ½cleanup³ÉÔ±ÖĞ
