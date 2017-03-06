@@ -138,13 +138,13 @@ nginx的以下功能模块的相关代码已经阅读，并对其源码及相关
 	
 16.7.31   
 	添加了新增模块的编译方法  
-	由于近期做分布式缓存，需要把nginx的高并发机制移植到twemproxy上，从新对多进程多核绑定、异步网络机制进行了重新梳理
+	由于近期做分布式缓存，需要把nginx的高并发机制移植到twemproxy上，从新对多进程多核绑定、异步网络机制进行了重新梳理  
 	   
 16.9.31   
-	热启动reload、优雅退出quit、热升级代码分析注释
-	subrequest重新分析注释
+	热启动reload、优雅退出quit、热升级代码分析注释  
+	subrequest重新分析注释  
 	
-17.2.20
+17.2.20  
     path http2代码到nginx-1.9.2
   	  
   	 
@@ -155,8 +155,8 @@ nginx的以下功能模块的相关代码已经阅读，并对其源码及相关
     电了，则检测套接字是判断不出来的，协议栈需要长时间过后才能判断出，如果关闭掉协议栈的keepalive可能永远检测不出，这时候nginx还是会把客户端请求发往后端服务器，
 	如果发往后端服务器数据大小很大，可能需要多次write，这时候会由write timeout来判断出后端出现问题。但是如果发往后端数据长度小，则不会添加write定时器，而是通过
 	写定时器超时来判断，这样不能立刻判断出后端异常，因为读写定时器默认都是60s，参考ngx_http_upstream_send_request， 
-
-    2. nginx限流可能不准确，见https://github.com/alibaba/tengine/issues/855分析	
+	### 链接
+	2.[限流不准确分析](https://github.com/alibaba/tengine/issues/855)<br />
 	 
    
   
