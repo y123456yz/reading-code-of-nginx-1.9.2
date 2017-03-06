@@ -170,6 +170,8 @@ ngx_http_upstream_init_hash_peer(ngx_http_request_t *r,
 }
 
 
+/*ngx_http_upstream_get_round_robin_peer ngx_http_upstream_get_least_conn_peer ngx_http_upstream_get_hash_peer  
+ngx_http_upstream_get_ip_hash_peer ngx_http_upstream_get_keepalive_peerµÈ */
 static ngx_int_t
 ngx_http_upstream_get_hash_peer(ngx_peer_connection_t *pc, void *data)
 {

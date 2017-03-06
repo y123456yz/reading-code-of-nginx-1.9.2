@@ -606,6 +606,8 @@ upstream中无server可以使用。就会清空所有peers数组中所有的失败次数的记录，使所有s
     并返回错误码给nginx,  nginx得到此错误码后，就不再向后台server发请求，而是在nginx的错误日志中输出“no live upstreams while connecting to upstream”
     的记录（这就是no live产生的真正原因），并直接返回给请求的客户端一个502的错误。
 */
+/*ngx_http_upstream_get_round_robin_peer ngx_http_upstream_get_least_conn_peer ngx_http_upstream_get_hash_peer  
+ngx_http_upstream_get_ip_hash_peer ngx_http_upstream_get_keepalive_peer等 */
 ngx_int_t
 ngx_http_upstream_get_round_robin_peer(ngx_peer_connection_t *pc, void *data)
 {

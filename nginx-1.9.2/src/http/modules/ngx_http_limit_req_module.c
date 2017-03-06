@@ -9,7 +9,12 @@
 #include <ngx_core.h>
 #include <ngx_http.h>
 
-
+/*
+size = offsetof(ngx_rbtree_node_t, color)
+           + offsetof(ngx_http_limit_req_node_t, data)
+           + key->len;
+红黑树分配空间大小，见ngx_http_limit_req_lookup
+*/
 typedef struct {
     u_char                       color;
     u_char                       dummy;
@@ -20,22 +25,23 @@ typedef struct {
     ngx_uint_t                   excess;
     ngx_uint_t                   count;
     u_char                       data[1];
-} ngx_http_limit_req_node_t;
+} ngx_http_limit_req_node_t; //用于限速的该客户端一些状态存入这里面，例如该客户端当前的excess等，通过红黑树管理
 
 
-typedef struct {
+typedef struct { //所有客户端请求的限速处理，可以参考ngx_http_limit_req_lookup，每个客户端对应一个红黑树节点，用与存储每次请求后用于限速的各种临时信息
     ngx_rbtree_t                  rbtree;
     ngx_rbtree_node_t             sentinel;
     ngx_queue_t                   queue;
 } ngx_http_limit_req_shctx_t;
 
 
-typedef struct {
+typedef struct { //创建空间和赋值见ngx_http_limit_req_init_zone
     ngx_http_limit_req_shctx_t  *sh;
-    ngx_slab_pool_t             *shpool;
+    ngx_slab_pool_t             *shpool; //用来管理limit req zone的共享内存块
     /* integer value, 1 corresponds to 0.001 r/s */
     ngx_uint_t                   rate; //rate实际上扩大了1000倍，例如1r/s，则这里为1000
-    ngx_http_complex_value_t     key;
+    //limit_req_zone  $binary_remote_addr  zone=req_one:10m rate=3000r/s;中的$binary_remote_addr对应的客户端地址
+    ngx_http_complex_value_t     key; 
     ngx_http_limit_req_node_t   *node;
 } ngx_http_limit_req_ctx_t;
 
@@ -472,6 +478,15 @@ ngx_http_limit_req_lookup(ngx_http_limit_req_limit_t *limit, ngx_uint_t hash,
             实际运行的请求数为rate+burst 
             之前的理解有误，可以参考这里:https://github.com/alibaba/tengine/issues/855
             */
+            /* 
+            lr->excess:桶中的令牌总数
+            ctx->rate * ngx_abs(ms) / 1000:每隔1ms从令牌桶中自动清除的令牌数
+            +1000 : 表示每来一个请求，就向令牌桶中添加1000个令牌，因为1个请求对应1000个令牌
+
+            ???????
+            如果rate=10000,burst=1,如果高流量过来，则1ms只允许过一个请求，1分钟才1000个，如果rate大于1000，
+            则if ((ngx_uint_t) excess > limit->burst) 是不是应该改为if ((ngx_uint_t) excess > ctx->rate / 1000) {
+            */
             excess = lr->excess - ctx->rate * ngx_abs(ms) / 1000 + 1000;
 
             if (excess < 0) {
@@ -480,6 +495,7 @@ ngx_http_limit_req_lookup(ngx_http_limit_req_limit_t *limit, ngx_uint_t hash,
 
             *ep = excess;
 
+            
             if ((ngx_uint_t) excess > limit->burst) {
                 return NGX_BUSY;
             }
@@ -684,7 +700,10 @@ ngx_http_limit_req_expire(ngx_http_limit_req_ctx_t *ctx, ngx_uint_t n)
     }
 }
 
-
+/*
+shm_zone->init = ngx_http_limit_req_init_zone;
+shm_zone->data = ctx; //ngx_http_limit_req_init_zone的data参数
+*/
 static ngx_int_t
 ngx_http_limit_req_init_zone(ngx_shm_zone_t *shm_zone, void *data)
 {
@@ -904,7 +923,7 @@ ngx_http_limit_req_zone(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
-    ctx->rate = rate * 1000 / scale;
+    ctx->rate = rate * 1000 / scale; //默认1000r/s
 
     shm_zone = ngx_shared_memory_add(cf, &name, size,
                                      &ngx_http_limit_req_module);
@@ -1011,7 +1030,7 @@ ngx_http_limit_req(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     if (limit == NULL) {
         return NGX_CONF_ERROR;
     }
-
+    
     limit->shm_zone = shm_zone;
     limit->burst = burst * 1000;
     limit->nodelay = nodelay;

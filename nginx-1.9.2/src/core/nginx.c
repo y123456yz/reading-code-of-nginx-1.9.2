@@ -189,8 +189,8 @@ static u_char      *ngx_conf_params;
 if (ngx_signal) { //加了-S参数
         return ngx_signal_process(cycle, ngx_signal);
     }
-*/
-static char        *ngx_signal; 
+*/ //信号发送ngx_signal_process
+static char        *ngx_signal; //stop, quit, reopen, reload
 
 
 static char **ngx_os_environ;
@@ -205,7 +205,6 @@ static char **ngx_os_environ;
 //8.打开listen的端口
 //9.所有模块初始化
 //10.启动worker进程
-//全书内容可以在http://book.2cto.com/201304/19606.html中查看，可以直接复制注释
 int ngx_cdecl
 main(int argc, char *const *argv)
 {
@@ -396,9 +395,6 @@ socket监听状况，还是需要写到日志文件中去的。在nginx的main函数中，首先会调用ngx_l
         return 0;
     }
 
-    /*
-    如果hginx.conf中配置为单进程工作模式，这时将会调用ngx_single_process_cycle方法进入单迸程工作模式。
-    */
     if (ngx_signal) { //加了-S参数
         return ngx_signal_process(cycle, ngx_signal);
     }
@@ -452,6 +448,9 @@ socket监听状况，还是需要写到日志文件中去的。在nginx的main函数中，首先会调用ngx_l
 
     ngx_use_stderr = 0;
 
+    /*
+    如果hginx.conf中配置为单进程工作模式，这时将会调用ngx_single_process_cycle方法进入单迸程工作模式。
+    */
     if (ngx_process == NGX_PROCESS_SINGLE) { //如果配置的是单进程工作模式，好像不会走到这里
         ngx_single_process_cycle(cycle);
         
@@ -462,30 +461,22 @@ socket监听状况，还是需要写到日志文件中去的。在nginx的main函数中，首先会调用ngx_l
 
     return 0;
 }
-/*
-?调用ngx_add_inherited_sockets()继承sockets； 
-?解析环境变量NGINX_VAR="NGINX"中的sockets，并保存至ngx_cycle.listening数组；
-?设置ngx_inherited=1；
-?调用ngx_set_inherited_sockets()逐一对ngx_cycle.listening数组中的sockets进行设置；
-?具体可参考<nginx源码分析—初始化过程中处理继承的sockets>
-*/
 
 /*
 在执行不重启服务升级Nginx的操作时，老的Nginx进程会通过环境变量“NGINX”来传递需要打开的监听端口，
-新的Nginx进程会通过ngx_add_inherited_sockets方法来使用已经打开的TCP监听端口   
-*/
-/*
+新的Nginx进程会通过ngx_add_inherited_sockets方法来使用已经打开的TCP监听端口,不采用这种方式的话会报错，说该端口已经bind   
+
 ngx_add_inherited_sockets 函数通过环境变量NGINX完成socket的继承，继承来的socket将会放到init_cycle的listening数组中。在NGINX环
 境变量中，每个socket中间用冒号或分号隔开。完成继承同时设置全局变量ngx_inherited为1
 */
 /*  
-图8-6中的第2步实际上就是在调用表812中的ngx_add_inherited_ sockets方法。Nginx在不重启服务升级时，也就是我们说过的平滑升级（参见1.9节）时，
-它会不重启master进程而启动新版本的Nginx程序。这样，旧版本的master进程会通过execve系统调用来启动新版本的master进程（先fork出子进程再
-调用exec来运行新程序），这时旧版本的master进程必须要通过一种方式告诉新版本的master进程这是在平滑升级，并且传递一些必要的信息。Nginx是通过环
-境变量来传递这些信息的，新版本的master进程通过ngx_add_inherited_sockets方法由环境变量里读取平滑升级信息，并对旧版本Nginx服务监听的句柄做继承处理。
+Nginx在不重启服务升级时，也就是我们说过的平滑升级时，它会不重启master进程而启动新版本的Nginx程序。这样，旧版本的
+master进程会通过execve系统调用来启动新版本的master进程（先fork出子进程再调用exec来运行新程序），这时旧版本的master
+进程必须要通过一种方式告诉新版本的master进程这是在平滑升级，并且传递一些必要的信息。Nginx是通过环境变量来传递这些
+信息的，新版本的master进程通过ngx_add_inherited_sockets方法由环境变量里读取平滑升级信息，并对旧版本Nginx服务监听的句柄做继承处理。
 */
 static ngx_int_t
-ngx_add_inherited_sockets(ngx_cycle_t *cycle)
+ngx_add_inherited_sockets(ngx_cycle_t *cycle)  //ngx_add_inherited_sockets和ngx_exec_new_binary对应
 {
     u_char           *p, *v, *inherited;
     ngx_int_t         s;
@@ -498,6 +489,8 @@ ngx_add_inherited_sockets(ngx_cycle_t *cycle)
     }
     ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0,
                   "using inherited sockets from \"%s\"", inherited);
+
+    /* 如果是热升级nginx的时候inherit不为NULL，走到这里，配合ngx_exec_new_binary阅读 */
 
     //初始化ngx_cycle.listening数组，并且数组中包含10个元素   
     if (ngx_array_init(&cycle->listening, cycle->pool, 10,
@@ -552,7 +545,7 @@ ngx_set_environment(ngx_cycle_t *cycle, ngx_uint_t *last)
     }
 
     var = ccf->env.elts;
-
+    
     for (i = 0; i < ccf->env.nelts; i++) {
         if (ngx_strcmp(var[i].data, "TZ") == 0
             || ngx_strncmp(var[i].data, "TZ=", 3) == 0)
@@ -561,6 +554,7 @@ ngx_set_environment(ngx_cycle_t *cycle, ngx_uint_t *last)
         }
     }
 
+    /* 先添加TZ到数组ccf->env */
     var = ngx_array_push(&ccf->env);
     if (var == NULL) {
         return NULL;
@@ -575,17 +569,17 @@ tz_found:
 
     n = 0;
 
+    /* 计算出有多少个环境变量，然后存入n变量中 */
     for (i = 0; i < ccf->env.nelts; i++) {
-
-        if (var[i].data[var[i].len] == '=') {
+        if (var[i].data[var[i].len] == '=') { //例如kye=   =号后面没有值则continue
             n++;
             continue;
         }
 
         for (p = ngx_os_environ; *p; p++) {
-
+            
             if (ngx_strncmp(*p, var[i].data, var[i].len) == 0
-                && (*p)[var[i].len] == '=')
+                && (*p)[var[i].len] == '=') //说明是key=value格式
             {
                 n++;
                 break;
@@ -593,7 +587,7 @@ tz_found:
         }
     }
 
-    if (last) {
+    if (last) { //last表示需要多分配last个环境变量，+1的原因是末尾是一个NULL，见后面的env[n] = NULL;
         env = ngx_alloc((*last + n + 1) * sizeof(char *), cycle->log);
         *last = n;
 
@@ -607,9 +601,9 @@ tz_found:
 
     n = 0;
 
+    //把ccf->env数组中的环境变量全部存入env数组中
     for (i = 0; i < ccf->env.nelts; i++) {
-
-        if (var[i].data[var[i].len] == '=') {
+        if (var[i].data[var[i].len] == '=') {   //kye=    =号后面没有值
             env[n++] = (char *) var[i].data;
             continue;
         }
@@ -617,7 +611,7 @@ tz_found:
         for (p = ngx_os_environ; *p; p++) {
 
             if (ngx_strncmp(*p, var[i].data, var[i].len) == 0
-                && (*p)[var[i].len] == '=')
+                && (*p)[var[i].len] == '=') //标准的key=value环境变量
             {
                 env[n++] = *p;
                 break;
@@ -636,8 +630,20 @@ tz_found:
 }
 
 
+/*
+由于Nginx只有一个可执行程序，当该可执行程序更新时，就创建一个子进程来执行新的二进制文件。同时要注意的是
+老进程通过环境变量将所有的侦听描述字传递给新进程，又因为文件描述字可以跨execve系统调用保留(关于跨exec函
+数保留文件描述字，可参考《Unix系统环境高级编程》第二版8.10节：exec函数集)，所以在新进程中这些侦听描述字
+可以接受新的连接请求。新进程获取环境变量中的描述字的实现在nginx.c的函数ngx_add_inherited_sockets中
+
+
+该函数的执行流程如下：
+1）构造启动新进程需要的环境变量。该环境变量的内容包括当前进程的环境变量以及当前进程的所有侦听socket描述字。
+2）给当前进程的pid文件添上后缀名oldbin。
+3）fork一个子进程并触发系统调用execve，该系统调用使用更新后的二进制文件路径作为参数。
+*/
 ngx_pid_t
-ngx_exec_new_binary(ngx_cycle_t *cycle, char *const *argv)
+ngx_exec_new_binary(ngx_cycle_t *cycle, char *const *argv) //ngx_add_inherited_sockets和ngx_exec_new_binary对应
 {
     char             **env, *var;
     u_char            *p;
@@ -649,9 +655,9 @@ ngx_exec_new_binary(ngx_cycle_t *cycle, char *const *argv)
 
     ngx_memzero(&ctx, sizeof(ngx_exec_ctx_t));
 
-    ctx.path = argv[0];
+    ctx.path = argv[0]; //原来启动nginx的时候的路径
     ctx.name = "new binary process";
-    ctx.argv = argv;
+    ctx.argv = argv; //原来启动nginx时候所带的参数
 
     n = 2;
     env = ngx_set_environment(cycle, &n);
@@ -659,6 +665,7 @@ ngx_exec_new_binary(ngx_cycle_t *cycle, char *const *argv)
         return NGX_INVALID_PID;
     }
 
+    //把旧master监听的fd写入环境变量NGINX
     var = ngx_alloc(sizeof(NGINX_VAR)
                     + cycle->listening.nelts * (NGX_INT32_LEN + 1) + 2,
                     cycle->log);
@@ -670,7 +677,7 @@ ngx_exec_new_binary(ngx_cycle_t *cycle, char *const *argv)
     p = ngx_cpymem(var, NGINX_VAR "=", sizeof(NGINX_VAR));
 
     ls = cycle->listening.elts;
-    for (i = 0; i < cycle->listening.nelts; i++) {
+    for (i = 0; i < cycle->listening.nelts; i++) { //把旧master监听的fd写入环境变量NGINX
         p = ngx_sprintf(p, "%ud;", ls[i].fd);
     }
 
@@ -692,14 +699,14 @@ ngx_exec_new_binary(ngx_cycle_t *cycle, char *const *argv)
 
     env[n] = NULL;
 
-#if (NGX_DEBUG)
+//#if (NGX_DEBUG)   yang add 调试
     {
     char  **e;
     for (e = env; *e; e++) {
         ngx_log_debug1(NGX_LOG_DEBUG_CORE, cycle->log, 0, "env: %s", *e);
     }
     }
-#endif
+//#endif
 
     ctx.envp = (char *const *) env;
 
@@ -720,7 +727,7 @@ ngx_exec_new_binary(ngx_cycle_t *cycle, char *const *argv)
     pid = ngx_execute(cycle, &ctx);
 
     if (pid == NGX_INVALID_PID) {
-        if (ngx_rename_file(ccf->oldpid.data, ccf->pid.data)
+        if (ngx_rename_file(ccf->oldpid.data, ccf->pid.data)//源master进程PID文件重命名为nginx.pid.oldbin
             == NGX_FILE_ERROR)
         {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
@@ -860,6 +867,10 @@ ngx_get_options(int argc, char *const *argv)
                 if (ngx_strcmp(ngx_signal, "stop") == 0
                     || ngx_strcmp(ngx_signal, "quit") == 0
                     || ngx_strcmp(ngx_signal, "reopen") == 0
+      /* 
+         reload实际上是执行reload的nginx进程向原master+worker中的master进程发送reload信号，源master收到后，启动新的worker进程，同时向源worker
+         进程发送quit信号，等他们处理完已有的数据信息后，退出，这样就只有新的worker进程运行。见ngx_signal_handler
+      */
                     || ngx_strcmp(ngx_signal, "reload") == 0)
                 {
                     ngx_process = NGX_PROCESS_SIGNALLER;

@@ -17,7 +17,7 @@ static ngx_int_t ngx_test_lockfile(u_char *file, ngx_log_t *log);
 static void ngx_clean_old_cycles(ngx_event_t *ev);
 
 //初始化参考ngx_init_cycle，最终有一个全局类型的ngx_cycle_s，即ngx_cycle
-volatile ngx_cycle_t  *ngx_cycle; //ngx_cycle = cycle;  赋值见main->ngx_init_cycle
+volatile ngx_cycle_t  *ngx_cycle; //ngx_cycle = cycle;  赋值见main
 ngx_array_t            ngx_old_cycles;
 
 static ngx_pool_t     *ngx_temp_pool;
@@ -608,7 +608,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
     /* handle the listening sockets */
 /*
-之前第4步在解析配置项时，所有的模块都已经解析出自己需要监听的端口，如HTTP模块已经在解析http{．．．}配置项时得到它要监听的端口，并添加到
+所有的模块都已经解析出自己需要监听的端口，如HTTP模块已经在解析http{．．．}配置项时得到它要监听的端口，并添加到
 listening数组中了。这一步骤就是按照listening数组中的每一个ngx_listening_t元素设置socket句柄并监听端口（实际上，这一步骤的主要工作就是调
 用表8-2中的ngx_open_listening_sockets方法）。
 */
@@ -1142,6 +1142,7 @@ ngx_signal_process(ngx_cycle_t *cycle, char *sig)
 
     ngx_memzero(&file, sizeof(ngx_file_t));
 
+    //打开存放master进程的文件NGX_PID_PATH
     file.name = ccf->pid;
     file.log = cycle->log;
 
@@ -1167,7 +1168,7 @@ ngx_signal_process(ngx_cycle_t *cycle, char *sig)
 
     while (n-- && (buf[n] == CR || buf[n] == LF)) { /* void */ }
 
-    pid = ngx_atoi(buf, ++n);
+    pid = ngx_atoi(buf, ++n); //master进程id
 
     if (pid == NGX_ERROR) {
         ngx_log_error(NGX_LOG_ERR, cycle->log, 0,

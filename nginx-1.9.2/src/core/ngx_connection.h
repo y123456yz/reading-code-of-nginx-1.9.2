@@ -18,7 +18,7 @@ typedef struct ngx_listening_s  ngx_listening_t;
 //初始化赋值等可以参考ngx_event_process_init
 //ngx_listening_t结构体代表着Nginx服务器监听的一个端口
 //实际上这些ngx_listening_s结构体是从 cycle->listening.elts中来的，见ngx_event_process_init
-struct ngx_listening_s { //初始化及赋值见ngx_http_add_listening
+struct ngx_listening_s { //初始化及赋值见ngx_http_add_listening    热升级nginx的时候，继承源master listen fd在ngx_set_inherited_sockets
     ngx_socket_t        fd; //socket套接字句柄   //赋值见ngx_open_listening_sockets
 
     struct sockaddr    *sockaddr; //监听sockaddr地址
@@ -89,7 +89,7 @@ struct ngx_listening_s { //初始化及赋值见ngx_http_add_listening
     //表示是否已经绑定。实际上目前该标志位没有使用
     unsigned            bound:1;       /* already bound */
     /* 表示当前监听句柄是否来自前一个进程（如升级Nginx程序），如果为1，则表示来自前一个进程。一般会保留之前已经设置好的套接字，不做改变 */
-    unsigned            inherited:1;   /* inherited from previous process */
+    unsigned            inherited:1;   /* inherited from previous process */ //说明是热升级过程
     unsigned            nonblocking_accept:1;  //目前未使用
     //lsopt.bind = 1;这里面存的是bind为1的配置才会有创建ngx_http_port_t
     unsigned            listen:1; //标志位，为1时表示当前结构体对应的套接字已经监听  赋值见ngx_open_listening_sockets
@@ -232,21 +232,16 @@ struct ngx_connection_s {  //cycle->read_events和cycle->write_events这两个数组存
     连接未使用时，data成员用于充当连接池中空闲连接链表中的next指针(ngx_event_process_init)。当连接被使用时，data的意义由使用它的Nginx模块而定，
     如在HTTP框架中，data指向ngx_http_request_t请求
 
-    //在服务器端accept客户端连接成功(ngx_event_accept)后，会通过ngx_get_connection从连接池获取一个ngx_connection_t结构，也就是每个客户端连接对于一个ngx_connection_t结构，
-    //并且为其分配一个ngx_http_connection_t结构，ngx_connection_t->data = ngx_http_connection_t，见ngx_http_init_connection
+    在服务器端accept客户端连接成功(ngx_event_accept)后，会通过ngx_get_connection从连接池获取一个ngx_connection_t结构，也就是每个客户端连接对于一个ngx_connection_t结构，
+    并且为其分配一个ngx_http_connection_t结构，ngx_connection_t->data = ngx_http_connection_t，见ngx_http_init_connection
      */ 
+ 
  /*
- 在liten，accep(ngx_event_accept)接收到新的客户端连接的时候:这里面存储有客户端建立连接过来后(ngx_http_connection_t)，本端接收连接的server{}所在
- server_name配置信息以及该ip:port对应的上下文信息存在着个里面当建立连接后开辟ngx_http_connection_t结构，这里面存储该服务器端
- ip:port所在server{}上下文配置信息，和server_name信息等，然后让ngx_connection_t->data指向该结构，这样就可以通过ngx_connection_t->data
- 获取到服务器端的serv loc 等配置信息以及该server{}中的server_name信息见ngx_http_init_connection
-
- 当接收到客户端的第一个请求数据的时候，在ngx_http_wait_request_handler中会重新让data指向新创建的ngx_http_request_t结构，之前data指向的
- ngx_http_connection_t结构，从新用ngx_http_request_t->connection指向该ngx_http_connection_t
- */  
- //上层父请求r的data指向第一个r下层的子请求，例如第二层的r->connection->data指向其第三层的第一个创建的子请求r，c->data = sr见ngx_http_subrequest
- //listen过程中，指向原始请求ngx_http_connection_t(ngx_http_init_connection),接收到客户端数据后指向ngx_http_request_t(ngx_http_wait_request_handler)
-    void               *data;
+    在子请求处理过程中，上层父请求r的data指向第一个r下层的子请求，例如第二层的r->connection->data指向其第三层的第一个
+ 创建的子请求r，c->data = sr见ngx_http_subrequest,在subrequest往客户端发送数据的时候，只有data指向的节点可以先发送出去
+    listen过程中，指向原始请求ngx_http_connection_t(ngx_http_init_connection),接收到客户端数据后指向ngx_http_request_t(ngx_http_wait_request_handler)
+ */
+    void               *data; /* 如果是subrequest，则data最终指向最下层子请求r,见ngx_http_subrequest */
     //如果是文件异步i/o中的ngx_event_aio_t，则它来自ngx_event_aio_t->ngx_event_t(只有读),如果是网络事件中的event,则为ngx_connection_s中的event(包括读和写)
     ngx_event_t        *read;//连接对应的读事件   赋值在ngx_event_process_init，空间是从ngx_cycle_t->read_event池子中获取的
     ngx_event_t        *write; //连接对应的写事件  赋值在ngx_event_process_init 一般在ngx_handle_write_event中添加些事件，空间是从ngx_cycle_t->read_event池子中获取的

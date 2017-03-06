@@ -24,7 +24,7 @@
 新的Nginx进程会通过ngx_add_inherited_sockets方法来使用已经打开的TCP监听端口   
 */
 #define NGINX_VAR          "NGINX" //见ngx_exec_new_binary 通过该环境变量保存当前的一些参数，等新的nginx起来的时候，就从环境变量NGINX_VAR中获取参数
-#define NGX_OLDPID_EXT     ".oldbin"
+#define NGX_OLDPID_EXT     ".oldbin" //热升级nginx可执行文件的时候，修改nginx.pid为nginx.pid.oldbin
 
 
 #endif /* _NGINX_H_INCLUDED_ */

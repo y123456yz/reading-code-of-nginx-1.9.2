@@ -57,8 +57,8 @@ typedef struct {
     unsigned            exited:1;//标志位，为1时表示进程已经退出  当子进程退出后，父进程收到SIGCHLD后，开始waitpid,见ngx_process_get_status
 } ngx_process_t;
 
-typedef struct {
-    char         *path;
+typedef struct {//赋值见ngx_exec_new_binary
+    char         *path; 
     char         *name;
     char *const  *argv;
     char *const  *envp;

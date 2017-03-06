@@ -636,7 +636,8 @@ ngx_http_upstream_create(ngx_http_request_t *r)//创建一个ngx_http_upstream_t结构
     7)无论连接是否建立成功，负责建立连接的connect方法都会立刻返回。
 */
 //ngx_http_upstream_init方法将会根据ngx_http_upstream_conf_t中的成员初始化upstream，同时会开始连接上游服务器，以此展开整个upstream处理流程
-void ngx_http_upstream_init(ngx_http_request_t *r) //在读取完浏览器发送来的请求头部字段后，会通过proxy fastcgi等模块读取包体，读取完后执行该函数
+void ngx_http_upstream_init(ngx_http_request_t *r) 
+//在读取完浏览器发送来的请求头部字段后，会通过proxy fastcgi等模块读取包体，读取完后执行该函数，例如ngx_http_read_client_request_body(r, ngx_http_upstream_init);
 {
     ngx_connection_t     *c;
 
@@ -855,14 +856,12 @@ ngx_http_upstream_init_request(ngx_http_request_t *r)
     */
     if (u->resolved == NULL) {//上游的IP地址是否被解析过，ngx_http_fastcgi_handler调用ngx_http_fastcgi_eval会解析。 为NULL说明没有解析过，也就是fastcgi_pas xxx中的xxx参数没有变量
         uscf = u->conf->upstream; //upstream赋值在ngx_http_fastcgi_pass
-        printf("yang test ............. resoleved NULL\n");
     } else { //fastcgi_pass xxx的xxx中有变量，说明后端服务器是会根据请求动态变化的，参考ngx_http_fastcgi_handler
 
 #if (NGX_HTTP_SSL)
         u->ssl_name = u->resolved->host;
 #endif
     //ngx_http_fastcgi_handler 会调用 ngx_http_fastcgi_eval函数，进行fastcgi_pass 后面的URL的简析，解析出unix域，或者socket.
-         printf("yang test ............. resoleved NO NULL, host:%s\n", u->resolved->host.data);
         // 如果已经是ip地址格式了，就不需要再进行解析
         if (u->resolved->sockaddr) {//如果地址已经被resolve过了，我IP地址，此时创建round robin peer就行
 
@@ -2445,6 +2444,7 @@ ngx_http_upstream_send_request_handler(ngx_http_request_t *r,
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                    "http upstream send request handler");
 
+    //表示向上游服务器发送的请求已经超时
     if (c->write->timedout) { //该定时器在ngx_http_upstream_send_request添加的
         ngx_http_upstream_next(r, u, NGX_HTTP_UPSTREAM_FT_TIMEOUT);
         return;
@@ -2458,7 +2458,7 @@ ngx_http_upstream_send_request_handler(ngx_http_request_t *r,
     }
 
 #endif
-
+    //表示上游服务器的响应需要直接转发给客户端，并且此时已经把响应头发送给客户端了
     if (u->header_sent) { //都已经收到后端的数据并且发送给客户端浏览器了，说明不会再想后端写数据，
         u->write_event_handler = ngx_http_upstream_dummy_handler;
 
@@ -4710,7 +4710,7 @@ ngx_http_upstream_finalize_request(ngx_http_request_t *r,
         rc = ngx_http_send_special(r, NGX_HTTP_FLUSH);
     }
 
-    ngx_http_finalize_request(r, rc);
+    ngx_http_finalize_request(r, rc); //ngx_http_upstream_finalize_request->ngx_http_finalize_request
 }
 
 

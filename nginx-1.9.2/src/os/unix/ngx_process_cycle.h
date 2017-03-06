@@ -24,11 +24,11 @@
 #define NGX_CMD_REOPEN         5
 
 
-#define NGX_PROCESS_SINGLE     0 //单进程方式  //如果配置的是单进程工作模式
-#define NGX_PROCESS_MASTER     1
-#define NGX_PROCESS_SIGNALLER  2
-#define NGX_PROCESS_WORKER     3
-#define NGX_PROCESS_HELPER     4
+#define NGX_PROCESS_SINGLE     0 //单进程方式  //如果配置的是单进程工作模式  
+#define NGX_PROCESS_MASTER     1 //正常运行的master+多worker进程模式中的主进程是该模式
+#define NGX_PROCESS_SIGNALLER  2 //是nginx -s发送信号的进程
+#define NGX_PROCESS_WORKER     3 //正常运行的master+多worker进程模式中的worker子进程是该模式
+#define NGX_PROCESS_HELPER     4 //做过期缓存文件清理的cache_manager处于该模式
 
 /*
 static ngx_cache_manager_ctx_t  ngx_cache_manager_ctx = {

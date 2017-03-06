@@ -91,7 +91,6 @@ static ngx_http_module_t  ngx_http_postpone_filter_module_ctx = {
 */ngx_module_t  ngx_http_postpone_filter_module = { 
 /* 
 ¸ÃÄ£¿éÊµ¼ÊÉÏÊÇÎªsubrequest¹¦ÄÜ½¨Á¢µÄ£¬Ö÷ÒªÓÃ»§±£Ö¤µ½ºó¶Ë¶à¸ö½ÚµãµÄÓ¦´ğÓĞĞòµÄ·¢ËÍµ½¿Í»§¶Ë£¬±£Ö¤ÊÇÎÒÃÇÆÚ´ıµÄË³Ğò£¬
-Õâ¾ÍºÍtwemproxy»º´æÖĞ¼ä¼şµÄmget¹¦ÄÜÀàËÆ
 */
     NGX_MODULE_V1,
     &ngx_http_postpone_filter_module_ctx,  /* module context */
@@ -112,44 +111,19 @@ static ngx_http_output_body_filter_pt    ngx_http_next_body_filter;
 
 
 /*
-    ºÃÁË£¬×ÓÇëÇó´´½¨Íê±Ï£¬Ò»°ãÀ´Ëµ×ÓÇëÇóµÄ´´½¨¶¼·¢ÉúÔÚÄ³¸öÇëÇóµÄcontent handler»òÕßÄ³¸öfilterÄÚ£¬´ÓÉÏÃæµÄº¯Êı¿ÉÒÔ¿´µ½×ÓÇëÇó²¢Ã»ÓĞÂíÉÏ±»Ö´ĞĞ£¬
-Ö»ÊÇ±»¹ÒÔØÔÚÁËÖ÷ÇëÇóµÄposted_requestsÁ´±íÖĞ£¬ÄÇËüÊ²Ã´Ê±ºò¿ÉÒÔÖ´ĞĞÄØ£¿Ö®Ç°Ëµµ½posted_requestsÁ´±íÊÇÔÚngx_http_run_posted_requestsº¯ÊıÖĞ
-±éÀú£¬ÄÇÃ´ngx_http_run_posted_requestsº¯ÊıÓÖÊÇÔÚÊ²Ã´Ê±ºòµ÷ÓÃ£¿ËüÊµ¼ÊÉÏÊÇÔÚÄ³¸öÇëÇóµÄ¶Á£¨Ğ´£©ÊÂ¼şµÄhandlerÖĞ£¬Ö´ĞĞÍê¸ÃÇëÇóÏà¹ØµÄ´¦Àíºó
-±»µ÷ÓÃ£¬±ÈÈçÖ÷ÇëÇóÔÚ×ßÍêÒ»±éPHASEµÄÊ±ºò»áµ÷ÓÃngx_http_run_posted_requests£¬ÕâÊ±×ÓÇëÇóµÃÒÔÔËĞĞ¡£
-
-    ÕâÊ±Êµ¼Ê»¹ÓĞ1¸öÎÊÌâĞèÒª½â¾ö£¬ÓÉÓÚnginxÊÇ¶à½ø³Ì£¬ÊÇ²»ÄÜ¹»ËæÒâ×èÈûµÄ£¨Èç¹ûÒ»¸öÇëÇó×èÈûÁËµ±Ç°½ø³Ì£¬¾ÍÏàµ±ÓÚ×èÈûÁËÕâ¸ö½ø³Ìacceptµ½µÄËùÓĞ
-ÆäËûÇëÇó£¬Í¬Ê±¸Ã½ø³ÌÒ²²»ÄÜacceptĞÂÇëÇó£©£¬Ò»¸öÇëÇó¿ÉÄÜÓÉÓÚÄ³Ğ©Ô­ÒòĞèÒª×èÈû£¨±ÈÈç·ÃÎÊio£©£¬nginxµÄ×ö·¨ÊÇÉèÖÃ¸ÃÇëÇóµÄÒ»Ğ©×´Ì¬²¢ÔÚepoll
-ÖĞÌí¼ÓÏàÓ¦µÄÊÂ¼ş£¬È»ºó×ªÈ¥´¦ÀíÆäËûÇëÇó£¬µÈµ½¸ÃÊÂ¼şµ½À´Ê±ÔÙ¼ÌĞø´¦Àí¸ÃÇëÇó£¬ÕâÑùµÄĞĞÎª¾ÍÒâÎ¶×ÅÒ»¸öÇëÇó¿ÉÄÜĞèÒª¶à´ÎÖ´ĞĞ»ú»á²ÅÄÜÍê³É£¬¶Ô
-ÓÚÒ»¸öÇëÇóµÄ¶à¸ö×ÓÇëÇóÀ´Ëµ£¬ÒâÎ¶×ÅËüÃÇÍê³ÉµÄÏÈºóË³Ğò¿ÉÄÜºÍËüÃÇ´´½¨µÄË³ĞòÊÇ²»Ò»ÑùµÄ£¬ËùÒÔ±ØĞëÓĞÒ»ÖÖ»úÖÆÈÃÌáÇ°Íê³ÉµÄ×ÓÇëÇó±£´æËü²úÉúµÄ
-Êı¾İ£¬¶ø²»ÊÇÖ±½ÓÊä³öµ½out chain£¬Í¬Ê±Ò²ÄÜ¹»ÈÃµ±Ç°ÄÜ¹»Íùout chainÊä³öÊı¾İµÄÇëÇó¼°Ê±µÄÊä³ö²úÉúµÄÊı¾İ¡£×÷ÕßIgor²ÉÓÃngx_connection_tÖĞµÄ
-data×Ö¶Î£¬ÒÔ¼°Ò»¸öbody filter£¬¼´ngx_http_postpone_filter£¬»¹ÓĞngx_http_finalize_requestº¯ÊıÖĞµÄÒ»Ğ©Âß¼­À´½â¾öÕâ¸öÎÊÌâ¡£
-
-²Î¿¼:http://blog.csdn.net/fengmo_q/article/details/6685840
-
-
-
-
-ËµÃ÷:
-root_rÎªÔ­Ê¼×îÉÏ²ãµÄÇëÇór£¬postponedÎª¸Ãr->postponedÖ¸Õë£¬
-sbuxy_rÖĞµÄx´ú±íµÄÊÇ¸Ã×ÓÇëÇóµÄ¸¸ÇëÇóÊ±x£¬y´ú±í¸Ã×ÓÇëÇóÊ±¸¸ÇëÇóµÄµÚy¸ö×ÓÇëÇó¡£
-datax´ú±ísubx_rÇëÇó²úÉúµÄÒ»¶ÎÊı¾İ,ËüÊÇÍ¨¹ıngx_http_postpone_filter_addÌí¼Óµ½r->postponedÁ´ÖĞ
-
-                                          -----root_r     
-                                          |postponed
-                                          |
-                            -------------sub1_r-------sub2_r-------data_root(ÊôÓÚroot_rÊı¾İ)
-                            |                           |postponed                    
-                            |postponed                  |
-                            |                           sub21_r-----data2(ÊôÓÚsub2_rÊı¾İ)
-                            |                           |
-                            |                           |
-                            |                           -----data2(ÊôÓÚsub21_rÊı¾İ)
-                            |
-                          sub11_r--------sub12_r-----data1(ÊôÓÚsub1_rÊı¾İ)
-                            |               |
-                            |postponed      |postponed
-                            |               |
-                            -----data11     -----data12(ÊôÓÚsub12_rÊı¾İ)
+    sub1_rºÍsub2_r¶¼ÊÇÍ¬Ò»¸ö¸¸ÇëÇó£¬¾ÍÊÇroot_rÇëÇó£¬sub1_rºÍsub2_r¾ÍÊÇngx_http_postponed_request_s->request³ÉÔ±
+    ËüÃÇÓÉngx_http_postponed_request_s->nextÁ¬½ÓÔÚÒ»Æğ£¬²Î¿¼ngx_http_subrequest
+    
+                      -----root_r(Ö÷ÇëÇó)     
+                      |postponed
+                      |                next
+        -------------sub1_r(data1)--------------sub2_r(data1)
+        |                                       |postponed                    
+        |postponed                              |
+        |                                     sub21_r-----sub22
+        |
+        |               next
+      sub11_r(data11)-----------sub12_r(data12)
 
     Í¼ÖĞµÄroot½Úµã¼´ÎªÖ÷ÇëÇó£¬ËüµÄpostponedÁ´±í´Ó×óÖÁÓÒ¹ÒÔØÁË3¸ö½Úµã£¬SUB1ÊÇËüµÄµÚÒ»¸ö×ÓÇëÇó£¬DATA1ÊÇËü²úÉúµÄÒ»¶ÎÊı¾İ£¬SUB2ÊÇËüµÄµÚ2¸ö×ÓÇëÇó£¬
 ¶øÇÒÕâ2¸ö×ÓÇëÇó·Ö±ğÓĞËüÃÇ×Ô¼ºµÄ×ÓÇëÇó¼°Êı¾İ¡£ngx_connection_tÖĞµÄdata×Ö¶Î±£´æµÄÊÇµ±Ç°¿ÉÒÔÍùout chain·¢ËÍÊı¾İµÄÇëÇó£¬ÎÄÕÂ¿ªÍ·Ëµµ½·¢µ½¿Í»§¶Ë
@@ -161,12 +135,14 @@ DATA11£¬µ«ÊÇ¸Ã½ÚµãÊµ¼ÊÉÏ±£´æµÄÊÇÊı¾İ£¬¶ø²»ÊÇ×ÓÇëÇó£¬ËùÒÔc->dataÕâÊ±Ó¦¸ÃÖ¸ÏòµÄÊÇÓ
 ·¢ËÍÊı¾İµ½¿Í»§¶ËÓÅÏÈ¼¶:
 1.×ÓÇëÇóÓÅÏÈ¼¶±È¸¸ÇëÇó¸ß
 2.Í¬¼¶(Ò»¸ör²úÉú¶à¸ö×ÓÇëÇó)ÇëÇó£¬´Ó×óµ½ÓÒÓÅÏÈ¼¶ÓÉ¸ßµ½µÍ(ÒòÎªÏÈ´´½¨µÄ×ÓÇëÇóÏÈ·¢ËÍÊı¾İµ½¿Í»§¶Ë)
-·¢ËÍÊı¾İµ½¿Í»§¶ËË³Ğò¿ØÖÆ¼ûngx_http_postpone_filter
+·¢ËÍÊı¾İµ½¿Í»§¶ËË³Ğò¿ØÖÆ¼ûngx_http_postpone_filter       nginxÍ¨¹ı×ÓÇëÇó·¢ËÍÊı¾İµ½ºó¶Ë¼ûngx_http_run_posted_requests
 */
 
-/* ¸Ãº¯Êı¾ÍºÍ»º´æÖĞ¼ä¼ştwemproxyµÄmgetÅúÁ¿»ñÈ¡Ò»Ñù£¬µ±ĞèÒª´Óºó¶Ë¶à¸ö·şÎñÆ÷»ñÈ¡ĞÅÏ¢µÄÊ±ºò£¬¾ÍĞèÒªµÈºó¶ËµÄ
+/* µ±ĞèÒª´Óºó¶Ë¶à¸ö·şÎñÆ÷»ñÈ¡ĞÅÏ¢µÄÊ±ºò£¬¾ÍĞèÒªµÈºó¶ËµÄ
 ËùÓĞÏìÓ¦¶¼ÊÕµ½ºó£¬²¢¶ÔÕâĞ©Ó¦´ğ½øĞĞºÏÊÊµÄË³Ğò²ÅÄÜ·¢Íù¿Í»§¶Ë£¬²ÅÄÜ±£Ö¤ÓĞĞòµÄ·¢ËÍ¸ø¿Í»§¶Ë*/
 //ÅäºÏhttp://blog.csdn.net/fengmo_q/article/details/6685840Í¼ĞÎ»¯ÔÄ¶Á
+
+
 //ÕâÀïµÄ²ÎÊıin¾ÍÊÇ½«Òª·¢ËÍ¸ø¿Í»§¶ËµÄÒ»¶Î°üÌå£¬
 static ngx_int_t //subrequest×¢Òângx_http_run_posted_requestsÓëngx_http_subrequest ngx_http_postpone_filter ngx_http_finalize_requestÅäºÏÔÄ¶Á
 ngx_http_postpone_filter(ngx_http_request_t *r, ngx_chain_t *in)
@@ -181,27 +157,21 @@ ngx_http_postpone_filter(ngx_http_request_t *r, ngx_chain_t *in)
                    "http postpone filter \"%V?%V\" %p", &r->uri, &r->args, in);
 
     /*
-                          -----root_r     
-                          |postponed
-                          |
-            -------------sub1_r-------sub2_r-------data_root(ÊôÓÚroot_rÊı¾İ)
-            |                           |postponed                    
-            |postponed                  |
-            |                           sub21_r-----data2(ÊôÓÚsub2_rÊı¾İ)
-            |                           |
-            |                           |
-            |                           -----data2(ÊôÓÚsub21_rÊı¾İ)
-            |
-          sub11_r--------sub12_r-----data1(ÊôÓÚsub1_rÊı¾İ)
-            |               |
-            |postponed      |postponed
-            |               |
-            -----data11     -----data12(ÊôÓÚsub12_rÊı¾İ)
+      sub1_rºÍsub2_r¶¼ÊÇÍ¬Ò»¸ö¸¸ÇëÇó£¬¾ÍÊÇroot_rÇëÇó£¬sub1_rºÍsub2_r¾ÍÊÇngx_http_postponed_request_s->request³ÉÔ±
+      ËüÃÇÓÉngx_http_postponed_request_s->nextÁ¬½ÓÔÚÒ»Æğ£¬²Î¿¼ngx_http_subrequest
 
-          ÏÂÃæµÄifÅĞ¶ÏÖ»ÓĞrÎªsub11_r²ÅÂú×ãr == c->data£¬Èç¹ûµ±Ç°r²»ÊÇsub11_r 
+                   -----root_r(Ö÷ÇëÇó)     
+                          |postponed
+                          |                next
+            -------------sub1_r(data1)--------------sub2_r(data1)
+            |                                       |postponed                    
+            |postponed                              |
+            |                                     sub21_r-----sub22
+            |
+            |               next
+          sub11_r(data11)-----------sub12_r(data12)
      */
-    //Èç¹ûµ±Ç°ÇëÇórÊÇÒ»¸ö×ÓÇëÇó£¨ÒòÎªc->dataÖ¸ÏòÔ­Ê¼ÇëÇó£©
-    //ËµÃ÷rÊÇÉÏ¼¶rµÄµÚÒ»¸ö×ÓÇëÇó£¬Ò²¾ÍÊÇhttp://blog.csdn.net/fengmo_q/article/details/6685840Í¼ÀïÃæµÄSUB1  SUB11 SUB21
+    //Èç¹ûµ±Ç°ÇëÇórÊÇÒ»¸ö×ÓÇëÇó£¨ÒòÎªc->dataÖ¸ÏòÔ­Ê¼ÇëÇó£©,ÈçÉÏÍ¼£¬c->dataÖ¸Ïòsub11_r£¬Èç¹ûrÎªsub12_r»òÕßsub1_r»òÕßsub2_r
     if (r != c->data) {//²Î¿¼ngx_http_subrequestÖĞµÄc->data = sr  ngx_connection_tÖĞµÄdata×Ö¶Î±£´æµÄÊÇµ±Ç°¿ÉÒÔÍùout chain·¢ËÍÊı¾İµÄÇëÇó£¬Ò²¾ÍÊÇÓÅÏÈ¼¶×î¸ßµÄÇëÇó
         /* µ±Ç°ÇëÇó²»ÄÜÍùout chain·¢ËÍÊı¾İ£¬Èç¹û²úÉúÁËÊı¾İ£¬ĞÂ½¨Ò»¸ö½Úµã£¬ 
        ½«Ëü±£´æÔÚµ±Ç°ÇëÇóµÄpostponed¶ÓÎ²¡£ÕâÑù¾Í±£Ö¤ÁËÊı¾İ°´Ğò·¢µ½¿Í»§¶Ë */  
@@ -222,6 +192,7 @@ ngx_http_postpone_filter(ngx_http_request_t *r, ngx_chain_t *in)
         //Èç¹ûµ±Ç°ÇëÇóÊÇ×ÓÇëÇó£¬¶øin°üÌåÓÖÎª¿Õ£¬ÄÇÃ´Ö±½Ó·µ»Ø¼´¿É
         return NGX_OK;
     }
+
 
     /* µ½ÕâÀï£¬±íÊ¾µ±Ç°ÇëÇó¿ÉÒÔÍùout chain·¢ËÍÊı¾İ£¬Èç¹ûËüµÄpostponedÁ´±íÖĞÃ»ÓĞ×ÓÇëÇó£¬Ò²Ã»ÓĞÊı¾İ£¬ 
        ÔòÖ±½Ó·¢ËÍµ±Ç°²úÉúµÄÊı¾İin»òÕß¼ÌĞø·¢ËÍout chainÖĞÖ®Ç°Ã»ÓĞ·¢ËÍÍê³ÉµÄÊı¾İ */  
@@ -295,41 +266,20 @@ ngx_http_postpone_filter(ngx_http_request_t *r, ngx_chain_t *in)
 }
 
 /*
-    Ò»°ãÀ´Ëµ×ÓÇëÇóµÄ´´½¨¶¼·¢ÉúÔÚÄ³¸öÇëÇóµÄcontent handler»òÕßÄ³¸öfilterÄÚ£¬´ÓÉÏÃæµÄº¯Êı¿ÉÒÔ¿´µ½×ÓÇëÇó²¢Ã»ÓĞÂíÉÏ±»Ö´ĞĞ£¬
-Ö»ÊÇ±»¹ÒÔØÔÚÁËÖ÷ÇëÇóµÄposted_requestsÁ´±íÖĞ£¬ÄÇËüÊ²Ã´Ê±ºò¿ÉÒÔÖ´ĞĞÄØ£¿Ö®Ç°Ëµµ½posted_requestsÁ´±íÊÇÔÚngx_http_run_posted_requestsº¯ÊıÖĞ
-±éÀú£¬ÄÇÃ´ngx_http_run_posted_requestsº¯ÊıÓÖÊÇÔÚÊ²Ã´Ê±ºòµ÷ÓÃ£¿ËüÊµ¼ÊÉÏÊÇÔÚÄ³¸öÇëÇóµÄ¶Á£¨Ğ´£©ÊÂ¼şµÄhandlerÖĞ£¬Ö´ĞĞÍê¸ÃÇëÇóÏà¹ØµÄ´¦Àíºó
-±»µ÷ÓÃ£¬±ÈÈçÖ÷ÇëÇóÔÚ×ßÍêÒ»±éPHASEµÄÊ±ºò»áµ÷ÓÃngx_http_run_posted_requests£¬ÕâÊ±×ÓÇëÇóµÃÒÔÔËĞĞ¡£
+    sub1_rºÍsub2_r¶¼ÊÇÍ¬Ò»¸ö¸¸ÇëÇó£¬¾ÍÊÇroot_rÇëÇó£¬sub1_rºÍsub2_r¾ÍÊÇngx_http_postponed_request_s->request³ÉÔ±
+    ËüÃÇÓÉngx_http_postponed_request_s->nextÁ¬½ÓÔÚÒ»Æğ£¬²Î¿¼ngx_http_subrequest
+    
+                  -----root_r(Ö÷ÇëÇó)     
+                  |postponed
+                  |                next
+    -------------sub1_r(data1)--------------sub2_r(data1)
+    |                                       |postponed                    
+    |postponed                              |
+    |                                     sub21_r-----sub22
+    |
+    |               next
+  sub11_r(data11)-----------sub12_r(data12)
 
-    ÕâÊ±Êµ¼Ê»¹ÓĞ1¸öÎÊÌâĞèÒª½â¾ö£¬ÓÉÓÚnginxÊÇ¶à½ø³Ì£¬ÊÇ²»ÄÜ¹»ËæÒâ×èÈûµÄ£¨Èç¹ûÒ»¸öÇëÇó×èÈûÁËµ±Ç°½ø³Ì£¬¾ÍÏàµ±ÓÚ×èÈûÁËÕâ¸ö½ø³Ìacceptµ½µÄËùÓĞ
-ÆäËûÇëÇó£¬Í¬Ê±¸Ã½ø³ÌÒ²²»ÄÜacceptĞÂÇëÇó£©£¬Ò»¸öÇëÇó¿ÉÄÜÓÉÓÚÄ³Ğ©Ô­ÒòĞèÒª×èÈû£¨±ÈÈç·ÃÎÊio£©£¬nginxµÄ×ö·¨ÊÇÉèÖÃ¸ÃÇëÇóµÄÒ»Ğ©×´Ì¬²¢ÔÚepoll
-ÖĞÌí¼ÓÏàÓ¦µÄÊÂ¼ş£¬È»ºó×ªÈ¥´¦ÀíÆäËûÇëÇó£¬µÈµ½¸ÃÊÂ¼şµ½À´Ê±ÔÙ¼ÌĞø´¦Àí¸ÃÇëÇó£¬ÕâÑùµÄĞĞÎª¾ÍÒâÎ¶×ÅÒ»¸öÇëÇó¿ÉÄÜĞèÒª¶à´ÎÖ´ĞĞ»ú»á²ÅÄÜÍê³É£¬¶Ô
-ÓÚÒ»¸öÇëÇóµÄ¶à¸ö×ÓÇëÇóÀ´Ëµ£¬ÒâÎ¶×ÅËüÃÇÍê³ÉµÄÏÈºóË³Ğò¿ÉÄÜºÍËüÃÇ´´½¨µÄË³ĞòÊÇ²»Ò»ÑùµÄ£¬ËùÒÔ±ØĞëÓĞÒ»ÖÖ»úÖÆÈÃÌáÇ°Íê³ÉµÄ×ÓÇëÇó±£´æËü²úÉúµÄ
-Êı¾İ£¬¶ø²»ÊÇÖ±½ÓÊä³öµ½out chain£¬Í¬Ê±Ò²ÄÜ¹»ÈÃµ±Ç°ÄÜ¹»Íùout chainÊä³öÊı¾İµÄÇëÇó¼°Ê±µÄÊä³ö²úÉúµÄÊı¾İ¡£×÷ÕßIgor²ÉÓÃngx_connection_tÖĞµÄ
-data×Ö¶Î£¬ÒÔ¼°Ò»¸öbody filter£¬¼´ngx_http_postpone_filter£¬»¹ÓĞngx_http_finalize_requestº¯ÊıÖĞµÄÒ»Ğ©Âß¼­À´½â¾öÕâ¸öÎÊÌâ¡£
-
-²Î¿¼:http://blog.csdn.net/fengmo_q/article/details/6685840
-
-ËµÃ÷:
-root_rÎªÔ­Ê¼×îÉÏ²ãµÄÇëÇór£¬postponedÎª¸Ãr->postponedÖ¸Õë£¬
-sbuxy_rÖĞµÄx´ú±íµÄÊÇ¸Ã×ÓÇëÇóµÄ¸¸ÇëÇóÊ±x£¬y´ú±í¸Ã×ÓÇëÇóÊ±¸¸ÇëÇóµÄµÚy¸ö×ÓÇëÇó¡£
-datax´ú±ísubx_rÇëÇó²úÉúµÄÒ»¶ÎÊı¾İ,ËüÊÇÍ¨¹ıngx_http_postpone_filter_addÌí¼Óµ½r->postponedÁ´ÖĞ
-
-                                          -----root_r     
-                                          |postponed
-                                          |
-                            -------------sub1_r-------sub2_r-------data_root(ÊôÓÚroot_rÊı¾İ)
-                            |                           |postponed                    
-                            |postponed                  |
-                            |                           sub21_r-----data2(ÊôÓÚsub2_rÊı¾İ)
-                            |                           |
-                            |                           |
-                            |                           -----data2(ÊôÓÚsub21_rÊı¾İ)
-                            |
-                          sub11_r--------sub12_r-----data1(ÊôÓÚsub1_rÊı¾İ)
-                            |               |
-                            |postponed      |postponed
-                            |               |
-                            -----data11     -----data12(ÊôÓÚsub12_rÊı¾İ)
 
     Í¼ÖĞµÄroot½Úµã¼´ÎªÖ÷ÇëÇó£¬ËüµÄpostponedÁ´±í´Ó×óÖÁÓÒ¹ÒÔØÁË3¸ö½Úµã£¬SUB1ÊÇËüµÄµÚÒ»¸ö×ÓÇëÇó£¬DATA1ÊÇËü²úÉúµÄÒ»¶ÎÊı¾İ£¬SUB2ÊÇËüµÄµÚ2¸ö×ÓÇëÇó£¬
 ¶øÇÒÕâ2¸ö×ÓÇëÇó·Ö±ğÓĞËüÃÇ×Ô¼ºµÄ×ÓÇëÇó¼°Êı¾İ¡£ngx_connection_tÖĞµÄdata×Ö¶Î±£´æµÄÊÇµ±Ç°¿ÉÒÔÍùout chain·¢ËÍÊı¾İµÄÇëÇó£¬ÎÄÕÂ¿ªÍ·Ëµµ½·¢µ½¿Í»§¶Ë
@@ -341,6 +291,8 @@ DATA11£¬µ«ÊÇ¸Ã½ÚµãÊµ¼ÊÉÏ±£´æµÄÊÇÊı¾İ£¬¶ø²»ÊÇ×ÓÇëÇó£¬ËùÒÔc->dataÕâÊ±Ó¦¸ÃÖ¸ÏòµÄÊÇÓ
 ·¢ËÍÊı¾İµ½¿Í»§¶ËÓÅÏÈ¼¶:
 1.×ÓÇëÇóÓÅÏÈ¼¶±È¸¸ÇëÇó¸ß
 2.Í¬¼¶(Ò»¸ör²úÉú¶à¸ö×ÓÇëÇó)ÇëÇó£¬´Ó×óµ½ÓÒÓÅÏÈ¼¶ÓÉ¸ßµ½µÍ(ÒòÎªÏÈ´´½¨µÄ×ÓÇëÇóÏÈ·¢ËÍÊı¾İµ½¿Í»§¶Ë)
+
+·¢ËÍÊı¾İµ½¿Í»§¶ËË³Ğò¿ØÖÆ¼ûngx_http_postpone_filter       nginxÍ¨¹ı×ÓÇëÇó·¢ËÍÊı¾İµ½ºó¶Ë¼ûngx_http_run_posted_requests
 */
 
 //²Î¿¼http://blog.csdn.net/fengmo_q/article/details/6685840ÖĞµÄÍ¼ĞÎ»¯¼°ÆäËµÃ÷

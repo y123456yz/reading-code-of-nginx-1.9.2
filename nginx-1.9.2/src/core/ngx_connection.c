@@ -422,7 +422,7 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
             }
 #endif
 
-            if (ls[i].fd != (ngx_socket_t) -1) {
+            if (ls[i].fd != (ngx_socket_t) -1) { //例如热升级的时候，fd是通过NGINX环境变量继承过来的，这里fd大于0
                 continue;
             }
 

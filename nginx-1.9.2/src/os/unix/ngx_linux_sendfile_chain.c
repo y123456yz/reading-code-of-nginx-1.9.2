@@ -390,7 +390,25 @@ ngx_linux_sendfile_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
     }
 }
 
+/*
+rocktmq中对零拷贝的解释
+（1）零拷贝原理：Consumer消费消息过程，使用了零拷贝，零拷贝包括一下2中方式，RocketMQ使用第一种方式，因小块数据传输的要求效果比sendfile方式好
+    a )使用mmap+write方式   (mmap将一个文件或者其它对象映射进内存)
+     优点：即使频繁调用，使用小文件块传输，效率也很高
+     缺点：不能很好的利用DMA方式，会比sendfile多消耗CPU资源，内存安全性控制复杂，需要避免JVM Crash问题
+    b）使用sendfile方式
+     优点：可以利用DMA方式，消耗CPU资源少，大块文件传输效率高，无内存安全新问题
+     缺点：小块文件效率低于mmap方式，只能是BIO方式传输，不能使用NIO
 
+    mmap是一种内存映射文件的方法，即将一个文件或者其它对象映射到进程的地址空间，实现文件磁盘地址和进程虚拟地址空间
+中一段虚拟地址的一一对映关系。实现这样的映射关系后，进程就可以采用指针的方式读写操作这一段内存，而系统会自动回
+写脏页面到对应的文件磁盘上，即完成了对文件的操作而不必再调用read,write等系统调用函数。相反，内核空间对这段区域
+的修改也直接反映用户空间，从而可以实现不同进程间的文件共享。
+
+
+http://www.linuxjournal.com/article/6345?page=0,0
+http://blog.csdn.net/kisimple/article/details/42499225
+*/
 static ssize_t
 ngx_linux_sendfile(ngx_connection_t *c, ngx_buf_t *file, size_t size)
 {

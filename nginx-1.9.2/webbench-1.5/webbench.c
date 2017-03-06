@@ -161,7 +161,6 @@ int main(int argc, char *argv[])
   }
  }
 
- printf("yang test ... max-conn:%u\n", max_request);
  if(optind==argc) {
                       fprintf(stderr,"webbench: Missing URL!\n");
 		      usage();

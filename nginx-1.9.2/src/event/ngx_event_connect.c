@@ -21,8 +21,10 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
     ngx_event_t       *rev, *wev;
     ngx_connection_t  *c;
 
+    /*ngx_http_upstream_get_round_robin_peer ngx_http_upstream_get_least_conn_peer ngx_http_upstream_get_hash_peer  
+    ngx_http_upstream_get_ip_hash_peer ngx_http_upstream_get_keepalive_peer等 */
     rc = pc->get(pc, pc->data);//ngx_http_upstream_get_round_robin_peer获取一个peer
-    if (rc != NGX_OK) {
+    if (rc != NGX_OK) {/* 说明后端服务器全部down掉，或者配置的是keepalive方式，直接选择某个peer上面已有的长连接来发送数据，则直接从这里返回 */
         return rc;
     }
 

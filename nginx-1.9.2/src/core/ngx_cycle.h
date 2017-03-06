@@ -291,11 +291,12 @@ typedef struct { //从ngx_cycle_s->conf_ctx[ngx_core_module.index]指向这里
      ngx_str_t                working_directory;//working_directory /var/yyz/corefile/;  coredump存放路径
      ngx_str_t                lock_file;
 
-     ngx_str_t                pid;
-     ngx_str_t                oldpid;
+     ngx_str_t                pid; //默认NGX_PID_PATH，主进程名
+     ngx_str_t                oldpid;//NGX_PID_PATH+NGX_OLDPID_EXT  热升级nginx进程的时候用
 
-     ngx_array_t              env;
-     char                   **environment;
+    //数组第一个成员是TZ字符串
+     ngx_array_t              env;//成员类型ngx_str_t，见ngx_core_module_create_conf
+     char                   **environment; //直接指向env，见ngx_set_environment
 } ngx_core_conf_t;
 
 

@@ -52,7 +52,7 @@ m_page[k]对应page[k]页面
 
 */
 //图形化理解参考:http://blog.csdn.net/u013009575/article/details/17743261
-typedef struct { //初始化赋值在ngx_slab_init
+typedef struct { //初始化赋值在ngx_slab_init  slab结构是配合共享内存使用的  可以以limit req模块为例，参考ngx_http_limit_req_module
     ngx_shmtx_sh_t    lock; //mutex的锁  
 
     size_t            min_size; //内存缓存obj最小的大小，一般是1个byte   //最小分配的空间是8byte 见ngx_slab_init 

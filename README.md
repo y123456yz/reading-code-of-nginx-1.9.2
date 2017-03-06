@@ -136,12 +136,16 @@ nginx的以下功能模块的相关代码已经阅读，并对其源码及相关
 	结合写超时定时器重新分析后端服务器拔掉网线或者直接断电情况下的后端服务器异常判断方法，参考ngx_http_upstream_send_request  
 	 
 	
-16.5.31   
+16.7.31   
 	添加了新增模块的编译方法  
-	由于近期做分布式缓存，需要把nginx的高并发机制移植到twemproxy上，从新对多进程多核绑定、异步网络机制进行了重新梳理
+	由于近期做分布式缓存，需要把nginx的高并发机制移植到twemproxy上，从新对多进程多核绑定、异步网络机制进行了重新梳理  
 	   
-   
-	后期计划：nginx lua模块分析  
+16.9.31   
+	热启动reload、优雅退出quit、热升级代码分析注释  
+	subrequest重新分析注释  
+	
+17.2.20
+    path http2代码到nginx-1.9.2
   	  
   	 
     
@@ -150,13 +154,16 @@ nginx的以下功能模块的相关代码已经阅读，并对其源码及相关
     1. 和后端服务器通过检查套接字连接状态来判断后端服务器是否down机，如果失效则连接下一个服务器。这种存在缺陷，例如如果后端服务器直接拔掉网线或者后端服务器断
     电了，则检测套接字是判断不出来的，协议栈需要长时间过后才能判断出，如果关闭掉协议栈的keepalive可能永远检测不出，这时候nginx还是会把客户端请求发往后端服务器，
 	如果发往后端服务器数据大小很大，可能需要多次write，这时候会由write timeout来判断出后端出现问题。但是如果发往后端数据长度小，则不会添加write定时器，而是通过
-	写定时器超时来判断，这样不能立刻判断出后端异常，因为读写定时器默认都是60s，参考ngx_http_upstream_send_request，  
+	写定时器超时来判断，这样不能立刻判断出后端异常，因为读写定时器默认都是60s，参考ngx_http_upstream_send_request， 
+
+    2. nginx限流可能不准确，见https://github.com/alibaba/tengine/issues/855分析	
 	 
    
   
 ===================================    
 编译方法：  
 步骤1：这里根据需要编译自己的模块  
+cd nginx-1.9.2  
 ./configure  --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads --add-module=/var/yyz/nginx-1.9.2/src/echo-nginx-module-master --add-module=./src/nginx-requestkey-module-master/ --with-http_secure_link_module --add-module=./src/redis2-nginx-module-master/ --add-module=./src/lua-nginx-module-master/
     
 步骤2：make && make install  

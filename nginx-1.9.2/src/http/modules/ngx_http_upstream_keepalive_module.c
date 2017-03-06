@@ -24,7 +24,8 @@ typedef struct {
     ngx_queue_t                        cache; // keepalive的第二个参数
     ngx_queue_t                        free; //初始化创建的max_cached个ngx_http_upstream_keepalive_cache_t会添加到该free队列中
 
-    //下面两个函数指针分别表示负载均衡算法(RR  IPHASH)对应的ngx_http_upstream_peer_t->init_upstream和ngx_http_upstream_peer_t->init
+    /*keepalive module是配合hash  ip_hash least_conn使用的，而且在这些模块之后，original_init_upstream和original_init_peer指向这
+    几个模块的uscf->peer.init_upstream或者uscf->peer.init*/
     ngx_http_upstream_init_pt          original_init_upstream;
     ngx_http_upstream_init_peer_pt     original_init_peer;
 
@@ -55,6 +56,8 @@ typedef struct { //ngx_http_upstream_init_keepalive_peer中开辟空间
     //保存原始获取peer和释放peer的钩子，它们通常是ngx_http_upstream_get_round_robin_peer和ngx_http_upstream_free_round_robin_peer，
     nginx负载均衡默认是使用轮询算法
      */
+     /*keepalive module是配合hash  ip_hash least_conn使用的，而且在这些模块之后，original_init_upstream和original_init_peer指向这
+    几个模块的get和free*/
     ngx_event_get_peer_pt              original_get_peer;
     ngx_event_free_peer_pt             original_free_peer;
 
@@ -171,7 +174,7 @@ ngx_http_upstream_init_keepalive(ngx_conf_t *cf,
 
     // 先执行原始初始化upstream函数（即ngx_http_upstream_init_round_robin），该函数会根据配置的后端地址解析成socket地址，用
     //于连接后端。并设置us->peer.init钩子为ngx_http_upstream_init_round_robin_peer
-    if (kcf->original_init_upstream(cf, us) != NGX_OK) {
+    if (kcf->original_init_upstream(cf, us) != NGX_OK) { //默认ngx_http_upstream_init_round_robin
         return NGX_ERROR;
     }
 
@@ -191,6 +194,10 @@ ngx_http_upstream_init_keepalive(ngx_conf_t *cf,
     ngx_queue_init(&kcf->cache);
     ngx_queue_init(&kcf->free);
 
+    /*
+    先预创建max_cached个后端连接信息ngx_http_upstream_keepalive_cache_t，，后续有连接过来从free队列
+    取连接，请求处理结束后将长连接缓存到cache队列，连接被断开（或超时）再从cache队列放入free队列
+    */
     for (i = 0; i < kcf->max_cached; i++) {
         ngx_queue_insert_head(&kcf->free, &cached[i].queue);
         cached[i].conf = kcf;
@@ -260,6 +267,9 @@ ngx_http_upstream_init_keepalive_peer(ngx_http_request_t *r,
 
 //ngx_http_upstream_free_keepalive_peer往kp->conf->cache中添加缓存ngx_connection_t，ngx_http_upstream_get_keepalive_peer从缓存中
 //取出和后端的连接缓存ngx_connection_t，可以避免重复的建立和关闭TCP连接
+
+/*ngx_http_upstream_get_round_robin_peer ngx_http_upstream_get_least_conn_peer ngx_http_upstream_get_hash_peer  
+ngx_http_upstream_get_ip_hash_peer ngx_http_upstream_get_keepalive_peer等 */
 static ngx_int_t
 ngx_http_upstream_get_keepalive_peer(ngx_peer_connection_t *pc, void *data)
 {
@@ -275,12 +285,14 @@ ngx_http_upstream_get_keepalive_peer(ngx_peer_connection_t *pc, void *data)
 
     /* ask balancer */
     // 先调用原始getpeer钩子（ngx_http_upstream_get_round_robin_peer）选择后端
-    rc = kp->original_get_peer(pc, kp->data);
+    rc = kp->original_get_peer(pc, kp->data); //通过hash  ip_hash rr方式选择后端的服务器peer
 
     if (rc != NGX_OK) {
         return rc;
     }
 
+    /* 已经选定应该把请求发往后端某个节点，然后下面就选择和这个节点的某个已有的长连接来发送数据 */
+    
     /* search cache for suitable connection */
 
     cache = &kp->conf->cache;
@@ -593,6 +605,14 @@ ngx_http_upstream_keepalive(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     /*
     When using load balancer methods other than the default round-robin method, it is necessary to activate them before the keepalive directive.
      */
+
+    /*
+    &ngx_http_upstream_hash_module,
+    &ngx_http_upstream_ip_hash_module,
+    &ngx_http_upstream_least_conn_module,
+    &ngx_http_upstream_keepalive_module,  keepalive module是配合hash  ip_hash least_conn使用的，而且在这些模块之后，original_init_upstream指向这几个模块的init_upstream
+    */
+  
     /* 保存原来的初始化upstream的钩子，并设置新的钩子 */ //这个是赋值均衡算法的一些初始化钩子用original_init_upstream保存
     kcf->original_init_upstream = uscf->peer.init_upstream
                                   ? uscf->peer.init_upstream

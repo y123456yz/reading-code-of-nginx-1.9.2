@@ -499,12 +499,12 @@ struct ngx_http_upstream_s { //该结构中的部分成员是从upstream{}中的相关配置里面(
     ////buffering方式，非子请求，后端头部信息已经读取完毕了，如果后端还有包体需要发送，则本端通过ngx_http_upstream_process_upstream该方式读取
     //非buffering方式，非子请求，后端头部信息已经读取完毕了，如果后端还有包体需要发送，则本端通过ngx_http_upstream_process_non_buffered_upstream读取
     //如果有子请求，后端头部信息已经读取完毕了，如果后端还有包体需要发送，则本端通过ngx_http_upstream_process_body_in_memory读取
-    ngx_http_upstream_handler_pt     read_event_handler; //ngx_http_upstream_process_header
+    ngx_http_upstream_handler_pt     read_event_handler; //ngx_http_upstream_process_header  ngx_http_upstream_handler中执行
     //处理写事件的回调方法，每一个阶段都有不同的write event handler  
     //注意ngx_http_upstream_t和ngx_http_request_t都有该成员 分别在ngx_http_request_handler和ngx_http_upstream_handler中执行
     ngx_http_upstream_handler_pt     write_event_handler; //ngx_http_upstream_send_request_handler用户向后端发送包体时，一次发送没完完成，再次出发epoll write的时候调用
 
-    //表示主动向上游服务器发起的连接。 
+    //表示主动向上游服务器发起的连接。 连接的fd保存在peer->connection里面
     ngx_peer_connection_t            peer;//初始赋值见ngx_http_upstream_connect->ngx_event_connect_peer(&u->peer);
 
     /*
@@ -716,7 +716,7 @@ NGX ERROR表示出现错误，返回NGX_OK表示解析到完整的包头
    
 /*
 当调用ngx_http_upstream_init启动upstream机制后，在各种原因（无论成功还是失败）导致该请求被销毁前都会调用finalize_request方
-法（参见图5-1）。在finalize_request方法中可以不做任何事情，但必须实现finalize_request方法，否则Nginx会出现空指针调用的严重错误。
+法。在finalize_request方法中可以不做任何事情，但必须实现finalize_request方法，否则Nginx会出现空指针调用的严重错误。
 
 当请求结束时，将会回调finalize_request方法，如果我们希望此时释放资源，如打开
 的句柄等，．那么可以把这样的代码添加到finalize_request方法中。本例中定义了mytest_

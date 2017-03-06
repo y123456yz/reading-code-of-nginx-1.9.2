@@ -100,7 +100,7 @@ static ngx_uint_t  ngx_slab_exact_shift;//ngx_slab_exact_shift = 7£¬¼´128µÄÎ»±íÊ
 
     //Í¼ĞÎ»¯Àí½â²Î¿¼:http://blog.csdn.net/u013009575/article/details/17743261
 void
-ngx_slab_init(ngx_slab_pool_t *pool)//poolÖ¸ÏòµÄÊÇÕû¸ö¹²ÏíÄÚ´æ¿Õ¼äµÄÆğÊ¼µØÖ·
+ngx_slab_init(ngx_slab_pool_t *pool)//poolÖ¸ÏòµÄÊÇÕû¸ö¹²ÏíÄÚ´æ¿Õ¼äµÄÆğÊ¼µØÖ·   slab½á¹¹ÊÇÅäºÏ¹²ÏíÄÚ´æÊ¹ÓÃµÄ ¿ÉÒÔÒÔlimit reqÄ£¿éÎªÀı£¬²Î¿¼ngx_http_limit_req_module
 {
     u_char           *p;
     size_t            size;

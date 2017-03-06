@@ -223,7 +223,7 @@ ngx_log_error_core(ngx_uint_t level, ngx_log_t *log, const char* filename, int l
     p = ngx_cpymem(errstr, ngx_cached_err_log_time.data,
                    ngx_cached_err_log_time.len);
 
-    snprintf(filebuf, sizeof(filebuf), "[%35s, %5d]", filename, lineno);
+    snprintf(filebuf, sizeof(filebuf), "[%40s, %5d]", filename, lineno);
 
     p = ngx_slprintf(p, last, "%s ", filebuf);  
     

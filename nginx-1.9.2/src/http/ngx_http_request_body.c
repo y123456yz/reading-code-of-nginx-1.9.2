@@ -89,6 +89,7 @@ ngx_http_read_client_request_body(ngx_http_request_t *r,  //只有在连接后端服务器
      ngx_http_finalize_request的方法去结束请求，否则引用计数会始终无法清零，从而导致请求无法释放。
      */
     r->main->count++;
+    //因为执行该函数一般都是向后端转发，例如可以参考ngx_http_read_client_request_body(r, ngx_http_upstream_init);，在ngx_http_upstream_init没有执行count++操作，实际上在这里
 
 #if (NGX_HTTP_V2)
     if (r->stream && r == r->main) {

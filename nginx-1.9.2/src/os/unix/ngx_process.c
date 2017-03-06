@@ -11,7 +11,8 @@
 #include <ngx_channel.h>
 
 
-typedef struct {
+//信号发送见ngx_os_signal_process
+typedef struct { //signals
     int     signo;   //需要处理的信号
     char   *signame; //信号对应的字符串名称
     char   *name;    //这个信号对应着的Nginx命令
@@ -40,12 +41,15 @@ ngx_int_t        ngx_last_process;
 */
 ngx_process_t    ngx_processes[NGX_MAX_PROCESSES]; //存储所有子进程的数组  ngx_spawn_process中赋值
 
-//信号处理在ngx_signal_handler
+//信号发送见ngx_os_signal_process 信号处理在ngx_signal_handler
 ngx_signal_t  signals[] = {
     { ngx_signal_value(NGX_RECONFIGURE_SIGNAL),
       "SIG" ngx_value(NGX_RECONFIGURE_SIGNAL),
       "reload",
-      ngx_signal_handler },
+      /* reload实际上是执行reload的nginx进程向原master+worker中的master进程发送reload信号，源master收到后，启动新的worker进程，同时向源worker
+         进程发送quit信号，等他们处理完已有的数据信息后，退出，这样就只有新的worker进程运行。
+      */
+      ngx_signal_handler }, 
 
     { ngx_signal_value(NGX_REOPEN_SIGNAL),
       "SIG" ngx_value(NGX_REOPEN_SIGNAL),
@@ -325,7 +329,11 @@ ngx_execute_proc(ngx_cycle_t *cycle, void *data)
 {
     ngx_exec_ctx_t  *ctx = data;
 
-    if (execve(ctx->path, ctx->argv, ctx->envp) == -1) {
+    /*
+    execve()用来执行参数filename字符串所代表的文件路径，第二个参数是利用指针数组来传递给执行文件，并且需
+    要以空指针(NULL)结束，最后一个参数则为传递给执行文件的新环境变量数组。
+    */
+    if (execve(ctx->path, ctx->argv, ctx->envp) == -1) { //把旧master进程bind监听的fd写入到环境变量NGINX_VAR中
         ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                       "execve() failed while executing %s \"%s\"",
                       ctx->name, ctx->path);
@@ -842,7 +850,7 @@ ngx_signal_handler(int signo)
             }
             break;
 
-        case ngx_signal_value(NGX_RECONFIGURE_SIGNAL):
+        case ngx_signal_value(NGX_RECONFIGURE_SIGNAL): //reload信号，是由master处理
             ngx_reconfigure = 1;
             action = ", reconfiguring";
             break;
@@ -854,7 +862,10 @@ ngx_signal_handler(int signo)
             break;
 
         case ngx_signal_value(NGX_CHANGEBIN_SIGNAL):
-            if (getppid() > 1 || ngx_new_binary > 0) {
+            //if (getppid() > 1 || ngx_new_binary > 0) { 
+            if (ngx_new_binary > 0) {  //yang add change，为了调试，故意注释
+           //nginx热升级通过发送该信号,这里必须保证父进程大于1，父进程小于等于1的话，说明已经由就master启动了本master，则就不能热升级
+           //所以如果通过crt登录启动nginx的话，可以看到其PPID大于1,所以不能热升级
 
                 /*
                  * Ignore the signal in the new binary if its parent is
@@ -896,7 +907,7 @@ ngx_signal_handler(int signo)
                 break;
             }
             ngx_debug_quit = 1;
-        case ngx_signal_value(NGX_SHUTDOWN_SIGNAL):
+        case ngx_signal_value(NGX_SHUTDOWN_SIGNAL): //工作进程收到quit信号
             ngx_quit = 1;
             action = ", shutting down";
             break;
@@ -1104,14 +1115,14 @@ ngx_os_signal_process()函数处理
 遍历signals数组，根据给定信号name，找到对应signo；
 调用kill向该pid发送signo号信号；
 */
-ngx_int_t
+ngx_int_t 
 ngx_os_signal_process(ngx_cycle_t *cycle, char *name, ngx_int_t pid)
 {
     ngx_signal_t  *sig;
 
     for (sig = signals; sig->signo != 0; sig++) {
         if (ngx_strcmp(name, sig->name) == 0) {
-            if (kill(pid, sig->signo) != -1) {
+            if (kill(pid, sig->signo) != -1) { //这里发送signal，信号接收处理在signals->handler
                 return 0;
             }
 

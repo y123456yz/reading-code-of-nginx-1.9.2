@@ -45,7 +45,7 @@ NginxÖĞ¶¨ÒåÁË»ù±¾µÄÊı¾İ½á¹¹ngx_connection_tÀ´±íÊ¾Á¬½Ó£¬Õâ¸öÁ¬½Ó±íÊ¾ÊÇ¿Í»§¶ËÖ÷¶¯·
 //±»¶¯Á¬½Ó(¿Í»§¶ËÁ¬½Ónginx)¶ÔÓ¦µÄÊı¾İ½á¹¹ÊÇngx_connection_s£¬Ö÷¶¯Á¬½Ó(nginxÁ¬½Óºó¶Ë·şÎñÆ÷)¶ÔÓ¦µÄÊı¾İ½á¹¹ÊÇngx_peer_connection_s
 struct ngx_peer_connection_s {
     /* Ò»¸öÖ÷¶¯Á¬½ÓÊµ¼ÊÉÏÒ²ĞèÒªngx_connection_t½á¹¹ÌåÖĞµÄ´ó²¿·Ö³ÉÔ±£¬²¢ÇÒ³öÓÚÖØÓÃµÄ¿¼ÂÇ¶ø¶¨ÒåÁËconnection³ÉÔ± */
-    ngx_connection_t                *connection; //¸³³õÖµ¼ûngx_event_connect_peer
+    ngx_connection_t                *connection; //¸³³õÖµ¼ûngx_event_connect_peer  Á¬½ÓµÄfd±£´æÔÚÕâÀïÃæ
 
     struct sockaddr                 *sockaddr;//Ô¶¶Ë·şÎñÆ÷µÄsocketµØÖ·
     socklen_t                        socklen; //sockaddrµØÖ·µÄ³¤¶È
@@ -60,8 +60,9 @@ struct ngx_peer_connection_s {
        ´ğ:µ±Õâ¸öfail_timeoutÊ±¼ä¶Î¹ıÁËºó£¬»áÖØÖÃpeer->checked£¬ÄÇÃ´ÓĞ¿ÉÒÔÊÔÌ½¸Ã·şÎñÆ÷ÁË£¬²Î¿¼ngx_http_upstream_get_peer
        //checkedÓÃÀ´¼ì²âÊ±¼ä£¬ÀıÈçÄ³¸öÊ±¼ä¶Îfail_timeoutÕâ¶ÎÊ±¼äºó¶ËÊ§Ğ§ÁË£¬ÄÇÃ´Õâ¸öfail_timeout¹ıÁËºó£¬Ò²¿ÉÒÔÊÔÌ½Ê¹ÓÃ¸Ã·şÎñÆ÷
      */ 
-    //ngx_event_connect_peerÖĞÖ´ĞĞ
-    //»ñÈ¡Á¬½ÓµÄ·½·¨£¬Èç¹ûÊ¹ÓÃ³¤Á¬½Ó¹¹³ÉµÄÁ¬½Ó³Ø£¬ÄÇÃ´±ØĞëÒªÊµÏÖget·½·¨
+    //ngx_event_connect_peerÖĞÖ´ĞĞ »ñÈ¡Á¬½ÓµÄ·½·¨£¬Èç¹ûÊ¹ÓÃ³¤Á¬½Ó¹¹³ÉµÄÁ¬½Ó³Ø£¬ÄÇÃ´±ØĞëÒªÊµÏÖget·½·¨
+    //ngx_http_upstream_get_round_robin_peer ngx_http_upstream_get_least_conn_peer 
+    //ngx_http_upstream_get_hash_peer  ngx_http_upstream_get_ip_hash_peer ngx_http_upstream_get_keepalive_peerµÈ
     ngx_event_get_peer_pt            get; //¸³Öµ¼ûngx_http_upstream_init_xxx_peer(ÀıÈçngx_http_upstream_init_round_robin_peer)
     ngx_event_free_peer_pt           free; //Óëget·½·¨¶ÔÓ¦µÄÊÍ·ÅÁ¬½ÓµÄ·½·¨ ngx_http_upstream_next»òÕßngx_http_upstream_finalize_requestÖĞÖ´ĞĞ
 

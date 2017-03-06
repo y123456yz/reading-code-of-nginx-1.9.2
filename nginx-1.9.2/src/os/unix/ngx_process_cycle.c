@@ -28,7 +28,7 @@ static void ngx_cache_manager_process_handler(ngx_event_t *ev);
 static void ngx_cache_loader_process_handler(ngx_event_t *ev);
 
 //如果是第一次加载，则满足ngx_is_init_cycle。如果是reload热启动，则原来的nginx进程的ngx_process == NGX_PROCESS_MASTER
-ngx_uint_t    ngx_process;
+ngx_uint_t    ngx_process;//不赋初值，默认0，也就是NGX_PROCESS_SINGLE
 ngx_uint_t    ngx_worker;
 ngx_pid_t     ngx_pid;//ngx_pid = ngx_getpid(); 在子进程中为子进程pid，在master中为master的pid
 
@@ -201,7 +201,7 @@ ngx_uint_t    ngx_exiting; //ngx_exiting标志位仅由ngx_worker_process_cycle方法在
 sig_atomic_t  ngx_reconfigure;//nginx -s reload会触发该新号
 sig_atomic_t  ngx_reopen; //当接收到USRI信号时，ngx_reopen标志位会设为1，这是在告诉Nginx需要重新打开文件（如切换日志文件时）
 
-sig_atomic_t  ngx_change_binary; //平滑升级到新版本的Nginx程序
+sig_atomic_t  ngx_change_binary; //平滑升级到新版本的Nginx程序，热升级
 ngx_pid_t     ngx_new_binary;//进行热代码替换，这里是调用execve来执行新的代码。 这个是在ngx_change_binary的基础上获取值
 ngx_uint_t    ngx_inherited;
 ngx_uint_t    ngx_daemonized;
@@ -585,6 +585,9 @@ ngx_noaccept，决定执行不同的分支流程，并循环执行（注意，每次一个循环执行完毕后进
     }
 }
 
+/*
+如果hginx.conf中配置为单进程工作模式，这时将会调用ngx_single_process_cycle方法进入单迸程工作模式。
+*/
 void
 ngx_single_process_cycle(ngx_cycle_t *cycle)
 {

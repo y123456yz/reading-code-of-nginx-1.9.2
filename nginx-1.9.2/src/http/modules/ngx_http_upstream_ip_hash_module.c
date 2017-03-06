@@ -358,7 +358,8 @@ IP哈希策略
 缺点：当某个时刻来自某个IP地址的请求特别多，那么将导致某台后端服务器的压力可能非常大，而其他后端服务器却空闲的不均衡情况、
 
 */
-
+/*ngx_http_upstream_get_round_robin_peer ngx_http_upstream_get_least_conn_peer ngx_http_upstream_get_hash_peer  
+ngx_http_upstream_get_ip_hash_peer ngx_http_upstream_get_keepalive_peer等 */
 static ngx_int_t
 ngx_http_upstream_get_ip_hash_peer(ngx_peer_connection_t *pc, void *data)
 {
