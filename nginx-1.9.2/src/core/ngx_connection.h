@@ -239,7 +239,8 @@ struct ngx_connection_s {  //cycle->read_events和cycle->write_events这两个数组存
  /*
     在子请求处理过程中，上层父请求r的data指向第一个r下层的子请求，例如第二层的r->connection->data指向其第三层的第一个
  创建的子请求r，c->data = sr见ngx_http_subrequest,在subrequest往客户端发送数据的时候，只有data指向的节点可以先发送出去
-    listen过程中，指向原始请求ngx_http_connection_t(ngx_http_init_connection),接收到客户端数据后指向ngx_http_request_t(ngx_http_wait_request_handler)
+    listen过程中，指向原始请求ngx_http_connection_t(ngx_http_init_connection ngx_http_ssl_handshake),接收到客户端数据后指向ngx_http_request_t(ngx_http_wait_request_handler)
+    http2协议的过程中，在ngx_http_v2_connection_t(ngx_http_v2_init)
  */
     void               *data; /* 如果是subrequest，则data最终指向最下层子请求r,见ngx_http_subrequest */
     //如果是文件异步i/o中的ngx_event_aio_t，则它来自ngx_event_aio_t->ngx_event_t(只有读),如果是网络事件中的event,则为ngx_connection_s中的event(包括读和写)
@@ -278,7 +279,7 @@ struct ngx_connection_s {  //cycle->read_events和cycle->write_events这两个数组存
     ngx_str_t           proxy_protocol_addr;
 
 #if (NGX_SSL)
-    ngx_ssl_connection_t  *ssl;
+    ngx_ssl_connection_t  *ssl; //赋值见ngx_ssl_create_connection
 #endif
 
     //本机的监听端口对应的sockaddr结构体，也就是listening监听对象中的sockaddr成员

@@ -1081,7 +1081,8 @@ ngx_ssl_set_session(ngx_connection_t *c, ngx_ssl_session_t *session)
     return NGX_OK;
 }
 
-
+/* TLS单向认证 协议握手过程参考http://www.ruanyifeng.com/blog/2014/02/ssl_tls.html */
+//tls单向认证四次握手过程，都会调用该函数处理，返回NGX_AGAIN表示握手还没有完成，需要再次进行后续握手过程
 ngx_int_t
 ngx_ssl_handshake(ngx_connection_t *c)
 {
@@ -1090,13 +1091,15 @@ ngx_ssl_handshake(ngx_connection_t *c)
 
     ngx_ssl_clear_error(c->log);
 
-    n = SSL_do_handshake(c->ssl->connection);
+    //这里会试着握手
+    n = SSL_do_handshake(c->ssl->connection); //改函数内部会调用ngx_http_ssl_alpn_select执行
 
+    //0x80:SSLv2  0x16:SSLv3/TLSv1 
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, c->log, 0, "SSL_do_handshake: %d", n);
 
-    if (n == 1) {
+    if (n == 1) { //握手完成
 
-        if (ngx_handle_read_event(c->read, 0, NGX_FUNC_LINE, NGX_FUNC_LINE) != NGX_OK) {
+        if (ngx_handle_read_event(c->read, 0, NGX_FUNC_LINE) != NGX_OK) {
             return NGX_ERROR;
         }
 
@@ -1135,6 +1138,7 @@ ngx_ssl_handshake(ngx_connection_t *c)
 
             *d = '\0';
 
+            /* 打印密码和版本，如SSL: TLSv1.2, cipher: "ECDHE-RSA-AES128-GCM-SHA256 TLSv1.2 Kx=ECDH Au=RSA Enc=AESGCM(128) Mac=AEAD */
             ngx_log_debug2(NGX_LOG_DEBUG_EVENT, c->log, 0,
                            "SSL: %s, cipher: \"%s\"",
                            SSL_get_version(c->ssl->connection), &buf[1]);
@@ -1167,14 +1171,15 @@ ngx_ssl_handshake(ngx_connection_t *c)
 
 #endif
 
-        return NGX_OK;
+        return NGX_OK;//握手完成
     }
 
     sslerr = SSL_get_error(c->ssl->connection, n);
-
+    
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, c->log, 0, "SSL_get_error: %d", sslerr);
-
-    if (sslerr == SSL_ERROR_WANT_READ) {
+    //这里应该再重新接收一次和NGINX一样,等待下一次循环（epoll）再进行，同时设置读写句柄，以便下次读取的时候直接进行握手
+    //单向认证四次握手过程还没有完成，需要继续握手
+    if (sslerr == SSL_ERROR_WANT_READ) {  //# define SSL_ERROR_WANT_READ             2
         c->read->ready = 0;
         c->read->handler = ngx_ssl_handshake_handler;
         c->write->handler = ngx_ssl_handshake_handler;
@@ -1187,7 +1192,7 @@ ngx_ssl_handshake(ngx_connection_t *c)
             return NGX_ERROR;
         }
 
-        return NGX_AGAIN;
+        return NGX_AGAIN;//需要继续握手
     }
 
     if (sslerr == SSL_ERROR_WANT_WRITE) {
@@ -1203,7 +1208,7 @@ ngx_ssl_handshake(ngx_connection_t *c)
             return NGX_ERROR;
         }
 
-        return NGX_AGAIN;
+        return NGX_AGAIN; //需要继续握手
     }
 
     err = (sslerr == SSL_ERROR_SYSCALL) ? ngx_errno : 0;
@@ -1223,10 +1228,11 @@ ngx_ssl_handshake(ngx_connection_t *c)
 
     ngx_ssl_connection_error(c, sslerr, err, "SSL_do_handshake() failed");
 
-    return NGX_ERROR;
+    return NGX_ERROR; //握手失败
 }
 
 
+/* tls握手第一步，接收客户端发送过来的ClientHello请求，TLS协议握手过程参考http://www.ruanyifeng.com/blog/2014/02/ssl_tls.html */
 static void
 ngx_ssl_handshake_handler(ngx_event_t *ev)
 {

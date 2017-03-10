@@ -184,7 +184,7 @@ cc -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -o objs/autotest objs/autotest.c
 ----------------------------------------
 checking for crypt()
 
-/tmp/ccuPaZ35.o: In function `main':
+/tmp/ccXI9IB5.o: In function `main':
 autotest.c:(.text+0xf): undefined reference to `crypt'
 collect2: ld returned 1 exit status
 ----------
@@ -292,7 +292,7 @@ checking for statvfs()
 ----------------------------------------
 checking for dlopen()
 
-/tmp/cchXFohv.o: In function `main':
+/tmp/ccaWkCPG.o: In function `main':
 autotest.c:(.text+0xf): undefined reference to `dlopen'
 collect2: ld returned 1 exit status
 ----------
@@ -497,7 +497,7 @@ checking for time_t size
 ----------------------------------------
 checking for setproctitle()
 
-/tmp/ccamsVWM.o: In function `main':
+/tmp/ccs4eRzB.o: In function `main':
 autotest.c:(.text+0xf): undefined reference to `setproctitle'
 collect2: ld returned 1 exit status
 ----------
@@ -526,7 +526,7 @@ checking for pwrite()
 ----------------------------------------
 checking for sys_nerr
 
-/tmp/cc9T6CTi.o: In function `main':
+/tmp/ccAWbcIQ.o: In function `main':
 autotest.c:(.text+0x6): warning: `sys_nerr' is deprecated; use `strerror' or `strerror_r' instead
 135
 ----------------------------------------
@@ -556,7 +556,7 @@ checking for System V shared memory
 ----------------------------------------
 checking for POSIX semaphores
 
-/tmp/ccg2n6y0.o: In function `main':
+/tmp/ccDI4Ali.o: In function `main':
 autotest.c:(.text+0x1a): undefined reference to `sem_init'
 autotest.c:(.text+0x32): undefined reference to `sem_destroy'
 collect2: ld returned 1 exit status
@@ -693,89 +693,6 @@ int main() {
 ----------
 cc -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -o objs/autotest objs/autotest.c -lpcre
 ----------
-
-----------------------------------------
-checking for md5 in system md library
-
-objs/autotest.c:4:17: error: md5.h: No such file or directory
-objs/autotest.c: In function 'main':
-objs/autotest.c:7: error: 'MD5_CTX' undeclared (first use in this function)
-objs/autotest.c:7: error: (Each undeclared identifier is reported only once
-objs/autotest.c:7: error: for each function it appears in.)
-objs/autotest.c:7: error: expected ';' before 'md5'
-objs/autotest.c:7: error: 'md5' undeclared (first use in this function)
-----------
-
-#include <sys/types.h>
-#include <unistd.h>
-#include <md5.h>
-
-int main() {
-    MD5_CTX md5; MD5Init(&md5);
-    return 0;
-}
-
-----------
-cc -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -o objs/autotest objs/autotest.c -lmd
-----------
-
-----------------------------------------
-checking for md5 in system md5 library
-
-objs/autotest.c:4:17: error: md5.h: No such file or directory
-objs/autotest.c: In function 'main':
-objs/autotest.c:7: error: 'MD5_CTX' undeclared (first use in this function)
-objs/autotest.c:7: error: (Each undeclared identifier is reported only once
-objs/autotest.c:7: error: for each function it appears in.)
-objs/autotest.c:7: error: expected ';' before 'md5'
-objs/autotest.c:7: error: 'md5' undeclared (first use in this function)
-----------
-
-#include <sys/types.h>
-#include <unistd.h>
-#include <md5.h>
-
-int main() {
-    MD5_CTX md5; MD5Init(&md5);
-    return 0;
-}
-
-----------
-cc -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -o objs/autotest objs/autotest.c -lmd5
-----------
-
-----------------------------------------
-checking for md5 in system OpenSSL crypto library
-
-
-----------------------------------------
-checking for sha1 in system md library
-
-objs/autotest.c:4:17: error: sha.h: No such file or directory
-objs/autotest.c: In function 'main':
-objs/autotest.c:7: error: 'SHA_CTX' undeclared (first use in this function)
-objs/autotest.c:7: error: (Each undeclared identifier is reported only once
-objs/autotest.c:7: error: for each function it appears in.)
-objs/autotest.c:7: error: expected ';' before 'sha1'
-objs/autotest.c:7: error: 'sha1' undeclared (first use in this function)
-----------
-
-#include <sys/types.h>
-#include <unistd.h>
-#include <sha.h>
-
-int main() {
-    SHA_CTX sha1; SHA1_Init(&sha1);
-    return 0;
-}
-
-----------
-cc -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -o objs/autotest objs/autotest.c -lmd
-----------
-
-----------------------------------------
-checking for sha1 in system OpenSSL crypto library
-
 
 ----------------------------------------
 checking for zlib library

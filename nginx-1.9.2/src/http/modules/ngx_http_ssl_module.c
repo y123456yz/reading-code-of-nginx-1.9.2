@@ -316,11 +316,17 @@ static ngx_str_t ngx_http_ssl_sess_id_ctx = ngx_string("HTTP");
 
 #ifdef TLSEXT_TYPE_application_layer_protocol_negotiation
 
+/*
+2017/03/08 15:24:45[                ngx_http_ssl_alpn_select,   341]  [debug] 2794#2794: *2 SSL ALPN supported by client: h2
+2017/03/08 15:24:45[                ngx_http_ssl_alpn_select,   341]  [debug] 2794#2794: *2 SSL ALPN supported by client: spdy/3.1
+2017/03/08 15:24:45[                ngx_http_ssl_alpn_select,   341]  [debug] 2794#2794: *2 SSL ALPN supported by client: http/1.1
+2017/03/08 15:24:45[                ngx_http_ssl_alpn_select,   368]  [debug] 2794#2794: *2 SSL ALPN selected: h2
+*/ /* 确定客户端和nginx采用什么协议进行通信 */ 
 static int
 ngx_http_ssl_alpn_select(ngx_ssl_conn_t *ssl_conn, const unsigned char **out,
     unsigned char *outlen, const unsigned char *in, unsigned int inlen,
     void *arg)
-{
+{/* ngx_ssl_handshake中执行该函数 */
     unsigned int            srvlen;
     unsigned char          *srv;
 #if (NGX_DEBUG)
@@ -367,6 +373,7 @@ ngx_http_ssl_alpn_select(ngx_ssl_conn_t *ssl_conn, const unsigned char **out,
     ngx_log_debug2(NGX_LOG_DEBUG_HTTP, c->log, 0,
                    "SSL ALPN selected: %*s", *outlen, *out);
 
+    //define SSL_TLSEXT_ERR_OK 0
     return SSL_TLSEXT_ERR_OK;
 }
 

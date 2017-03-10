@@ -38,14 +38,17 @@
 
 #define NGX_HTTP_V2_SETTINGS_PARAM_SIZE          6
 
-/* settings fields */
+/* settings fields */ /* setting帧组包在ngx_http_v2_send_settings,解析生效判断见ngx_http_v2_state_settings_params */
 #define NGX_HTTP_V2_HEADER_TABLE_SIZE_SETTING    0x1
-#define NGX_HTTP_V2_MAX_STREAMS_SETTING          0x3
+//发送者允许可打开流的最大值，建议值100，默认可不用设置；0值为禁止创建新流 
+#define NGX_HTTP_V2_MAX_STREAMS_SETTING          0x3 
+/* 发送端流控窗口大小，接收到客户端setting中携带有该类型后，需要做流控窗口调整，默认值2^16-1 (65,535)个字节大小；最大值为2^31-1个字节大小，若溢出需要报FLOW_CONTROL_ERROR错误 */
 #define NGX_HTTP_V2_INIT_WINDOW_SIZE_SETTING     0x4
+/* 单帧负载最大值，默认为2^14（16384）个字节，两端所发送帧都会收到此设定影响；值区间为2^14（16384）-2^24-1(16777215)  */
 #define NGX_HTTP_V2_MAX_FRAME_SIZE_SETTING       0x5
 
+//SETTING帧FRAME_SIZE的取值
 #define NGX_HTTP_V2_FRAME_BUFFER_SIZE            24
-
 #define NGX_HTTP_V2_DEFAULT_FRAME_SIZE           (1 << 14)
 
 #define NGX_HTTP_V2_MAX_WINDOW                   ((1U << 31) - 1)
@@ -179,9 +182,9 @@ static void ngx_http_v2_node_children_update(ngx_http_v2_node_t *node);
 
 static void ngx_http_v2_pool_cleanup(void *data);
 
-
+/* 各个frame帧的内容部分处理，每种frame对应一个handler，解析到对应frame后，根据解析出的type执行对应的回调，见ngx_http_v2_state_head */
 static ngx_http_v2_handler_pt ngx_http_v2_frame_states[] = {
-    ngx_http_v2_state_data,
+    ngx_http_v2_state_data, /* NGX_HTTP_V2_DATA_FRAME对应的内容部分处理 */
     ngx_http_v2_state_headers,
     ngx_http_v2_state_priority,
     ngx_http_v2_state_rst_stream,
@@ -196,7 +199,10 @@ static ngx_http_v2_handler_pt ngx_http_v2_frame_states[] = {
 #define NGX_HTTP_V2_FRAME_STATES                                              \
     (sizeof(ngx_http_v2_frame_states) / sizeof(ngx_http_v2_handler_pt))
 
-
+/*
+如果配置启用ssl和http2则通过ngx_http_ssl_handshake_handler调用ngx_http_v2_init
+如果只启用了http2则通过ngx_http_init_connection调用ngx_http_v2_init
+*/
 void
 ngx_http_v2_init(ngx_event_t *rev)
 {
@@ -241,6 +247,7 @@ ngx_http_v2_init(ngx_event_t *rev)
 
     h2c->frame_size = NGX_HTTP_V2_DEFAULT_FRAME_SIZE;
 
+    /* 获取http2模块的配置信息 */
     h2scf = ngx_http_get_module_srv_conf(hc->conf_ctx, ngx_http_v2_module);
 
     h2c->pool = ngx_create_pool(h2scf->pool_size, h2c->connection->log);
@@ -258,6 +265,7 @@ ngx_http_v2_init(ngx_event_t *rev)
     cln->handler = ngx_http_v2_pool_cleanup;
     cln->data = h2c;
 
+    /* ngx_http_v2_node_t类型的数组指针 */
     h2c->streams_index = ngx_pcalloc(c->pool, ngx_http_v2_index_size(h2scf)
                                               * sizeof(ngx_http_v2_node_t *));
     if (h2c->streams_index == NULL) {
@@ -294,7 +302,7 @@ ngx_http_v2_init(ngx_event_t *rev)
     ngx_http_v2_read_handler(rev);
 }
 
-
+/* 读取客户端数据，如果读取recv返回NGX_AGAIN,则把h2c->last_out队列数据发送出去 */
 static void
 ngx_http_v2_read_handler(ngx_event_t *rev)
 {
@@ -329,7 +337,7 @@ ngx_http_v2_read_handler(ngx_event_t *rev)
         ngx_memcpy(p, h2c->state.buffer, NGX_HTTP_V2_STATE_BUFFER_SIZE);
         end = p + h2c->state.buffer_used;
 
-        n = c->recv(c, end, available);
+        n = c->recv(c, end, available); /* 接收客户端数据 */
 
         if (n == NGX_AGAIN) {
             break;
@@ -367,6 +375,7 @@ ngx_http_v2_read_handler(ngx_event_t *rev)
         return;
     }
 
+    /* 把队列中的数据发送出去 */
     if (h2c->last_out && ngx_http_v2_send_output_queue(h2c) == NGX_ERROR) {
         ngx_http_v2_finalize_connection(h2c, 0);
         return;
@@ -442,7 +451,9 @@ ngx_http_v2_write_handler(ngx_event_t *wev)
     ngx_http_v2_handle_connection(h2c);
 }
 
-
+/*
+发送队列last_out中的数据
+*/
 ngx_int_t
 ngx_http_v2_send_output_queue(ngx_http_v2_connection_t *h2c)
 {
@@ -660,7 +671,9 @@ ngx_http_v2_state_proxy_protocol(ngx_http_v2_connection_t *h2c, u_char *pos,
     return ngx_http_v2_state_preface(h2c, pos, end);
 }
 
-
+/* 
+连接序言:在建立TCP连接并且检测到HTTP/2会被各个对等端使用后，每个端点必须发送一个连接序言最终确认并作为建立HTTP/2连接的初始设置参数。
+解析客户端发送过来的magic头字符串:HTTP/2.0\r\n\r\nSM\r\n\r\n */
 static u_char *
 ngx_http_v2_state_preface(ngx_http_v2_connection_t *h2c, u_char *pos,
     u_char *end)
@@ -703,7 +716,7 @@ ngx_http_v2_state_preface_end(ngx_http_v2_connection_t *h2c, u_char *pos,
     }
 
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, h2c->connection->log, 0,
-                   "http2 preface verified");
+                   "http2 preface verified"); //前言验证
 
     return ngx_http_v2_state_head(h2c, pos + sizeof(preface) - 1, end);
 }
@@ -719,8 +732,9 @@ ngx_http_v2_state_head(ngx_http_v2_connection_t *h2c, u_char *pos, u_char *end)
         return ngx_http_v2_state_save(h2c, pos, end, ngx_http_v2_state_head);
     }
 
+    //http2头部解析
     head = ngx_http_v2_parse_uint32(pos);
-
+                       
     h2c->state.length = ngx_http_v2_parse_length(head);
     h2c->state.flags = pos[4];
 
@@ -740,10 +754,11 @@ ngx_http_v2_state_head(ngx_http_v2_connection_t *h2c, u_char *pos, u_char *end)
         return ngx_http_v2_state_skip(h2c, pos, end);
     }
 
+    //HTTP2帧内容部分解析
     return ngx_http_v2_frame_states[type](h2c, pos, end);
 }
 
-
+//见ngx_http_v2_frame_states
 static u_char *
 ngx_http_v2_state_data(ngx_http_v2_connection_t *h2c, u_char *pos, u_char *end)
 {
@@ -1042,7 +1057,7 @@ error:
     return ngx_http_v2_state_skip_padded(h2c, pos, end);
 }
 
-
+//见ngx_http_v2_frame_states
 static u_char *
 ngx_http_v2_state_headers(ngx_http_v2_connection_t *h2c, u_char *pos,
     u_char *end)
@@ -1654,7 +1669,19 @@ ngx_http_v2_state_header_complete(ngx_http_v2_connection_t *h2c, u_char *pos,
     return ngx_http_v2_state_complete(h2c, pos, end);
 }
 
-
+/*
++=+=============================================================+
+|E|                  Stream Dependency (31)                     |
++-+-------------+-----------------------------------------------+
+| Weight (8)    |
++---------------+
+字段列表： - E：流是否独立 - Stream Dependency：流依赖，值为流的标识符，自然也是31个比特表示。 - Weight：权重/优先级，一个字节表示自然数，范围1~256
+注意事项： 
+- PRIORITY帧其流标识符为0x0，接收方需要响应PROTOCOL_ERROR类型的连接错误。 
+- PRIORITY帧可在流的任何状态下发送，但限制是不能够在一个包含有报头块连续的帧里面出现，其发送时刻需要，若流已经结束，虽然可以发送，但已经没有什么效果。 
+- 超过5个字节PRIORITY帧接收方响应FRAME_SIZE_ERROR类型流错误。
+*/
+//见ngx_http_v2_frame_states
 static u_char *
 ngx_http_v2_state_priority(ngx_http_v2_connection_t *h2c, u_char *pos,
     u_char *end)
@@ -1747,7 +1774,7 @@ ngx_http_v2_state_priority(ngx_http_v2_connection_t *h2c, u_char *pos,
     return ngx_http_v2_state_complete(h2c, pos, end);
 }
 
-
+//见ngx_http_v2_frame_states
 static u_char *
 ngx_http_v2_state_rst_stream(ngx_http_v2_connection_t *h2c, u_char *pos,
     u_char *end)
@@ -1829,13 +1856,13 @@ ngx_http_v2_state_rst_stream(ngx_http_v2_connection_t *h2c, u_char *pos,
     return ngx_http_v2_state_complete(h2c, pos, end);
 }
 
-
+//见ngx_http_v2_frame_states
 static u_char *
 ngx_http_v2_state_settings(ngx_http_v2_connection_t *h2c, u_char *pos,
     u_char *end)
 {
-    if (h2c->state.flags == NGX_HTTP_V2_ACK_FLAG) {
-
+    if (h2c->state.flags == NGX_HTTP_V2_ACK_FLAG) { //头部flag为NGX_HTTP_V2_ACK_FLAG
+        //ACK (0x1)，表示接收者已经接收到SETTING帧，作为确认必须设置此标志位，此时负载为空，否则需要报FRAME_SIZE_ERROR错误
         if (h2c->state.length != 0) {
             ngx_log_error(NGX_LOG_INFO, h2c->connection->log, 0,
                           "client sent SETTINGS frame with the ACK flag "
@@ -1849,7 +1876,7 @@ ngx_http_v2_state_settings(ngx_http_v2_connection_t *h2c, u_char *pos,
         return ngx_http_v2_state_complete(h2c, pos, end);
     }
 
-    if (h2c->state.length % NGX_HTTP_V2_SETTINGS_PARAM_SIZE) {
+    if (h2c->state.length % NGX_HTTP_V2_SETTINGS_PARAM_SIZE) { /* setting帧内容部分必须为6字节的倍数 */
         ngx_log_error(NGX_LOG_INFO, h2c->connection->log, 0,
                       "client sent SETTINGS frame with incorrect length %uz",
                       h2c->state.length);
@@ -1857,7 +1884,7 @@ ngx_http_v2_state_settings(ngx_http_v2_connection_t *h2c, u_char *pos,
         return ngx_http_v2_connection_error(h2c, NGX_HTTP_V2_SIZE_ERROR);
     }
 
-    ngx_http_v2_send_settings(h2c, 1);
+    ngx_http_v2_send_settings(h2c, 1); /* 发送setting应答，表示我收到了客户端的setting帧报文 */
 
     return ngx_http_v2_state_settings_params(h2c, pos, end);
 }
@@ -1868,21 +1895,23 @@ ngx_http_v2_state_settings_params(ngx_http_v2_connection_t *h2c, u_char *pos,
     u_char *end)
 {
     ngx_uint_t  id, value;
-
+    /*
+ Identifier(16) + Value (32) 循环解析id及对应的value
+    */
     while (h2c->state.length) {
         if (end - pos < NGX_HTTP_V2_SETTINGS_PARAM_SIZE) {
             return ngx_http_v2_state_save(h2c, pos, end,
                                           ngx_http_v2_state_settings_params);
         }
 
-        h2c->state.length -= NGX_HTTP_V2_SETTINGS_PARAM_SIZE;
+        h2c->state.length -= NGX_HTTP_V2_SETTINGS_PARAM_SIZE; 
 
         id = ngx_http_v2_parse_uint16(pos);
         value = ngx_http_v2_parse_uint32(&pos[2]);
 
         switch (id) {
 
-        case NGX_HTTP_V2_INIT_WINDOW_SIZE_SETTING:
+        case NGX_HTTP_V2_INIT_WINDOW_SIZE_SETTING: /* 流控窗口调整 */
 
             if (value > NGX_HTTP_V2_MAX_WINDOW) {
                 ngx_log_error(NGX_LOG_INFO, h2c->connection->log, 0,
@@ -1928,7 +1957,7 @@ ngx_http_v2_state_settings_params(ngx_http_v2_connection_t *h2c, u_char *pos,
     return ngx_http_v2_state_complete(h2c, pos, end);
 }
 
-
+//见ngx_http_v2_frame_states
 static u_char *
 ngx_http_v2_state_push_promise(ngx_http_v2_connection_t *h2c, u_char *pos,
     u_char *end)
@@ -1939,7 +1968,7 @@ ngx_http_v2_state_push_promise(ngx_http_v2_connection_t *h2c, u_char *pos,
     return ngx_http_v2_connection_error(h2c, NGX_HTTP_V2_PROTOCOL_ERROR);
 }
 
-
+//见ngx_http_v2_frame_states
 static u_char *
 ngx_http_v2_state_ping(ngx_http_v2_connection_t *h2c, u_char *pos, u_char *end)
 {
@@ -1981,7 +2010,7 @@ ngx_http_v2_state_ping(ngx_http_v2_connection_t *h2c, u_char *pos, u_char *end)
     return ngx_http_v2_state_complete(h2c, pos + NGX_HTTP_V2_PING_SIZE, end);
 }
 
-
+//见ngx_http_v2_frame_states
 static u_char *
 ngx_http_v2_state_goaway(ngx_http_v2_connection_t *h2c, u_char *pos,
     u_char *end)
@@ -2018,7 +2047,7 @@ ngx_http_v2_state_goaway(ngx_http_v2_connection_t *h2c, u_char *pos,
     return ngx_http_v2_state_skip(h2c, pos, end);
 }
 
-
+//见ngx_http_v2_frame_states
 static u_char *
 ngx_http_v2_state_window_update(ngx_http_v2_connection_t *h2c, u_char *pos,
     u_char *end)
@@ -2135,7 +2164,7 @@ ngx_http_v2_state_window_update(ngx_http_v2_connection_t *h2c, u_char *pos,
     return ngx_http_v2_state_complete(h2c, pos, end);
 }
 
-
+//见ngx_http_v2_frame_states
 static u_char *
 ngx_http_v2_state_continuation(ngx_http_v2_connection_t *h2c, u_char *pos,
     u_char *end)
@@ -2360,7 +2389,7 @@ ngx_http_v2_parse_int(ngx_http_v2_connection_t *h2c, u_char **pos, u_char *end,
     return NGX_AGAIN;
 }
 
-
+/* 组setting帧报文，加入到ngx_http_v2_connection_t->last_out */
 static ngx_int_t
 ngx_http_v2_send_settings(ngx_http_v2_connection_t *h2c, ngx_uint_t ack)
 {
@@ -2383,8 +2412,10 @@ ngx_http_v2_send_settings(ngx_http_v2_connection_t *h2c, ngx_uint_t ack)
         return NGX_ERROR;
     }
 
+    /* 如果是ack则该setting帧的数据部分长度为0，否则为Identifier(16) + Value(32)  */
     len = ack ? 0 : (sizeof(uint16_t) + sizeof(uint32_t)) * 3;
 
+    /* 9字节HTTP2头部+len字节数据部分 */
     buf = ngx_create_temp_buf(h2c->pool, NGX_HTTP_V2_FRAME_HEADER_SIZE + len);
     if (buf == NULL) {
         return NGX_ERROR;
@@ -2404,14 +2435,17 @@ ngx_http_v2_send_settings(ngx_http_v2_connection_t *h2c, ngx_uint_t ack)
 #endif
     frame->blocked = 0;
 
+    //SETTINGS帧
     buf->last = ngx_http_v2_write_len_and_type(buf->last, len,
                                                NGX_HTTP_V2_SETTINGS_FRAME);
 
+    //HTTP2头部flag赋值
     *buf->last++ = ack ? NGX_HTTP_V2_ACK_FLAG : NGX_HTTP_V2_NO_FLAG;
 
+    //HTTP2头部 Stream Identifier赋值  SETTING帧该值为0
     buf->last = ngx_http_v2_write_sid(buf->last, 0);
 
-    if (!ack) {
+    if (!ack) { /* 是否要携带setting内容部分 */
         h2scf = ngx_http_get_module_srv_conf(h2c->http_connection->conf_ctx,
                                              ngx_http_v2_module);
 
@@ -2454,7 +2488,7 @@ ngx_http_v2_settings_frame_handler(ngx_http_v2_connection_t *h2c,
     return NGX_OK;
 }
 
-
+/* 组WINDOW_UPDATE帧 */
 static ngx_int_t
 ngx_http_v2_send_window_update(ngx_http_v2_connection_t *h2c, ngx_uint_t sid,
     size_t window)
@@ -2537,7 +2571,7 @@ ngx_http_v2_get_frame(ngx_http_v2_connection_t *h2c, size_t length,
 
     frame = h2c->free_frames;
 
-    if (frame) {
+    if (frame) { /* 从free表中取出头部的frame */
         h2c->free_frames = frame->next;
 
         buf = frame->first->buf;
@@ -2545,7 +2579,7 @@ ngx_http_v2_get_frame(ngx_http_v2_connection_t *h2c, size_t length,
 
         frame->blocked = 0;
 
-    } else {
+    } else { /* 创建一个frame */
         pool = h2c->pool ? h2c->pool : h2c->connection->pool;
 
         frame = ngx_pcalloc(pool, sizeof(ngx_http_v2_out_frame_t));
@@ -2581,12 +2615,12 @@ ngx_http_v2_get_frame(ngx_http_v2_connection_t *h2c, size_t length,
 
     frame->length = length;
 #endif
-
+    //HTTP2头部的length   type赋值
     buf->last = ngx_http_v2_write_len_and_type(buf->pos, length, type);
 
-    *buf->last++ = flags;
+    *buf->last++ = flags; //HTTP2  flags字段赋值
 
-    buf->last = ngx_http_v2_write_sid(buf->last, sid);
+    buf->last = ngx_http_v2_write_sid(buf->last, sid); //Stream ID填充
 
     return frame;
 }
@@ -2738,7 +2772,7 @@ ngx_http_v2_create_stream(ngx_http_v2_connection_t *h2c)
     return stream;
 }
 
-
+/* 根据sid查找对应的node，如果找到直接返回，找不到则创建一个node节点 */
 static ngx_http_v2_node_t *
 ngx_http_v2_get_node_by_id(ngx_http_v2_connection_t *h2c, ngx_uint_t sid,
     ngx_uint_t alloc)

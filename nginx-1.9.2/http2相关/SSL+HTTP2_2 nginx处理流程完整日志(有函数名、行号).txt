@@ -1,0 +1,251 @@
+2017/03/09 15:11:50[                ngx_epoll_process_events,  1715]  [debug] 37112#37112: epoll: fd:6 EPOLLIN  (ev:0001) d:00007F04D687D010
+2017/03/09 15:11:50[                ngx_epoll_process_events,  1761]  [debug] 37112#37112: post event 00007F04D2C7D010
+2017/03/09 15:11:50[           ngx_process_events_and_timers,   395]  [debug] 37112#37112: epoll_wait timer range(delta): 130130
+2017/03/09 15:11:50[                ngx_event_process_posted,    62]  [debug] 37112#37112: begin to run befor posted event 00007F04D2C7D010
+2017/03/09 15:11:50[                ngx_event_process_posted,    64]  [debug] 37112#37112: delete posted event 00007F04D2C7D010
+2017/03/09 15:11:50[                        ngx_event_accept,    72]  [debug] 37112#37112: accept on 0.0.0.0:443, ready: 1
+2017/03/09 15:11:50[                            ngx_memalign,    72]  [debug] 37112#37112: posix_memalign: 0000000002101280:256 @16
+2017/03/09 15:11:50[                        ngx_event_accept,   371]  [debug] 37112#37112: *4 accept: 10.2.4.4:3751 fd:3
+2017/03/09 15:11:50[                            ngx_memalign,    72]  [debug] 37112#37112: posix_memalign: 00000000020D4350:256 @16
+2017/03/09 15:11:50[                     ngx_event_add_timer,   100]  [debug] 37112#37112: *4 < ngx_http_init_connection,   403>  event timer add fd:3, expire-time:60 s, timer.key:1489043570719
+2017/03/09 15:11:50[                 ngx_reusable_connection,  1177]  [debug] 37112#37112: *4 reusable connection: 1
+2017/03/09 15:11:50[                   ngx_handle_read_event,   499]  [debug] 37112#37112: *4 < ngx_http_init_connection,   406> epoll NGX_USE_CLEAR_EVENT(et) read add
+2017/03/09 15:11:50[                     ngx_epoll_add_event,  1404]  [debug] 37112#37112: *4 epoll add read event: fd:3 op:1 ev:80002001
+2017/03/09 15:11:50[                        ngx_event_accept,   100]  [debug] 37112#37112: accept() not ready (11: Resource temporarily unavailable)
+2017/03/09 15:11:50[                ngx_trylock_accept_mutex,   406]  [debug] 37112#37112: accept mutex locked
+2017/03/09 15:11:50[                ngx_epoll_process_events,  1715]  [debug] 37112#37112: epoll: fd:3 EPOLLIN  (ev:0001) d:00007F04D687D1D1
+2017/03/09 15:11:50[                ngx_epoll_process_events,  1761]  [debug] 37112#37112: *4 post event 00007F04D2C7D0D0
+2017/03/09 15:11:50[           ngx_process_events_and_timers,   395]  [debug] 37112#37112: epoll_wait timer range(delta): 1
+2017/03/09 15:11:50[                ngx_event_process_posted,    62]  [debug] 37112#37112: begin to run befor posted event 00007F04D2C7D0D0
+2017/03/09 15:11:50[                ngx_event_process_posted,    64]  [debug] 37112#37112: *4 delete posted event 00007F04D2C7D0D0
+2017/03/09 15:11:50[                  ngx_http_ssl_handshake,   680]  [debug] 37112#37112: *4 http check ssl handshake
+2017/03/09 15:11:50[                  ngx_http_ssl_handshake,   704]  [debug] 37112#37112: *4 http recv(): 1
+2017/03/09 15:11:50[                  ngx_http_ssl_handshake,   759]  [debug] 37112#37112: *4 https ssl handshake: 0x16
+2017/03/09 15:11:50[             ngx_http_ssl_npn_advertised,   393]  [debug] 37112#37112: *4 SSL NPN advertised
+2017/03/09 15:11:50[                       ngx_ssl_handshake,  1098]  [debug] 37112#37112: *4 SSL_do_handshake: -1
+2017/03/09 15:11:50[                       ngx_ssl_handshake,  1179]  [debug] 37112#37112: *4 SSL_get_error: 2
+2017/03/09 15:11:50[                 ngx_reusable_connection,  1177]  [debug] 37112#37112: *4 reusable connection: 0
+2017/03/09 15:11:50[                ngx_trylock_accept_mutex,   406]  [debug] 37112#37112: accept mutex locked
+2017/03/09 15:11:50[                ngx_epoll_process_events,  1715]  [debug] 37112#37112: epoll: fd:3 EPOLLIN  (ev:0001) d:00007F04D687D1D1
+2017/03/09 15:11:50[                ngx_epoll_process_events,  1761]  [debug] 37112#37112: *4 post event 00007F04D2C7D0D0
+2017/03/09 15:11:50[           ngx_process_events_and_timers,   395]  [debug] 37112#37112: epoll_wait timer range(delta): 6
+2017/03/09 15:11:50[                ngx_event_process_posted,    62]  [debug] 37112#37112: begin to run befor posted event 00007F04D2C7D0D0
+2017/03/09 15:11:50[                ngx_event_process_posted,    64]  [debug] 37112#37112: *4 delete posted event 00007F04D2C7D0D0
+2017/03/09 15:11:50[               ngx_ssl_handshake_handler,  1244]  [debug] 37112#37112: *4 SSL handshake handler: 0
+2017/03/09 15:11:50[                       ngx_ssl_handshake,  1098]  [debug] 37112#37112: *4 SSL_do_handshake: 1
+2017/03/09 15:11:50[                       ngx_ssl_handshake,  1144]  [debug] 37112#37112: *4 SSL: TLSv1.2, cipher: "ECDHE-RSA-AES128-GCM-SHA256 TLSv1.2 Kx=ECDH Au=RSA Enc=AESGCM(128) Mac=AEAD"
+2017/03/09 15:11:50[                        ngx_http_v2_init,   216]  [debug] 37112#37112: *4 init http2 connection
+2017/03/09 15:11:50[                               ngx_alloc,    34]  [debug] 37112#37112: *4 malloc: 00000000020DA1E0:408
+2017/03/09 15:11:50[                            ngx_memalign,    72]  [debug] 37112#37112: *4 posix_memalign: 00000000020D8BB0:4096 @16
+2017/03/09 15:11:50[                    ngx_pool_cleanup_add,   412]  [debug] 37112#37112: *4 add cleanup: 0000000002101368
+2017/03/09 15:11:50[                               ngx_alloc,    34]  [debug] 37112#37112: *4 malloc: 00000000020D3CC0:256
+2017/03/09 15:11:50[               ngx_http_v2_send_settings,  2379]  [debug] 37112#37112: *4 http2 send SETTINGS frame
+2017/03/09 15:11:50[                ngx_http_v2_read_handler,   322]  [debug] 37112#37112: *4 http2 read handler
+2017/03/09 15:11:50[                            ngx_ssl_recv,  1347]  [debug] 37112#37112: *4 SSL_read: -1
+2017/03/09 15:11:50[                     ngx_ssl_handle_recv,  1446]  [debug] 37112#37112: *4 SSL_get_error: 2
+2017/03/09 15:11:50[           ngx_http_v2_send_output_queue,   487]  [debug] 37112#37112: *4 http2 frame out: 00000000020D8CB8 sid:0 bl:0 len:4
+2017/03/09 15:11:50[           ngx_http_v2_send_output_queue,   487]  [debug] 37112#37112: *4 http2 frame out: 00000000020D8C00 sid:0 bl:0 len:18
+2017/03/09 15:11:50[                            ngx_memalign,    72]  [debug] 37112#37112: *4 posix_memalign: 00000000020D9BC0:256 @16
+2017/03/09 15:11:50[                               ngx_alloc,    34]  [debug] 37112#37112: *4 malloc: 0000000002115470:16384
+2017/03/09 15:11:50[                      ngx_ssl_send_chain,  1601]  [debug] 37112#37112: *4 SSL buf copy: 27
+2017/03/09 15:11:50[                      ngx_ssl_send_chain,  1601]  [debug] 37112#37112: *4 SSL buf copy: 13
+2017/03/09 15:11:50[                           ngx_ssl_write,  1673]  [debug] 37112#37112: *4 SSL to write: 40
+2017/03/09 15:11:50[                           ngx_ssl_write,  1677]  [debug] 37112#37112: *4 SSL_write: 40
+2017/03/09 15:11:50[           ngx_http_v2_send_output_queue,   520]  [debug] 37112#37112: *4 tcp_nodelay
+2017/03/09 15:11:50[           ngx_http_v2_send_output_queue,   561]  [debug] 37112#37112: *4 http2 frame sent: 00000000020D8C00 sid:0 bl:0 len:18
+2017/03/09 15:11:50[           ngx_http_v2_send_output_queue,   561]  [debug] 37112#37112: *4 http2 frame sent: 00000000020D8CB8 sid:0 bl:0 len:4
+2017/03/09 15:11:50[                        ngx_destroy_pool,    90]  [debug] 37112#37112: *4 free: 00000000020D8BB0, unused: 3656
+2017/03/09 15:11:50[                               ngx_pfree,   336]  [debug] 37112#37112: *4 free: 0000000002115470
+2017/03/09 15:11:50[                 ngx_reusable_connection,  1177]  [debug] 37112#37112: *4 reusable connection: 1
+2017/03/09 15:11:50[                     ngx_event_del_timer,    39]  [debug] 37112#37112: *4 <      ngx_event_add_timer,    93>  event timer del: 3: 1489043570719
+2017/03/09 15:11:50[                     ngx_event_add_timer,   100]  [debug] 37112#37112: *4 <ngx_http_v2_handle_connection,   644>  event timer add fd:3, expire-time:180 s, timer.key:1489043690726
+2017/03/09 15:11:50[                ngx_trylock_accept_mutex,   406]  [debug] 37112#37112: accept mutex locked
+2017/03/09 15:11:50[                ngx_epoll_process_events,  1715]  [debug] 37112#37112: epoll: fd:3 EPOLLIN  (ev:0001) d:00007F04D687D1D1
+2017/03/09 15:11:50[                ngx_epoll_process_events,  1761]  [debug] 37112#37112: *4 post event 00007F04D2C7D0D0
+2017/03/09 15:11:50[           ngx_process_events_and_timers,   395]  [debug] 37112#37112: epoll_wait timer range(delta): 2
+2017/03/09 15:11:50[                ngx_event_process_posted,    62]  [debug] 37112#37112: begin to run befor posted event 00007F04D2C7D0D0
+2017/03/09 15:11:50[                ngx_event_process_posted,    64]  [debug] 37112#37112: *4 delete posted event 00007F04D2C7D0D0
+2017/03/09 15:11:50[                ngx_http_v2_idle_handler,  3670]  [debug] 37112#37112: *4 http2 idle handler
+2017/03/09 15:11:50[                 ngx_reusable_connection,  1177]  [debug] 37112#37112: *4 reusable connection: 0
+2017/03/09 15:11:50[                            ngx_memalign,    72]  [debug] 37112#37112: *4 posix_memalign: 00000000020D8BB0:4096 @16
+2017/03/09 15:11:50[                ngx_http_v2_read_handler,   322]  [debug] 37112#37112: *4 http2 read handler
+2017/03/09 15:11:50[                            ngx_ssl_recv,  1347]  [debug] 37112#37112: *4 SSL_read: 170
+2017/03/09 15:11:50[                            ngx_ssl_recv,  1347]  [debug] 37112#37112: *4 SSL_read: -1
+2017/03/09 15:11:50[                     ngx_ssl_handle_recv,  1446]  [debug] 37112#37112: *4 SSL_get_error: 2
+2017/03/09 15:11:50[           ngx_http_v2_state_preface_end,   711]  [debug] 37112#37112: *4 http2 preface verified
+2017/03/09 15:11:50[                  ngx_http_v2_state_head,   740]  [debug] 37112#37112: *4 process http2 frame type:4 f:0 l:12 sid:0
+2017/03/09 15:11:50[               ngx_http_v2_send_settings,  2379]  [debug] 37112#37112: *4 http2 send SETTINGS frame
+2017/03/09 15:11:50[              ngx_http_v2_state_complete,  2199]  [debug] 37112#37112: *4 http2 frame complete pos:00007F04CF03C03D end:00007F04CF03C0BA
+2017/03/09 15:11:50[                  ngx_http_v2_state_head,   740]  [debug] 37112#37112: *4 process http2 frame type:4 f:1 l:0 sid:0
+2017/03/09 15:11:50[              ngx_http_v2_state_complete,  2199]  [debug] 37112#37112: *4 http2 frame complete pos:00007F04CF03C046 end:00007F04CF03C0BA
+2017/03/09 15:11:50[                  ngx_http_v2_state_head,   740]  [debug] 37112#37112: *4 process http2 frame type:2 f:0 l:5 sid:3
+2017/03/09 15:11:50[              ngx_http_v2_state_priority,  1693]  [debug] 37112#37112: *4 http2 PRIORITY frame sid:3 on 0 excl:0 weight:201
+2017/03/09 15:11:50[              ngx_http_v2_state_complete,  2199]  [debug] 37112#37112: *4 http2 frame complete pos:00007F04CF03C054 end:00007F04CF03C0BA
+2017/03/09 15:11:50[                  ngx_http_v2_state_head,   740]  [debug] 37112#37112: *4 process http2 frame type:2 f:0 l:5 sid:5
+2017/03/09 15:11:50[              ngx_http_v2_state_priority,  1693]  [debug] 37112#37112: *4 http2 PRIORITY frame sid:5 on 0 excl:0 weight:101
+2017/03/09 15:11:50[                            ngx_memalign,    72]  [debug] 37112#37112: *4 posix_memalign: 00000000020DB090:256 @16
+2017/03/09 15:11:50[              ngx_http_v2_state_complete,  2199]  [debug] 37112#37112: *4 http2 frame complete pos:00007F04CF03C062 end:00007F04CF03C0BA
+2017/03/09 15:11:50[                  ngx_http_v2_state_head,   740]  [debug] 37112#37112: *4 process http2 frame type:2 f:0 l:5 sid:7
+2017/03/09 15:11:50[              ngx_http_v2_state_priority,  1693]  [debug] 37112#37112: *4 http2 PRIORITY frame sid:7 on 0 excl:0 weight:1
+2017/03/09 15:11:50[              ngx_http_v2_state_complete,  2199]  [debug] 37112#37112: *4 http2 frame complete pos:00007F04CF03C070 end:00007F04CF03C0BA
+2017/03/09 15:11:50[                  ngx_http_v2_state_head,   740]  [debug] 37112#37112: *4 process http2 frame type:2 f:0 l:5 sid:9
+2017/03/09 15:11:50[              ngx_http_v2_state_priority,  1693]  [debug] 37112#37112: *4 http2 PRIORITY frame sid:9 on 7 excl:0 weight:1
+2017/03/09 15:11:50[                            ngx_memalign,    72]  [debug] 37112#37112: *4 posix_memalign: 00000000020DB220:256 @16
+2017/03/09 15:11:50[              ngx_http_v2_state_complete,  2199]  [debug] 37112#37112: *4 http2 frame complete pos:00007F04CF03C07E end:00007F04CF03C0BA
+2017/03/09 15:11:50[                  ngx_http_v2_state_head,   740]  [debug] 37112#37112: *4 process http2 frame type:2 f:0 l:5 sid:11
+2017/03/09 15:11:50[              ngx_http_v2_state_priority,  1693]  [debug] 37112#37112: *4 http2 PRIORITY frame sid:11 on 3 excl:0 weight:1
+2017/03/09 15:11:50[              ngx_http_v2_state_complete,  2199]  [debug] 37112#37112: *4 http2 frame complete pos:00007F04CF03C08C end:00007F04CF03C0BA
+2017/03/09 15:11:50[                  ngx_http_v2_state_head,   740]  [debug] 37112#37112: *4 process http2 frame type:1 f:25 l:37 sid:13
+2017/03/09 15:11:50[               ngx_http_v2_state_headers,  1127]  [debug] 37112#37112: *4 http2 HEADERS frame sid:13 on 11 excl:0 weight:16
+2017/03/09 15:11:50[                            ngx_memalign,    72]  [debug] 37112#37112: *4 posix_memalign: 0000000002114CA0:256 @16
+2017/03/09 15:11:50[                            ngx_memalign,    72]  [debug] 37112#37112: *4 posix_memalign: 0000000002115470:4096 @16
+2017/03/09 15:11:50[                            ngx_memalign,    72]  [debug] 37112#37112: *4 posix_memalign: 0000000002116480:4096 @16
+2017/03/09 15:11:50[          ngx_http_v2_get_indexed_header,   105]  [debug] 37112#37112: *4 http2 get indexed header name: 2
+2017/03/09 15:11:50[          ngx_http_v2_get_indexed_header,   105]  [debug] 37112#37112: *4 http2 get indexed header name: 4
+2017/03/09 15:11:50[            ngx_http_process_request_uri,  1245]  [debug] 37112#37112: *4 http uri: "/"
+2017/03/09 15:11:50[            ngx_http_process_request_uri,  1248]  [debug] 37112#37112: *4 http args: ""
+2017/03/09 15:11:50[            ngx_http_process_request_uri,  1251]  [debug] 37112#37112: *4 http exten: ""
+2017/03/09 15:11:50[          ngx_http_v2_get_indexed_header,   105]  [debug] 37112#37112: *4 http2 get indexed header name: 7
+2017/03/09 15:11:50[          ngx_http_v2_get_indexed_header,   105]  [debug] 37112#37112: *4 http2 get indexed header: 1
+2017/03/09 15:11:50[             ngx_http_v2_state_field_len,  1339]  [debug] 37112#37112: *4 http2 hpack encoded string length: 6
+2017/03/09 15:11:50[                  ngx_http_v2_add_header,   184]  [debug] 37112#37112: *4 http2 add header to hpack table: ":authority: 10.2.4.5"
+2017/03/09 15:11:50[                               ngx_alloc,    34]  [debug] 37112#37112: *4 malloc: 0000000002114DB0:512
+2017/03/09 15:11:50[                               ngx_alloc,    34]  [debug] 37112#37112: *4 malloc: 0000000002117490:4096
+2017/03/09 15:11:50[               ngx_http_v2_table_account,   297]  [debug] 37112#37112: *4 http2 hpack table account: 50 free:4096
+2017/03/09 15:11:50[          ngx_http_v2_get_indexed_header,   105]  [debug] 37112#37112: *4 http2 get indexed header: 19
+2017/03/09 15:11:50[             ngx_http_v2_state_field_len,  1339]  [debug] 37112#37112: *4 http2 hpack raw string length: 3
+2017/03/09 15:11:50[                  ngx_http_v2_add_header,   184]  [debug] 37112#37112: *4 http2 add header to hpack table: "accept: */*"
+2017/03/09 15:11:50[               ngx_http_v2_table_account,   297]  [debug] 37112#37112: *4 http2 hpack table account: 41 free:4046
+2017/03/09 15:11:50[        ngx_http_v2_state_process_header,  1613]  [debug] 37112#37112: *4 http2 http header: "accept: */*"
+2017/03/09 15:11:50[          ngx_http_v2_get_indexed_header,   105]  [debug] 37112#37112: *4 http2 get indexed header name: 16
+2017/03/09 15:11:50[        ngx_http_v2_state_process_header,  1613]  [debug] 37112#37112: *4 http2 http header: "accept-encoding: gzip, deflate"
+2017/03/09 15:11:50[          ngx_http_v2_get_indexed_header,   105]  [debug] 37112#37112: *4 http2 get indexed header: 58
+2017/03/09 15:11:50[             ngx_http_v2_state_field_len,  1339]  [debug] 37112#37112: *4 http2 hpack encoded string length: 13
+2017/03/09 15:11:50[                  ngx_http_v2_add_header,   184]  [debug] 37112#37112: *4 http2 add header to hpack table: "user-agent: nghttp2/1.21.0-DEV"
+2017/03/09 15:11:50[               ngx_http_v2_table_account,   297]  [debug] 37112#37112: *4 http2 hpack table account: 60 free:4005
+2017/03/09 15:11:50[        ngx_http_v2_state_process_header,  1613]  [debug] 37112#37112: *4 http2 http header: "user-agent: nghttp2/1.21.0-DEV"
+2017/03/09 15:11:50[      ngx_http_v2_construct_request_line,  3226]  [debug] 37112#37112: *4 http2 http request line: "GET / HTTP/2.0"
+2017/03/09 15:11:50[             ngx_http_core_rewrite_phase,  1997]  [debug] 37112#37112: *4 rewrite phase: 0 (NGX_HTTP_SERVER_REWRITE_PHASE)
+2017/03/09 15:11:50[         ngx_http_core_find_config_phase,  2055]  [debug] 37112#37112: *4 find config phase: 1 (NGX_HTTP_FIND_CONFIG_PHASE), uri:/
+2017/03/09 15:11:50[      ngx_http_core_find_static_location,  2947]  [debug] 37112#37112: *4 test location: "/query"
+2017/03/09 15:11:50[      ngx_http_core_find_static_location,  2947]  [debug] 37112#37112: *4 test location: "/list"
+2017/03/09 15:11:50[             ngx_http_core_find_location,  2883]  [debug] 37112#37112: *4 ngx pcre test location: ~ "\.php$"
+2017/03/09 15:11:50[         ngx_http_core_find_config_phase,  2076]  [debug] 37112#37112: *4 using configuration ""
+2017/03/09 15:11:50[         ngx_http_core_find_config_phase,  2083]  [debug] 37112#37112: *4 http cl:-1 max:1048576, rc:-5
+2017/03/09 15:11:50[             ngx_http_core_rewrite_phase,  1997]  [debug] 37112#37112: *4 rewrite phase: 2 (NGX_HTTP_REWRITE_PHASE)
+2017/03/09 15:11:50[        ngx_http_core_post_rewrite_phase,  2151]  [debug] 37112#37112: *4 post rewrite phase: 3 (NGX_HTTP_POST_REWRITE_PHASE)
+2017/03/09 15:11:50[             ngx_http_core_generic_phase,  1933]  [debug] 37112#37112: *4 generic phase: 4 (NGX_HTTP_PREACCESS_PHASE)
+2017/03/09 15:11:50[             ngx_http_core_generic_phase,  1933]  [debug] 37112#37112: *4 generic phase: 5 (NGX_HTTP_PREACCESS_PHASE)
+2017/03/09 15:11:50[              ngx_http_core_access_phase,  2249]  [debug] 37112#37112: *4 access phase: 6 (NGX_HTTP_ACCESS_PHASE)
+2017/03/09 15:11:50[              ngx_http_core_access_phase,  2249]  [debug] 37112#37112: *4 access phase: 7 (NGX_HTTP_ACCESS_PHASE)
+2017/03/09 15:11:50[         ngx_http_core_post_access_phase,  2351]  [debug] 37112#37112: *4 post access phase: 8 (NGX_HTTP_POST_ACCESS_PHASE)
+2017/03/09 15:11:50[             ngx_http_core_content_phase,  2681]  [debug] 37112#37112: *4 content phase: 9 (NGX_HTTP_CONTENT_PHASE)
+2017/03/09 15:11:50[                  ngx_http_index_handler,   301]  [debug] 37112#37112: *4 open index "/usr/local/nginx/html/index.html"
+2017/03/09 15:11:50[              ngx_http_internal_redirect,  4130]  [debug] 37112#37112: *4 internal redirect: "/index.html?"
+2017/03/09 15:11:50[             ngx_http_core_rewrite_phase,  1997]  [debug] 37112#37112: *4 rewrite phase: 0 (NGX_HTTP_SERVER_REWRITE_PHASE)
+2017/03/09 15:11:50[         ngx_http_core_find_config_phase,  2055]  [debug] 37112#37112: *4 find config phase: 1 (NGX_HTTP_FIND_CONFIG_PHASE), uri:/index.html
+2017/03/09 15:11:50[      ngx_http_core_find_static_location,  2947]  [debug] 37112#37112: *4 test location: "/query"
+2017/03/09 15:11:50[      ngx_http_core_find_static_location,  2947]  [debug] 37112#37112: *4 test location: "/list"
+2017/03/09 15:11:50[             ngx_http_core_find_location,  2883]  [debug] 37112#37112: *4 ngx pcre test location: ~ "\.php$"
+2017/03/09 15:11:50[         ngx_http_core_find_config_phase,  2076]  [debug] 37112#37112: *4 using configuration ""
+2017/03/09 15:11:50[         ngx_http_core_find_config_phase,  2083]  [debug] 37112#37112: *4 http cl:-1 max:1048576, rc:-5
+2017/03/09 15:11:50[             ngx_http_core_rewrite_phase,  1997]  [debug] 37112#37112: *4 rewrite phase: 2 (NGX_HTTP_REWRITE_PHASE)
+2017/03/09 15:11:50[        ngx_http_core_post_rewrite_phase,  2151]  [debug] 37112#37112: *4 post rewrite phase: 3 (NGX_HTTP_POST_REWRITE_PHASE)
+2017/03/09 15:11:50[             ngx_http_core_generic_phase,  1933]  [debug] 37112#37112: *4 generic phase: 4 (NGX_HTTP_PREACCESS_PHASE)
+2017/03/09 15:11:50[             ngx_http_core_generic_phase,  1933]  [debug] 37112#37112: *4 generic phase: 5 (NGX_HTTP_PREACCESS_PHASE)
+2017/03/09 15:11:50[              ngx_http_core_access_phase,  2249]  [debug] 37112#37112: *4 access phase: 6 (NGX_HTTP_ACCESS_PHASE)
+2017/03/09 15:11:50[              ngx_http_core_access_phase,  2249]  [debug] 37112#37112: *4 access phase: 7 (NGX_HTTP_ACCESS_PHASE)
+2017/03/09 15:11:50[         ngx_http_core_post_access_phase,  2351]  [debug] 37112#37112: *4 post access phase: 8 (NGX_HTTP_POST_ACCESS_PHASE)
+2017/03/09 15:11:50[             ngx_http_core_content_phase,  2681]  [debug] 37112#37112: *4 content phase: 9 (NGX_HTTP_CONTENT_PHASE)
+2017/03/09 15:11:50[             ngx_http_core_content_phase,  2681]  [debug] 37112#37112: *4 content phase: 10 (NGX_HTTP_CONTENT_PHASE)
+2017/03/09 15:11:50[             ngx_http_core_content_phase,  2681]  [debug] 37112#37112: *4 content phase: 11 (NGX_HTTP_CONTENT_PHASE)
+2017/03/09 15:11:50[                 ngx_http_static_handler,   108]  [debug] 37112#37112: *4 http filename: "/usr/local/nginx/html/index.html"
+2017/03/09 15:11:50[                    ngx_pool_cleanup_add,   412]  [debug] 37112#37112: *4 add cleanup: 0000000002116230
+2017/03/09 15:11:50[                 ngx_http_static_handler,   173]  [debug] 37112#37112: *4 http static fd: 13
+2017/03/09 15:11:50[               ngx_http_send_header,  3359][yangya  [debug] 37112#37112: *4 ngx http send header
+2017/03/09 15:11:50[               ngx_http_v2_header_filter,   143]  [debug] 37112#37112: *4 http2 header filter
+2017/03/09 15:11:50[               ngx_http_v2_header_filter,   609]  [debug] 37112#37112: *4 http2:13 create HEADERS frame 0000000002116420: len:134
+2017/03/09 15:11:50[                    ngx_http_cleanup_add,  4261]  [debug] 37112#37112: *4 http cleanup add: 0000000002116458
+2017/03/09 15:11:50[           ngx_http_v2_send_output_queue,   487]  [debug] 37112#37112: *4 http2 frame out: 0000000002116420 sid:13 bl:1 len:134
+2017/03/09 15:11:50[           ngx_http_v2_send_output_queue,   487]  [debug] 37112#37112: *4 http2 frame out: 00000000020D8C00 sid:0 bl:0 len:0
+2017/03/09 15:11:50[                               ngx_alloc,    34]  [debug] 37112#37112: *4 malloc: 0000000002106DB0:16384
+2017/03/09 15:11:50[                      ngx_ssl_send_chain,  1601]  [debug] 37112#37112: *4 SSL buf copy: 9
+2017/03/09 15:11:50[                      ngx_ssl_send_chain,  1601]  [debug] 37112#37112: *4 SSL buf copy: 143
+2017/03/09 15:11:50[                           ngx_ssl_write,  1673]  [debug] 37112#37112: *4 SSL to write: 152
+2017/03/09 15:11:50[                           ngx_ssl_write,  1677]  [debug] 37112#37112: *4 SSL_write: 152
+2017/03/09 15:11:50[           ngx_http_v2_send_output_queue,   561]  [debug] 37112#37112: *4 http2 frame sent: 00000000020D8C00 sid:0 bl:0 len:0
+2017/03/09 15:11:50[       ngx_http_v2_headers_frame_handler,  1077]  [debug] 37112#37112: *4 http2:13 HEADERS frame 0000000002116420 was sent
+2017/03/09 15:11:50[           ngx_http_v2_send_output_queue,   561]  [debug] 37112#37112: *4 http2 frame sent: 0000000002116420 sid:13 bl:1 len:134
+2017/03/09 15:11:50[                  ngx_http_output_filter,  3412]  [debug] 37112#37112: *4 http output filter "/index.html?"
+2017/03/09 15:11:50[                    ngx_http_copy_filter,   297]  [debug] 37112#37112: *4 http copy filter: "/index.html?", r->aio:0
+2017/03/09 15:11:50[                   ngx_output_chain,   161][yangya  [debug] 37112#37112: *4 ctx->sendfile:0, ctx->aio:0, ctx->directio:0
+2017/03/09 15:11:50[             ngx_output_chain_as_is,   406][yangya  [debug] 37112#37112: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/09 15:11:50[             ngx_output_chain_as_is,   406][yangya  [debug] 37112#37112: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/09 15:11:50[                           ngx_read_file,    73]  [debug] 37112#37112: *4 read file /usr/local/nginx/html/index.html: 13, 0000000002116DE0, 641, 0
+2017/03/09 15:11:50[                ngx_http_postpone_filter,   157]  [debug] 37112#37112: *4 http postpone filter "/index.html?" 0000000002117068
+2017/03/09 15:11:50[                   ngx_http_write_filter,   208]  [debug] 37112#37112: *4 write new buf temporary:1 buf-in-file:0, buf->start:0000000002116DE0, buf->pos:0000000002116DE0, buf_size: 641 file_pos: 0, in_file_size: 0
+2017/03/09 15:11:50[                   ngx_http_write_filter,   248]  [debug] 37112#37112: *4 http write filter: last:1 flush:0 size:641
+2017/03/09 15:11:50[                   ngx_http_write_filter,   380]  [debug] 37112#37112: *4 http write filter limit 0
+2017/03/09 15:11:50[       ngx_http_v2_filter_get_data_frame,   937]  [debug] 37112#37112: *4 http2:13 create DATA frame 0000000002116420: len:641 flags:1
+2017/03/09 15:11:50[           ngx_http_v2_send_output_queue,   487]  [debug] 37112#37112: *4 http2 frame out: 0000000002116420 sid:13 bl:0 len:641
+2017/03/09 15:11:50[                      ngx_ssl_send_chain,  1601]  [debug] 37112#37112: *4 SSL buf copy: 9
+2017/03/09 15:11:50[                      ngx_ssl_send_chain,  1601]  [debug] 37112#37112: *4 SSL buf copy: 641
+2017/03/09 15:11:50[                           ngx_ssl_write,  1673]  [debug] 37112#37112: *4 SSL to write: 650
+2017/03/09 15:11:50[                           ngx_ssl_write,  1677]  [debug] 37112#37112: *4 SSL_write: 650
+2017/03/09 15:11:50[          ngx_http_v2_data_frame_handler,  1171]  [debug] 37112#37112: *4 http2:13 DATA frame 0000000002116420 was sent
+2017/03/09 15:11:50[           ngx_http_v2_send_output_queue,   561]  [debug] 37112#37112: *4 http2 frame sent: 0000000002116420 sid:13 bl:0 len:641
+2017/03/09 15:11:50[                   ngx_http_write_filter,   386]  [debug] 37112#37112: *4 http write filter 0000000000000000
+2017/03/09 15:11:50[                    ngx_http_copy_filter,   376]  [debug] 37112#37112: *4 http copy filter rc: 0, buffered:0 "/index.html?"
+2017/03/09 15:11:50[               ngx_http_finalize_request,  2603]  [debug] 37112#37112: *4 http finalize request rc: 0, "/index.html?" a:1, c:2, b:0, p:0000000000000000
+2017/03/09 15:11:50[                  ngx_http_close_request,  3932]  [debug] 37112#37112: *4 http request count:2 blk:0
+2017/03/09 15:11:50[               ngx_http_finalize_request,  2603]  [debug] 37112#37112: *4 http finalize request rc: -4, "/index.html?" a:1, c:1, b:0, p:0000000000000000
+2017/03/09 15:11:50[                  ngx_http_close_request,  3932]  [debug] 37112#37112: *4 http request count:1 blk:0
+2017/03/09 15:11:50[                ngx_http_v2_close_stream,  3555]  [debug] 37112#37112: *4 http2 close stream 13, queued 0, processing 1
+2017/03/09 15:11:50[                   ngx_http_free_request,  3995]  [debug] 37112#37112: *4 http close request
+2017/03/09 15:11:50[                    ngx_http_log_handler,   376]  [debug] 37112#37112: *4 http log handler
+2017/03/09 15:11:50[                        ngx_destroy_pool,    67]  [debug] 37112#37112: *4 run cleanup: 0000000002116230
+2017/03/09 15:11:50[                   ngx_pool_cleanup_file,   470]  [debug] 37112#37112: *4 file cleanup: fd:13
+2017/03/09 15:11:50[                        ngx_destroy_pool,    90]  [debug] 37112#37112: *4 free: 0000000002115470, unused: 0
+2017/03/09 15:11:50[                        ngx_destroy_pool,    90]  [debug] 37112#37112: *4 free: 0000000002116480, unused: 769
+2017/03/09 15:11:50[              ngx_http_v2_state_complete,  2199]  [debug] 37112#37112: *4 http2 frame complete pos:00007F04CF03C0BA end:00007F04CF03C0BA
+2017/03/09 15:11:50[                        ngx_destroy_pool,    90]  [debug] 37112#37112: *4 free: 00000000020D8BB0, unused: 3328
+2017/03/09 15:11:50[                               ngx_pfree,   336]  [debug] 37112#37112: *4 free: 0000000002106DB0
+2017/03/09 15:11:50[                 ngx_reusable_connection,  1177]  [debug] 37112#37112: *4 reusable connection: 1
+2017/03/09 15:11:50[                     ngx_event_add_timer,    89]  [debug] 37112#37112: *4 <ngx_http_v2_handle_connection,   644>  event timer: 3, old: 1489043690726, new: 1489043690728, 
+2017/03/09 15:11:50[                ngx_trylock_accept_mutex,   406]  [debug] 37112#37112: accept mutex locked
+2017/03/09 15:11:50[                ngx_epoll_process_events,  1715]  [debug] 37112#37112: epoll: fd:3 EPOLLIN  (ev:0001) d:00007F04D687D1D1
+2017/03/09 15:11:50[                ngx_epoll_process_events,  1761]  [debug] 37112#37112: *4 post event 00007F04D2C7D0D0
+2017/03/09 15:11:50[           ngx_process_events_and_timers,   395]  [debug] 37112#37112: epoll_wait timer range(delta): 2
+2017/03/09 15:11:50[                ngx_event_process_posted,    62]  [debug] 37112#37112: begin to run befor posted event 00007F04D2C7D0D0
+2017/03/09 15:11:50[                ngx_event_process_posted,    64]  [debug] 37112#37112: *4 delete posted event 00007F04D2C7D0D0
+2017/03/09 15:11:50[                ngx_http_v2_idle_handler,  3670]  [debug] 37112#37112: *4 http2 idle handler
+2017/03/09 15:11:50[                 ngx_reusable_connection,  1177]  [debug] 37112#37112: *4 reusable connection: 0
+2017/03/09 15:11:50[                            ngx_memalign,    72]  [debug] 37112#37112: *4 posix_memalign: 00000000020D8BB0:4096 @16
+2017/03/09 15:11:50[                ngx_http_v2_read_handler,   322]  [debug] 37112#37112: *4 http2 read handler
+2017/03/09 15:11:50[                            ngx_ssl_recv,  1347]  [debug] 37112#37112: *4 SSL_read: 17
+2017/03/09 15:11:50[                            ngx_ssl_recv,  1347]  [debug] 37112#37112: *4 SSL_read: 0
+2017/03/09 15:11:50[                     ngx_ssl_handle_recv,  1446]  [debug] 37112#37112: *4 SSL_get_error: 6
+2017/03/09 15:11:50[                     ngx_ssl_handle_recv,  1481]  [debug] 37112#37112: *4 peer shutdown SSL cleanly
+2017/03/09 15:11:50[                  ngx_http_v2_state_head,   740]  [debug] 37112#37112: *4 process http2 frame type:7 f:0 l:8 sid:0
+2017/03/09 15:11:50[                ngx_http_v2_state_goaway,  2020]  [debug] 37112#37112: *4 http2 GOAWAY frame: last sid 0, error 0
+2017/03/09 15:11:50[                  ngx_http_v2_state_skip,  2242]  [debug] 37112#37112: *4 http2 frame skip 0
+2017/03/09 15:11:50[              ngx_http_v2_state_complete,  2199]  [debug] 37112#37112: *4 http2 frame complete pos:00007F04CF03C021 end:00007F04CF03C021
+2017/03/09 15:11:50[               ngx_http_close_connection,  4181]  [debug] 37112#37112: *4 close http connection: 3
+2017/03/09 15:11:50[                        ngx_ssl_shutdown,  1798]  [debug] 37112#37112: *4 SSL_shutdown: 1
+2017/03/09 15:11:50[                     ngx_event_del_timer,    39]  [debug] 37112#37112: *4 <     ngx_close_connection,  1090>  event timer del: 3: 1489043690726
+2017/03/09 15:11:50[                 ngx_reusable_connection,  1177]  [debug] 37112#37112: *4 reusable connection: 0
+2017/03/09 15:11:50[               ngx_close_connection,  1139][yangya  [debug] 37112#37112: close socket:3
+2017/03/09 15:11:50[                        ngx_destroy_pool,    67]  [debug] 37112#37112: *4 run cleanup: 0000000002101368
+2017/03/09 15:11:50[                        ngx_destroy_pool,    90]  [debug] 37112#37112: *4 free: 00000000020D8BB0, unused: 4016
+2017/03/09 15:11:50[                        ngx_destroy_pool,    74]  [debug] 37112#37112: *4 free: 0000000000000000
+2017/03/09 15:11:50[                        ngx_destroy_pool,    74]  [debug] 37112#37112: *4 free: 0000000002117490
+2017/03/09 15:11:50[                        ngx_destroy_pool,    74]  [debug] 37112#37112: *4 free: 0000000002114DB0
+2017/03/09 15:11:50[                        ngx_destroy_pool,    74]  [debug] 37112#37112: *4 free: 00000000020D3CC0
+2017/03/09 15:11:50[                        ngx_destroy_pool,    74]  [debug] 37112#37112: *4 free: 00000000020DA1E0
+2017/03/09 15:11:50[                        ngx_destroy_pool,    90]  [debug] 37112#37112: *4 free: 0000000002101280, unused: 0
+2017/03/09 15:11:50[                        ngx_destroy_pool,    90]  [debug] 37112#37112: *4 free: 00000000020D4350, unused: 0
+2017/03/09 15:11:50[                        ngx_destroy_pool,    90]  [debug] 37112#37112: *4 free: 00000000020D9BC0, unused: 8
+2017/03/09 15:11:50[                        ngx_destroy_pool,    90]  [debug] 37112#37112: *4 free: 00000000020DB090, unused: 16
+2017/03/09 15:11:50[                        ngx_destroy_pool,    90]  [debug] 37112#37112: *4 free: 00000000020DB220, unused: 16
+2017/03/09 15:11:50[                        ngx_destroy_pool,    90]  [debug] 37112#37112: *4 free: 0000000002114CA0, unused: 56
+2017/03/09 15:11:50[                ngx_trylock_accept_mutex,   406]  [debug] 37112#37112: accept mutex locked

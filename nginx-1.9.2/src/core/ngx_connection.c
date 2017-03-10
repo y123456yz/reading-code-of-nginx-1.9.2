@@ -1164,8 +1164,8 @@ ngx_close_connection(ngx_connection_t *c)
 
         /* we use ngx_cycle->log because c->log was in c->pool */
         //由于c已经在前面释放了，因此不能再用C->log了
-        ngx_log_error(level, ngx_cycle->log, err,
-                      ngx_close_socket_n " %d failed", fd);
+        
+        ngx_log_error(level, ngx_cycle->log, err, ngx_close_socket_n " %d failed", fd);
     }
 }
 

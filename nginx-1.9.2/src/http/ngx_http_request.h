@@ -951,9 +951,10 @@ typedef struct {  //获取请求对应的server块信息，server_name信息可以参考ngx_http_
     ngx_buf_t                       **free;
     ngx_int_t                         nfree;
 
-#if (NGX_HTTP_SSL)
-    unsigned                          ssl:1;
-#endif
+#if (NGX_HTTP_SSL) /* 可以通过listen xxx ssl或者ssl on启用ssl */
+    unsigned                          ssl:1; //listen配置的时候启用ssl或者启用ssl模块的ssl on配置的时候置1
+#endif 
+    //见ngx_http_core_listen   配置类似listen ip:port  proxy_protocol的时候置1   proxy protocol启用，表示直接把流量转发到后端，nginx不用做任何处理,就和HAPROXY功能类似
     unsigned                          proxy_protocol:1; //listen配置项中是否携带该参数
 } ngx_http_connection_t;
 

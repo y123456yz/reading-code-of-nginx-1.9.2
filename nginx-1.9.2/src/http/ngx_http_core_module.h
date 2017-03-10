@@ -124,7 +124,7 @@ deferred, ipv6only, or so_keepalive parameters are used then for a given address
     unsigned                   ssl:1;
 #endif
 #if (NGX_HTTP_V2)
-    unsigned                   http2:1;
+    unsigned                   http2:1; //listen是否启用http2配置，例如listen 443 ssl http2;
 #endif
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
     unsigned                   ipv6only:1;
@@ -133,7 +133,7 @@ deferred, ipv6only, or so_keepalive parameters are used then for a given address
     unsigned                   reuseport:1; //端口复用
 #endif
     unsigned                   so_keepalive:2; //listen配置项带上so_keepalive参数时置1，见ngx_http_core_listen 打开取值1 off关闭取值2
-    unsigned                   proxy_protocol:1; //见ngx_http_core_listen 
+    unsigned                   proxy_protocol:1; //见ngx_http_core_listen   配置类似listen ip:port  proxy_protocol的时候置1
 
     int                        backlog;
     int                        rcvbuf;
@@ -708,7 +708,7 @@ struct ngx_http_addr_conf_s {//创建空间赋值在ngx_http_add_addrs。 该结构体是ngx_
     ngx_http_virtual_names_t  *virtual_names; //创建空间赋值在ngx_http_add_addrs
 
 #if (NGX_HTTP_SSL)
-    unsigned                   ssl:1;
+    unsigned                   ssl:1; //listen配置是否启用ssl认证
 #endif
 #if (NGX_HTTP_V2)
     unsigned                   http2:1;

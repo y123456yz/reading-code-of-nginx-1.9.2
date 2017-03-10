@@ -20,4 +20,15 @@ server {} host定位过程
     但如果请求行的头部的host:bbb，那么需要重新获取对应的server{} #2,见ngx_http_set_virtual_server->ngx_http_find_virtual_server
 
 	如果请求中不带host，则直接#1为知道server{]
+
+
+http2环境搭建:
+初次使用nginx 搭建http2.0       				http://www.open-open.com/lib/view/open1452660300917.html
+源码安装升级 Nginx 到最新版（当前是1.9.14） 	http://www.tuicool.com/articles/aqyMve
+Nginx+HTTPS(SSL/TLS)							http://www.cnblogs.com/doseoer/p/5663203.html
+
+SSL/TLS协议运行机制的概述						http://www.ruanyifeng.com/blog/2014/02/ssl_tls.html
+HTTP2协议中文版									http://www.oschina.net/question/1397765_172789
+HTTP2帧格式										http://www.blogjava.net/yongboy/archive/2015/03/20/423655.html
+使用nginx把 http 向https升级					http://blog.csdn.net/xiaoyao8903/article/details/53244739
  */

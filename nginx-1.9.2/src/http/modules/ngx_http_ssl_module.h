@@ -15,7 +15,7 @@
 
 
 typedef struct {
-    ngx_flag_t                      enable;
+    ngx_flag_t                      enable; //ssl on
 
     ngx_ssl_t                       ssl;
 

@@ -213,7 +213,8 @@ struct ngx_event_s {
      在解析完客户端发送来的请求的请求行和头部行后，设置handler为ngx_http_request_handler
      */ //一般与客户端的数据读写是 ngx_http_request_handler;  与后端服务器读写为ngx_http_upstream_handler(如fastcgi proxy memcache gwgi等)
     
-    //监听sock:ngx_event_accept，ngx_http_wait_request_handler ngx_http_request_handler,ngx_http_upstream_handler ngx_file_aio_event_handler
+    /* ngx_event_accept，ngx_http_ssl_handshake ngx_ssl_handshake_handler ngx_http_v2_write_handler ngx_http_v2_read_handler 
+    ngx_http_wait_request_handler  ngx_http_request_handler,ngx_http_upstream_handler ngx_file_aio_event_handler */
     ngx_event_handler_pt  handler; //由epoll读写事件在ngx_epoll_process_events触发
    
 

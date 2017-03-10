@@ -36,22 +36,26 @@
 #define ngx_ssl_session_t       SSL_SESSION
 #define ngx_ssl_conn_t          SSL
 
-
+//ngx_http_ssl_srv_conf_t->ssl成员属于该结构
 typedef struct {
     SSL_CTX                    *ctx;
     ngx_log_t                  *log;
-    size_t                      buffer_size;
+    size_t                      buffer_size; /* 默认NGX_SSL_BUFSIZE, 赋值见ngx_ssl_create */
 } ngx_ssl_t;
 
-
+/* 创建空间和赋值见ngx_ssl_create_connection，ngx_connection_t.ssl成员属于该结构 */
 typedef struct {
-    ngx_ssl_conn_t             *connection;
+    ngx_ssl_conn_t             *connection; //赋值见ngx_ssl_create_connection
 
     ngx_int_t                   last;
     ngx_buf_t                  *buf;
     size_t                      buffer_size;
 
-    ngx_connection_handler_pt   handler;
+    /* ngx_ssl_handshake握手为完成的时候，在ngx_http_ssl_handshake赋值为ngx_http_ssl_handshake_handler，
+       如果是和后端进行ssl握手处理，则为ngx_http_upstream_ssl_handshake
+       如果是ssl挥手，则为ngx_http_close_connection
+    */
+    ngx_connection_handler_pt   handler; //ssl单向认证四次握手完成后在ngx_ssl_handshake_handler中执行该handler
 
     ngx_event_handler_pt        saved_read_handler;
     ngx_event_handler_pt        saved_write_handler;

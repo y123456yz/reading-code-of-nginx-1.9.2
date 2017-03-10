@@ -1,4 +1,4 @@
-#define NGX_CONFIGURE " --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads --add-module=./src/nginx-requestkey-module-master/ --with-http_secure_link_module --add-module=./src/redis2-nginx-module-master/ --add-module=./src/lua-nginx-module-master --with-http_v2_module"
+#define NGX_CONFIGURE " --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads --add-module=/root/yangyazhou/reading-code-of-nginx-1.9.2/nginx-1.9.2/src/echo-nginx-module-master/ --add-module=./src/nginx-requestkey-module-master/ --with-http_secure_link_module --add-module=./src/redis2-nginx-module-master/ --add-module=./src/lua-nginx-module-master/ --with-http_ssl_module --with-http_v2_module --with-openssl=/usr/local/openssl"
 
 #ifndef NGX_DEBUG
 #define NGX_DEBUG  1
@@ -323,6 +323,11 @@
 #endif
 
 
+#ifndef NGX_HTTP_SSL
+#define NGX_HTTP_SSL  1
+#endif
+
+
 #ifndef NGX_HTTP_X_FORWARDED_FOR
 #define NGX_HTTP_X_FORWARDED_FOR  1
 #endif
@@ -343,8 +348,13 @@
 #endif
 
 
-#ifndef NGX_OPENSSL_MD5
-#define NGX_OPENSSL_MD5  1
+#ifndef NGX_OPENSSL
+#define NGX_OPENSSL  1
+#endif
+
+
+#ifndef NGX_SSL
+#define NGX_SSL  1
 #endif
 
 
@@ -353,18 +363,23 @@
 #endif
 
 
+#ifndef NGX_OPENSSL_MD5
+#define NGX_OPENSSL_MD5  1
+#endif
+
+
 #ifndef NGX_HAVE_MD5
 #define NGX_HAVE_MD5  1
 #endif
 
 
-#ifndef NGX_HAVE_SHA1
-#define NGX_HAVE_SHA1  1
+#ifndef NGX_HAVE_OPENSSL_SHA1_H
+#define NGX_HAVE_OPENSSL_SHA1_H  1
 #endif
 
 
-#ifndef NGX_HAVE_OPENSSL_SHA1_H
-#define NGX_HAVE_OPENSSL_SHA1_H  1
+#ifndef NGX_HAVE_SHA1
+#define NGX_HAVE_SHA1  1
 #endif
 
 

@@ -336,7 +336,8 @@ ngx_http_init_connection(ngx_connection_t *c)
     rev->handler = ngx_http_wait_request_handler;
     c->write->handler = ngx_http_empty_handler;
 
-#if (NGX_HTTP_V2)
+#if (NGX_HTTP_V2) 
+    /* 这里放在SSL的前面是，如果没有配置SSL，则直接不用进行SSL协商而进行HTTP2处理ngx_http_v2_init */
     if (hc->addr_conf->http2) {
         rev->handler = ngx_http_v2_init;
     }
@@ -659,7 +660,7 @@ ngx_http_create_request(ngx_connection_t *c)
 
 
 #if (NGX_HTTP_SSL)
-
+/* 如果配置了需要支持ssl协议，则连接建立后会调用该handler处理后续ssl协商过程 */
 static void
 ngx_http_ssl_handshake(ngx_event_t *rev)
 {
@@ -689,9 +690,14 @@ ngx_http_ssl_handshake(ngx_event_t *rev)
         return;
     }
 
-    size = hc->proxy_protocol ? sizeof(buf) : 1;
+    size = hc->proxy_protocol ? sizeof(buf) : 1; //如果不是做proxy，则读1字节出来，看是什么协议
 
-    n = recv(c->fd, (char *) buf, size, MSG_PEEK);
+    /*
+    MSG_PEEK标志会将套接字接收队列中的可读的数据拷贝到缓冲区，但不会使套接子接收队列中的数据减少，
+    常见的是：例如调用recv或read后，导致套接字接收队列中的数据被读取后而减少，而指定了MSG_PEEK标志，
+    可通过返回值获得可读数据长度，并且不会减少套接字接收缓冲区中的数据，所以可以供程序的其他部分继续读取。
+    */
+    n = recv(c->fd, (char *) buf, size, MSG_PEEK); 
 
     err = ngx_socket_errno;
 
@@ -772,6 +778,7 @@ ngx_http_ssl_handshake(ngx_event_t *rev)
 
                 ngx_reusable_connection(c, 0);
 
+                //ssl单向认证四次握手完成后执行该handler
                 c->ssl->handler = ngx_http_ssl_handshake_handler;
                 return;
             }
@@ -781,6 +788,7 @@ ngx_http_ssl_handshake(ngx_event_t *rev)
             return;
         }
 
+        //http 平台的请求，如果是http平台的请求，就走一般流程返回错我信息
         ngx_log_debug0(NGX_LOG_DEBUG_HTTP, rev->log, 0, "plain http");
 
         c->log->action = "waiting for request";
@@ -795,7 +803,7 @@ ngx_http_ssl_handshake(ngx_event_t *rev)
     ngx_http_close_connection(c);
 }
 
-
+//SSL或者TLS协商成功后，开始读取客户端包体了
 static void
 ngx_http_ssl_handshake_handler(ngx_connection_t *c)
 {
@@ -3953,6 +3961,13 @@ ngx_http_close_request(ngx_http_request_t *r, ngx_int_t rc)
     }
 #endif
 
+    #if (NGX_HTTP_V2)
+    if (r->stream) {
+        ngx_http_v2_close_stream(r->stream, rc);
+        return;
+    }
+    #endif
+
     ngx_http_free_request(r, rc);
     ngx_http_close_connection(c);
 }
@@ -4123,10 +4138,11 @@ ngx_http_free_request(ngx_http_request_t *r, ngx_int_t rc) //释放request的相关资
     pool = r->pool;
     r->pool = NULL;
 
-    ngx_destroy_pool(pool);
+    ngx_destroy_pool(pool); /* 释放request->pool */
 }
 
 
+//当包体应答给客户端后，在ngx_http_free_request中调用日志的handler来记录请求信息到log日志
 static void
 ngx_http_log_request(ngx_http_request_t *r)
 {

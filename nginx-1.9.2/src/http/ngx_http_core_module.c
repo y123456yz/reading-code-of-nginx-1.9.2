@@ -3021,7 +3021,6 @@ ngx_http_core_find_static_location(ngx_http_request_t *r,
         如果前缀相等，uri的长度比node的长度还要小，比如node的name是/abc ，uri是/ab,这种情况是/abc 一定是精确匹配，因为如果是
         前缀匹配那么／abc 肯定会再／ab的tree 指针里面。 
           */
-        printf("len < node-len, continue\n");
         node = node->left;
     }
 }
