@@ -16,7 +16,7 @@
 static ngx_int_t ngx_http_v2_table_account(ngx_http_v2_connection_t *h2c,
     size_t size);
 
-
+//HPACK 使用2个索引表(静态索引表和动态索引表)来把头部映射到索引值,这里的ngx_http_v2_static_table是静态索引表
 static ngx_http_v2_header_t  ngx_http_v2_static_table[] = {
     { ngx_string(":authority"), ngx_string("") },
     { ngx_string(":method"), ngx_string("GET") },
@@ -81,6 +81,11 @@ static ngx_http_v2_header_t  ngx_http_v2_static_table[] = {
     { ngx_string("www-authenticate"), ngx_string("") },
 };
 
+/*
+静态表的大小现在是固定的61， 因此静态表就是从1到61的索引，然后动态表从新到旧，依次从62开始递增。
+这样就共同的组成了一个索引空间，且互不冲突。
+*/
+//ngx_http_v2_static_table静态表成员数
 #define NGX_HTTP_V2_STATIC_TABLE_ENTRIES                                      \
     (sizeof(ngx_http_v2_static_table)                                         \
      / sizeof(ngx_http_v2_header_t))
@@ -104,15 +109,16 @@ ngx_http_v2_get_indexed_header(ngx_http_v2_connection_t *h2c, ngx_uint_t index,
                    "http2 get indexed %s: %ui",
                    name_only ? "header" : "header name", index);
 
-    index--;
+    index--;//--是因为数组从0开始的
 
-    if (index < NGX_HTTP_V2_STATIC_TABLE_ENTRIES) {
+    if (index < NGX_HTTP_V2_STATIC_TABLE_ENTRIES) { /* 说明压缩的头部行是静态索引表中头部行信息 */
         h2c->state.header = ngx_http_v2_static_table[index];
         return NGX_OK;
     }
 
+    
     index -= NGX_HTTP_V2_STATIC_TABLE_ENTRIES;
-
+    /* 说明该压缩的头部行在动态索引表中 */
     if (index < h2c->hpack.added - h2c->hpack.deleted) {
         index = (h2c->hpack.added - index - 1) % h2c->hpack.allocated;
         entry = h2c->hpack.entries[index];

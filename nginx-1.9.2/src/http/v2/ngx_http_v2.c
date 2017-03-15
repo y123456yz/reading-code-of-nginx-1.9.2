@@ -1216,10 +1216,28 @@ ngx_http_v2_state_headers(ngx_http_v2_connection_t *h2c, u_char *pos,
         ngx_http_v2_set_dependency(h2c, node, depend, excl);
     }
 
+    /* 解析HTTP2 header帧内容部分  Header Block Fragment (*)  */
     return ngx_http_v2_state_header_block(h2c, pos, end);
 }
 
-
+/*
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|Pad Length? (8)|
++-+-------------+-----------------------------------------------+
+|E|                 Stream Dependency? (31)                     |
++-+-------------+-----------------------------------------------+
+|  Weight? (8)  |
++-+-------------+-----------------------------------------------+
+|                   Header Block Fragment (*)                 ...
++---------------------------------------------------------------+
+|                           Padding (*)                       ...
++---------------------------------------------------------------+
+*/
+/* 解析HTTP2 header帧内容部分  Header Block Fragment (*) 
+HPACK编解码协议参考:https://imququ.com/post/header-compression-in-http2.html
+*/
 static u_char *
 ngx_http_v2_state_header_block(ngx_http_v2_connection_t *h2c, u_char *pos,
     u_char *end)
@@ -1240,25 +1258,80 @@ ngx_http_v2_state_header_block(ngx_http_v2_connection_t *h2c, u_char *pos,
     ch = *pos;
 
     if (ch >= (1 << 7)) { /* 128 ~ 256的时候prefix为bit:0111 1111 */
-        /* indexed header field */
+        /*  整个头部键值对都在字典中
+            0   1   2   3   4   5   6   7
+            +---+---+---+---+---+---+---+---+
+            | 1 |        Index (7+)         |
+            +---+---------------------------+
+        */
+        /* indexed header field */ //说明索引表中已经存在该请求行信息，见ngx_http_v2_static_table
         indexed = 1;
         prefix = ngx_http_v2_prefix(7);
 
     } else if (ch >= (1 << 6)) { /* 127 ~ 64的时候prefix为bit:0011 1111 */
+        /* 头部名称在字典中，更新动态字典
+          0   1   2   3   4   5   6   7
+        +---+---+---+---+---+---+---+---+
+        | 0 | 1 |      Index (6+)       |
+        +---+---+-----------------------+
+        | H |     Value Length (7+)     |
+        +---+---------------------------+
+        | Value String (Length octets)  |
+        +-------------------------------+
+        */
         /* literal header field with incremental indexing */
         h2c->state.index = 1;
         prefix = ngx_http_v2_prefix(6);
 
     } else if (ch >= (1 << 5)) {/* 63 ~ 32的时候prefix为bit:0001 1111 */
+        /* 头部名称不在字典中，更新动态字典
+          0   1   2   3   4   5   6   7
+        +---+---+---+---+---+---+---+---+
+        | 0 | 1 |           0           |
+        +---+---+-----------------------+
+        | H |     Name Length (7+)      |
+        +---+---------------------------+
+        |  Name String (Length octets)  |
+        +---+---------------------------+
+        | H |     Value Length (7+)     |
+        +---+---------------------------+
+        | Value String (Length octets)  |
+        +-------------------------------+
+        */
         /* dynamic table size update */
         size_update = 1;
         prefix = ngx_http_v2_prefix(5);
 
     } else if (ch >= (1 << 4)) {/* 31 ~ 16的时候prefix为bit:0000 1111 */
+        /*头部名称在字典中，不允许更新动态字典
+          0   1   2   3   4   5   6   7
+        +---+---+---+---+---+---+---+---+
+        | 0 | 0 | 0 | 1 |  Index (4+)   |
+        +---+---+-----------------------+
+        | H |     Value Length (7+)     |
+        +---+---------------------------+
+        | Value String (Length octets)  |
+        +-------------------------------+
+        */
         /* literal header field never indexed */
         prefix = ngx_http_v2_prefix(4);
 
     } else { /* 15 ~ 0的时候prefix为bit:0000 0111 */
+        /*
+        头部名称不在字典中，不允许更新动态字典
+          0   1   2   3   4   5   6   7
+        +---+---+---+---+---+---+---+---+
+        | 0 | 0 | 0 | 1 |       0       |
+        +---+---+-----------------------+
+        | H |     Name Length (7+)      |
+        +---+---------------------------+
+        |  Name String (Length octets)  |
+        +---+---------------------------+
+        | H |     Value Length (7+)     |
+        +---+---------------------------+
+        | Value String (Length octets)  |
+        +-------------------------------+
+        */
         /* literal header field without indexing */
         prefix = ngx_http_v2_prefix(3);
     }
@@ -1285,7 +1358,7 @@ ngx_http_v2_state_header_block(ngx_http_v2_connection_t *h2c, u_char *pos,
         return ngx_http_v2_connection_error(h2c, NGX_HTTP_V2_SIZE_ERROR);
     }
 
-    if (indexed) {
+    if (indexed) { //本地索引表中已经存在该请求行，查找索引表
         if (ngx_http_v2_get_indexed_header(h2c, value, 0) != NGX_OK) {
             return ngx_http_v2_connection_error(h2c, NGX_HTTP_V2_COMP_ERROR);
         }
