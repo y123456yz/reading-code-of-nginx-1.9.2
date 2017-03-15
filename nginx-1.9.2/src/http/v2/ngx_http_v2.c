@@ -678,6 +678,10 @@ static u_char *
 ngx_http_v2_state_preface(ngx_http_v2_connection_t *h2c, u_char *pos,
     u_char *end)
 {
+/*
+客户端连接序言以24个字节的序列开始 PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n
+服务端连接序言包含一个有可能是空的设置（SETTING）帧，它必须在HTTP/2连接中首个发送。
+*/
     static const u_char preface[] = "PRI * HTTP/2.0\r\n";
 
     if ((size_t) (end - pos) < sizeof(preface) - 1) {
@@ -1057,6 +1061,21 @@ error:
     return ngx_http_v2_state_skip_padded(h2c, pos, end);
 }
 
+/*
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|Pad Length? (8)|
++-+-------------+-----------------------------------------------+
+|E|                 Stream Dependency? (31)                     |
++-+-------------+-----------------------------------------------+
+|  Weight? (8)  |
++-+-------------+-----------------------------------------------+
+|                   Header Block Fragment (*)                 ...
++---------------------------------------------------------------+
+|                           Padding (*)                       ...
++---------------------------------------------------------------+
+*/
 //见ngx_http_v2_frame_states
 static u_char *
 ngx_http_v2_state_headers(ngx_http_v2_connection_t *h2c, u_char *pos,
@@ -1073,11 +1092,11 @@ ngx_http_v2_state_headers(ngx_http_v2_connection_t *h2c, u_char *pos,
 
     size = 0;
 
-    if (padded) {
+    if (padded) { //如果有padded标记，则应该有1字节的pad数据长度字段
         size++;
     }
 
-    if (priority) {
+    if (priority) { /* 如果http2头部flag带有优先级标识，表示内容部分带有Stream Dependency和weight */
         size += sizeof(uint32_t) + 1;
     }
 
@@ -1114,15 +1133,15 @@ ngx_http_v2_state_headers(ngx_http_v2_connection_t *h2c, u_char *pos,
 
             return ngx_http_v2_connection_error(h2c, NGX_HTTP_V2_SIZE_ERROR);
         }
-
+        /* 把尾部的pad部分内容长度除去 */
         h2c->state.length -= h2c->state.padding;
     }
 
     depend = 0;
     excl = 0;
     weight = 16;
-
-    if (priority) {
+    
+    if (priority) { /* 带有priority标识，则解析出对应的依赖流和权重 */
         dependency = ngx_http_v2_parse_uint32(pos);
 
         depend = dependency & 0x7fffffff;
@@ -1151,6 +1170,7 @@ ngx_http_v2_state_headers(ngx_http_v2_connection_t *h2c, u_char *pos,
 
     h2c->state.header_limit = h2scf->max_header_size;
 
+    /* 超过限制 */
     if (h2c->processing >= h2scf->concurrent_streams) {
         ngx_log_error(NGX_LOG_INFO, h2c->connection->log, 0,
                       "concurrent streams exceeded %ui", h2c->processing);
@@ -1177,6 +1197,7 @@ ngx_http_v2_state_headers(ngx_http_v2_connection_t *h2c, u_char *pos,
         h2c->closed_nodes--;
     }
 
+    /* 创建一个流并进行相关赋值 */
     stream = ngx_http_v2_create_stream(h2c);
     if (stream == NULL) {
         return ngx_http_v2_connection_error(h2c, NGX_HTTP_V2_INTERNAL_ERROR);
@@ -1190,7 +1211,7 @@ ngx_http_v2_state_headers(ngx_http_v2_connection_t *h2c, u_char *pos,
     h2c->state.stream = stream;
     h2c->state.pool = stream->request->pool;
 
-    if (priority || node->parent == NULL) {
+    if (priority || node->parent == NULL) { /* 设置优先级依赖流、权重 */
         node->weight = weight;
         ngx_http_v2_set_dependency(h2c, node, depend, excl);
     }
@@ -1218,26 +1239,26 @@ ngx_http_v2_state_header_block(ngx_http_v2_connection_t *h2c, u_char *pos,
 
     ch = *pos;
 
-    if (ch >= (1 << 7)) {
+    if (ch >= (1 << 7)) { /* 128 ~ 256的时候prefix为bit:0111 1111 */
         /* indexed header field */
         indexed = 1;
         prefix = ngx_http_v2_prefix(7);
 
-    } else if (ch >= (1 << 6)) {
+    } else if (ch >= (1 << 6)) { /* 127 ~ 64的时候prefix为bit:0011 1111 */
         /* literal header field with incremental indexing */
         h2c->state.index = 1;
         prefix = ngx_http_v2_prefix(6);
 
-    } else if (ch >= (1 << 5)) {
+    } else if (ch >= (1 << 5)) {/* 63 ~ 32的时候prefix为bit:0001 1111 */
         /* dynamic table size update */
         size_update = 1;
         prefix = ngx_http_v2_prefix(5);
 
-    } else if (ch >= (1 << 4)) {
+    } else if (ch >= (1 << 4)) {/* 31 ~ 16的时候prefix为bit:0000 1111 */
         /* literal header field never indexed */
         prefix = ngx_http_v2_prefix(4);
 
-    } else {
+    } else { /* 15 ~ 0的时候prefix为bit:0000 0111 */
         /* literal header field without indexing */
         prefix = ngx_http_v2_prefix(3);
     }
@@ -1721,7 +1742,7 @@ ngx_http_v2_state_priority(ngx_http_v2_connection_t *h2c, u_char *pos,
         return ngx_http_v2_connection_error(h2c, NGX_HTTP_V2_PROTOCOL_ERROR);
     }
 
-    if (depend == h2c->state.sid) {
+    if (depend == h2c->state.sid) {  /* 不能依赖自己 */
         ngx_log_error(NGX_LOG_INFO, h2c->connection->log, 0,
                       "client sent PRIORITY frame for stream %ui "
                       "with incorrect dependancy", h2c->state.sid);
@@ -2389,7 +2410,11 @@ ngx_http_v2_parse_int(ngx_http_v2_connection_t *h2c, u_char **pos, u_char *end,
     return NGX_AGAIN;
 }
 
-/* 组setting帧报文，加入到ngx_http_v2_connection_t->last_out */
+/*
+客户端连接序言以24个字节的序列开始 PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n
+服务端连接序言包含一个有可能是空的设置（SETTING）帧，它必须在HTTP/2连接中首个发送。
+*/
+/* 组setting帧报文，加入到ngx_http_v2_connection_t->last_out  ack为1表示收到对方的setting帧，需要应答，其中内容部分为0 */
 static ngx_int_t
 ngx_http_v2_send_settings(ngx_http_v2_connection_t *h2c, ngx_uint_t ack)
 {

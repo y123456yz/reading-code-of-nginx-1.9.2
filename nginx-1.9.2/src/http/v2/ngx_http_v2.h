@@ -485,8 +485,8 @@ Stream Identifier若为0x0，则表示针对整个连接，否则针对具体流
 #define NGX_HTTP_V2_ACK_FLAG             0x01 
 #define NGX_HTTP_V2_END_STREAM_FLAG      0x01
 #define NGX_HTTP_V2_END_HEADERS_FLAG     0x04
-#define NGX_HTTP_V2_PADDED_FLAG          0x08
-#define NGX_HTTP_V2_PRIORITY_FLAG        0x20
+#define NGX_HTTP_V2_PADDED_FLAG          0x08 /* 说明HTTP2内容部分带有pad数据 */
+#define NGX_HTTP_V2_PRIORITY_FLAG        0x20 /* flag带有该标识，表示内容部分带有Stream Dependency和weight */
 
 
 typedef struct ngx_http_v2_connection_s   ngx_http_v2_connection_t;
@@ -507,7 +507,7 @@ typedef struct {
 typedef struct {
     ngx_uint_t                       sid; //http2头部sid，见ngx_http_v2_state_head
     size_t                           length; //http2头部leng，见ngx_http_v2_state_head
-    size_t                           padding; 
+    size_t                           padding; //HTTP2头部flag带有NGX_HTTP_V2_PADDED_FLAG标识，则padding为pad内容的长度
     unsigned                         flags:8; //http2头部flag，见ngx_http_v2_state_head
 
     unsigned                         incomplete:1;
@@ -523,8 +523,10 @@ typedef struct {
     u_char                          *field_start;
     u_char                          *field_end;
     size_t                           field_rest;
+    /* 赋值见ngx_http_v2_state_headers */
     ngx_pool_t                      *pool;
 
+    /* 当前正在处理的stream，赋值见ngx_http_v2_state_headers */
     ngx_http_v2_stream_t            *stream;
 
     u_char                           buffer[NGX_HTTP_V2_STATE_BUFFER_SIZE];
@@ -559,6 +561,7 @@ struct ngx_http_v2_connection_s {
     ngx_connection_t                *connection;//对应的客户端连接，赋值见ngx_http_v2_init
     ngx_http_connection_t           *http_connection;
 
+    /* ngx_http_v2_create_stream中自增，表示创建的流的数量，ngx_http_v2_close_stream自减 */
     ngx_uint_t                       processing;
 
     size_t                           send_window;//默认NGX_HTTP_V2_DEFAULT_WINDOW
@@ -578,42 +581,56 @@ struct ngx_http_v2_connection_s {
     ngx_pool_t                      *pool;
     /* frame通过该free链表来实现重复利用，可以参考ngx_http_v2_get_frame */
     ngx_http_v2_out_frame_t         *free_frames;
+    /* 创建空间和赋值见ngx_http_v2_create_stream，根据客户端连接伪造的一个连接 */
     ngx_connection_t                *free_fake_connections;
     
-    /* ngx_http_v2_node_t类型的数组指针，ngx_http_v2_init中创建空间和赋值 */
+    /* ngx_http_v2_node_t类型的数组指针，ngx_http_v2_init中创建空间和赋值，真正的ngx_http_v2_node_t赋值见ngx_http_v2_get_node_by_id */
     ngx_http_v2_node_t             **streams_index;
     /* 在ngx_http_v2_queue_blocked_frame中把帧加入该链表，在ngx_http_v2_send_output_queue中发送队列中的数据 */
     ngx_http_v2_out_frame_t         *last_out;
 
     ngx_queue_t                      posted;
     ngx_queue_t                      dependencies;
+    /* 队列成员为ngx_http_v2_node_t，赋值见ngx_http_v2_state_priority */
     ngx_queue_t                      closed;
-
+    /* 最末尾的一个流ID号 */
     ngx_uint_t                       last_sid;
 
     unsigned                         closed_nodes:8;
     unsigned                         blocked:1;
 };
 
-/* ngx_http_v2_connection_t.streams_index指针数组成员为该类型 */
+/* ngx_http_v2_connection_t.streams_index指针数组成员为该类型，一个流ID对应一个该结构，见ngx_http_v2_get_node_by_id */
+/* 一个ngx_http_v2_stream_s.node流对应一个ngx_http_v2_node_t */
 struct ngx_http_v2_node_s { 
 /* PRIORITY帧通告的某个流ID对应的weight和dependecy都保存在该结构中，见ngx_http_v2_state_priority */
     ngx_uint_t                       id; /* stream id */
     ngx_http_v2_node_t              *index;
-    ngx_http_v2_node_t              *parent;
+    /* 如果没有parent，则该指针指向NGX_HTTP_V2_ROOT */
+    ngx_http_v2_node_t              *parent; 
+    /* child通过该queue加入到parent->children，那么parent就可以通过children队列获取到所有的child
+    如果该node没有parent则通过该queue加入到&h2c->dependencies，见ngx_http_v2_set_dependency,*/
     ngx_queue_t                      queue;
+    /* 所有的children节点挂到该队列中 */
     ngx_queue_t                      children;
     ngx_queue_t                      reuse;
     ngx_uint_t                       rank;
     ngx_uint_t                       weight;
     double                           rel_weight;
-    ngx_http_v2_stream_t            *stream;
+    /* 该node对应的流，一个node对应一个流，赋值见ngx_http_v2_state_headers */
+    ngx_http_v2_stream_t            *stream; 
 };
 
-
-struct ngx_http_v2_stream_s {
+/*
+创建空间和赋值见ngx_http_v2_create_stream
+*/
+struct ngx_http_v2_stream_s {   
+    /*初始赋值见ngx_http_v2_create_stream*/
     ngx_http_request_t              *request;
+    /*初始赋值见ngx_http_v2_create_stream*/
     ngx_http_v2_connection_t        *connection;
+    /* 一个ngx_http_v2_stream_s.node流对应一个ngx_http_v2_node_t,流id等存在该node中 */
+    /* 该node对应的流，一个node对应一个流，赋值见ngx_http_v2_state_headers */
     ngx_http_v2_node_t              *node;
 
     ngx_uint_t                       header_buffers;
@@ -731,7 +748,7 @@ ngx_int_t ngx_http_v2_table_size(ngx_http_v2_connection_t *h2c, size_t size);
 ngx_int_t ngx_http_v2_huff_decode(u_char *state, u_char *src, size_t len,
     u_char **dst, ngx_uint_t last, ngx_log_t *log);
 
-
+/* 低bits - 1位全为1  例如bits为4，则结果为bit:1111   例如bits为5，则结果为bit:1111*/
 #define ngx_http_v2_prefix(bits)  ((1 << (bits)) - 1)
 
 

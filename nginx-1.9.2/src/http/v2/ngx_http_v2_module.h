@@ -22,6 +22,7 @@ typedef struct {
 
 typedef struct {
     size_t                          pool_size; //http2_pool_size配置项指定，空间分配在ngx_http_v2_init
+    /* 一个连接上同时处理的流最大限度，生效见ngx_http_v2_state_headers */
     ngx_uint_t                      concurrent_streams; //http2_max_concurrent_streams配置项指定 默认128
     size_t                          max_field_size; //http2_max_field_size配置项指定  默认4096
     size_t                          max_header_size; //http2_max_header_size配置项指定 默认16384

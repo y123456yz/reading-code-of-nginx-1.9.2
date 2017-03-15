@@ -1398,6 +1398,7 @@ ngx_http_run_posted_requests方法就是通过遍历该单链表来执行子请求的 */
 #endif
 
     #if (NGX_HTTP_V2)
+        /* 赋值见ngx_http_v2_create_stream */
         ngx_http_v2_stream_t             *stream;
     #endif
 

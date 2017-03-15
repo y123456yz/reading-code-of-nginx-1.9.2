@@ -1,0 +1,7 @@
+http://blog.csdn.net/kenanxiuji/article/details/52490749   Ò»¼ü°²×°nghttp2.0
+
+export LD_LIBRARY_PATH=/usr/local/lib:/lib:/lib64
+export PKG_CONFIG=`which pkg-config`
+export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+export PATH=$PATH:/usr/local/gcc-4.8.4/bin/
+export LD_LIBRARY_PATH=/usr/local/lib:/lib:/lib64:/usr/lib:/usr/local/lib64
