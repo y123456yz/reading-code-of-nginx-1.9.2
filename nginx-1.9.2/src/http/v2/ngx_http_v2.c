@@ -1237,6 +1237,7 @@ ngx_http_v2_state_headers(ngx_http_v2_connection_t *h2c, u_char *pos,
 */
 /* 解析HTTP2 header帧内容部分  Header Block Fragment (*) 
 HPACK编解码协议参考:https://imququ.com/post/header-compression-in-http2.html
+http://http2.github.io/http2-spec/compression.html#integer.representation
 */
 static u_char *
 ngx_http_v2_state_header_block(ngx_http_v2_connection_t *h2c, u_char *pos,
@@ -1257,19 +1258,14 @@ ngx_http_v2_state_header_block(ngx_http_v2_connection_t *h2c, u_char *pos,
 
     ch = *pos;
 
-    if (ch >= (1 << 7)) { /* 128 ~ 256的时候prefix为bit:0111 1111 */
-        /*  整个头部键值对都在字典中
+    /*  详细的HPACK见http://http2.github.io/http2-spec/compression.html#integer.representation
+        整个头部键值对都在字典中
             0   1   2   3   4   5   6   7
             +---+---+---+---+---+---+---+---+
             | 1 |        Index (7+)         |
             +---+---------------------------+
-        */
-        /* indexed header field */ //说明索引表中已经存在该请求行信息，见ngx_http_v2_static_table
-        indexed = 1;
-        prefix = ngx_http_v2_prefix(7);
 
-    } else if (ch >= (1 << 6)) { /* 127 ~ 64的时候prefix为bit:0011 1111 */
-        /* 头部名称在字典中，更新动态字典
+        头部名称在字典中，更新动态字典
           0   1   2   3   4   5   6   7
         +---+---+---+---+---+---+---+---+
         | 0 | 1 |      Index (6+)       |
@@ -1278,13 +1274,9 @@ ngx_http_v2_state_header_block(ngx_http_v2_connection_t *h2c, u_char *pos,
         +---+---------------------------+
         | Value String (Length octets)  |
         +-------------------------------+
-        */
-        /* literal header field with incremental indexing */
-        h2c->state.index = 1;
-        prefix = ngx_http_v2_prefix(6);
 
-    } else if (ch >= (1 << 5)) {/* 63 ~ 32的时候prefix为bit:0001 1111 */
-        /* 头部名称不在字典中，更新动态字典
+        
+         头部名称不在字典中，更新动态字典
           0   1   2   3   4   5   6   7
         +---+---+---+---+---+---+---+---+
         | 0 | 1 |           0           |
@@ -1296,14 +1288,9 @@ ngx_http_v2_state_header_block(ngx_http_v2_connection_t *h2c, u_char *pos,
         | H |     Value Length (7+)     |
         +---+---------------------------+
         | Value String (Length octets)  |
-        +-------------------------------+
-        */
-        /* dynamic table size update */
-        size_update = 1;
-        prefix = ngx_http_v2_prefix(5);
+        +-------------------------------+     
 
-    } else if (ch >= (1 << 4)) {/* 31 ~ 16的时候prefix为bit:0000 1111 */
-        /*头部名称在字典中，不允许更新动态字典
+        头部名称在字典中，不允许更新动态字典
           0   1   2   3   4   5   6   7
         +---+---+---+---+---+---+---+---+
         | 0 | 0 | 0 | 1 |  Index (4+)   |
@@ -1312,12 +1299,7 @@ ngx_http_v2_state_header_block(ngx_http_v2_connection_t *h2c, u_char *pos,
         +---+---------------------------+
         | Value String (Length octets)  |
         +-------------------------------+
-        */
-        /* literal header field never indexed */
-        prefix = ngx_http_v2_prefix(4);
 
-    } else { /* 15 ~ 0的时候prefix为bit:0000 0111 */
-        /*
         头部名称不在字典中，不允许更新动态字典
           0   1   2   3   4   5   6   7
         +---+---+---+---+---+---+---+---+
@@ -1332,6 +1314,28 @@ ngx_http_v2_state_header_block(ngx_http_v2_connection_t *h2c, u_char *pos,
         | Value String (Length octets)  |
         +-------------------------------+
         */
+    if (ch >= (1 << 7)) { /* 128 ~ 256的时候prefix为bit:0111 1111 */
+        //在预定的头字段静态映射表 中已经有预定义的 Header Name 和 Header Value值
+        /* indexed header field */ //说明索引表中已经存在该请求行信息，见ngx_http_v2_static_table
+        indexed = 1;
+        prefix = ngx_http_v2_prefix(7);
+
+    } else if (ch >= (1 << 6)) { /* 127 ~ 64的时候prefix为bit:0011 1111 */
+        //预定的头字段静态映射表中有 name，需要设置新值
+        /* literal header field with incremental indexing */
+        h2c->state.index = 1;//需要添加name:value到动态表中
+        prefix = ngx_http_v2_prefix(6);
+
+    } else if (ch >= (1 << 5)) {/* 63 ~ 32的时候prefix为bit:0001 1111 */
+        /* dynamic table size update，动态索引表大小调整 */
+        size_update = 1;
+        prefix = ngx_http_v2_prefix(5);
+
+    } else if (ch >= (1 << 4)) {/* 31 ~ 16的时候prefix为bit:0000 1111 */
+        /* literal header field never indexed */
+        prefix = ngx_http_v2_prefix(4);
+
+    } else { /* 15 ~ 0的时候prefix为bit:0000 0111 */
         /* literal header field without indexing */
         prefix = ngx_http_v2_prefix(3);
     }
@@ -1358,7 +1362,7 @@ ngx_http_v2_state_header_block(ngx_http_v2_connection_t *h2c, u_char *pos,
         return ngx_http_v2_connection_error(h2c, NGX_HTTP_V2_SIZE_ERROR);
     }
 
-    if (indexed) { //本地索引表中已经存在该请求行，查找索引表
+    if (indexed) { //本地索引表中已经存在该请求行name和value，查找索引表
         if (ngx_http_v2_get_indexed_header(h2c, value, 0) != NGX_OK) {
             return ngx_http_v2_connection_error(h2c, NGX_HTTP_V2_COMP_ERROR);
         }
@@ -1366,7 +1370,7 @@ ngx_http_v2_state_header_block(ngx_http_v2_connection_t *h2c, u_char *pos,
         return ngx_http_v2_state_process_header(h2c, pos, end);
     }
 
-    if (size_update) {
+    if (size_update) { //表size更新
         if (ngx_http_v2_table_size(h2c, value) != NGX_OK) {
             return ngx_http_v2_connection_error(h2c, NGX_HTTP_V2_COMP_ERROR);
         }
@@ -1586,13 +1590,14 @@ ngx_http_v2_state_process_header(ngx_http_v2_connection_t *h2c, u_char *pos,
     if (h2c->state.parse_name) {
         h2c->state.parse_name = 0;
 
+        /*  */
         header->name.len = h2c->state.field_end - h2c->state.field_start;
         header->name.data = h2c->state.field_start;
 
         return ngx_http_v2_state_field_len(h2c, pos, end);
     }
 
-    if (h2c->state.parse_value) {
+    if (h2c->state.parse_value) { /* 更新value */
         h2c->state.parse_value = 0;
 
         header->value.len = h2c->state.field_end - h2c->state.field_start;
@@ -1601,6 +1606,7 @@ ngx_http_v2_state_process_header(ngx_http_v2_connection_t *h2c, u_char *pos,
 
     len = header->name.len + header->value.len;
 
+    /* header帧中的每一个name+value之和不能超过该限制 */
     if (len > h2c->state.header_limit) {
         ngx_log_error(NGX_LOG_INFO, h2c->connection->log, 0,
                       "client sent too many headers: "
@@ -1609,10 +1615,9 @@ ngx_http_v2_state_process_header(ngx_http_v2_connection_t *h2c, u_char *pos,
 
         return ngx_http_v2_connection_error(h2c, NGX_HTTP_V2_ENHANCE_YOUR_CALM);
     }
-
     h2c->state.header_limit -= len;
 
-    if (h2c->state.index) {
+    if (h2c->state.index) { //需要添加name:value到动态表中
         if (ngx_http_v2_add_header(h2c, header) != NGX_OK) {
             return ngx_http_v2_connection_error(h2c,
                                                 NGX_HTTP_V2_INTERNAL_ERROR);

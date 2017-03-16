@@ -497,7 +497,7 @@ typedef struct ngx_http_v2_out_frame_s    ngx_http_v2_out_frame_t;
 typedef u_char *(*ngx_http_v2_handler_pt) (ngx_http_v2_connection_t *h2c,
     u_char *pos, u_char *end);
 
-
+/* 动态表存储节点，最终存入ngx_http_v2_hpack_t.entries中 */
 typedef struct {
     ngx_str_t                        name;
     ngx_str_t                        value;
@@ -515,8 +515,9 @@ typedef struct {
     /* HPACK */
     unsigned                         parse_name:1;
     unsigned                         parse_value:1;
-    unsigned                         index:1;
-    ngx_http_v2_header_t             header;
+    /* ngx_http_v2_state_header_block中置1，表示需要把name:value通过ngx_http_v2_add_header加入动态表中，然后置0 */
+    unsigned                         index:1; //需要添加name:value到动态表中
+    ngx_http_v2_header_t             header; //赋值见ngx_http_v2_get_indexed_header
     size_t                           header_limit;
     size_t                           field_limit;
     u_char                           field_state;
@@ -541,18 +542,29 @@ typedef struct {
 } ngx_http_v2_state_t;
 
 
-
+/* ngx_http_v2_connection_t.hpack */
 typedef struct {
+    /* 开辟空间和赋值见ngx_http_v2_add_header，默认64个指针数组，指向storage中的多个ngx_http_v2_header_t结构，
+    通过entries[i]指针就可以直接访问到storage中的某个name:value,这样通过entries数组指针就可以访问到所有的name:value */
     ngx_http_v2_header_t           **entries;
 
+    /* storage中总的name:value个数，ngx_http_v2_add_header中自增 */
     ngx_uint_t                       added;
+    /* 当空间不够的时候，会重复利用storage空间，也就是把部分name:value设置为无效，好让新的name:value添加到storage中，
+       deleted表示因为storage空间不够的情况下又有新的name:value加进来，则清除掉最老的name:value来腾出空间，见ngx_http_v2_add_header
+    */
     ngx_uint_t                       deleted;
     ngx_uint_t                       reused;
+    /* entries指针数组中指针的总数 */
     ngx_uint_t                       allocated;
 
+    //默认NGX_HTTP_V2_TABLE_SIZE
     size_t                           size;
+    //默认NGX_HTTP_V2_TABLE_SIZE   storage中的可用空间
     size_t                           free;
+    /* 真正的空间在这里 */
     u_char                          *storage;
+    /* 指向storage中的有效空间起始位置 */
     u_char                          *pos;
 } ngx_http_v2_hpack_t;
 
@@ -575,7 +587,7 @@ struct ngx_http_v2_connection_s {
     ngx_queue_t                      waiting;
 
     ngx_http_v2_state_t              state;
-
+    /* hpack动态表，创建空间和赋值见ngx_http_v2_add_header */
     ngx_http_v2_hpack_t              hpack;
 
     ngx_pool_t                      *pool;
