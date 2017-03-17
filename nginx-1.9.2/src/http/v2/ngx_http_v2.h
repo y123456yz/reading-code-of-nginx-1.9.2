@@ -483,7 +483,13 @@ Stream Identifier若为0x0，则表示针对整个连接，否则针对具体流
 #define NGX_HTTP_V2_NO_FLAG              0x00
 //ACK (0x1)，表示接收者已经接收到SETTING帧，作为确认必须设置此标志位，此时负载为空
 #define NGX_HTTP_V2_ACK_FLAG             0x01 
+/* END_STREAM (0x1) ：位1用来表示当前帧是确定的流发送的最后一帧 */
 #define NGX_HTTP_V2_END_STREAM_FLAG      0x01
+/* 
+该标记只针对header帧有效，位3表示帧包含了整个的报头块(章节4.3)，且后面没有延续帧。 不带有END_HEADERS标
+记的报头帧在同个流上后面必须跟着延续帧。接收端接收到任何其他类型的帧或者在其他流上的帧必须作为类型为
+协议错误的连接错误处理。 
+*/
 #define NGX_HTTP_V2_END_HEADERS_FLAG     0x04
 #define NGX_HTTP_V2_PADDED_FLAG          0x08 /* 说明HTTP2内容部分带有pad数据 */
 #define NGX_HTTP_V2_PRIORITY_FLAG        0x20 /* flag带有该标识，表示内容部分带有Stream Dependency和weight */
@@ -637,7 +643,7 @@ struct ngx_http_v2_node_s {
 创建空间和赋值见ngx_http_v2_create_stream
 */
 struct ngx_http_v2_stream_s {   
-    /*初始赋值见ngx_http_v2_create_stream*/
+    /*初始赋值见ngx_http_v2_create_stream，http2对应的r的相关成员赋值见ngx_http_v2_pseudo_header*/
     ngx_http_request_t              *request;
     /*初始赋值见ngx_http_v2_create_stream*/
     ngx_http_v2_connection_t        *connection;
@@ -660,7 +666,7 @@ struct ngx_http_v2_stream_s {
     ngx_chain_t                     *free_bufs;
 
     ngx_queue_t                      queue;
-
+    /* 创建空间和赋值见ngx_http_v2_cookie */
     ngx_array_t                     *cookies;
 
     size_t                           header_limit;
@@ -668,6 +674,7 @@ struct ngx_http_v2_stream_s {
     unsigned                         handled:1;
     unsigned                         blocked:1;
     unsigned                         exhausted:1;
+    /* ngx_http_v2_state_header_complete中赋值，1表示这是header帧已经接收或者发送完毕，后面没有该header帧的其他帧部分 */
     unsigned                         end_headers:1;
     unsigned                         in_closed:1;
     unsigned                         out_closed:1;

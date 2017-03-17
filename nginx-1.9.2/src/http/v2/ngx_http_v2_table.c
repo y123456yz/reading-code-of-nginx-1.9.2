@@ -90,7 +90,9 @@ static ngx_http_v2_header_t  ngx_http_v2_static_table[] = {
     (sizeof(ngx_http_v2_static_table)                                         \
      / sizeof(ngx_http_v2_header_t))
 
-/* 根据index从静态表或者动态表中获取name:value存入到h2c->state.header */
+/* 根据index索引从静态表或者动态表中获取name:value存入到h2c->state.header，第一次发送name:value过来，第二次
+   就可以直接发送之前name:value对应的索引过来就可以定位到对应的name:value，从而节约网络资源
+*/
 ngx_int_t
 ngx_http_v2_get_indexed_header(ngx_http_v2_connection_t *h2c, ngx_uint_t index,
     ngx_uint_t name_only)
@@ -119,7 +121,11 @@ ngx_http_v2_get_indexed_header(ngx_http_v2_connection_t *h2c, ngx_uint_t index,
     
     index -= NGX_HTTP_V2_STATIC_TABLE_ENTRIES;
     /* 说明该压缩的头部行在动态索引表中，在动态索引表范围内 */
+    //把从动态表中查找的name:value赋值给h2c->state.header
     if (index < h2c->hpack.added - h2c->hpack.deleted) {
+        /* 说明之前以及发送过某name:value，这次发送了对应的索引值过来，通过该索引就可以直接定位到之前发送的name:value信息，
+           这样就可以减少头部报文的长度，节省带宽
+        */
         index = (h2c->hpack.added - index - 1) % h2c->hpack.allocated;
         entry = h2c->hpack.entries[index];
 
@@ -174,13 +180,16 @@ ngx_http_v2_get_indexed_header(ngx_http_v2_connection_t *h2c, ngx_uint_t index,
         return NGX_OK;
     }
 
+    /* 说明之前没有发送过某name:value过来，你现在却发送了该name:value对应的索引过来，这显然不对 */
     ngx_log_error(NGX_LOG_INFO, h2c->connection->log, 0,
                   "client sent out of bound hpack table index: %ui", index);
 
     return NGX_ERROR;
 }
 
-//把name:value加入到h2c->hpack.entries表中
+/* 把header对应的name:value添加到entries[]指向的映射表中，这里的header可能是静态表，也可能是动态表，所以entries指向的
+映射表中可能同时包含静态表和动态表 */
+//把name:value加入到h2c->hpack.entries[]指向的空间
 ngx_int_t
 ngx_http_v2_add_header(ngx_http_v2_connection_t *h2c,
     ngx_http_v2_header_t *header)

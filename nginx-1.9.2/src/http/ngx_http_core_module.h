@@ -640,8 +640,8 @@ typedef struct {
     //发请求过来，隔了client_header_timeout时间后还没有新请求过来，这会关闭连接
     //注意，在解析到完整的头部行和请求行后，会在ngx_http_process_request中会把读事件超时定时器删除
     ngx_msec_t                  client_header_timeout; //默认60秒，如果不设置的话      注意和上面的large_client_header_buffers配合解释
-
-    ngx_flag_t                  ignore_invalid_headers;
+    
+    ngx_flag_t                  ignore_invalid_headers; //默认为1
     ngx_flag_t                  merge_slashes;
     ngx_flag_t                  underscores_in_headers; //HTTP头部是否允许下画线, 见ngx_http_parse_header_line
 

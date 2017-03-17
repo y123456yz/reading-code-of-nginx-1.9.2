@@ -1242,6 +1242,7 @@ r->request_body->temp_file->file.nameÖĞ»ñÈ¡Nginx½ÓÊÕµ½µÄÇëÇó°üÌåËùÔÚÎÄ¼şµÄÃû³Æ£¨
 ×¢Òâ¡¡NginxÖĞ¶ÔÄÚ´æµÄ¿ØÖÆÏàµ±ÑÏ¸ñ£¬ÎªÁË±ÜÃâ²»±ØÒªµÄÄÚ´æ¿ªÏú£¬Ğí¶àĞèÒªÓÃµ½µÄ³ÉÔ±¶¼²»ÊÇÖØĞÂ·ÖÅäÄÚ´æºó´æ´¢µÄ£¬¶øÊÇÖ±½ÓÖ¸ÏòÓÃ»§ÇëÇóÖĞµÄÏàÓ¦µØÖ·¡£
 ÀıÈç£¬method_name.data¡¢request_startÕâÁ½¸öÖ¸ÕëÊµ¼ÊÖ¸ÏòµÄ¶¼ÊÇÍ¬Ò»¸öµØÖ·¡£¶øÇÒ£¬ÒòÎªËüÃÇÊÇ¼òµ¥µÄÄÚ´æÖ¸Õë£¬²»ÊÇÖ¸Ïò×Ö·û´®µÄÖ¸Õë£¬ËùÒÔ£¬ÔÚ´ó²¿·ÖÇé¿öÏÂ£¬¶¼²»ÄÜ½«ÕâĞ©u_char*Ö¸Õëµ±×ö×Ö·û´®Ê¹ÓÃ¡£
 */ //NGX_HTTP_GET | NGX_HTTP_HEADµÈ,ÎªNGX_HTTP_HEAD±íÊ¾Ö»ĞèÒª·¢ËÍHTTPÍ·²¿×Ö¶Î
+    /* HTTP2µÄmethod¸³Öµ¼ûngx_http_v2_parse_method */
     ngx_uint_t                        method; //¶ÔÓ¦¿Í»§¶ËÇëÇóÖĞÇëÇóĞĞµÄÇëÇó·½·¨GET¡¢POSµÈ£¬È¡Öµ¼ûNGX_HTTP_GET,Ò²¿ÉÒÔÓÃÏÂÃæµÄmethod_name½øĞĞ×Ö·û´®±È½Ï
 /*
 http_protocolÖ¸ÏòÓÃ»§ÇëÇóÖĞHTTPµÄÆğÊ¼µØÖ·¡£
@@ -1303,6 +1304,7 @@ URL×Ö·û×ªÒå
 */
 //unparsed_uri±íÊ¾Ã»ÓĞ½øĞĞURL½âÂëµÄÔ­Ê¼ÇëÇó¡£ÀıÈç£¬µ±uriÎª¡°/a b¡±Ê±£¬unparsed_uriÊÇ¡°/a%20b¡±£¨¿Õ¸ñ×Ö·û×öÍê±àÂëºóÊÇ%20£©¡£
     ngx_str_t                         unparsed_uri;//²Î¿¼:ÎªÊ²Ã´Òª¶ÔURI½øĞĞ±àÂë:
+    /* HTTP2µÄmethod¸³Öµ¼ûngx_http_v2_parse_method */
     ngx_str_t                         method_name;//¼ûmethod   GET  POSTµÈ
     ngx_str_t                         http_protocol;//GET /sample.jsp HTTP/1.1  ÖĞµÄHTTP/1.1
 
@@ -1455,7 +1457,7 @@ ngx_http_finalize_request·½·¨Ò»´Î£¬ÕâÊÇÕıÈ·µÄ¡£¶ÔÓÚmytestÄ£¿éÒ²Ò»Ñù£¬Îñ±ØÒª±£Ö¤¶
 
     /* URI with " " */
     unsigned                          space_in_uri:1; //uriÖĞÊÇ·ñ´øÓĞ¿Õ¸ñ
-
+    //Í·²¿Ö¡ÄÚÈİ²¿·ÖheaderºÏ·¨ĞÔ¼ì²é£¬¼ûngx_http_v2_validate_header
     unsigned                          invalid_header:1; //Í·²¿ĞĞ½âÎö²»ÕıÈ·£¬¼ûngx_http_parse_header_line
 
     unsigned                          add_uri_to_alias:1;

@@ -1362,11 +1362,17 @@ ngx_http_v2_state_header_block(ngx_http_v2_connection_t *h2c, u_char *pos,
         return ngx_http_v2_connection_error(h2c, NGX_HTTP_V2_SIZE_ERROR);
     }
 
-    if (indexed) { //本地索引表中已经存在该请求行name和value，查找索引表
+    ngx_log_debug3(NGX_LOG_DEBUG_HTTP, h2c->connection->log, 0,
+                   "ngx_http_v2_state_header_block, indexed:%ui, size_update:%ui, value:%ui",
+                   indexed, size_update, value);
+
+    if (indexed) { //本地索引表中已经存在该请求行name和value，查找索引表,走这里说明对端之前以及发送过该name信息
+        /* 通过value索引获取映射表中的真实name:value */
         if (ngx_http_v2_get_indexed_header(h2c, value, 0) != NGX_OK) {
             return ngx_http_v2_connection_error(h2c, NGX_HTTP_V2_COMP_ERROR);
         }
 
+        /*  */
         return ngx_http_v2_state_process_header(h2c, pos, end);
     }
 
@@ -1587,7 +1593,7 @@ ngx_http_v2_state_process_header(ngx_http_v2_connection_t *h2c, u_char *pos,
 
     header = &h2c->state.header;
 
-    if (h2c->state.parse_name) {
+    if (h2c->state.parse_name) { /* 需要更新name */
         h2c->state.parse_name = 0;
 
         /*  */
@@ -1597,7 +1603,7 @@ ngx_http_v2_state_process_header(ngx_http_v2_connection_t *h2c, u_char *pos,
         return ngx_http_v2_state_field_len(h2c, pos, end);
     }
 
-    if (h2c->state.parse_value) { /* 更新value */
+    if (h2c->state.parse_value) { /* 需要更新value */
         h2c->state.parse_value = 0;
 
         header->value.len = h2c->state.field_end - h2c->state.field_start;
@@ -1617,7 +1623,7 @@ ngx_http_v2_state_process_header(ngx_http_v2_connection_t *h2c, u_char *pos,
     }
     h2c->state.header_limit -= len;
 
-    if (h2c->state.index) { //需要添加name:value到动态表中
+    if (h2c->state.index) { //需要添加name:value到entries[]指针数组对应的表中
         if (ngx_http_v2_add_header(h2c, header) != NGX_OK) {
             return ngx_http_v2_connection_error(h2c,
                                                 NGX_HTTP_V2_INTERNAL_ERROR);
@@ -1633,6 +1639,7 @@ ngx_http_v2_state_process_header(ngx_http_v2_connection_t *h2c, u_char *pos,
     r = h2c->state.stream->request;
 
     /* TODO Optimization: validate headers while parsing. */
+    /* name:value有效性检查 */
     if (ngx_http_v2_validate_header(r, header) != NGX_OK) {
         if (ngx_http_v2_terminate_stream(h2c, h2c->state.stream,
                                          NGX_HTTP_V2_PROTOCOL_ERROR)
@@ -1645,6 +1652,7 @@ ngx_http_v2_state_process_header(ngx_http_v2_connection_t *h2c, u_char *pos,
         goto error;
     }
 
+    /* 对以冒号开头的name进行检查，并获取响应的头部值存入http2对应的r中 */
     if (header->name.data[0] == ':') {
         rc = ngx_http_v2_pseudo_header(r, header);
 
@@ -1671,6 +1679,7 @@ ngx_http_v2_state_process_header(ngx_http_v2_connection_t *h2c, u_char *pos,
         return ngx_http_v2_connection_error(h2c, NGX_HTTP_V2_INTERNAL_ERROR);
     }
 
+    /* name不合法，给出打印 */
     if (r->invalid_header) {
         cscf = ngx_http_get_module_srv_conf(r, ngx_http_core_module);
 
@@ -1682,6 +1691,7 @@ ngx_http_v2_state_process_header(ngx_http_v2_connection_t *h2c, u_char *pos,
         }
     }
 
+    /* 如果name字符串是cookie */
     if (header->name.len == cookie.len
         && ngx_memcmp(header->name.data, cookie.data, cookie.len) == 0)
     {
@@ -3010,9 +3020,11 @@ ngx_http_v2_validate_header(ngx_http_request_t *r, ngx_http_v2_header_t *header)
 
     cscf = ngx_http_get_module_srv_conf(r, ngx_http_core_module);
 
+    //name检查
     for (i = (header->name.data[0] == ':'); i != header->name.len; i++) {
         ch = header->name.data[i];
 
+        /* name只能是这些字符，这些字符以为的其他字符一律不正确 */
         if ((ch >= 'a' && ch <= 'z')
             || (ch == '-')
             || (ch >= '0' && ch <= '9')
@@ -3044,6 +3056,7 @@ ngx_http_v2_validate_header(ngx_http_request_t *r, ngx_http_v2_header_t *header)
         r->invalid_header = 1;
     }
 
+    //value检查
     for (i = 0; i != header->value.len; i++) {
         ch = header->value.data[i];
 
@@ -3063,7 +3076,13 @@ ngx_http_v2_validate_header(ngx_http_request_t *r, ngx_http_v2_header_t *header)
     return NGX_OK;
 }
 
+/*
+对以:开头的name做检查，以冒号开头的name只有5种，可以参考ngx_http_v2_static_table
+为什么这里没有status的检查?????????????????
+应该是我们是nginx是服务端，他只会应答客户端的时候才会带上:status  客户端是不会发送该name过来的、
 
+该函数是解析path method scheme authority信息存入h2c->state.stream->request
+*/
 static ngx_int_t
 ngx_http_v2_pseudo_header(ngx_http_request_t *r, ngx_http_v2_header_t *header)
 {
@@ -3152,7 +3171,7 @@ ngx_http_v2_parse_path(ngx_http_request_t *r, ngx_http_v2_header_t *header)
     return NGX_OK;
 }
 
-
+/* 根据header获取method_name和method,然后赋值给r->method_name和r->method */
 static ngx_int_t
 ngx_http_v2_parse_method(ngx_http_request_t *r, ngx_http_v2_header_t *header)
 {
