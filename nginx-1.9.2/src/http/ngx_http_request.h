@@ -557,6 +557,7 @@ typedef struct {
     /*³£ÓÃµÄHTTPÍ·²¿ĞÅÏ¢¿ÉÒÔÍ¨¹ır->headers_in»ñÈ¡£¬²»³£ÓÃµÄHTTPÍ·²¿ÔòĞèÒª±éÀúr->headers_in.headersÀ´±éÀú»ñÈ¡*/
     /*ËùÓĞ½âÎö¹ıµÄHTTPÍ·²¿¶¼ÔÚheadersÁ´±íÖĞ£¬¿ÉÒÔÊ¹ÓÃ±éÀúÁ´±íµÄ·½·¨À´»ñÈ¡ËùÓĞµÄHTTPÍ·²¿¡£×¢Òâ£¬ÕâÀïheadersÁ´±íµÄ
     Ã¿Ò»¸öÔªËØ¶¼ÊÇngx_table_elt_t³ÉÔ±*/ //´Óngx_http_headers_in»ñÈ¡±äÁ¿ºó´æ´¢µ½¸ÃÁ´±íÖĞ£¬Á´±íÖĞµÄ³ÉÔ±¾ÍÊÇÏÂÃæµÄ¸÷¸öngx_table_elt_t³ÉÔ±
+    //HTTP2µÄÏà¹ØÍ·²¿¸³Öµ¼ûngx_http_v2_state_process_header
     ngx_list_t                        headers; //ÔÚngx_http_process_request_line³õÊ¼»¯list¿Õ¼ä  ngx_http_process_request_headersÖĞ´æ´¢½âÎöµ½µÄÇëÇóĞĞvalueºÍkey
 
     /*ÒÔÏÂÃ¿¸öngx_table_elt_t³ÉÔ±¶¼ÊÇRFC1616¹æ·¶ÖĞ¶¨ÒåµÄHTTPÍ·²¿£¬ ËüÃÇÊµ¼Ê¶¼Ö¸ÏòheadersÁ´±íÖĞµÄÏàÓ¦³ÉÔ±¡£×¢Òâ£¬
@@ -1600,8 +1601,8 @@ image/gif.image/jpeg,** Îªvalue²¿·Ö£¬header_start header_end·Ö±ğ¶ÔÓ¦valueµÄÍ·ºÍÎ
 //ngx_str_tÀàĞÍµÄuri³ÉÔ±Ö¸ÏòÓÃ»§ÇëÇóÖĞµÄURI¡£Í¬Àí£¬u_char*ÀàĞÍµÄuri_startºÍuri_endÒ²Óërequest_start¡¢request_endµÄÓÃ·¨ÏàËÆ£¬Î¨Ò»²»
 //Í¬µÄÊÇ£¬method_endÖ¸Ïò·½·¨ÃûµÄ×îºóÒ»¸ö×Ö·û£¬¶øuri_endÖ¸ÏòURI½áÊøºóµÄÏÂÒ»¸öµØÖ·£¬Ò²¾ÍÊÇ×îºóÒ»¸ö×Ö·ûµÄÏÂÒ»¸ö×Ö·ûµØÖ·£¨HTTP¿ò¼ÜµÄĞĞÎª£©£¬
 //ÕâÊÇ´ó²¿·Öu_char*ÀàĞÍÖ¸Õë¶Ô¡°xxx_start¡±ºÍ¡°xxx_end¡±±äÁ¿µÄÓÃ·¨¡£
-    u_char                           *uri_start;
-    u_char                           *uri_end;
+    u_char                           *uri_start;//HTTP2µÄ¸³Öµ¼ûngx_http_v2_parse_path
+    u_char                           *uri_end;//HTTP2µÄ¸³Öµ¼ûngx_http_v2_parse_path
 
 /*
 ngx_str_tÀàĞÍµÄextern³ÉÔ±Ö¸ÏòÓÃ»§ÇëÇóµÄÎÄ¼şÀ©Õ¹Ãû¡£ÀıÈç£¬ÔÚ·ÃÎÊ¡°GET /a.txt HTTP/1.1¡±Ê±£¬externµÄÖµÊÇ{len = 3, data = "txt"}£¬
@@ -1616,6 +1617,8 @@ uri_extÖ¸ÕëÖ¸ÏòµÄµØÖ·Óëextern.dataÏàÍ¬¡£
     u_char                           *request_start; //ÇëÇóĞĞ¿ªÊ¼´¦
     u_char                           *request_end;  //ÇëÇóĞĞ½áÎ²´¦
     u_char                           *method_end;  //GET  POST×Ö·û´®½áÎ²´¦
+
+    //HTTP2µÄ¸³Öµ¼ûngx_http_v2_parse_scheme
     u_char                           *schema_start;
     u_char                           *schema_end;
     u_char                           *host_start;

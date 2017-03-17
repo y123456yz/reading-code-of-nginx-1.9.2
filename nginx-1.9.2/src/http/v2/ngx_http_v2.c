@@ -1703,11 +1703,13 @@ ngx_http_v2_state_process_header(ngx_http_v2_connection_t *h2c, u_char *pos,
         return ngx_http_v2_state_header_complete(h2c, pos, end);
     }
 
+    /* path method scheme authority cookie以外的name:value直接存入r->headers_in.headers */
     h = ngx_list_push(&r->headers_in.headers);
     if (h == NULL) {
         return ngx_http_v2_connection_error(h2c, NGX_HTTP_V2_INTERNAL_ERROR);
     }
 
+    /* 拷贝name:value到headers链表 */
     h->key.len = header->name.len;
     h->key.data = header->name.data;
 
@@ -1721,6 +1723,7 @@ ngx_http_v2_state_process_header(ngx_http_v2_connection_t *h2c, u_char *pos,
 
     cmcf = ngx_http_get_module_main_conf(r, ngx_http_core_module);
 
+    /* 转换为小写字母做HASH */
     hh = ngx_hash_find(&cmcf->headers_in_hash, h->hash,
                        h->lowcase_key, h->key.len);
 
@@ -3152,6 +3155,7 @@ ngx_http_v2_parse_path(ngx_http_request_t *r, ngx_http_v2_header_t *header)
     r->uri_start = header->value.data;
     r->uri_end = header->value.data + header->value.len;
 
+    //uri解析
     if (ngx_http_parse_uri(r) != NGX_OK) {
         ngx_log_error(NGX_LOG_INFO, r->connection->log, 0,
                       "client sent invalid :path header: \"%V\"",
@@ -3402,6 +3406,7 @@ ngx_http_v2_cookie(ngx_http_request_t *r, ngx_http_v2_header_t *header)
         return NGX_ERROR;
     }
 
+    /* 拷贝cookie的value信息存到r->stream->cookies  */
     val->len = header->value.len;
     val->data = header->value.data;
 
