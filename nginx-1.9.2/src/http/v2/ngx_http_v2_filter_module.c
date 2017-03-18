@@ -110,7 +110,29 @@ ngx_module_t  ngx_http_v2_filter_module = {
 
 static ngx_http_output_header_filter_pt  ngx_http_next_header_filter;
 
+/*
+2017/03/18 17:01:45[      ngx_http_proxy_process_status_line,  2466]  [debug] 30470#30470: *3 http proxy status 404 "404 Not Found"
+2017/03/18 17:01:45[           ngx_http_proxy_process_header,  2544]  [debug] 30470#30470: *3 http proxy header: "Date: Sat, 18 Mar 2017 09:03:34 GMT"
+2017/03/18 17:01:45[           ngx_http_proxy_process_header,  2544]  [debug] 30470#30470: *3 http proxy header: "Content-Type: text/plain; charset=utf-8"
+2017/03/18 17:01:45[           ngx_http_proxy_process_header,  2544]  [debug] 30470#30470: *3 http proxy header: "Content-Length: 9"
+2017/03/18 17:01:45[           ngx_http_proxy_process_header,  2544]  [debug] 30470#30470: *3 http proxy header: "X-Backend-Header-Rtt: 0.002134"
+2017/03/18 17:01:45[           ngx_http_proxy_process_header,  2544]  [debug] 30470#30470: *3 http proxy header: "Connection: close"
+2017/03/18 17:01:45[           ngx_http_proxy_process_header,  2544]  [debug] 30470#30470: *3 http proxy header: "Server: nghttpx"
+2017/03/18 17:01:45[           ngx_http_proxy_process_header,  2544]  [debug] 30470#30470: *3 http proxy header: "Via: 2 nghttpx"
+2017/03/18 17:01:45[           ngx_http_proxy_process_header,  2544]  [debug] 30470#30470: *3 http proxy header: "x-frame-options: SAMEORIGIN"
+2017/03/18 17:01:45[                            ngx_memalign,    72]  [debug] 30470#30470: *3 posix_memalign: 0000000000C40B90:4096 @16
+2017/03/18 17:01:45[           ngx_http_proxy_process_header,  2544]  [debug] 30470#30470: *3 http proxy header: "x-xss-protection: 1; mode=block"
+2017/03/18 17:01:45[           ngx_http_proxy_process_header,  2544]  [debug] 30470#30470: *3 http proxy header: "x-content-type-options: nosniff"
+2017/03/18 17:01:45[           ngx_http_proxy_process_header,  2554]  [debug] 30470#30470: *3 http proxy header done
+2017/03/18 17:01:45[      ngx_http_proxy_process_header,  2622][yangya  [debug] 30470#30470: *3 upstream header recv ok, u->keepalive:0
+2017/03/18 17:01:45[           ngx_http_proxy_process_header,  2625]  [debug] 30470#30470: *3 yang test .... body:not found
+2017/03/18 17:01:45[               ngx_http_send_header,  3358][yangya  [debug] 30470#30470: *3 ngx http send header
+2017/03/18 17:01:45[               ngx_http_v2_header_filter,   143]  [debug] 30470#30470: *3 http2 header filter
+*/
 
+/* NGINX在ngx_http_v2_state_header_block对接收到的头部帧进行解码解包，在ngx_http_v2_header_filter中对头部帧进行编码组包 */
+/* NGINX接收客户端的header帧在函数ngx_http_v2_header_filter，发送响应的header帧在函数ngx_http_v2_header_filter */
+/* 接收完后端响应的头部信息后，解析成功后发送这些头部信息到客户端，需要走该header filter模块 */
 static ngx_int_t
 ngx_http_v2_header_filter(ngx_http_request_t *r)
 {
@@ -208,11 +230,15 @@ ngx_http_v2_header_filter(ngx_http_request_t *r)
         }
     }
 
+    /* NGINX在ngx_http_v2_state_header_block对接收到的头部帧进行解码解包，在ngx_http_v2_header_filter中对头部帧进行编码组包 */
+
+    /* 头部9字节 + status响应长度(1字节为什么可以表示status响应码，因为一个字节就可以表示静态表的那个成员,见ngx_http_v2_static_table) */
     len = NGX_HTTP_V2_FRAME_HEADER_SIZE
           + (status ? 1 : 1 + ngx_http_v2_literal_size("418"));
 
     clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
 
+    //对server:进行编码
     if (r->headers_out.server == NULL) {
         len += 1 + clcf->server_tokens ? ngx_http_v2_literal_size(NGINX_VER)
                                        : ngx_http_v2_literal_size("nginx");
@@ -625,7 +651,6 @@ ngx_http_v2_header_filter(ngx_http_request_t *r)
 
     return ngx_http_v2_filter_send(fc, stream);
 }
-
 
 static u_char *
 ngx_http_v2_write_int(u_char *pos, ngx_uint_t prefix, ngx_uint_t value)

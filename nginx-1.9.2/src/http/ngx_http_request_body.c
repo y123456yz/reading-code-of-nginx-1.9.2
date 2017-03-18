@@ -92,6 +92,8 @@ ngx_http_read_client_request_body(ngx_http_request_t *r,  //只有在连接后端服务器
     //因为执行该函数一般都是向后端转发，例如可以参考ngx_http_read_client_request_body(r, ngx_http_upstream_init);，在ngx_http_upstream_init没有执行count++操作，实际上在这里
 
 #if (NGX_HTTP_V2)
+    /* HTTP2 data帧以外的所有帧的数据读取在ngx_http_v2_read_handler，
+    data帧读取在ngx_http_read_client_request_body->ngx_http_v2_read_request_body */
     if (r->stream && r == r->main) {
         r->request_body_no_buffering = 0;
         rc = ngx_http_v2_read_request_body(r, post_handler);

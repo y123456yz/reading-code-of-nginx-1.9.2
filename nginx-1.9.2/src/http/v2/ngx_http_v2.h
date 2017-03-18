@@ -461,6 +461,7 @@ Stream Identifier若为0x0，则表示针对整个连接，否则针对具体流
 #define NGX_HTTP_V2_INT_OCTETS           4
 #define NGX_HTTP_V2_MAX_FIELD            ((1 << NGX_HTTP_V2_INT_OCTETS * 7) - 1)
 
+/* 以下三个都是赋值给V2的ngx_http_v2_stream_t.skip_data */
 #define NGX_HTTP_V2_DATA_DISCARD         1
 #define NGX_HTTP_V2_DATA_ERROR           2
 #define NGX_HTTP_V2_DATA_INTERNAL_ERROR  3
@@ -486,9 +487,9 @@ Stream Identifier若为0x0，则表示针对整个连接，否则针对具体流
 /* END_STREAM (0x1) ：位1用来表示当前帧是确定的流发送的最后一帧 */
 #define NGX_HTTP_V2_END_STREAM_FLAG      0x01
 /* 
-该标记只针对header帧有效，位3表示帧包含了整个的报头块(章节4.3)，且后面没有延续帧。 不带有END_HEADERS标
+该标记只针对header帧有效，位3表示帧包含了整个的报头块，且后面没有延续帧。 不带有END_HEADERS标
 记的报头帧在同个流上后面必须跟着延续帧。接收端接收到任何其他类型的帧或者在其他流上的帧必须作为类型为
-协议错误的连接错误处理。 
+协议错误的连接错误处理。 如果是交互的最后一个header帧，则必须以该标记结束，见ngx_http_v2_state_header_complete
 */
 #define NGX_HTTP_V2_END_HEADERS_FLAG     0x04
 #define NGX_HTTP_V2_PADDED_FLAG          0x08 /* 说明HTTP2内容部分带有pad数据 */
@@ -512,10 +513,11 @@ typedef struct {
 
 typedef struct {
     ngx_uint_t                       sid; //http2头部sid，见ngx_http_v2_state_head
-    size_t                           length; //http2头部leng，见ngx_http_v2_state_head
+    size_t                           length; //http2头部leng，每解析x字节，则减去x,见ngx_http_v2_state_head
     size_t                           padding; //HTTP2头部flag带有NGX_HTTP_V2_PADDED_FLAG标识，则padding为pad内容的长度
     unsigned                         flags:8; //http2头部flag，见ngx_http_v2_state_head
 
+    //ngx_http_v2_state_save中赋值，表示name或者value的数据还没有读取完整
     unsigned                         incomplete:1;
 
     /* HPACK */
@@ -526,12 +528,18 @@ typedef struct {
     /* ngx_http_v2_state_header_block中置1，表示需要把name:value通过ngx_http_v2_add_header加入动态表中，然后置0 */
     unsigned                         index:1; //需要添加name:value到动态表中
     ngx_http_v2_header_t             header; //赋值见ngx_http_v2_get_indexed_header
+    /* header内容中的所有name+value之和长度最大值，生效见ngx_http_v2_state_process_header 
+    限制经过HPACK压缩后完整请求头的最大尺寸。
+    */
     size_t                           header_limit;
     //限制经过HPACK压缩后请求头中单个name:value字段的最大尺寸。通过http2_max_field_size配置
     size_t                           field_limit;
     u_char                           field_state;
+
+    /*ngx_http_v2_state_field_len中filed_start分配空间用于存储不在索引表中，只能从协议中读取的name或者value对应的字符串 */
     u_char                          *field_start;
     u_char                          *field_end;
+    /* 记录当前需要解析的name或者value的长度，赋值见ngx_http_v2_state_field_len */
     size_t                           field_rest;
     /* 赋值见ngx_http_v2_state_headers */
     ngx_pool_t                      *pool;
@@ -539,8 +547,10 @@ typedef struct {
     /* 当前正在处理的stream，赋值见ngx_http_v2_state_headers */
     ngx_http_v2_stream_t            *stream;
 
+    /* 由于数据不完整，ngx_http_v2_state_save则把已经读到的这部分不完整的数据临时保存到buffer中，
+    在ngx_http_v2_read_handler进行中对后续读取数据合并到一起 */
     u_char                           buffer[NGX_HTTP_V2_STATE_BUFFER_SIZE];
-    size_t                           buffer_used;
+    size_t                           buffer_used; //buffer已经使用了的空间
 
     /* 
     赋值可能为:ngx_http_v2_state_preface  ngx_http_v2_state_header_complete ngx_http_v2_state_skip_headers  ngx_http_v2_state_head
@@ -669,9 +679,11 @@ struct ngx_http_v2_stream_s {
     ngx_chain_t                     *free_bufs;
 
     ngx_queue_t                      queue;
-    /* 创建空间和赋值见ngx_http_v2_cookie */
+    /* 创建空间和赋值见ngx_http_v2_cookie,header帧中如果有设置cookie，则赋值到该数组中 */
     ngx_array_t                     *cookies;
-
+    /* header内容中的所有name+value之和长度最大值，生效见ngx_http_v2_state_process_header 
+        限制经过HPACK压缩后完整请求头的最大尺寸。
+    */
     size_t                           header_limit;
 
     unsigned                         handled:1;
@@ -681,6 +693,7 @@ struct ngx_http_v2_stream_s {
     unsigned                         end_headers:1;
     unsigned                         in_closed:1;
     unsigned                         out_closed:1;
+    /* 针对HTTP2，赋值为NGX_HTTP_V2_DATA_DISCARD等 */
     unsigned                         skip_data:2;
 };
 

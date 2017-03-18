@@ -146,7 +146,9 @@ nginx的以下功能模块的相关代码已经阅读，并对其源码及相关
 	
 17.2.20  
     path http2代码到nginx-1.9.2  
-	nginx ssl tls握手协商流程分析
+	nginx ssl tls握手协商流程分析  
+	http2初始流程、setting帧处理过程、连接序言、header帧处理流程、HPACK实现方法分析、完善理解HTTP2调用过程的必要打印。    
+	
   	  
   	 
     

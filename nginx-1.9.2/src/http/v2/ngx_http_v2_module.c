@@ -48,7 +48,7 @@ static ngx_conf_post_t  ngx_http_v2_chunk_size_post =
 
 
 static ngx_command_t  ngx_http_v2_commands[] = {
-
+    //设置每一个worker的输入缓冲区大小
     { ngx_string("http2_recv_buffer_size"),
       NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_size_slot,
@@ -63,6 +63,7 @@ static ngx_command_t  ngx_http_v2_commands[] = {
       offsetof(ngx_http_v2_srv_conf_t, pool_size),
       &ngx_http_v2_pool_size_post },
 
+    //设置一个连接中最大并发流的数量
     { ngx_string("http2_max_concurrent_streams"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_num_slot,
@@ -70,6 +71,7 @@ static ngx_command_t  ngx_http_v2_commands[] = {
       offsetof(ngx_http_v2_srv_conf_t, concurrent_streams),
       NULL },
 
+    //限制经过HPACK压缩后请求头中每个字段的最大尺寸。
     { ngx_string("http2_max_field_size"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_size_slot,
@@ -77,6 +79,7 @@ static ngx_command_t  ngx_http_v2_commands[] = {
       offsetof(ngx_http_v2_srv_conf_t, max_field_size),
       NULL },
 
+    //限制经过HPACK压缩后完整请求头的最大尺寸。
     { ngx_string("http2_max_header_size"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_size_slot,
@@ -98,6 +101,7 @@ static ngx_command_t  ngx_http_v2_commands[] = {
       offsetof(ngx_http_v2_srv_conf_t, recv_timeout),
       NULL },
 
+    /* 设置空闲连接关闭的超时时间。 */
     { ngx_string("http2_idle_timeout"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
@@ -105,6 +109,8 @@ static ngx_command_t  ngx_http_v2_commands[] = {
       offsetof(ngx_http_v2_srv_conf_t, idle_timeout),
       NULL },
 
+    /* 设置响应报文内容（response body）分片的最大长度。如果这个值过小，将会带来更高的开销，
+    如果值过大，则会导致线头阻塞的问题。默认大小8k。 */
     { ngx_string("http2_chunk_size"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_size_slot,

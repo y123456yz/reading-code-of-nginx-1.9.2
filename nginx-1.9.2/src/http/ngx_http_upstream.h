@@ -710,7 +710,8 @@ process_header»Øµ÷·½·¨process_headerÊÇÓÃÓÚ½âÎöÉÏÓÎ·şÎñÆ÷·µ»ØµÄ»ùÓÚTCPµÄÏìÓ¦Í·²¿µ
 /*
 ½âÎöÉÏÓÎ·şÎñÆ÷·µ»ØÏìÓ¦µÄ°üÍ·£¬·µ»ØNGX_AGAIN±íÊ¾°üÍ·»¹Ã»ÓĞ½ÓÊÕÍêÕû£¬·µ»ØNGX_HTTP_UPSTREAM_INVALID_HEADER±íÊ¾°üÍ·²»ºÏ·¨£¬·µ»Ø
 NGX ERROR±íÊ¾³öÏÖ´íÎó£¬·µ»ØNGX_OK±íÊ¾½âÎöµ½ÍêÕûµÄ°üÍ·
-*/ //ngx_http_fastcgi_process_header  ngx_http_proxy_process_status_line->ngx_http_proxy_process_status_line(ngx_http_XXX_process_header) //ÔÚngx_http_upstream_process_headerÖĞÖ´ĞĞ
+*/ //ngx_http_fastcgi_process_header  ngx_http_proxy_process_status_line->ngx_http_proxy_process_status_line(ngx_http_XXX_process_header) 
+//ÔÚngx_http_upstream_process_headerÖĞÖ´ĞĞ
     ngx_int_t                      (*process_header)(ngx_http_request_t *r); //´¦ÀíÉÏÓÎ·şÎñÆ÷»Ø¸´µÄµÚÒ»¸öbit£¬Ê±³£ÊÇ±£´æÒ»¸öÖ¸ÏòÉÏÓÎ»Ø¸´¸ºÔØµÄÖ¸Õë
     void                           (*abort_request)(ngx_http_request_t *r);//ÔÚ¿Í»§¶Ë·ÅÆúÇëÇóµÄÊ±ºò±»µ÷ÓÃ ngx_http_XXX_abort_request
    

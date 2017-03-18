@@ -304,7 +304,9 @@ ngx_http_v2_init(ngx_event_t *rev)
 
 /* 读取客户端数据，如果读取recv返回NGX_AGAIN,则把h2c->last_out队列数据发送出去 */
 static void
-ngx_http_v2_read_handler(ngx_event_t *rev)
+ngx_http_v2_read_handler(ngx_event_t *rev) 
+/* HTTP2 data帧以外的所有帧的数据读取在ngx_http_v2_read_handler，
+data帧读取在ngx_http_read_client_request_body->ngx_http_v2_read_request_body */
 {
     u_char                    *p, *end;
     size_t                     available;
@@ -1076,7 +1078,8 @@ error:
 |                           Padding (*)                       ...
 +---------------------------------------------------------------+
 */
-//见ngx_http_v2_frame_states
+//见ngx_http_v2_frame_states    
+/* NGINX接收客户端的header帧在函数ngx_http_v2_header_filter，发送响应的header帧在函数ngx_http_v2_header_filter */
 static u_char *
 ngx_http_v2_state_headers(ngx_http_v2_connection_t *h2c, u_char *pos,
     u_char *end)
@@ -1239,6 +1242,7 @@ ngx_http_v2_state_headers(ngx_http_v2_connection_t *h2c, u_char *pos,
 HPACK编解码协议参考:https://imququ.com/post/header-compression-in-http2.html
 http://http2.github.io/http2-spec/compression.html#integer.representation
 
+在ngx_http_v2_state_header_block对接收到的头部帧进行解码解包，在ngx_http_v2_header_filter中对头部帧进行编码组包
 该函数循环解析对端发送过来的HEADER帧name:value信息
 */
 static u_char * 
@@ -1401,7 +1405,7 @@ ngx_http_v2_state_header_block(ngx_http_v2_connection_t *h2c, u_char *pos,
         h2c->state.parse_name = 1;
 
     } else {
-        //查找索引表获取对应的name:value
+        //查找索引表获取对应的name字符串
         if (ngx_http_v2_get_indexed_header(h2c, value, 1) != NGX_OK) {
             return ngx_http_v2_connection_error(h2c, NGX_HTTP_V2_COMP_ERROR);
         }
@@ -1416,9 +1420,12 @@ ngx_http_v2_state_header_block(ngx_http_v2_connection_t *h2c, u_char *pos,
     /* 不能从索引表中获取value，需要从对端发送的报文中获取 */
     h2c->state.parse_value = 1;
 
+    /* 解析接收报文协议中(不在索引表中)的name或者value字符串 */
     return ngx_http_v2_state_field_len(h2c, pos, end);
 }
 
+//name不在索引表，则直接从报文协议中获取name:value对应的字符串存入到h2c->state.header中
+/* 解析接收报文协议中(不在索引表中)的name或者value字符串，说明该header帧中的name不在索引表中，则需要从报文中直接解析出来 */
 static u_char *
 ngx_http_v2_state_field_len(ngx_http_v2_connection_t *h2c, u_char *pos,
     u_char *end)
@@ -1493,6 +1500,7 @@ ngx_http_v2_state_field_len(ngx_http_v2_connection_t *h2c, u_char *pos,
 
     alloc = (huff ? len * 8 / 5 : len) + 1;
 
+    //为filed_start分配空间用于存储不在索引表中，只能从协议中读取的name或者value对应的字符串
     h2c->state.field_start = ngx_pnalloc(h2c->state.pool, alloc);
     if (h2c->state.field_start == NULL) {
         return ngx_http_v2_connection_error(h2c, NGX_HTTP_V2_INTERNAL_ERROR);
@@ -1548,28 +1556,33 @@ ngx_http_v2_state_field_huff(ngx_http_v2_connection_t *h2c, u_char *pos,
     return ngx_http_v2_state_process_header(h2c, pos + size, end);
 }
 
+//name不在索引表，则直接从报文协议中获取name:value对应的字符串存入到h2c->state.header中，同时存到entries[]数组执行的storage空间
 //数据没有进行哈夫曼编码，则直接获取数据即可  ngx_http_v2_state_field_raw无哈夫曼编码数据获取，ngx_http_v2_state_field_huff哈夫曼编码decode还原数据
 static u_char *
 ngx_http_v2_state_field_raw(ngx_http_v2_connection_t *h2c, u_char *pos,
     u_char *end)
-{
+{ //解析name或者value的字符串数据
     size_t  size;
 
     size = end - pos;
 
+    /* 例如本来协议中获取到的name长度为100字节，但是发现后面跟的name数据却只有50字节，说明数据部分还没有读取完毕，则需要再次读取 */
     if (size > h2c->state.field_rest) {
         size = h2c->state.field_rest;
     }
 
     h2c->state.field_rest -= size;
 
+    /* 拷贝name或者value的字符串存入到filed_start空间 */
     h2c->state.field_end = ngx_cpymem(h2c->state.field_end, pos, size);
 
-    if (h2c->state.field_rest) {
+    if (h2c->state.field_rest) { //数据没有读取完整,临时存到buff，等下次读取完整后在做处理
         return ngx_http_v2_state_save(h2c, end, end,
                                       ngx_http_v2_state_field_raw);
     }
+    /* 说明name或者value数据是完整的 */
 
+    
     *h2c->state.field_end = '\0';
 
     return ngx_http_v2_state_process_header(h2c, pos + size, end);
@@ -1593,7 +1606,7 @@ ngx_http_v2_state_field_skip(ngx_http_v2_connection_t *h2c, u_char *pos,
     return ngx_http_v2_state_process_header(h2c, pos + size, end);
 }
 
-
+/* 读取在协议报文中，但是不在索引表中的name和value字符串，然后存储到header中，同时存到entries[]数组执行的storage空间 */
 static u_char *
 ngx_http_v2_state_process_header(ngx_http_v2_connection_t *h2c, u_char *pos,
     u_char *end)
@@ -1611,10 +1624,13 @@ ngx_http_v2_state_process_header(ngx_http_v2_connection_t *h2c, u_char *pos,
 
     header = &h2c->state.header;
 
-    if (h2c->state.parse_name) { /* 如果收到的name不在压缩表中，需要直接从报文读取 */
+
+    //该if中首先读取name字符串，然后在通过ngx_http_v2_state_field_len再次进入该函数，执行if后面的流程，也就是读取value字符串存储到header中
+    if (h2c->state.parse_name) { /* 如果收到的name不在压缩表中，需要直接从报文读取，然后
+    继续调用ngx_http_v2_state_field_len再次进入该函数，执行后面的value读取 */
         h2c->state.parse_name = 0;
 
-        /*  */
+        /* 获取name */
         header->name.len = h2c->state.field_end - h2c->state.field_start;
         header->name.data = h2c->state.field_start;
 
@@ -1641,6 +1657,7 @@ ngx_http_v2_state_process_header(ngx_http_v2_connection_t *h2c, u_char *pos,
     }
     h2c->state.header_limit -= len;
 
+    //，同时存name:value到entries[]数组执行的storage空间索引表中
     if (h2c->state.index) { //需要添加name:value到entries[]指针数组对应的表中
         if (ngx_http_v2_add_header(h2c, header) != NGX_OK) {
             return ngx_http_v2_connection_error(h2c,
@@ -1764,14 +1781,15 @@ error:
     return ngx_http_v2_state_header_complete(h2c, pos, end);
 }
 
-
+/* 如果头部帧中还有name:value没有解析完成，则返回pos继续解析，header帧已经解析完毕并解析到最后一帧了(带end_header标记)，
+则调用ngx_http_v2_run_request进行phase过程执行 */
 static u_char *
 ngx_http_v2_state_header_complete(ngx_http_v2_connection_t *h2c, u_char *pos,
     u_char *end)
 {
     ngx_http_v2_stream_t  *stream;
 
-    if (h2c->state.length) {
+    if (h2c->state.length) { /* 说明头部帧中还有name:value没有解析完成，则返回pos继续解析 */
         h2c->state.handler = h2c->state.pool ? ngx_http_v2_state_header_block
                                              : ngx_http_v2_state_skip_headers;
         return pos;
@@ -1780,9 +1798,9 @@ ngx_http_v2_state_header_complete(ngx_http_v2_connection_t *h2c, u_char *pos,
     stream = h2c->state.stream;
 
     if (stream) {
-        if (h2c->state.flags & NGX_HTTP_V2_END_HEADERS_FLAG) {
+        if (h2c->state.flags & NGX_HTTP_V2_END_HEADERS_FLAG) { /* HEADER帧处理完毕，HEADER帧必须以该标记结束 */
             stream->end_headers = 1;
-            ngx_http_v2_run_request(stream->request);
+            ngx_http_v2_run_request(stream->request); //NGINX phase阶段处理
 
         } else {
             stream->header_limit = h2c->state.header_limit;
@@ -2413,7 +2431,7 @@ ngx_http_v2_state_skip_headers(ngx_http_v2_connection_t *h2c, u_char *pos,
     return ngx_http_v2_state_header_block(h2c, pos, end);
 }
 
-
+/* 例如本来协议中获取到的name长度为100字节，但是发现后面跟的name数据却只有50字节，说明数据部分还没有读取完毕，则需要再次读取 */
 static u_char *
 ngx_http_v2_state_save(ngx_http_v2_connection_t *h2c, u_char *pos, u_char *end,
     ngx_http_v2_handler_pt handler)
@@ -2433,8 +2451,10 @@ ngx_http_v2_state_save(ngx_http_v2_connection_t *h2c, u_char *pos, u_char *end,
         return ngx_http_v2_connection_error(h2c, NGX_HTTP_V2_INTERNAL_ERROR);
     }
 
+    /* 由于数据不完整，则把已经读到的这部分不完整的数据临时保存到buffer中，在ngx_http_v2_read_handler进行中对后续读取数据合并到一起 */
     ngx_memcpy(h2c->state.buffer, pos, NGX_HTTP_V2_STATE_BUFFER_SIZE);
 
+    /*  */
     h2c->state.buffer_used = size;
     h2c->state.handler = handler;
     h2c->state.incomplete = 1;
@@ -3137,7 +3157,7 @@ ngx_http_v2_pseudo_header(ngx_http_request_t *r, ngx_http_v2_header_t *header)
 
         break;
 
-    case 9://获取头部帧中name为authority对应的value，并存入r对应的响应字段中,主要是通过
+    case 9://获取头部帧中name为authority对应的value，并存入r对应的响应字段中,主要是通过authority对应的value来获取配置信息r->srv_conf r->loc_conf
         if (ngx_memcmp(header->name.data, "authority", sizeof("authority") - 1)
             == 0)
         {
@@ -3315,6 +3335,7 @@ ngx_http_v2_parse_scheme(ngx_http_request_t *r, ngx_http_v2_header_t *header)
 }
 
 //ngx_http_v2_static_table
+//主要是通过authority对应的value来获取配置信息r->srv_conf r->loc_conf
 static ngx_int_t
 ngx_http_v2_parse_authority(ngx_http_request_t *r, ngx_http_v2_header_t *header)
 {
@@ -3361,7 +3382,9 @@ ngx_http_v2_parse_authority(ngx_http_request_t *r, ngx_http_v2_header_t *header)
     return NGX_OK;
 }
 
-
+/*
+组件HTTP2头部行，如GET /abc/xx.txt HTTP/2.0
+*/
 static ngx_int_t
 ngx_http_v2_construct_request_line(ngx_http_request_t *r)
 {
@@ -3376,10 +3399,12 @@ ngx_http_v2_construct_request_line(ngx_http_request_t *r)
         return NGX_ERROR;
     }
 
+    //头部行长度
     r->request_line.len = r->method_name.len + 1
                           + r->unparsed_uri.len
                           + sizeof(ending) - 1;
 
+    /* 分配空间，组件头部行内容 */
     p = ngx_pnalloc(r->pool, r->request_line.len + 1);
     if (p == NULL) {
         ngx_http_v2_close_stream(r->stream, NGX_HTTP_INTERNAL_SERVER_ERROR);
@@ -3399,13 +3424,14 @@ ngx_http_v2_construct_request_line(ngx_http_request_t *r)
     /* some modules expect the space character after method name */
     r->method_name.data = r->request_line.data;
 
+    //http2 http request line: "GET / HTTP/2.0"
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                    "http2 http request line: \"%V\"", &r->request_line);
 
     return NGX_OK;
 }
 
-
+/* 头部行内容name如果为cookie，则解析出对应的value设置到r->stream->cookies */
 static ngx_int_t
 ngx_http_v2_cookie(ngx_http_request_t *r, ngx_http_v2_header_t *header)
 {
@@ -3436,6 +3462,7 @@ ngx_http_v2_cookie(ngx_http_request_t *r, ngx_http_v2_header_t *header)
 }
 
 
+/* 解析cookie内容存入r->headers_in.headers数组的cookies成员中 */
 static ngx_int_t
 ngx_http_v2_construct_cookie_header(ngx_http_request_t *r)
 {
@@ -3476,6 +3503,7 @@ ngx_http_v2_construct_cookie_header(ngx_http_request_t *r)
     p = buf;
     end = buf + len;
 
+    /* 拷贝cookies数组的所有cookie字符串到新分配的buf空间 */
     for (i = 0; /* void */ ; i++) {
 
         p = ngx_cpymem(p, vals[i].data, vals[i].len);
@@ -3506,6 +3534,7 @@ ngx_http_v2_construct_cookie_header(ngx_http_request_t *r)
 
     cmcf = ngx_http_get_module_main_conf(r, ngx_http_core_module);
 
+    /* 把cookie:value存入headers_in_hash hash表中 */
     hh = ngx_hash_find(&cmcf->headers_in_hash, h->hash,
                        h->lowcase_key, h->key.len);
 
@@ -3514,6 +3543,7 @@ ngx_http_v2_construct_cookie_header(ngx_http_request_t *r)
         return NGX_ERROR;
     }
 
+    /* 解析cookie内容存入r->headers_in.headers数组的cookies成员中 */
     if (hh->handler(r, h, hh->offset) != NGX_OK) {
         /*
          * request has been finalized already
@@ -3525,10 +3555,11 @@ ngx_http_v2_construct_cookie_header(ngx_http_request_t *r)
     return NGX_OK;
 }
 
-
+/* HTTP2头部帧处理完毕，开始进入nginx phase阶段进行后续处理了，后续处理过程和HTTP1.X流程类似 */
 static void
 ngx_http_v2_run_request(ngx_http_request_t *r)
 {
+    /* 组件HTTP2头部行，如GET /abc/xx.txt HTTP/2.0 */
     if (ngx_http_v2_construct_request_line(r) != NGX_OK) {
         return;
     }
@@ -3543,6 +3574,7 @@ ngx_http_v2_run_request(ngx_http_request_t *r)
         return;
     }
 
+    /* 该流已经closed了，则进行finalize处理 */
     if (r->headers_in.content_length_n > 0 && r->stream->in_closed) {
         ngx_log_error(NGX_LOG_INFO, r->connection->log, 0,
                       "client prematurely closed stream");
@@ -3644,7 +3676,8 @@ ngx_http_v2_init_request_body(ngx_http_request_t *r)
     return NGX_OK;
 }
 
-
+/* HTTP2 data帧以外的所有帧的数据读取在ngx_http_v2_read_handler，
+data帧读取在ngx_http_read_client_request_body->ngx_http_v2_read_request_body */
 ngx_int_t
 ngx_http_v2_read_request_body(ngx_http_request_t *r,
     ngx_http_client_body_handler_pt post_handler)

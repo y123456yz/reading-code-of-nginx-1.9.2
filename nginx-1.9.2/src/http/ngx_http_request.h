@@ -1257,8 +1257,8 @@ http_version是Nginx解析过的协议版本，它的取值范围如下：
 最后，使用request_start和request_end可以获取原始的用户请求行。
 */
     ngx_uint_t                        http_version;//http_version是Nginx解析过的协议版本，它的取值范围如下：
-
-    ngx_str_t                         request_line; //请求行内容
+    /* 如果是HTTP2，则赋值见ngx_http_v2_construct_request_line */
+    ngx_str_t                         request_line; //请求行内容  
 
 
 /*
@@ -1307,7 +1307,7 @@ URL字符转义
 */
 //unparsed_uri表示没有进行URL解码的原始请求。例如，当uri为“/a b”时，unparsed_uri是“/a%20b”（空格字符做完编码后是%20）。
     ngx_str_t                         unparsed_uri;//参考:为什么要对URI进行编码:
-    /* HTTP2的method赋值见ngx_http_v2_parse_method */
+    /* HTTP2的method赋值见ngx_http_v2_parse_method，在组新的HTTP2头部行后，赋值见ngx_http_v2_construct_request_line */ 
     ngx_str_t                         method_name;//见method   GET  POST等
     ngx_str_t                         http_protocol;//GET /sample.jsp HTTP/1.1  中的HTTP/1.1
 

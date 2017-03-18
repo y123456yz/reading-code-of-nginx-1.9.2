@@ -16,9 +16,11 @@
 static ngx_int_t ngx_http_v2_table_account(ngx_http_v2_connection_t *h2c,
     size_t size);
 
+/**/
+//header帧内容部分，可以通过1字节来获取到对应的name:value，例如客户端发送过来的一字节编码转换后为2，则对应method:POST头部行
 //HPACK 使用2个索引表(静态索引表和动态索引表)来把头部映射到索引值,这里的ngx_http_v2_static_table是静态索引表
 static ngx_http_v2_header_t  ngx_http_v2_static_table[] = {
-    { ngx_string(":authority"), ngx_string("") },  //0
+    { ngx_string(":authority"), ngx_string("") },  //0   
     { ngx_string(":method"), ngx_string("GET") },
     { ngx_string(":method"), ngx_string("POST") },
     { ngx_string(":path"), ngx_string("/") },
@@ -317,6 +319,7 @@ ngx_http_v2_table_account(ngx_http_v2_connection_t *h2c, size_t size)
 {
     ngx_http_v2_header_t  *entry;
 
+    /* ?????????????????????????? 这里为什么要加32字节 */
     size += 32;
 
     ngx_log_debug2(NGX_LOG_DEBUG_HTTP, h2c->connection->log, 0,
