@@ -248,14 +248,16 @@ struct ngx_connection_s {  //cycle->read_events和cycle->write_events这两个数组存
     ngx_event_t        *write; //连接对应的写事件  赋值在ngx_event_process_init 一般在ngx_handle_write_event中添加些事件，空间是从ngx_cycle_t->read_event池子中获取的
 
     ngx_socket_t        fd;//套接字句柄
-
+    /* 如果启用了ssl,则发送和接收数据在ngx_ssl_recv ngx_ssl_write ngx_ssl_recv_chain ngx_ssl_send_chain */
     //服务端通过ngx_http_wait_request_handler读取数据
     ngx_recv_pt         recv; //直接接收网络字符流的方法  见ngx_event_accept或者ngx_http_upstream_connect   赋值为ngx_os_io  在接收到客户端连接或者向上游服务器发起连接后赋值
     ngx_send_pt         send; //直接发送网络字符流的方法  见ngx_event_accept或者ngx_http_upstream_connect   赋值为ngx_os_io  在接收到客户端连接或者向上游服务器发起连接后赋值
 
+    /* 如果启用了ssl,则发送和接收数据在ngx_ssl_recv ngx_ssl_write ngx_ssl_recv_chain ngx_ssl_send_chain */
     //以ngx_chain_t链表为参数来接收网络字符流的方法  ngx_recv_chain
     ngx_recv_chain_pt   recv_chain;  //赋值见ngx_event_accept     ngx_event_pipe_read_upstream中执行
     //以ngx_chain_t链表为参数来发送网络字符流的方法    ngx_send_chain
+    //当http2头部帧发送的时候，会在ngx_http_v2_header_filter把ngx_http_v2_send_chain.send_chain=ngx_http_v2_send_chain
     ngx_send_chain_pt   send_chain; //赋值见ngx_event_accept   ngx_http_write_filter和ngx_chain_writer中执行
 
     //这个连接对应的ngx_listening_t监听对象,通过listen配置项配置，此连接由listening监听端口的事件建立,赋值在ngx_event_process_init

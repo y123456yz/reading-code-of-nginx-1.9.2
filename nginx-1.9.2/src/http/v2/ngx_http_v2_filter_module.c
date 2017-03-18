@@ -11,16 +11,17 @@
 #include <nginx.h>
 #include <ngx_http_v2_module.h>
 
-
+//这里的ngx_http_v2_integer_octets ngx_http_v2_integer_octets index索引编码过程和ngx_http_v2_state_header_block中的解码过程对应
+//ngx_http_v2_integer_octets ngx_http_v2_indexed进行整数编码，ngx_http_v2_literal_size进行字符串编码
 #define ngx_http_v2_integer_octets(v)  (((v) + 127) / 128)
-
 #define ngx_http_v2_literal_size(h)                                           \
     (ngx_http_v2_integer_octets(sizeof(h) - 1) + sizeof(h) - 1)
 
+/* 128也就是位操作1000 0000,也就是该index在索引表中，如果i为1表示索引表的0，i=2对应索引表的1，i=3对应索引表的2，i=4对应索引表的3 */
 #define ngx_http_v2_indexed(i)      (128 + (i))
 #define ngx_http_v2_inc_indexed(i)  (64 + (i))
 
-
+/* 和ngx_http_v2_static_table数组下表对应，相差1 */
 #define NGX_HTTP_V2_STATUS_INDEX          8
 #define NGX_HTTP_V2_STATUS_200_INDEX      8
 #define NGX_HTTP_V2_STATUS_204_INDEX      9
@@ -230,7 +231,9 @@ ngx_http_v2_header_filter(ngx_http_request_t *r)
         }
     }
 
-    /* NGINX在ngx_http_v2_state_header_block对接收到的头部帧进行解码解包，在ngx_http_v2_header_filter中对头部帧进行编码组包 */
+    /* NGINX在ngx_http_v2_state_header_block对接收到的头部帧进行解码解包，在ngx_http_v2_header_filter中对头部帧进行编码组包
+       静态映射表在ngx_http_v2_static_table
+    */
 
     /* 头部9字节 + status响应长度(1字节为什么可以表示status响应码，因为一个字节就可以表示静态表的那个成员,见ngx_http_v2_static_table) */
     len = NGX_HTTP_V2_FRAME_HEADER_SIZE
@@ -379,6 +382,7 @@ ngx_http_v2_header_filter(ngx_http_request_t *r)
     part = &r->headers_out.headers.part;
     header = part->elts;
 
+    /* header_out数组列表中的所有NAME:VALUE长度加进来 */
     for (i = 0; /* void */; i++) {
 
         if (i >= part->nelts) {
@@ -415,6 +419,7 @@ ngx_http_v2_header_filter(ngx_http_request_t *r)
 
     stream = r->stream;
 
+    /* 如果整个头部帧内容超过了最大frame_size大小，则可能需要拆分到多个帧 */
     len += NGX_HTTP_V2_FRAME_HEADER_SIZE
            * (len / stream->connection->frame_size);
 
@@ -429,7 +434,6 @@ ngx_http_v2_header_filter(ngx_http_request_t *r)
 
     if (status) {
         *b->last++ = status;
-
     } else {
         *b->last++ = ngx_http_v2_inc_indexed(NGX_HTTP_V2_STATUS_INDEX);
         *b->last++ = 3;
@@ -617,6 +621,7 @@ ngx_http_v2_header_filter(ngx_http_request_t *r)
     cl->buf = b;
     cl->next = NULL;
 
+    /* 针对前面的header帧封包，组一个frame结构，挂到h2c->last_out队列，通过ngx_http_v2_filter_send触发发送出去 */
     frame = ngx_palloc(r->pool, sizeof(ngx_http_v2_out_frame_t));
     if (frame == NULL) {
         return NGX_ERROR;
@@ -624,6 +629,7 @@ ngx_http_v2_header_filter(ngx_http_request_t *r)
 
     frame->first = cl;
     frame->last = cl;
+    //该frame上对应的数据发送完毕后，会调用ngx_http_v2_headers_frame_handler
     frame->handler = ngx_http_v2_headers_frame_handler;
     frame->stream = stream;
     frame->length = b->last - b->pos - NGX_HTTP_V2_FRAME_HEADER_SIZE;
@@ -641,11 +647,14 @@ ngx_http_v2_header_filter(ngx_http_request_t *r)
         return NGX_ERROR;
     }
 
+    
     cln->handler = ngx_http_v2_filter_cleanup;
     cln->data = stream;
 
     stream->queued = 1;
 
+    //把ngx_http_v2_send_chain.send_chain=ngx_http_v2_header_filter,后面的数据帧就通过该函数发送，
+    //在读取到后端数据后开始走out filter流程，然后调用ngx_http_output_filter，最终执行该ngx_http_v2_send_chain
     fc->send_chain = ngx_http_v2_send_chain;
     fc->need_last_buf = 1;
 
@@ -711,7 +720,12 @@ ngx_http_v2_write_continuation_head(u_char *pos, size_t length, ngx_uint_t sid,
     (void) ngx_http_v2_write_sid(pos, sid);
 }
 
+/*
+当http2头部帧发送的时候，会在ngx_http_v2_header_filter把ngx_http_v2_send_chain.send_chain=ngx_http_v2_send_chain
 
+该函数发送数据帧
+在读取到后端数据后开始走out filter流程，然后调用ngx_http_output_filter，最终执行该ngx_http_v2_send_chain
+*/
 static ngx_chain_t *
 ngx_http_v2_send_chain(ngx_connection_t *fc, ngx_chain_t *in, off_t limit)
 {
@@ -726,6 +740,8 @@ ngx_http_v2_send_chain(ngx_connection_t *fc, ngx_chain_t *in, off_t limit)
 
     r = fc->data;
     stream = r->stream;
+    ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                   "ngx_http_v2_send_chain");
 
 #if (NGX_SUPPRESS_WARN)
     size = 0;
@@ -741,7 +757,7 @@ ngx_http_v2_send_chain(ngx_connection_t *fc, ngx_chain_t *in, off_t limit)
         in = in->next;
     }
 
-    if (in == NULL) {
+    if (in == NULL) { /* chain链上没有要发送的数据 */
 
         if (stream->queued) {
             fc->write->delayed = 1;
@@ -754,6 +770,7 @@ ngx_http_v2_send_chain(ngx_connection_t *fc, ngx_chain_t *in, off_t limit)
 
     h2c = stream->connection;
 
+    /* 窗口 */
     if (size && ngx_http_v2_flow_control(h2c, stream) == NGX_DECLINED) {
         fc->write->delayed = 1;
         return in;
@@ -779,16 +796,17 @@ ngx_http_v2_send_chain(ngx_connection_t *fc, ngx_chain_t *in, off_t limit)
         offset = 0;
     }
 
+    /* 发送limit不能超过h2c->send_window和stream->send_window的最小值 */
     if (limit == 0 || limit > (off_t) h2c->send_window) {
         limit = h2c->send_window;
     }
-
     if (limit > stream->send_window) {
         limit = (stream->send_window > 0) ? stream->send_window : 0;
     }
 
     h2lcf = ngx_http_get_module_loc_conf(r, ngx_http_v2_module);
 
+    /* frame_size为本地配置chunk_size和对端通知的frame_size的最小值 */
     frame_size = (h2lcf->chunk_size < h2c->frame_size)
                  ? h2lcf->chunk_size : h2c->frame_size;
 
@@ -796,7 +814,7 @@ ngx_http_v2_send_chain(ngx_connection_t *fc, ngx_chain_t *in, off_t limit)
     cl = NULL;
 #endif
 
-    for ( ;; ) {
+    for ( ;; ) {  
         if ((off_t) frame_size > limit) {
             frame_size = (size_t) limit;
         }
@@ -804,6 +822,7 @@ ngx_http_v2_send_chain(ngx_connection_t *fc, ngx_chain_t *in, off_t limit)
         ln = &out;
         rest = frame_size;
 
+        /* 把chain链中的buf组包到新的cl chain(即out链)链中,但是数据总大小不能超过rest限制 */
         while ((off_t) rest >= size) {
 
             if (offset) {
@@ -831,8 +850,8 @@ ngx_http_v2_send_chain(ngx_connection_t *fc, ngx_chain_t *in, off_t limit)
             in = in->next;
 
             if (in == NULL) {
-                frame_size -= rest;
-                rest = 0;
+                frame_size -= rest; //in链中的数据已经全部移到out链，这时候的frame_size就是out中的数据大小
+                rest = 0; //清0，说明所有的in链中的数据都可以全部发送出去
                 break;
             }
 
@@ -861,6 +880,7 @@ ngx_http_v2_send_chain(ngx_connection_t *fc, ngx_chain_t *in, off_t limit)
 
         ngx_http_v2_queue_frame(h2c, frame);
 
+        /* 发送了这么多数据，则窗口减少 */
         h2c->send_window -= frame_size;
 
         stream->send_window -= frame_size;
@@ -931,7 +951,7 @@ ngx_http_v2_filter_get_shadow(ngx_http_v2_stream_t *stream, ngx_buf_t *buf,
     return cl;
 }
 
-
+//获取data帧frame结构
 static ngx_http_v2_out_frame_t *
 ngx_http_v2_filter_get_data_frame(ngx_http_v2_stream_t *stream,
     size_t len, ngx_chain_t *first, ngx_chain_t *last)
@@ -1031,7 +1051,7 @@ ngx_http_v2_filter_send(ngx_connection_t *fc, ngx_http_v2_stream_t *stream)
     return NGX_OK;
 }
 
-
+/* 查看发送窗口是不是大于0，大于0则发送 */
 static ngx_inline ngx_int_t
 ngx_http_v2_flow_control(ngx_http_v2_connection_t *h2c,
     ngx_http_v2_stream_t *stream)

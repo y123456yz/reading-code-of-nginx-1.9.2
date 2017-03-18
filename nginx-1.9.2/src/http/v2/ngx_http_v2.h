@@ -526,7 +526,7 @@ typedef struct {
     /* 如果收到的value不在压缩表中，需要直接从报文读取，见ngx_http_v2_state_header_block ngx_http_v2_state_process_header */
     unsigned                         parse_value:1;
     /* ngx_http_v2_state_header_block中置1，表示需要把name:value通过ngx_http_v2_add_header加入动态表中，然后置0 */
-    unsigned                         index:1; //需要添加name:value到动态表中
+    unsigned                         index:1; //需要添加name:value到映射表中
     ngx_http_v2_header_t             header; //赋值见ngx_http_v2_get_indexed_header
     /* header内容中的所有name+value之和长度最大值，生效见ngx_http_v2_state_process_header 
     限制经过HPACK压缩后完整请求头的最大尺寸。
@@ -594,7 +594,8 @@ struct ngx_http_v2_connection_s {
 
     /* ngx_http_v2_create_stream中自增，表示创建的流的数量，ngx_http_v2_close_stream自减 */
     ngx_uint_t                       processing;
-
+    
+    /* 注意ngx_http_v2_connection_s的send_window、recv_window、init_window与ngx_http_v2_stream_s的send_window、recv_window的区别 */
     size_t                           send_window;//默认NGX_HTTP_V2_DEFAULT_WINDOW
     size_t                           recv_window;//默认NGX_HTTP_V2_MAX_WINDOW
     // 接收到对端的setting帧后，会做调整，见ngx_http_v2_state_settings_params
@@ -665,14 +666,16 @@ struct ngx_http_v2_stream_s {
     ngx_http_v2_node_t              *node;
 
     ngx_uint_t                       header_buffers;
+    //1表示数据已经入队，还没有发送，在ngx_http_v2_finalize_connection清0
     ngx_uint_t                       queued;
 
     /*
      * A change to SETTINGS_INITIAL_WINDOW_SIZE could cause the
      * send_window to become negative, hence it's signed.
      */
-    ssize_t                          send_window;
-    size_t                           recv_window;
+    /* 注意ngx_http_v2_connection_s的send_window、recv_window、init_window与ngx_http_v2_stream_s的send_window、recv_window的区别 */
+    ssize_t                          send_window; //默认值NGX_HTTP_V2_DEFAULT_WINDOW
+    size_t                           recv_window; //默认值NGX_HTTP_V2_MAX_WINDOW
 
     ngx_http_v2_out_frame_t         *free_frames;
     ngx_chain_t                     *free_data_headers;

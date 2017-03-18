@@ -1531,6 +1531,7 @@ ngx_http_finalize_request·½·¨Ò»´Î£¬ÕâÊÇÕıÈ·µÄ¡£¶ÔÓÚmytestÄ£¿éÒ²Ò»Ñù£¬Îñ±ØÒª±£Ö¤¶
     //Èç¹ûºó¶Ë´øÓĞTransfer-Encoding: chunked»áÖÃ1
     unsigned                          chunked:1; //chunk±àÂë·½Ê½×é°üÊµ¼Ê×é°ü¹ı³Ì²Î¿¼ngx_http_chunked_body_filter
     //µ±ÏÂÓÎµÄr->method == NGX_HTTP_HEADÇëÇó·½·¨Ö»ÇëÇóÍ·²¿ĞĞ£¬Ôò»áÔÚngx_http_header_filterÖĞÖÃ1
+    //HTTP2Í·²¿Ö¡·¢ËÍÔÚngx_http_v2_header_filterÖĞÖÃ1
     unsigned                          header_only:1; //±íÊ¾ÊÇ·ñÖ»ÓĞĞĞ¡¢Í·²¿£¬Ã»ÓĞ°üÌå  ngx_http_header_filterÖĞÖÃ1
     //ÔÚ1.0ÒÔÉÏ°æ±¾Ä¬ÈÏÊÇ³¤Á¬½Ó£¬1.0ÒÔÉÏ°æ±¾Ä¬ÈÏÖÃ1£¬Èç¹ûÔÚÇëÇóÍ·ÀïÃæÃ»ÓĞÉèÖÃÁ¬½Ó·½Ê½£¬¼ûngx_http_handler
     //±êÖ¾Î»£¬Îª1Ê±±íÊ¾µ±Ç°ÇëÇóÊÇkeepaliveÇëÇó  1³¤Á¬½Ó   0¶ÌÁ¬½Ó  ³¤Á¬½ÓÊ±¼äÍ¨¹ıÇëÇóÍ·²¿µÄKeep-Alive:ÉèÖÃ£¬²Î¿¼ngx_http_headers_in_t

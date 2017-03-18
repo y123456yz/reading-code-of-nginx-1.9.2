@@ -495,6 +495,7 @@ ngx_http_v2_send_output_queue(ngx_http_v2_connection_t *h2c)
                        out->blocked, out->length);
     }
 
+    /* 如果启用了ssl,则发送和接收数据在ngx_ssl_recv ngx_ssl_write ngx_ssl_recv_chain ngx_ssl_send_chain */
     cl = c->send_chain(c, cl, 0);
 
     if (cl == NGX_CHAIN_ERROR) {
@@ -577,6 +578,7 @@ ngx_http_v2_send_output_queue(ngx_http_v2_connection_t *h2c)
         frame = out;
     }
 
+    /*  */
     h2c->last_out = frame;
 
     return NGX_OK;
@@ -1321,6 +1323,8 @@ ngx_http_v2_state_header_block(ngx_http_v2_connection_t *h2c, u_char *pos,
         | Value String (Length octets)  |
         +-------------------------------+
         */
+        
+    /* NGINX在ngx_http_v2_state_header_block对接收到的头部帧进行解码解包，在ngx_http_v2_header_filter中对头部帧进行编码组包 */
     if (ch >= (1 << 7)) { /* 128 ~ 256的时候prefix为bit:0111 1111 */
         //在预定的头字段静态映射表 中已经有预定义的 Header Name 和 Header Value值
         /* indexed header field */ //说明索引表中已经存在该请求行信息，见ngx_http_v2_static_table
@@ -1347,8 +1351,9 @@ ngx_http_v2_state_header_block(ngx_http_v2_connection_t *h2c, u_char *pos,
         prefix = ngx_http_v2_prefix(3);
     }
 
+    //这里的value索引解码过程和ngx_http_v2_indexed对应
     value = ngx_http_v2_parse_int(h2c, &pos, end, prefix);
-
+    
     if (value < 0) {
         if (value == NGX_AGAIN) {
             return ngx_http_v2_state_save(h2c, pos, end,
@@ -2485,7 +2490,7 @@ ngx_http_v2_connection_error(ngx_http_v2_connection_t *h2c,
     return NULL;
 }
 
-
+//这里的index索引解码过程和ngx_http_v2_indexed对应
 static ngx_int_t
 ngx_http_v2_parse_int(ngx_http_v2_connection_t *h2c, u_char **pos, u_char *end,
     ngx_uint_t prefix)
