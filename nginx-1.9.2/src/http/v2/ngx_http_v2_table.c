@@ -18,17 +18,17 @@ static ngx_int_t ngx_http_v2_table_account(ngx_http_v2_connection_t *h2c,
 
 //HPACK 使用2个索引表(静态索引表和动态索引表)来把头部映射到索引值,这里的ngx_http_v2_static_table是静态索引表
 static ngx_http_v2_header_t  ngx_http_v2_static_table[] = {
-    { ngx_string(":authority"), ngx_string("") },
+    { ngx_string(":authority"), ngx_string("") },  //0
     { ngx_string(":method"), ngx_string("GET") },
     { ngx_string(":method"), ngx_string("POST") },
     { ngx_string(":path"), ngx_string("/") },
     { ngx_string(":path"), ngx_string("/index.html") },
-    { ngx_string(":scheme"), ngx_string("http") },
+    { ngx_string(":scheme"), ngx_string("http") }, //5
     { ngx_string(":scheme"), ngx_string("https") },
     { ngx_string(":status"), ngx_string("200") },
     { ngx_string(":status"), ngx_string("204") },
     { ngx_string(":status"), ngx_string("206") },
-    { ngx_string(":status"), ngx_string("304") },
+    { ngx_string(":status"), ngx_string("304") },  //10
     { ngx_string(":status"), ngx_string("400") },
     { ngx_string(":status"), ngx_string("404") },
     { ngx_string(":status"), ngx_string("500") },
@@ -107,6 +107,7 @@ ngx_http_v2_get_indexed_header(ngx_http_v2_connection_t *h2c, ngx_uint_t index,
         return NGX_ERROR;
     }
 
+    //注意这里打印如果是7，表示从1开始，实际上是对应数字ngx_http_v2_static_table[6]
     ngx_log_debug2(NGX_LOG_DEBUG_HTTP, h2c->connection->log, 0,
                    "http2 get indexed %s: %ui",
                    name_only ? "header" : "header name", index);

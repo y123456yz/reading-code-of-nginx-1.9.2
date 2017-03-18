@@ -373,10 +373,12 @@ typedef enum {
 
 typedef struct { //见ngx_http_headers_in
     ngx_str_t                         name; //匹配头部行name:value中的name，见ngx_http_process_request_headers
+    //offset即ngx_http_headers_in中成员的对应offset(如请求行带有host，则offset=offsetof(ngx_http_headers_in_t, host))
     ngx_uint_t                        offset;
     //handler的三个参数分别为(r, h, hh->offset):r为对应的连接请求，h存储为头部行key:value(如:Content-Type: text/html)值，
     //hh->offset即ngx_http_headers_in中成员的对应offset(如请求行带有host，则offset=offsetof(ngx_http_headers_in_t, host))
-    ngx_http_header_handler_pt        handler; //ngx_http_process_request_headers中执行 
+    ngx_http_header_handler_pt        handler; //各个头部对应的handler见ngx_http_headers_in
+    //ngx_http_process_request_headers ngx_http_v2_state_process_header ngx_http_v2_parse_authority ngx_http_v2_parse_authority中执行 
 } ngx_http_header_t;
 
 

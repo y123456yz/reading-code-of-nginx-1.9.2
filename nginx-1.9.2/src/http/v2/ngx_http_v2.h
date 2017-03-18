@@ -519,12 +519,15 @@ typedef struct {
     unsigned                         incomplete:1;
 
     /* HPACK */
+    /* 如果收到的name不在压缩表中，需要直接从报文读取，见ngx_http_v2_state_header_block ngx_http_v2_state_process_header */
     unsigned                         parse_name:1;
+    /* 如果收到的value不在压缩表中，需要直接从报文读取，见ngx_http_v2_state_header_block ngx_http_v2_state_process_header */
     unsigned                         parse_value:1;
     /* ngx_http_v2_state_header_block中置1，表示需要把name:value通过ngx_http_v2_add_header加入动态表中，然后置0 */
     unsigned                         index:1; //需要添加name:value到动态表中
     ngx_http_v2_header_t             header; //赋值见ngx_http_v2_get_indexed_header
     size_t                           header_limit;
+    //限制经过HPACK压缩后请求头中单个name:value字段的最大尺寸。通过http2_max_field_size配置
     size_t                           field_limit;
     u_char                           field_state;
     u_char                          *field_start;
