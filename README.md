@@ -144,12 +144,20 @@ nginx的以下功能模块的相关代码已经阅读，并对其源码及相关
 	热启动reload、优雅退出quit、热升级代码分析注释  
 	subrequest重新分析注释  
 	
-17.2.20  
+17.3.15  
     path http2代码到nginx-1.9.2  
-	nginx ssl tls握手协商流程分析  
+	nginx http2数据读取过程分析,ssl tls握手协商流程分析  
 	http2初始流程、setting帧处理过程、连接序言、header帧处理流程、HPACK实现方法分析、完善理解HTTP2调用过程的必要打印。    
 	
-  	  
+17.3.21  
+    HTTP2 header帧处理流程、stream建立过程、伪request结构处理过程分析  
+	HTTP2 header帧处理完成后与NGINX phase框架衔接过程分析    
+	HTTP2 报文输出过程与nginx框架结合流程分析,DATA帧输出流程分析  
+	多sream同时请求，多流交互情况下DATA帧发送过程分析    
+    
+
+    ?????
+    NGINX不支持PUSH、做反向代理情况下和后端为什么还是走HTTP1.X协议？
   	 
     
 ===================================  	 
@@ -159,6 +167,7 @@ nginx的以下功能模块的相关代码已经阅读，并对其源码及相关
 	如果发往后端服务器数据大小很大，可能需要多次write，这时候会由write timeout来判断出后端出现问题。但是如果发往后端数据长度小，则不会添加write定时器，而是通过
 	写定时器超时来判断，这样不能立刻判断出后端异常，因为读写定时器默认都是60s，参考ngx_http_upstream_send_request，  
 	2.[限流不准确分析](https://github.com/alibaba/tengine/issues/855)<br />  
+	3.
 	 
    
   

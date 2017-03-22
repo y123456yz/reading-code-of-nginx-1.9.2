@@ -454,6 +454,11 @@ ngx_http_v2_write_handler(ngx_event_t *wev)
 }
 
 /*
+EADER帧发送流程:ngx_http_v2_filter_send->ngx_http_v2_send_output_queue
+DATA帧发送流程:ngx_http_v2_send_chain->ngx_http_v2_send_output_queue
+一次发送不完(例如协议栈写满返回AGAIN)则下次通过ngx_http_v2_write_handler->ngx_http_v2_send_output_queue再次发送
+
+例如通过同一个connect来下载两个文件，则2个文件的相关信息会被组成一个一个交替的帧挂载到该链表上，通过该函数进行交替发送
 发送队列last_out中的数据
 */
 ngx_int_t
@@ -481,6 +486,7 @@ ngx_http_v2_send_output_queue(ngx_http_v2_connection_t *h2c)
     cl = NULL;
     out = NULL;
 
+    //从输出队列取出来连接到cl链中
     for (frame = h2c->last_out; frame; frame = fn) {
         frame->last->next = cl;
         cl = frame->first;
@@ -496,7 +502,7 @@ ngx_http_v2_send_output_queue(ngx_http_v2_connection_t *h2c)
     }
 
     /* 如果启用了ssl,则发送和接收数据在ngx_ssl_recv ngx_ssl_write ngx_ssl_recv_chain ngx_ssl_send_chain */
-    cl = c->send_chain(c, cl, 0);
+    cl = c->send_chain(c, cl, 0); //发送cl链中的数据，如果cl链中数据没有发送完成，则这部分没有发送完成的数据还保存在cl链中
 
     if (cl == NGX_CHAIN_ERROR) {
         goto error;
@@ -559,6 +565,7 @@ ngx_http_v2_send_output_queue(ngx_http_v2_connection_t *h2c)
     for ( /* void */ ; out; out = fn) {
         fn = out->next;
 
+        /* 一般HEADER帧ngx_http_v2_headers_frame_handler  DATA帧handler为ngx_http_v2_data_frame_handler   */
         if (out->handler(h2c, out) != NGX_OK) {
             out->blocked = 1;
             break;
@@ -578,7 +585,7 @@ ngx_http_v2_send_output_queue(ngx_http_v2_connection_t *h2c)
         frame = out;
     }
 
-    /*  */
+    /* 把该函数没有发送完成的帧重新加入到last_out链表 */
     h2c->last_out = frame;
 
     return NGX_OK;
@@ -2805,7 +2812,6 @@ ngx_http_v2_frame_handler(ngx_http_v2_connection_t *h2c,
     return NGX_OK;
 }
 
-
 static ngx_http_v2_stream_t *
 ngx_http_v2_create_stream(ngx_http_v2_connection_t *h2c)
 {
@@ -2889,6 +2895,7 @@ ngx_http_v2_create_stream(ngx_http_v2_connection_t *h2c)
         return NULL;
     }
 
+    ngx_str_set(&r->http_protocol, "HTTP/2.0");
     r->http_version = NGX_HTTP_VERSION_20;
     r->valid_location = 1;
 
@@ -3154,6 +3161,7 @@ ngx_http_v2_pseudo_header(ngx_http_request_t *r, ngx_http_v2_header_t *header)
             return ngx_http_v2_parse_method(r, header);
         }
 
+        //取值只能为http或者https
         if (ngx_memcmp(header->name.data, "scheme", sizeof("scheme") - 1)
             == 0)
         {
@@ -3564,7 +3572,7 @@ ngx_http_v2_construct_cookie_header(ngx_http_request_t *r)
 static void
 ngx_http_v2_run_request(ngx_http_request_t *r)
 {
-    /* 组件HTTP2头部行，如GET /abc/xx.txt HTTP/2.0 */
+    /* 组HTTP2头部行，如GET /abc/xx.txt HTTP/2.0 */
     if (ngx_http_v2_construct_request_line(r) != NGX_OK) {
         return;
     }

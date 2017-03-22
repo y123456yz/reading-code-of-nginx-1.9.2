@@ -1,0 +1,8 @@
+server {
+	listen 443 ssl http2;
+	ssl_certificate /usr/local/nginx/openssl-key/xx.crt;
+	ssl_certificate_key /usr/local/nginx/openssl-key/xx.key;
+	location / {
+			proxy_pass http://106.186.112.116:80/$request_uri;
+	}
+}

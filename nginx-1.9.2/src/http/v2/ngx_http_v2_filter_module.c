@@ -158,7 +158,7 @@ ngx_http_v2_header_filter(ngx_http_request_t *r)
     u_char                     addr[NGX_SOCKADDR_STRLEN];
 
 
-    if (!r->stream) {
+    if (!r->stream) { /* 如果没有创建对应的stream，则直接跳到下一个filter */
         return ngx_http_next_header_filter(r);
     }
 
@@ -721,6 +721,15 @@ ngx_http_v2_write_continuation_head(u_char *pos, size_t length, ngx_uint_t sid,
 }
 
 /*
+EADER帧发送流程:ngx_http_v2_filter_send->ngx_http_v2_send_output_queue
+DATA帧发送流程:ngx_http_v2_send_chain->ngx_http_v2_send_output_queue
+一次发送不完(例如协议栈写满返回AGAIN)则下次通过ngx_http_v2_write_handler->ngx_http_v2_send_output_queue再次发送
+
+例如通过同一个connect来下载两个文件，则2个文件的相关信息会被组成一个一个交替的帧挂载到该链表上，通过该函数进行交替发送
+发送队列last_out中的数据
+*/
+
+/*
 当http2头部帧发送的时候，会在ngx_http_v2_header_filter把ngx_http_v2_send_chain.send_chain=ngx_http_v2_send_chain
 
 该函数发送数据帧
@@ -961,7 +970,7 @@ ngx_http_v2_filter_get_data_frame(ngx_http_v2_stream_t *stream,
     ngx_chain_t                *cl;
     ngx_http_v2_out_frame_t  *frame;
 
-
+    //帧结构stream->free_frames会进行重复利用
     frame = stream->free_frames;
 
     if (frame) {
@@ -1027,7 +1036,14 @@ ngx_http_v2_filter_get_data_frame(ngx_http_v2_stream_t *stream,
     return frame;
 }
 
+/*
+EADER帧发送流程:ngx_http_v2_filter_send->ngx_http_v2_send_output_queue
+DATA帧发送流程:ngx_http_v2_send_chain->ngx_http_v2_send_output_queue
+一次发送不完(例如协议栈写满返回AGAIN)则下次通过ngx_http_v2_write_handler->ngx_http_v2_send_output_queue再次发送
 
+例如通过同一个connect来下载两个文件，则2个文件的相关信息会被组成一个一个交替的帧挂载到该链表上，通过该函数进行交替发送
+发送队列last_out中的数据
+*/
 static ngx_inline ngx_int_t
 ngx_http_v2_filter_send(ngx_connection_t *fc, ngx_http_v2_stream_t *stream)
 {
@@ -1101,7 +1117,7 @@ ngx_http_v2_waiting_queue(ngx_http_v2_connection_t *h2c,
 }
 
 
-
+//每一个h2c->last_out链表中的frame发送完成都会调用对应的handler,这里是header帧发送完成的handler
 static ngx_int_t
 ngx_http_v2_headers_frame_handler(ngx_http_v2_connection_t *h2c,
     ngx_http_v2_out_frame_t *frame)
@@ -1111,7 +1127,7 @@ ngx_http_v2_headers_frame_handler(ngx_http_v2_connection_t *h2c,
 
     buf = frame->first->buf;
 
-    if (buf->pos != buf->last) {
+    if (buf->pos != buf->last) { /* 说明还没有发送完成 */
         return NGX_AGAIN;
     }
 
@@ -1130,7 +1146,7 @@ ngx_http_v2_headers_frame_handler(ngx_http_v2_connection_t *h2c,
     return NGX_OK;
 }
 
-
+//每一个h2c->last_out链表中的frame发送完成都会调用对应的handler,这里是data帧发送完成的handler
 static ngx_int_t
 ngx_http_v2_data_frame_handler(ngx_http_v2_connection_t *h2c,
     ngx_http_v2_out_frame_t *frame)

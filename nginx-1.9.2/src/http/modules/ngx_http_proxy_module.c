@@ -2621,8 +2621,7 @@ ngx_http_proxy_process_header(ngx_http_request_t *r)
             ngx_log_debugall(r->connection->log, 0,
                       "upstream header recv ok, u->keepalive:%d", keepalive_t);
 
-            ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                   "yang test .... body:%*s", (size_t) (r->upstream->buffer.last - r->upstream->buffer.pos), r->upstream->buffer.pos);
+            //ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,  "yang test .... body:%*s", (size_t) (r->upstream->buffer.last - r->upstream->buffer.pos), r->upstream->buffer.pos);
             return NGX_OK;
         }
 

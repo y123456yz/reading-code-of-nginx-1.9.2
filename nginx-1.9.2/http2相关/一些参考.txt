@@ -1,3 +1,5 @@
 HPACK完全解析:http://www.jianshu.com/p/f44b930cfcac
 HPACK   https://imququ.com/post/header-compression-in-http2.html
 使用 nghttp2 调试 HTTP/2 流量 https://imququ.com/post/intro-to-nghttp2.html
+NGINX HTTP2官方说明:https://www.nginx.com/blog/http2-r7/
+Rules of Thumb for HTTP/2 Push:https://docs.google.com/document/d/1K0NykTXBbbbTlv60t5MyJvXjqKGsCVNYHyLEXIxYMv0/edit#

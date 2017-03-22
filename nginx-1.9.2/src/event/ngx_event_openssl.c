@@ -1506,7 +1506,7 @@ ngx_ssl_write_handler(ngx_event_t *wev)
  * Besides for protocols such as HTTP it is possible to always buffer
  * the output to decrease a SSL overhead some more.
  */
-
+//发送in链中的数据到c，如果发送in没有全部发送成功，则剩余的部分数据通过in返回
 ngx_chain_t *
 ngx_ssl_send_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
 {

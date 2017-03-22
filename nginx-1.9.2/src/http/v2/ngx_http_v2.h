@@ -468,6 +468,7 @@ Stream Identifier若为0x0，则表示针对整个连接，否则针对具体流
 
 #define NGX_HTTP_V2_FRAME_HEADER_SIZE    9 //HTTP2头部长度9字节
 
+/* 接收到对应帧的时候回调见ngx_http_v2_frame_states */
 /* frame types  HTTP2报文头部的type字段  针对时间敏感的帧，比如RST_STREAM, WINDOW_UPDATE, PRIORITY，需要快速发送出去 */
 #define NGX_HTTP_V2_DATA_FRAME           0x0
 #define NGX_HTTP_V2_HEADERS_FRAME        0x1
@@ -592,7 +593,7 @@ struct ngx_http_v2_connection_s {
     ngx_connection_t                *connection;//对应的客户端连接，赋值见ngx_http_v2_init
     ngx_http_connection_t           *http_connection;
 
-    /* ngx_http_v2_create_stream中自增，表示创建的流的数量，ngx_http_v2_close_stream自减 */
+    /* ngx_http_v2_create_stream中自增，表示创建的流的数量，当前正在使用的流数量，ngx_http_v2_close_stream自减 */
     ngx_uint_t                       processing;
     
     /* 注意ngx_http_v2_connection_s的send_window、recv_window、init_window与ngx_http_v2_stream_s的send_window、recv_window的区别 */
@@ -611,7 +612,7 @@ struct ngx_http_v2_connection_s {
     ngx_http_v2_hpack_t              hpack;
 
     ngx_pool_t                      *pool;
-    /* frame通过该free链表来实现重复利用，可以参考ngx_http_v2_get_frame */
+    /* frame通过该free链表来实现重复利用，可以参考ngx_http_v2_get_frame ngx_http_v2_frame_handler*/
     ngx_http_v2_out_frame_t         *free_frames;
     /* 创建空间和赋值见ngx_http_v2_create_stream，根据客户端连接伪造的一个连接 */
     ngx_connection_t                *free_fake_connections;
@@ -619,8 +620,8 @@ struct ngx_http_v2_connection_s {
     /* ngx_http_v2_node_t类型的数组指针，ngx_http_v2_init中创建空间和赋值，真正的ngx_http_v2_node_t赋值见ngx_http_v2_get_node_by_id */
     ngx_http_v2_node_t             **streams_index;
     /* 在ngx_http_v2_queue_blocked_frame中把帧加入该链表，在ngx_http_v2_send_output_queue中发送队列中的数据 */
-    ngx_http_v2_out_frame_t         *last_out;
-
+    //例如通过同一个connect来下载两个文件，则2个文件的相关信息会被组成一个一个交替的帧挂载到该链表上进行交替发送
+    ngx_http_v2_out_frame_t         *last_out; /* http2 header帧和data帧都挂载到该链表中 */
     ngx_queue_t                      posted;
     ngx_queue_t                      dependencies;
     /* 队列成员为ngx_http_v2_node_t，赋值见ngx_http_v2_state_priority */
@@ -702,7 +703,7 @@ struct ngx_http_v2_stream_s {
 
 
 /* 创建空间和赋值见ngx_http_v2_send_settings，对应一种setting、HEADER等帧，每个帧对应一个该结构，最终加入ngx_http_v2_connection_t->last_out */
-struct ngx_http_v2_out_frame_s {
+struct ngx_http_v2_out_frame_s {//该结构stream->free_frames会进行重复利用
     ngx_http_v2_out_frame_t         *next;
     ngx_chain_t                     *first;
     ngx_chain_t                     *last;
@@ -710,13 +711,16 @@ struct ngx_http_v2_out_frame_s {
     /* 
     赋值:ngx_http_v2_settings_frame_handler ngx_http_v2_data_frame_handler  ngx_http_v2_headers_frame_handler  ngx_http_v2_frame_handler
     执行在ngx_http_v2_send_output_queue
-    */
+    */ //每个帧发送到对端成功后都会调用对应的handler
     ngx_int_t                      (*handler)(ngx_http_v2_connection_t *h2c,
                                         ngx_http_v2_out_frame_t *frame);
 
     ngx_http_v2_stream_t            *stream;
     size_t                           length;
 
+    /* 说明该帧在ngx_http_v2_send_output_queue调用的时候还没有发送出去，当数据发送出去后ngx_http_v2_out_frame_t会被
+    stream->free_frames回收，这时候还是为1，下次get重复利用的时候就是0了
+    */
     unsigned                         blocked:1;
     unsigned                         fin:1;
 };
@@ -746,6 +750,7 @@ ngx_http_v2_queue_frame(ngx_http_v2_connection_t *h2c,
     *out = frame;
 }
 
+//例如通过同一个connect来下载两个文件，则2个文件的相关信息(包括header帧和DATA帧)会被组成一个一个交替的帧挂载到该链表上进行交替发送
 /* 添加frame到last_out链表 */
 static ngx_inline void
 ngx_http_v2_queue_blocked_frame(ngx_http_v2_connection_t *h2c,
