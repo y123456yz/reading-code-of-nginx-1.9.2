@@ -1161,7 +1161,7 @@ ngx_http_v2_data_frame_handler(ngx_http_v2_connection_t *h2c,
 
     if (cl->buf->tag == (ngx_buf_tag_t) &ngx_http_v2_filter_get_data_frame) {
 
-        if (cl->buf->pos != cl->buf->last) {
+        if (cl->buf->pos != cl->buf->last) { /* 说明该frame只有部分数据发送了 */
             ngx_log_debug2(NGX_LOG_DEBUG_HTTP, h2c->connection->log, 0,
                            "http2:%ui DATA frame %p was sent partially",
                            stream->node->id, frame);

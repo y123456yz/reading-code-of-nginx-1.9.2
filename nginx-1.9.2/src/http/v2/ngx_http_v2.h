@@ -473,11 +473,16 @@ Stream Identifier若为0x0，则表示针对整个连接，否则针对具体流
 #define NGX_HTTP_V2_DATA_FRAME           0x0
 #define NGX_HTTP_V2_HEADERS_FRAME        0x1
 #define NGX_HTTP_V2_PRIORITY_FRAME       0x2
-#define NGX_HTTP_V2_RST_STREAM_FRAME     0x3
+//接收到RST_STREAM帧，需要关闭对应流，因此流也要处于关闭状态。 - 接收者不能够在此流上发送任何帧
+//例如更新窗口设置的发送窗口增加量加上已有的send_buf值超过了最大限度则会发送RST帧
+#define NGX_HTTP_V2_RST_STREAM_FRAME     0x3 
+//setting帧决定接收到HEAD帧后创建流的时候，确定发送窗口的大小和流窗口大小。同时决定在通过write chain发送frame帧的时候，决定没个数据块的大小
+//例如一个frame帧为10K，但是对端指定其接收数据的frame_size=5K，则该frame会被拆成两个frame_size大小的包体发送
 #define NGX_HTTP_V2_SETTINGS_FRAME       0x4
 #define NGX_HTTP_V2_PUSH_PROMISE_FRAME   0x5
 #define NGX_HTTP_V2_PING_FRAME           0x6
 #define NGX_HTTP_V2_GOAWAY_FRAME         0x7
+//HTTP/2定义的帧类型的一种，用途是通知对端增加窗口值，WINDOW_UPDATE会指定增加的大小
 #define NGX_HTTP_V2_WINDOW_UPDATE_FRAME  0x8
 #define NGX_HTTP_V2_CONTINUATION_FRAME   0x9
 
@@ -597,12 +602,22 @@ struct ngx_http_v2_connection_s {
     ngx_uint_t                       processing;
     
     /* 注意ngx_http_v2_connection_s的send_window、recv_window、init_window与ngx_http_v2_stream_s的send_window、recv_window的区别 */
-    size_t                           send_window;//默认NGX_HTTP_V2_DEFAULT_WINDOW
-    size_t                           recv_window;//默认NGX_HTTP_V2_MAX_WINDOW
-    // 接收到对端的setting帧后，会做调整，见ngx_http_v2_state_settings_params
-    size_t                           init_window;//默认NGX_HTTP_V2_DEFAULT_WINDOW
+    /* ngx_http_v2_send_chain发送多少DATA帧，h2c->send_window就会减少多少，对端接收到后其h2c->recv_window也会减少多少，
+       当对端收到DATA帧的时候，如果发现该连接上的recv_window大小已经小于NGX_HTTP_V2_MAX_WINDOW / 4了，则通知本发送端
+       把h2c->send_window调整为NGX_HTTP_V2_MAX_WINDOW，同时对端也把连接的接收recv_window调整到该MAX值当对端收到DATA帧
+       的时候，如果发现该连接上的recv_window大小已经小于NGX_HTTP_V2_MAX_WINDOW / 4了，则通知本发送端把h2c->send_window
+       调整为NGX_HTTP_V2_MAX_WINDOW，同时对端也把连接的接收recv_window调整到该MAX值
+    */ //最终该连接本地的send_window始终和对端的recv_window保持一致的
+    //流的发送窗口可以通过setting帧调整，但是接受窗口都是默认值NGX_HTTP_V2_MAX_WINDOW
+    size_t                           send_window;//默认NGX_HTTP_V2_DEFAULT_WINDOW 65535
+    /* 在接收对端发送过来的DATA帧后，会调整该值，例如接收到对端发送过来的len长度数据，则本端接收窗口减少这么多，
+        生效见ngx_http_v2_state_data */
+    size_t                           recv_window;//默认NGX_HTTP_V2_MAX_WINDOW 2^32 -1
+    // 接收到对端的setting帧后，会做调整，见ngx_http_v2_state_settings_params  stream->send_window = h2c->init_window;
+    //流的发送窗口可以通过setting帧调整，但是接受窗口都是默认值NGX_HTTP_V2_MAX_WINDOW
+    size_t                           init_window;//默认NGX_HTTP_V2_DEFAULT_WINDOW  决定流的发送窗口大小 一般对端会发送SETTING帧进行调整
 
-    //接收到对端的setting帧后，会做调整，见ngx_http_v2_state_settings_params
+    //接收到对端的setting帧后，会做调整，见ngx_http_v2_state_settings_params 决定发送FRAME帧的时候，每帧数据大小不超过该值
     size_t                           frame_size;//默认NGX_HTTP_V2_DEFAULT_FRAME_SIZE  接收到对端的setting帧后，会做调整，见ngx_http_v2_state_settings_params
 
     ngx_queue_t                      waiting;
@@ -675,8 +690,13 @@ struct ngx_http_v2_stream_s {
      * send_window to become negative, hence it's signed.
      */
     /* 注意ngx_http_v2_connection_s的send_window、recv_window、init_window与ngx_http_v2_stream_s的send_window、recv_window的区别 */
-    ssize_t                          send_window; //默认值NGX_HTTP_V2_DEFAULT_WINDOW
-    size_t                           recv_window; //默认值NGX_HTTP_V2_MAX_WINDOW
+    /* ngx_http_v2_state_data没在该流上每发送多少DATA帧数据，stream->send_window就减少多少，对方收到该数据后，其
+       stream->recv_window也相应的减少多少，当对方发现其recv_window少于NGX_HTTP_V2_MAX_WINDOW / 4则又把其recv_window
+       还原为NGX_HTTP_V2_MAX_WINDOW，同时通知本端增加相应的量来还原为NGX_HTTP_V2_MAX_WINDOW
+    最终，本端stream的send_window始终和对端strean的recv_window保持一致 */
+    //默认值NGX_HTTP_V2_DEFAULT_WINDOW  但是在收到对方的Setting帧后会对send_window进行调整
+    ssize_t                          send_window; //默认等于h2c->init_window，也就是65535
+    size_t                           recv_window; //默认值NGX_HTTP_V2_MAX_WINDOW 2^32 - 1
 
     ngx_http_v2_out_frame_t         *free_frames;
     ngx_chain_t                     *free_data_headers;

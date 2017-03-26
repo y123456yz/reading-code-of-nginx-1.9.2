@@ -1,0 +1,1133 @@
+nghttp÷¥––√¸¡Ó:./src/nghttp -nv https://10.2.4X.X:443/logo.jpg https://10.2.4X.5X:443/logo2.jpg 
+
+
+
+2017/03/24 19:17:08[                ngx_epoll_process_events,  1715]  [debug] 28548#28548: epoll: fd:6 EPOLLIN  (ev:0001) d:00007F0567309010
+2017/03/24 19:17:08[                ngx_epoll_process_events,  1761]  [debug] 28548#28548: post event 00007F0563709010
+2017/03/24 19:17:08[           ngx_process_events_and_timers,   395]  [debug] 28548#28548: epoll_wait timer range(delta): 11178
+2017/03/24 19:17:08[                ngx_event_process_posted,    62]  [debug] 28548#28548: begin to run befor posted event 00007F0563709010
+2017/03/24 19:17:08[                ngx_event_process_posted,    64]  [debug] 28548#28548: delete posted event 00007F0563709010
+2017/03/24 19:17:08[                        ngx_event_accept,    72]  [debug] 28548#28548: accept on 0.0.0.0:443, ready: 1
+2017/03/24 19:17:08[                            ngx_memalign,    72]  [debug] 28548#28548: posix_memalign: 00000000018A3760:256 @16
+2017/03/24 19:17:08[                        ngx_event_accept,   371]  [debug] 28548#28548: *6 accept: 10.2.4.4:17731 fd:3
+2017/03/24 19:17:08[                            ngx_memalign,    72]  [debug] 28548#28548: posix_memalign: 000000000189EB90:256 @16
+2017/03/24 19:17:08[                     ngx_event_add_timer,   100]  [debug] 28548#28548: *6 < ngx_http_init_connection,   403>  event timer add fd:3, expire-time:60 s, timer.key:1490354288597
+2017/03/24 19:17:08[                 ngx_reusable_connection,  1177]  [debug] 28548#28548: *6 reusable connection: 1
+2017/03/24 19:17:08[                   ngx_handle_read_event,   499]  [debug] 28548#28548: *6 < ngx_http_init_connection,   406> epoll NGX_USE_CLEAR_EVENT(et) read add
+2017/03/24 19:17:08[                     ngx_epoll_add_event,  1404]  [debug] 28548#28548: *6 epoll add read event: fd:3 op:1 ev:80002001
+2017/03/24 19:17:08[                        ngx_event_accept,   100]  [debug] 28548#28548: accept() not ready (11: Resource temporarily unavailable)
+2017/03/24 19:17:08[                ngx_trylock_accept_mutex,   406]  [debug] 28548#28548: accept mutex locked
+2017/03/24 19:17:08[                ngx_epoll_process_events,  1715]  [debug] 28548#28548: epoll: fd:3 EPOLLIN  (ev:0001) d:00007F05673092B1
+2017/03/24 19:17:08[                ngx_epoll_process_events,  1761]  [debug] 28548#28548: *6 post event 00007F0563709130
+2017/03/24 19:17:08[           ngx_process_events_and_timers,   395]  [debug] 28548#28548: epoll_wait timer range(delta): 1
+2017/03/24 19:17:08[                ngx_event_process_posted,    62]  [debug] 28548#28548: begin to run befor posted event 00007F0563709130
+2017/03/24 19:17:08[                ngx_event_process_posted,    64]  [debug] 28548#28548: *6 delete posted event 00007F0563709130
+2017/03/24 19:17:08[                  ngx_http_ssl_handshake,   680]  [debug] 28548#28548: *6 http check ssl handshake
+2017/03/24 19:17:08[                  ngx_http_ssl_handshake,   704]  [debug] 28548#28548: *6 http recv(): 1
+2017/03/24 19:17:08[                  ngx_http_ssl_handshake,   759]  [debug] 28548#28548: *6 https ssl handshake: 0x16
+2017/03/24 19:17:08[             ngx_http_ssl_npn_advertised,   393]  [debug] 28548#28548: *6 SSL NPN advertised
+2017/03/24 19:17:08[                       ngx_ssl_handshake,  1098]  [debug] 28548#28548: *6 SSL_do_handshake: -1
+2017/03/24 19:17:08[                       ngx_ssl_handshake,  1179]  [debug] 28548#28548: *6 SSL_get_error: 2
+2017/03/24 19:17:08[                 ngx_reusable_connection,  1177]  [debug] 28548#28548: *6 reusable connection: 0
+2017/03/24 19:17:08[                ngx_trylock_accept_mutex,   406]  [debug] 28548#28548: accept mutex locked
+2017/03/24 19:17:08[                ngx_epoll_process_events,  1715]  [debug] 28548#28548: epoll: fd:3 EPOLLIN  (ev:0001) d:00007F05673092B1
+2017/03/24 19:17:08[                ngx_epoll_process_events,  1761]  [debug] 28548#28548: *6 post event 00007F0563709130
+2017/03/24 19:17:08[           ngx_process_events_and_timers,   395]  [debug] 28548#28548: epoll_wait timer range(delta): 6
+2017/03/24 19:17:08[                ngx_event_process_posted,    62]  [debug] 28548#28548: begin to run befor posted event 00007F0563709130
+2017/03/24 19:17:08[                ngx_event_process_posted,    64]  [debug] 28548#28548: *6 delete posted event 00007F0563709130
+2017/03/24 19:17:08[               ngx_ssl_handshake_handler,  1244]  [debug] 28548#28548: *6 SSL handshake handler: 0
+2017/03/24 19:17:08[                       ngx_ssl_handshake,  1098]  [debug] 28548#28548: *6 SSL_do_handshake: 1
+2017/03/24 19:17:08[                       ngx_ssl_handshake,  1144]  [debug] 28548#28548: *6 SSL: TLSv1.2, cipher: "ECDHE-RSA-AES128-GCM-SHA256 TLSv1.2 Kx=ECDH Au=RSA Enc=AESGCM(128) Mac=AEAD"
+2017/03/24 19:17:08[                        ngx_http_v2_init,   219]  [debug] 28548#28548: *6 init http2 connection
+2017/03/24 19:17:08[                               ngx_alloc,    34]  [debug] 28548#28548: *6 malloc: 00000000018A41A0:408
+2017/03/24 19:17:08[                            ngx_memalign,    72]  [debug] 28548#28548: *6 posix_memalign: 00000000018AD540:4096 @16
+2017/03/24 19:17:08[                    ngx_pool_cleanup_add,   412]  [debug] 28548#28548: *6 add cleanup: 00000000018A3848
+2017/03/24 19:17:08[                               ngx_alloc,    34]  [debug] 28548#28548: *6 malloc: 00000000018A50F0:256
+2017/03/24 19:17:08[               ngx_http_v2_send_settings,  2564]  [debug] 28548#28548: *6 http2 send SETTINGS frame
+2017/03/24 19:17:08[                ngx_http_v2_read_handler,   327]  [debug] 28548#28548: *6 http2 read handler
+2017/03/24 19:17:08[                            ngx_ssl_recv,  1347]  [debug] 28548#28548: *6 SSL_read: -1
+2017/03/24 19:17:08[                     ngx_ssl_handle_recv,  1446]  [debug] 28548#28548: *6 SSL_get_error: 2
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018AD648 sid:0 bl:0 len:4
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018AD590 sid:0 bl:0 len:18
+2017/03/24 19:17:08[                            ngx_memalign,    72]  [debug] 28548#28548: *6 posix_memalign: 00000000018AE860:256 @16
+2017/03/24 19:17:08[                               ngx_alloc,    34]  [debug] 28548#28548: *6 malloc: 00000000018DB470:16384
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 27
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 13
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 40
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 40
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   529]  [debug] 28548#28548: *6 tcp_nodelay
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018AD590 sid:0 bl:0 len:18
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018AD648 sid:0 bl:0 len:4
+2017/03/24 19:17:08[                        ngx_destroy_pool,    90]  [debug] 28548#28548: *6 free: 00000000018AD540, unused: 3656
+2017/03/24 19:17:08[                               ngx_pfree,   336]  [debug] 28548#28548: *6 free: 00000000018DB470
+2017/03/24 19:17:08[                 ngx_reusable_connection,  1177]  [debug] 28548#28548: *6 reusable connection: 1
+2017/03/24 19:17:08[                     ngx_event_del_timer,    39]  [debug] 28548#28548: *6 <      ngx_event_add_timer,    93>  event timer del: 3: 1490354288597
+2017/03/24 19:17:08[                     ngx_event_add_timer,   100]  [debug] 28548#28548: *6 <ngx_http_v2_handle_connection,   654>  event timer add fd:3, expire-time:180 s, timer.key:1490354408604
+2017/03/24 19:17:08[                ngx_trylock_accept_mutex,   406]  [debug] 28548#28548: accept mutex locked
+2017/03/24 19:17:08[                ngx_epoll_process_events,  1715]  [debug] 28548#28548: epoll: fd:3 EPOLLIN  (ev:0001) d:00007F05673092B1
+2017/03/24 19:17:08[                ngx_epoll_process_events,  1761]  [debug] 28548#28548: *6 post event 00007F0563709130
+2017/03/24 19:17:08[           ngx_process_events_and_timers,   395]  [debug] 28548#28548: epoll_wait timer range(delta): 2
+2017/03/24 19:17:08[                ngx_event_process_posted,    62]  [debug] 28548#28548: begin to run befor posted event 00007F0563709130
+2017/03/24 19:17:08[                ngx_event_process_posted,    64]  [debug] 28548#28548: *6 delete posted event 00007F0563709130
+2017/03/24 19:17:08[                ngx_http_v2_idle_handler,  3887]  [debug] 28548#28548: *6 http2 idle handler
+2017/03/24 19:17:08[                 ngx_reusable_connection,  1177]  [debug] 28548#28548: *6 reusable connection: 0
+2017/03/24 19:17:08[                            ngx_memalign,    72]  [debug] 28548#28548: *6 posix_memalign: 00000000018AD540:4096 @16
+2017/03/24 19:17:08[                ngx_http_v2_read_handler,   327]  [debug] 28548#28548: *6 http2 read handler
+2017/03/24 19:17:08[                            ngx_ssl_recv,  1347]  [debug] 28548#28548: *6 SSL_read: 208
+2017/03/24 19:17:08[                            ngx_ssl_recv,  1347]  [debug] 28548#28548: *6 SSL_read: -1
+2017/03/24 19:17:08[                     ngx_ssl_handle_recv,  1446]  [debug] 28548#28548: *6 SSL_get_error: 2
+2017/03/24 19:17:08[           ngx_http_v2_state_preface_end,   727]  [debug] 28548#28548: *6 http2 preface verified
+2017/03/24 19:17:08[                  ngx_http_v2_state_head,   757]  [debug] 28548#28548: *6 process http2 frame type:4 f:0 l:12 sid:0
+2017/03/24 19:17:08[               ngx_http_v2_send_settings,  2564]  [debug] 28548#28548: *6 http2 send SETTINGS frame
+2017/03/24 19:17:08[              ngx_http_v2_state_complete,  2378]  [debug] 28548#28548: *6 http2 frame complete pos:00007F055FAC803D end:00007F055FAC80E0
+2017/03/24 19:17:08[                  ngx_http_v2_state_head,   757]  [debug] 28548#28548: *6 process http2 frame type:4 f:1 l:0 sid:0
+2017/03/24 19:17:08[              ngx_http_v2_state_complete,  2378]  [debug] 28548#28548: *6 http2 frame complete pos:00007F055FAC8046 end:00007F055FAC80E0
+2017/03/24 19:17:08[                  ngx_http_v2_state_head,   757]  [debug] 28548#28548: *6 process http2 frame type:2 f:0 l:5 sid:3
+2017/03/24 19:17:08[              ngx_http_v2_state_priority,  1870]  [debug] 28548#28548: *6 http2 PRIORITY frame sid:3 on 0 excl:0 weight:201
+2017/03/24 19:17:08[              ngx_http_v2_state_complete,  2378]  [debug] 28548#28548: *6 http2 frame complete pos:00007F055FAC8054 end:00007F055FAC80E0
+2017/03/24 19:17:08[                  ngx_http_v2_state_head,   757]  [debug] 28548#28548: *6 process http2 frame type:2 f:0 l:5 sid:5
+2017/03/24 19:17:08[              ngx_http_v2_state_priority,  1870]  [debug] 28548#28548: *6 http2 PRIORITY frame sid:5 on 0 excl:0 weight:101
+2017/03/24 19:17:08[                            ngx_memalign,    72]  [debug] 28548#28548: *6 posix_memalign: 00000000018AE970:256 @16
+2017/03/24 19:17:08[              ngx_http_v2_state_complete,  2378]  [debug] 28548#28548: *6 http2 frame complete pos:00007F055FAC8062 end:00007F055FAC80E0
+2017/03/24 19:17:08[                  ngx_http_v2_state_head,   757]  [debug] 28548#28548: *6 process http2 frame type:2 f:0 l:5 sid:7
+2017/03/24 19:17:08[              ngx_http_v2_state_priority,  1870]  [debug] 28548#28548: *6 http2 PRIORITY frame sid:7 on 0 excl:0 weight:1
+2017/03/24 19:17:08[              ngx_http_v2_state_complete,  2378]  [debug] 28548#28548: *6 http2 frame complete pos:00007F055FAC8070 end:00007F055FAC80E0
+2017/03/24 19:17:08[                  ngx_http_v2_state_head,   757]  [debug] 28548#28548: *6 process http2 frame type:2 f:0 l:5 sid:9
+2017/03/24 19:17:08[              ngx_http_v2_state_priority,  1870]  [debug] 28548#28548: *6 http2 PRIORITY frame sid:9 on 7 excl:0 weight:1
+2017/03/24 19:17:08[                            ngx_memalign,    72]  [debug] 28548#28548: *6 posix_memalign: 00000000018AE550:256 @16
+2017/03/24 19:17:08[              ngx_http_v2_state_complete,  2378]  [debug] 28548#28548: *6 http2 frame complete pos:00007F055FAC807E end:00007F055FAC80E0
+2017/03/24 19:17:08[                  ngx_http_v2_state_head,   757]  [debug] 28548#28548: *6 process http2 frame type:2 f:0 l:5 sid:11
+2017/03/24 19:17:08[              ngx_http_v2_state_priority,  1870]  [debug] 28548#28548: *6 http2 PRIORITY frame sid:11 on 3 excl:0 weight:1
+2017/03/24 19:17:08[              ngx_http_v2_state_complete,  2378]  [debug] 28548#28548: *6 http2 frame complete pos:00007F055FAC808C end:00007F055FAC80E0
+2017/03/24 19:17:08[                  ngx_http_v2_state_head,   757]  [debug] 28548#28548: *6 process http2 frame type:1 f:25 l:45 sid:13
+2017/03/24 19:17:08[               ngx_http_v2_state_headers,  1161]  [debug] 28548#28548: *6 http2 HEADERS frame sid:13 on 11 excl:0 weight:16
+2017/03/24 19:17:08[                            ngx_memalign,    72]  [debug] 28548#28548: *6 posix_memalign: 00000000018AE660:256 @16
+2017/03/24 19:17:08[                            ngx_memalign,    72]  [debug] 28548#28548: *6 posix_memalign: 00000000018A57D0:4096 @16
+2017/03/24 19:17:08[                            ngx_memalign,    72]  [debug] 28548#28548: *6 posix_memalign: 00000000018DB470:4096 @16
+2017/03/24 19:17:08[          ngx_http_v2_state_header_block,  1379]  [debug] 28548#28548: *6 ngx_http_v2_state_header_block, indexed:1, size_update:0, value:2
+2017/03/24 19:17:08[          ngx_http_v2_get_indexed_header,   115]  [debug] 28548#28548: *6 http2 get indexed header name: 2
+2017/03/24 19:17:08[          ngx_http_v2_state_header_block,  1389]  [debug] 28548#28548: *6 HEADER name::method, value:GET
+2017/03/24 19:17:08[          ngx_http_v2_state_header_block,  1379]  [debug] 28548#28548: *6 ngx_http_v2_state_header_block, indexed:0, size_update:0, value:4
+2017/03/24 19:17:08[          ngx_http_v2_get_indexed_header,   115]  [debug] 28548#28548: *6 http2 get indexed header: 4
+2017/03/24 19:17:08[          ngx_http_v2_state_header_block,  1420]  [debug] 28548#28548: *6 HEADER name::path, value:/
+2017/03/24 19:17:08[             ngx_http_v2_state_field_len,  1479]  [debug] 28548#28548: *6 http2 hpack encoded string length: 7
+2017/03/24 19:17:08[            ngx_http_process_request_uri,  1245]  [debug] 28548#28548: *6 http uri: "/logo.jpg"
+2017/03/24 19:17:08[            ngx_http_process_request_uri,  1248]  [debug] 28548#28548: *6 http args: ""
+2017/03/24 19:17:08[            ngx_http_process_request_uri,  1251]  [debug] 28548#28548: *6 http exten: "jpg"
+2017/03/24 19:17:08[          ngx_http_v2_state_header_block,  1379]  [debug] 28548#28548: *6 ngx_http_v2_state_header_block, indexed:1, size_update:0, value:7
+2017/03/24 19:17:08[          ngx_http_v2_get_indexed_header,   115]  [debug] 28548#28548: *6 http2 get indexed header name: 7
+2017/03/24 19:17:08[          ngx_http_v2_state_header_block,  1389]  [debug] 28548#28548: *6 HEADER name::scheme, value:https
+2017/03/24 19:17:08[          ngx_http_v2_state_header_block,  1379]  [debug] 28548#28548: *6 ngx_http_v2_state_header_block, indexed:0, size_update:0, value:1
+2017/03/24 19:17:08[          ngx_http_v2_get_indexed_header,   115]  [debug] 28548#28548: *6 http2 get indexed header: 1
+2017/03/24 19:17:08[          ngx_http_v2_state_header_block,  1420]  [debug] 28548#28548: *6 HEADER name::authority, value:
+2017/03/24 19:17:08[             ngx_http_v2_state_field_len,  1479]  [debug] 28548#28548: *6 http2 hpack encoded string length: 6
+2017/03/24 19:17:08[                  ngx_http_v2_add_header,   206]  [debug] 28548#28548: *6 http2 add header to hpack table: ":authority: 10.2.4.5"
+2017/03/24 19:17:08[                               ngx_alloc,    34]  [debug] 28548#28548: *6 malloc: 00000000018A4D60:512
+2017/03/24 19:17:08[                               ngx_alloc,    34]  [debug] 28548#28548: *6 malloc: 00000000018DC480:4096
+2017/03/24 19:17:08[               ngx_http_v2_table_account,   327]  [debug] 28548#28548: *6 http2 hpack table account: 50 free:4096
+2017/03/24 19:17:08[          ngx_http_v2_state_header_block,  1379]  [debug] 28548#28548: *6 ngx_http_v2_state_header_block, indexed:0, size_update:0, value:19
+2017/03/24 19:17:08[          ngx_http_v2_get_indexed_header,   115]  [debug] 28548#28548: *6 http2 get indexed header: 19
+2017/03/24 19:17:08[          ngx_http_v2_state_header_block,  1420]  [debug] 28548#28548: *6 HEADER name:accept, value:
+2017/03/24 19:17:08[             ngx_http_v2_state_field_len,  1479]  [debug] 28548#28548: *6 http2 hpack raw string length: 3
+2017/03/24 19:17:08[                  ngx_http_v2_add_header,   206]  [debug] 28548#28548: *6 http2 add header to hpack table: "accept: */*"
+2017/03/24 19:17:08[               ngx_http_v2_table_account,   327]  [debug] 28548#28548: *6 http2 hpack table account: 41 free:4046
+2017/03/24 19:17:08[        ngx_http_v2_state_process_header,  1777]  [debug] 28548#28548: *6 http2 http header: "accept: */*"
+2017/03/24 19:17:08[          ngx_http_v2_state_header_block,  1379]  [debug] 28548#28548: *6 ngx_http_v2_state_header_block, indexed:1, size_update:0, value:16
+2017/03/24 19:17:08[          ngx_http_v2_get_indexed_header,   115]  [debug] 28548#28548: *6 http2 get indexed header name: 16
+2017/03/24 19:17:08[          ngx_http_v2_state_header_block,  1389]  [debug] 28548#28548: *6 HEADER name:accept-encoding, value:gzip, deflate
+2017/03/24 19:17:08[        ngx_http_v2_state_process_header,  1777]  [debug] 28548#28548: *6 http2 http header: "accept-encoding: gzip, deflate"
+2017/03/24 19:17:08[          ngx_http_v2_state_header_block,  1379]  [debug] 28548#28548: *6 ngx_http_v2_state_header_block, indexed:0, size_update:0, value:58
+2017/03/24 19:17:08[          ngx_http_v2_get_indexed_header,   115]  [debug] 28548#28548: *6 http2 get indexed header: 58
+2017/03/24 19:17:08[          ngx_http_v2_state_header_block,  1420]  [debug] 28548#28548: *6 HEADER name:user-agent, value:
+2017/03/24 19:17:08[             ngx_http_v2_state_field_len,  1479]  [debug] 28548#28548: *6 http2 hpack encoded string length: 13
+2017/03/24 19:17:08[                  ngx_http_v2_add_header,   206]  [debug] 28548#28548: *6 http2 add header to hpack table: "user-agent: nghttp2/1.21.0-DEV"
+2017/03/24 19:17:08[               ngx_http_v2_table_account,   327]  [debug] 28548#28548: *6 http2 hpack table account: 60 free:4005
+2017/03/24 19:17:08[        ngx_http_v2_state_process_header,  1777]  [debug] 28548#28548: *6 http2 http header: "user-agent: nghttp2/1.21.0-DEV"
+2017/03/24 19:17:08[      ngx_http_v2_construct_request_line,  3435]  [debug] 28548#28548: *6 http2 http request line: "GET /logo.jpg HTTP/2.0"
+2017/03/24 19:17:08[             ngx_http_core_rewrite_phase,  1997]  [debug] 28548#28548: *6 rewrite phase: 0 (NGX_HTTP_SERVER_REWRITE_PHASE)
+2017/03/24 19:17:08[         ngx_http_core_find_config_phase,  2055]  [debug] 28548#28548: *6 find config phase: 1 (NGX_HTTP_FIND_CONFIG_PHASE), uri:/logo.jpg
+2017/03/24 19:17:08[      ngx_http_core_find_static_location,  2947]  [debug] 28548#28548: *6 test location: "/"
+2017/03/24 19:17:08[      ngx_http_core_find_static_location,  2947]  [debug] 28548#28548: *6 test location: "list"
+2017/03/24 19:17:08[             ngx_http_core_find_location,  2883]  [debug] 28548#28548: *6 ngx pcre test location: ~ "\.php$"
+2017/03/24 19:17:08[         ngx_http_core_find_config_phase,  2076]  [debug] 28548#28548: *6 using configuration "/"
+2017/03/24 19:17:08[         ngx_http_core_find_config_phase,  2083]  [debug] 28548#28548: *6 http cl:-1 max:1048576, rc:-5
+2017/03/24 19:17:08[             ngx_http_core_rewrite_phase,  1997]  [debug] 28548#28548: *6 rewrite phase: 2 (NGX_HTTP_REWRITE_PHASE)
+2017/03/24 19:17:08[        ngx_http_core_post_rewrite_phase,  2151]  [debug] 28548#28548: *6 post rewrite phase: 3 (NGX_HTTP_POST_REWRITE_PHASE)
+2017/03/24 19:17:08[             ngx_http_core_generic_phase,  1933]  [debug] 28548#28548: *6 generic phase: 4 (NGX_HTTP_PREACCESS_PHASE)
+2017/03/24 19:17:08[             ngx_http_core_generic_phase,  1933]  [debug] 28548#28548: *6 generic phase: 5 (NGX_HTTP_PREACCESS_PHASE)
+2017/03/24 19:17:08[              ngx_http_core_access_phase,  2249]  [debug] 28548#28548: *6 access phase: 6 (NGX_HTTP_ACCESS_PHASE)
+2017/03/24 19:17:08[              ngx_http_core_access_phase,  2249]  [debug] 28548#28548: *6 access phase: 7 (NGX_HTTP_ACCESS_PHASE)
+2017/03/24 19:17:08[         ngx_http_core_post_access_phase,  2351]  [debug] 28548#28548: *6 post access phase: 8 (NGX_HTTP_POST_ACCESS_PHASE)
+2017/03/24 19:17:08[             ngx_http_core_content_phase,  2681]  [debug] 28548#28548: *6 content phase: 9 (NGX_HTTP_CONTENT_PHASE)
+2017/03/24 19:17:08[             ngx_http_core_content_phase,  2681]  [debug] 28548#28548: *6 content phase: 10 (NGX_HTTP_CONTENT_PHASE)
+2017/03/24 19:17:08[             ngx_http_core_content_phase,  2681]  [debug] 28548#28548: *6 content phase: 11 (NGX_HTTP_CONTENT_PHASE)
+2017/03/24 19:17:08[                 ngx_http_static_handler,   108]  [debug] 28548#28548: *6 http filename: "/usr/local/nginx/html/logo.jpg"
+2017/03/24 19:17:08[                    ngx_pool_cleanup_add,   412]  [debug] 28548#28548: *6 add cleanup: 00000000018A6580
+2017/03/24 19:17:08[                 ngx_http_static_handler,   173]  [debug] 28548#28548: *6 http static fd: 14
+2017/03/24 19:17:08[               ngx_http_send_header,  3358][yangya  [debug] 28548#28548: *6 ngx http send header
+2017/03/24 19:17:08[               ngx_http_v2_header_filter,   166]  [debug] 28548#28548: *6 http2 header filter
+2017/03/24 19:17:08[               ngx_http_v2_header_filter,   641]  [debug] 28548#28548: *6 http2:13 create HEADERS frame 00000000018A6770: len:140
+2017/03/24 19:17:08[                    ngx_http_cleanup_add,  4260]  [debug] 28548#28548: *6 http cleanup add: 00000000018A67A8
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018A6770 sid:13 bl:1 len:140
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018AD590 sid:0 bl:0 len:0
+2017/03/24 19:17:08[                               ngx_alloc,    34]  [debug] 28548#28548: *6 malloc: 00000000018ECB80:16384
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 149
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 158
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 158
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018AD590 sid:0 bl:0 len:0
+2017/03/24 19:17:08[       ngx_http_v2_headers_frame_handler,  1122]  [debug] 28548#28548: *6 http2:13 HEADERS frame 00000000018A6770 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018A6770 sid:13 bl:1 len:140
+2017/03/24 19:17:08[                  ngx_http_output_filter,  3411]  [debug] 28548#28548: *6 http output filter "/logo.jpg?"
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   297]  [debug] 28548#28548: *6 http copy filter: "/logo.jpg?", r->aio:0
+2017/03/24 19:17:08[                   ngx_output_chain,   161][yangya  [debug] 28548#28548: *6 ctx->sendfile:0, ctx->aio:0, ctx->directio:0
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                               ngx_alloc,    34]  [debug] 28548#28548: *6 malloc: 00000000018F0B90:32768
+2017/03/24 19:17:08[                           ngx_read_file,    73]  [debug] 28548#28548: *6 read file /usr/local/nginx/html/logo.jpg: 14, 00000000018F0B90, 32768, 0
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                ngx_http_postpone_filter,   157]  [debug] 28548#28548: *6 http postpone filter "/logo.jpg?" 00000000018DBDD0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   208]  [debug] 28548#28548: *6 write new buf temporary:1 buf-in-file:0, buf->start:00000000018F0B90, buf->pos:00000000018F0B90, buf_size: 32768 file_pos: 0, in_file_size: 0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   248]  [debug] 28548#28548: *6 http write filter: last:0 flush:1 size:32768
+2017/03/24 19:17:08[                   ngx_http_write_filter,   380]  [debug] 28548#28548: *6 http write filter limit 0
+2017/03/24 19:17:08[                  ngx_http_v2_send_chain,   744]  [debug] 28548#28548: *6 ngx_http_v2_send_chain
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:13 create DATA frame 00000000018A6770: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:13 create DATA frame 00000000018DBF20: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:13 create DATA frame 00000000018DC028: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:13 create DATA frame 00000000018DC130: len:8192 flags:0
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DC130 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DC028 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DBF20 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018A6770 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8174
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 16384
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: -1
+2017/03/24 19:17:08[                           ngx_ssl_write,  1703]  [debug] 28548#28548: *6 SSL_get_error: 3
+2017/03/24 19:17:08[                  ngx_handle_write_event,   612]  [debug] 28548#28548: *6 <ngx_http_v2_send_output_queue,   508> epoll NGX_USE_CLEAR_EVENT write add
+2017/03/24 19:17:08[                     ngx_epoll_add_event,  1400]  [debug] 28548#28548: *6 epoll modify read and write event: fd:3 op:3 ev:80002005
+2017/03/24 19:17:08[                     ngx_event_add_timer,   100]  [debug] 28548#28548: *6 <ngx_http_v2_send_output_queue,   551>  event timer add fd:3, expire-time:60 s, timer.key:1490354288606
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:13 DATA frame 00000000018A6770 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018A6770 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1190]  [debug] 28548#28548: *6 http2:13 DATA frame 00000000018DBF20 was sent partially
+2017/03/24 19:17:08[                   ngx_http_write_filter,   386]  [debug] 28548#28548: *6 http write filter 0000000000000000
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   376]  [debug] 28548#28548: *6 http copy filter rc: -2, buffered:4 "/logo.jpg?"
+2017/03/24 19:17:08[               ngx_http_finalize_request,  2603]  [debug] 28548#28548: *6 http finalize request rc: -2, "/logo.jpg?" a:1, c:1, b:4, p:0000000000000000
+2017/03/24 19:17:08[              ngx_http_v2_state_complete,  2378]  [debug] 28548#28548: *6 http2 frame complete pos:00007F055FAC80C2 end:00007F055FAC80E0
+2017/03/24 19:17:08[                  ngx_http_v2_state_head,   757]  [debug] 28548#28548: *6 process http2 frame type:1 f:25 l:21 sid:15
+2017/03/24 19:17:08[               ngx_http_v2_state_headers,  1161]  [debug] 28548#28548: *6 http2 HEADERS frame sid:15 on 11 excl:0 weight:16
+2017/03/24 19:17:08[                            ngx_memalign,    72]  [debug] 28548#28548: *6 posix_memalign: 00000000018AEB50:256 @16
+2017/03/24 19:17:08[                            ngx_memalign,    72]  [debug] 28548#28548: *6 posix_memalign: 00000000018DD490:4096 @16
+2017/03/24 19:17:08[                            ngx_memalign,    72]  [debug] 28548#28548: *6 posix_memalign: 00000000018DE4A0:4096 @16
+2017/03/24 19:17:08[          ngx_http_v2_state_header_block,  1379]  [debug] 28548#28548: *6 ngx_http_v2_state_header_block, indexed:1, size_update:0, value:2
+2017/03/24 19:17:08[          ngx_http_v2_get_indexed_header,   115]  [debug] 28548#28548: *6 http2 get indexed header name: 2
+2017/03/24 19:17:08[          ngx_http_v2_state_header_block,  1389]  [debug] 28548#28548: *6 HEADER name::method, value:GET
+2017/03/24 19:17:08[          ngx_http_v2_state_header_block,  1379]  [debug] 28548#28548: *6 ngx_http_v2_state_header_block, indexed:0, size_update:0, value:4
+2017/03/24 19:17:08[          ngx_http_v2_get_indexed_header,   115]  [debug] 28548#28548: *6 http2 get indexed header: 4
+2017/03/24 19:17:08[          ngx_http_v2_state_header_block,  1420]  [debug] 28548#28548: *6 HEADER name::path, value:/
+2017/03/24 19:17:08[             ngx_http_v2_state_field_len,  1479]  [debug] 28548#28548: *6 http2 hpack encoded string length: 8
+2017/03/24 19:17:08[            ngx_http_process_request_uri,  1245]  [debug] 28548#28548: *6 http uri: "/logo2.jpg"
+2017/03/24 19:17:08[            ngx_http_process_request_uri,  1248]  [debug] 28548#28548: *6 http args: ""
+2017/03/24 19:17:08[            ngx_http_process_request_uri,  1251]  [debug] 28548#28548: *6 http exten: "jpg"
+2017/03/24 19:17:08[          ngx_http_v2_state_header_block,  1379]  [debug] 28548#28548: *6 ngx_http_v2_state_header_block, indexed:1, size_update:0, value:7
+2017/03/24 19:17:08[          ngx_http_v2_get_indexed_header,   115]  [debug] 28548#28548: *6 http2 get indexed header name: 7
+2017/03/24 19:17:08[          ngx_http_v2_state_header_block,  1389]  [debug] 28548#28548: *6 HEADER name::scheme, value:https
+2017/03/24 19:17:08[          ngx_http_v2_state_header_block,  1379]  [debug] 28548#28548: *6 ngx_http_v2_state_header_block, indexed:1, size_update:0, value:64
+2017/03/24 19:17:08[          ngx_http_v2_get_indexed_header,   115]  [debug] 28548#28548: *6 http2 get indexed header name: 64
+2017/03/24 19:17:08[          ngx_http_v2_state_header_block,  1389]  [debug] 28548#28548: *6 HEADER name::authority, value:10.2.4.5
+2017/03/24 19:17:08[          ngx_http_v2_state_header_block,  1379]  [debug] 28548#28548: *6 ngx_http_v2_state_header_block, indexed:1, size_update:0, value:63
+2017/03/24 19:17:08[          ngx_http_v2_get_indexed_header,   115]  [debug] 28548#28548: *6 http2 get indexed header name: 63
+2017/03/24 19:17:08[          ngx_http_v2_state_header_block,  1389]  [debug] 28548#28548: *6 HEADER name:accept, value:*/*
+2017/03/24 19:17:08[        ngx_http_v2_state_process_header,  1777]  [debug] 28548#28548: *6 http2 http header: "accept: */*"
+2017/03/24 19:17:08[          ngx_http_v2_state_header_block,  1379]  [debug] 28548#28548: *6 ngx_http_v2_state_header_block, indexed:1, size_update:0, value:16
+2017/03/24 19:17:08[          ngx_http_v2_get_indexed_header,   115]  [debug] 28548#28548: *6 http2 get indexed header name: 16
+2017/03/24 19:17:08[          ngx_http_v2_state_header_block,  1389]  [debug] 28548#28548: *6 HEADER name:accept-encoding, value:gzip, deflate
+2017/03/24 19:17:08[        ngx_http_v2_state_process_header,  1777]  [debug] 28548#28548: *6 http2 http header: "accept-encoding: gzip, deflate"
+2017/03/24 19:17:08[          ngx_http_v2_state_header_block,  1379]  [debug] 28548#28548: *6 ngx_http_v2_state_header_block, indexed:1, size_update:0, value:62
+2017/03/24 19:17:08[          ngx_http_v2_get_indexed_header,   115]  [debug] 28548#28548: *6 http2 get indexed header name: 62
+2017/03/24 19:17:08[          ngx_http_v2_state_header_block,  1389]  [debug] 28548#28548: *6 HEADER name:user-agent, value:nghttp2/1.21.0-DEV
+2017/03/24 19:17:08[        ngx_http_v2_state_process_header,  1777]  [debug] 28548#28548: *6 http2 http header: "user-agent: nghttp2/1.21.0-DEV"
+2017/03/24 19:17:08[      ngx_http_v2_construct_request_line,  3435]  [debug] 28548#28548: *6 http2 http request line: "GET /logo2.jpg HTTP/2.0"
+2017/03/24 19:17:08[             ngx_http_core_rewrite_phase,  1997]  [debug] 28548#28548: *6 rewrite phase: 0 (NGX_HTTP_SERVER_REWRITE_PHASE)
+2017/03/24 19:17:08[         ngx_http_core_find_config_phase,  2055]  [debug] 28548#28548: *6 find config phase: 1 (NGX_HTTP_FIND_CONFIG_PHASE), uri:/logo2.jpg
+2017/03/24 19:17:08[      ngx_http_core_find_static_location,  2947]  [debug] 28548#28548: *6 test location: "/"
+2017/03/24 19:17:08[      ngx_http_core_find_static_location,  2947]  [debug] 28548#28548: *6 test location: "list"
+2017/03/24 19:17:08[             ngx_http_core_find_location,  2883]  [debug] 28548#28548: *6 ngx pcre test location: ~ "\.php$"
+2017/03/24 19:17:08[         ngx_http_core_find_config_phase,  2076]  [debug] 28548#28548: *6 using configuration "/"
+2017/03/24 19:17:08[         ngx_http_core_find_config_phase,  2083]  [debug] 28548#28548: *6 http cl:-1 max:1048576, rc:-5
+2017/03/24 19:17:08[             ngx_http_core_rewrite_phase,  1997]  [debug] 28548#28548: *6 rewrite phase: 2 (NGX_HTTP_REWRITE_PHASE)
+2017/03/24 19:17:08[        ngx_http_core_post_rewrite_phase,  2151]  [debug] 28548#28548: *6 post rewrite phase: 3 (NGX_HTTP_POST_REWRITE_PHASE)
+2017/03/24 19:17:08[             ngx_http_core_generic_phase,  1933]  [debug] 28548#28548: *6 generic phase: 4 (NGX_HTTP_PREACCESS_PHASE)
+2017/03/24 19:17:08[             ngx_http_core_generic_phase,  1933]  [debug] 28548#28548: *6 generic phase: 5 (NGX_HTTP_PREACCESS_PHASE)
+2017/03/24 19:17:08[              ngx_http_core_access_phase,  2249]  [debug] 28548#28548: *6 access phase: 6 (NGX_HTTP_ACCESS_PHASE)
+2017/03/24 19:17:08[              ngx_http_core_access_phase,  2249]  [debug] 28548#28548: *6 access phase: 7 (NGX_HTTP_ACCESS_PHASE)
+2017/03/24 19:17:08[         ngx_http_core_post_access_phase,  2351]  [debug] 28548#28548: *6 post access phase: 8 (NGX_HTTP_POST_ACCESS_PHASE)
+2017/03/24 19:17:08[             ngx_http_core_content_phase,  2681]  [debug] 28548#28548: *6 content phase: 9 (NGX_HTTP_CONTENT_PHASE)
+2017/03/24 19:17:08[             ngx_http_core_content_phase,  2681]  [debug] 28548#28548: *6 content phase: 10 (NGX_HTTP_CONTENT_PHASE)
+2017/03/24 19:17:08[             ngx_http_core_content_phase,  2681]  [debug] 28548#28548: *6 content phase: 11 (NGX_HTTP_CONTENT_PHASE)
+2017/03/24 19:17:08[                 ngx_http_static_handler,   108]  [debug] 28548#28548: *6 http filename: "/usr/local/nginx/html/logo2.jpg"
+2017/03/24 19:17:08[                    ngx_pool_cleanup_add,   412]  [debug] 28548#28548: *6 add cleanup: 00000000018DE260
+2017/03/24 19:17:08[                 ngx_http_static_handler,   173]  [debug] 28548#28548: *6 http static fd: 15
+2017/03/24 19:17:08[               ngx_http_send_header,  3358][yangya  [debug] 28548#28548: *6 ngx http send header
+2017/03/24 19:17:08[               ngx_http_v2_header_filter,   166]  [debug] 28548#28548: *6 http2 header filter
+2017/03/24 19:17:08[               ngx_http_v2_header_filter,   641]  [debug] 28548#28548: *6 http2:15 create HEADERS frame 00000000018DE450: len:140
+2017/03/24 19:17:08[                    ngx_http_cleanup_add,  4260]  [debug] 28548#28548: *6 http cleanup add: 00000000018DED30
+2017/03/24 19:17:08[                  ngx_http_output_filter,  3411]  [debug] 28548#28548: *6 http output filter "/logo2.jpg?"
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   297]  [debug] 28548#28548: *6 http copy filter: "/logo2.jpg?", r->aio:0
+2017/03/24 19:17:08[                   ngx_output_chain,   161][yangya  [debug] 28548#28548: *6 ctx->sendfile:0, ctx->aio:0, ctx->directio:0
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                               ngx_alloc,    34]  [debug] 28548#28548: *6 malloc: 00000000018F8BA0:32768
+2017/03/24 19:17:08[                           ngx_read_file,    73]  [debug] 28548#28548: *6 read file /usr/local/nginx/html/logo2.jpg: 15, 00000000018F8BA0, 32768, 0
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                ngx_http_postpone_filter,   157]  [debug] 28548#28548: *6 http postpone filter "/logo2.jpg?" 00000000018DEE38
+2017/03/24 19:17:08[                   ngx_http_write_filter,   208]  [debug] 28548#28548: *6 write new buf temporary:1 buf-in-file:0, buf->start:00000000018F8BA0, buf->pos:00000000018F8BA0, buf_size: 32768 file_pos: 0, in_file_size: 0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   248]  [debug] 28548#28548: *6 http write filter: last:0 flush:1 size:32768
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   376]  [debug] 28548#28548: *6 http copy filter rc: -2, buffered:4 "/logo2.jpg?"
+2017/03/24 19:17:08[               ngx_http_finalize_request,  2603]  [debug] 28548#28548: *6 http finalize request rc: -2, "/logo2.jpg?" a:1, c:1, b:4, p:0000000000000000
+2017/03/24 19:17:08[              ngx_http_v2_state_complete,  2378]  [debug] 28548#28548: *6 http2 frame complete pos:00007F055FAC80E0 end:00007F055FAC80E0
+2017/03/24 19:17:08[                     ngx_event_del_timer,    39]  [debug] 28548#28548: *6 < ngx_http_v2_read_handler,   390>  event timer del: 3: 1490354408604
+2017/03/24 19:17:08[                ngx_trylock_accept_mutex,   406]  [debug] 28548#28548: accept mutex locked
+2017/03/24 19:17:08[                ngx_epoll_process_events,  1715]  [debug] 28548#28548: epoll: fd:3 EPOLLOUT  (ev:0004) d:00007F05673092B1
+2017/03/24 19:17:08[                ngx_epoll_process_events,  1788]  [debug] 28548#28548: *6 post event 00007F055FB09130
+2017/03/24 19:17:08[           ngx_process_events_and_timers,   395]  [debug] 28548#28548: epoll_wait timer range(delta): 2
+2017/03/24 19:17:08[                ngx_event_process_posted,    62]  [debug] 28548#28548: begin to run befor posted event 00007F055FB09130
+2017/03/24 19:17:08[                ngx_event_process_posted,    64]  [debug] 28548#28548: *6 delete posted event 00007F055FB09130
+2017/03/24 19:17:08[               ngx_http_v2_write_handler,   420]  [debug] 28548#28548: *6 http2 write handler
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DC130 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DC028 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DE450 sid:15 bl:1 len:140
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DBF20 sid:13 bl:1 len:8192
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 16384
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 16384
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 18
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 149
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8007
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 16384
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 16384
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 185
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 185
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 185
+2017/03/24 19:17:08[                     ngx_event_del_timer,    39]  [debug] 28548#28548: *6 <ngx_http_v2_send_output_queue,   555>  event timer del: 3: 1490354288606
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:13 DATA frame 00000000018DBF20 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DBF20 sid:13 bl:1 len:8192
+2017/03/24 19:17:08[       ngx_http_v2_headers_frame_handler,  1122]  [debug] 28548#28548: *6 http2:15 HEADERS frame 00000000018DE450 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DE450 sid:15 bl:1 len:140
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:13 DATA frame 00000000018DC028 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DC028 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:13 DATA frame 00000000018DC130 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DC130 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[               ngx_http_v2_write_handler,   441]  [debug] 28548#28548: *6 run http2 stream 13
+2017/03/24 19:17:08[                ngx_http_request_handler,  2424]  [debug] 28548#28548: *6 http run request(ev->write:1): "/logo.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3059]  [debug] 28548#28548: *6 http writer handler: "/logo.jpg?"
+2017/03/24 19:17:08[                  ngx_http_output_filter,  3411]  [debug] 28548#28548: *6 http output filter "/logo.jpg?"
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   297]  [debug] 28548#28548: *6 http copy filter: "/logo.jpg?", r->aio:0
+2017/03/24 19:17:08[                   ngx_output_chain,   161][yangya  [debug] 28548#28548: *6 ctx->sendfile:0, ctx->aio:0, ctx->directio:0
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:206158430208, mmap:140733193388032
+2017/03/24 19:17:08[                ngx_http_postpone_filter,   157]  [debug] 28548#28548: *6 http postpone filter "/logo.jpg?" 0000000000000000
+2017/03/24 19:17:08[                   ngx_http_write_filter,   248]  [debug] 28548#28548: *6 http write filter: last:0 flush:0 size:0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   380]  [debug] 28548#28548: *6 http write filter limit 0
+2017/03/24 19:17:08[                  ngx_http_v2_send_chain,   744]  [debug] 28548#28548: *6 ngx_http_v2_send_chain
+2017/03/24 19:17:08[                   ngx_http_write_filter,   386]  [debug] 28548#28548: *6 http write filter 0000000000000000
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:206158430208, mmap:140733193388032
+2017/03/24 19:17:08[                           ngx_read_file,    73]  [debug] 28548#28548: *6 read file /usr/local/nginx/html/logo.jpg: 14, 00000000018F0B90, 32768, 32768
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:206158430208, mmap:140733193388032
+2017/03/24 19:17:08[                ngx_http_postpone_filter,   157]  [debug] 28548#28548: *6 http postpone filter "/logo.jpg?" 00000000018DBDD0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   208]  [debug] 28548#28548: *6 write new buf temporary:1 buf-in-file:0, buf->start:00000000018F0B90, buf->pos:00000000018F0B90, buf_size: 32768 file_pos: 0, in_file_size: 0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   248]  [debug] 28548#28548: *6 http write filter: last:0 flush:1 size:32768
+2017/03/24 19:17:08[                   ngx_http_write_filter,   380]  [debug] 28548#28548: *6 http write filter limit 0
+2017/03/24 19:17:08[                  ngx_http_v2_send_chain,   744]  [debug] 28548#28548: *6 ngx_http_v2_send_chain
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:13 create DATA frame 00000000018DC130: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:13 create DATA frame 00000000018DC028: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:13 create DATA frame 00000000018DBF20: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:13 create DATA frame 00000000018A6770: len:8191 flags:0
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018A6770 sid:13 bl:0 len:8191
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DBF20 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DC028 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DC130 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8174
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 16384
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 16384
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 18
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8156
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 16384
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 16384
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 35
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 35
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 35
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:13 DATA frame 00000000018DC130 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DC130 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:13 DATA frame 00000000018DC028 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DC028 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:13 DATA frame 00000000018DBF20 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DBF20 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:13 DATA frame 00000000018A6770 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018A6770 sid:13 bl:0 len:8191
+2017/03/24 19:17:08[                   ngx_http_write_filter,   386]  [debug] 28548#28548: *6 http write filter 00000000018DBDE0
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:206158430208, mmap:140733193388032
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   376]  [debug] 28548#28548: *6 http copy filter rc: -2, buffered:4 "/logo.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3125]  [debug] 28548#28548: *6 http writer output filter: -2, "/logo.jpg?"
+2017/03/24 19:17:08[               ngx_http_v2_write_handler,   441]  [debug] 28548#28548: *6 run http2 stream 15
+2017/03/24 19:17:08[                ngx_http_request_handler,  2424]  [debug] 28548#28548: *6 http run request(ev->write:1): "/logo2.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3059]  [debug] 28548#28548: *6 http writer handler: "/logo2.jpg?"
+2017/03/24 19:17:08[                  ngx_http_output_filter,  3411]  [debug] 28548#28548: *6 http output filter "/logo2.jpg?"
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   297]  [debug] 28548#28548: *6 http copy filter: "/logo2.jpg?", r->aio:0
+2017/03/24 19:17:08[                   ngx_output_chain,   161][yangya  [debug] 28548#28548: *6 ctx->sendfile:0, ctx->aio:0, ctx->directio:0
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:206158430208, mmap:140733193388032
+2017/03/24 19:17:08[                ngx_http_postpone_filter,   157]  [debug] 28548#28548: *6 http postpone filter "/logo2.jpg?" 0000000000000000
+2017/03/24 19:17:08[                   ngx_http_write_filter,   151]  [debug] 28548#28548: *6 write old buf t:1 f:0 00000000018F8BA0, pos 00000000018F8BA0, size: 32768 file: 0, size: 0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   248]  [debug] 28548#28548: *6 http write filter: last:0 flush:1 size:32768
+2017/03/24 19:17:08[                   ngx_http_write_filter,   380]  [debug] 28548#28548: *6 http write filter limit 0
+2017/03/24 19:17:08[                  ngx_http_v2_send_chain,   744]  [debug] 28548#28548: *6 ngx_http_v2_send_chain
+2017/03/24 19:17:08[                   ngx_http_write_filter,   386]  [debug] 28548#28548: *6 http write filter 00000000018DEE48
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:206158430208, mmap:140733193388032
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   376]  [debug] 28548#28548: *6 http copy filter rc: -2, buffered:4 "/logo2.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3125]  [debug] 28548#28548: *6 http writer output filter: -2, "/logo2.jpg?"
+2017/03/24 19:17:08[                ngx_trylock_accept_mutex,   406]  [debug] 28548#28548: accept mutex locked
+2017/03/24 19:17:08[                ngx_epoll_process_events,  1715]  [debug] 28548#28548: epoll: fd:3 EPOLLIN EPOLLOUT  (ev:0005) d:00007F05673092B1
+2017/03/24 19:17:08[                ngx_epoll_process_events,  1761]  [debug] 28548#28548: *6 post event 00007F0563709130
+2017/03/24 19:17:08[                ngx_epoll_process_events,  1788]  [debug] 28548#28548: *6 post event 00007F055FB09130
+2017/03/24 19:17:08[           ngx_process_events_and_timers,   395]  [debug] 28548#28548: epoll_wait timer range(delta): 2
+2017/03/24 19:17:08[                ngx_event_process_posted,    62]  [debug] 28548#28548: begin to run befor posted event 00007F0563709130
+2017/03/24 19:17:08[                ngx_event_process_posted,    64]  [debug] 28548#28548: *6 delete posted event 00007F0563709130
+2017/03/24 19:17:08[                ngx_http_v2_read_handler,   327]  [debug] 28548#28548: *6 http2 read handler
+2017/03/24 19:17:08[                            ngx_ssl_recv,  1347]  [debug] 28548#28548: *6 SSL_read: 26
+2017/03/24 19:17:08[                            ngx_ssl_recv,  1347]  [debug] 28548#28548: *6 SSL_read: 26
+2017/03/24 19:17:08[                            ngx_ssl_recv,  1347]  [debug] 28548#28548: *6 SSL_read: -1
+2017/03/24 19:17:08[                     ngx_ssl_handle_recv,  1446]  [debug] 28548#28548: *6 SSL_get_error: 2
+2017/03/24 19:17:08[                  ngx_http_v2_state_head,   757]  [debug] 28548#28548: *6 process http2 frame type:8 f:0 l:4 sid:0
+2017/03/24 19:17:08[         ngx_http_v2_state_window_update,  2235]  [debug] 28548#28548: *6 http2 WINDOW_UPDATE frame sid:0 window:32768
+2017/03/24 19:17:08[                ngx_http_request_handler,  2424]  [debug] 28548#28548: *6 http run request(ev->write:1): "/logo2.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3059]  [debug] 28548#28548: *6 http writer handler: "/logo2.jpg?"
+2017/03/24 19:17:08[                  ngx_http_output_filter,  3411]  [debug] 28548#28548: *6 http output filter "/logo2.jpg?"
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   297]  [debug] 28548#28548: *6 http copy filter: "/logo2.jpg?", r->aio:0
+2017/03/24 19:17:08[                   ngx_output_chain,   161][yangya  [debug] 28548#28548: *6 ctx->sendfile:0, ctx->aio:0, ctx->directio:0
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                ngx_http_postpone_filter,   157]  [debug] 28548#28548: *6 http postpone filter "/logo2.jpg?" 0000000000000000
+2017/03/24 19:17:08[                   ngx_http_write_filter,   151]  [debug] 28548#28548: *6 write old buf t:1 f:0 00000000018F8BA0, pos 00000000018F8BA0, size: 32768 file: 0, size: 0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   248]  [debug] 28548#28548: *6 http write filter: last:0 flush:1 size:32768
+2017/03/24 19:17:08[                   ngx_http_write_filter,   380]  [debug] 28548#28548: *6 http write filter limit 0
+2017/03/24 19:17:08[                  ngx_http_v2_send_chain,   744]  [debug] 28548#28548: *6 ngx_http_v2_send_chain
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:15 create DATA frame 00000000018DE450: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:15 create DATA frame 00000000018DEF78: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:15 create DATA frame 00000000018DF080: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:15 create DATA frame 00000000018DF188: len:8192 flags:0
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DF188 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DF080 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DEF78 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DE450 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8174
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 16384
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 16384
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 18
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8156
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 16384
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 16384
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 36
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 36
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 36
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:15 DATA frame 00000000018DE450 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DE450 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:15 DATA frame 00000000018DEF78 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DEF78 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:15 DATA frame 00000000018DF080 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DF080 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:15 DATA frame 00000000018DF188 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DF188 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[                   ngx_http_write_filter,   386]  [debug] 28548#28548: *6 http write filter 0000000000000000
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                           ngx_read_file,    73]  [debug] 28548#28548: *6 read file /usr/local/nginx/html/logo2.jpg: 15, 00000000018F8BA0, 32768, 32768
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                ngx_http_postpone_filter,   157]  [debug] 28548#28548: *6 http postpone filter "/logo2.jpg?" 00000000018DEE38
+2017/03/24 19:17:08[                   ngx_http_write_filter,   208]  [debug] 28548#28548: *6 write new buf temporary:1 buf-in-file:0, buf->start:00000000018F8BA0, buf->pos:00000000018F8BA0, buf_size: 32768 file_pos: 0, in_file_size: 0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   248]  [debug] 28548#28548: *6 http write filter: last:0 flush:1 size:32768
+2017/03/24 19:17:08[                   ngx_http_write_filter,   380]  [debug] 28548#28548: *6 http write filter limit 0
+2017/03/24 19:17:08[                  ngx_http_v2_send_chain,   744]  [debug] 28548#28548: *6 ngx_http_v2_send_chain
+2017/03/24 19:17:08[                   ngx_http_write_filter,   386]  [debug] 28548#28548: *6 http write filter 00000000018DEE48
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   376]  [debug] 28548#28548: *6 http copy filter rc: -2, buffered:4 "/logo2.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3125]  [debug] 28548#28548: *6 http writer output filter: -2, "/logo2.jpg?"
+2017/03/24 19:17:08[              ngx_http_v2_state_complete,  2378]  [debug] 28548#28548: *6 http2 frame complete pos:00007F055FAC801D end:00007F055FAC8044
+2017/03/24 19:17:08[                  ngx_http_v2_state_head,   757]  [debug] 28548#28548: *6 process http2 frame type:8 f:0 l:4 sid:13
+2017/03/24 19:17:08[         ngx_http_v2_state_window_update,  2235]  [debug] 28548#28548: *6 http2 WINDOW_UPDATE frame sid:13 window:32768
+2017/03/24 19:17:08[                ngx_http_request_handler,  2424]  [debug] 28548#28548: *6 http run request(ev->write:1): "/logo.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3059]  [debug] 28548#28548: *6 http writer handler: "/logo.jpg?"
+2017/03/24 19:17:08[                  ngx_http_output_filter,  3411]  [debug] 28548#28548: *6 http output filter "/logo.jpg?"
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   297]  [debug] 28548#28548: *6 http copy filter: "/logo.jpg?", r->aio:0
+2017/03/24 19:17:08[                   ngx_output_chain,   161][yangya  [debug] 28548#28548: *6 ctx->sendfile:0, ctx->aio:0, ctx->directio:0
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                ngx_http_postpone_filter,   157]  [debug] 28548#28548: *6 http postpone filter "/logo.jpg?" 0000000000000000
+2017/03/24 19:17:08[                   ngx_http_write_filter,   151]  [debug] 28548#28548: *6 write old buf t:1 f:0 00000000018F0B90, pos 00000000018F8B8F, size: 1 file: 0, size: 0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   248]  [debug] 28548#28548: *6 http write filter: last:0 flush:1 size:1
+2017/03/24 19:17:08[                   ngx_http_write_filter,   380]  [debug] 28548#28548: *6 http write filter limit 0
+2017/03/24 19:17:08[                  ngx_http_v2_send_chain,   744]  [debug] 28548#28548: *6 ngx_http_v2_send_chain
+2017/03/24 19:17:08[                   ngx_http_write_filter,   386]  [debug] 28548#28548: *6 http write filter 00000000018DBDE0
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   376]  [debug] 28548#28548: *6 http copy filter rc: -2, buffered:4 "/logo.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3125]  [debug] 28548#28548: *6 http writer output filter: -2, "/logo.jpg?"
+2017/03/24 19:17:08[              ngx_http_v2_state_complete,  2378]  [debug] 28548#28548: *6 http2 frame complete pos:00007F055FAC802A end:00007F055FAC8044
+2017/03/24 19:17:08[                  ngx_http_v2_state_head,   757]  [debug] 28548#28548: *6 process http2 frame type:8 f:0 l:4 sid:0
+2017/03/24 19:17:08[         ngx_http_v2_state_window_update,  2235]  [debug] 28548#28548: *6 http2 WINDOW_UPDATE frame sid:0 window:32767
+2017/03/24 19:17:08[                ngx_http_request_handler,  2424]  [debug] 28548#28548: *6 http run request(ev->write:1): "/logo2.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3059]  [debug] 28548#28548: *6 http writer handler: "/logo2.jpg?"
+2017/03/24 19:17:08[                  ngx_http_output_filter,  3411]  [debug] 28548#28548: *6 http output filter "/logo2.jpg?"
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   297]  [debug] 28548#28548: *6 http copy filter: "/logo2.jpg?", r->aio:0
+2017/03/24 19:17:08[                   ngx_output_chain,   161][yangya  [debug] 28548#28548: *6 ctx->sendfile:0, ctx->aio:0, ctx->directio:0
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                ngx_http_postpone_filter,   157]  [debug] 28548#28548: *6 http postpone filter "/logo2.jpg?" 0000000000000000
+2017/03/24 19:17:08[                   ngx_http_write_filter,   151]  [debug] 28548#28548: *6 write old buf t:1 f:0 00000000018F8BA0, pos 00000000018F8BA0, size: 32768 file: 0, size: 0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   248]  [debug] 28548#28548: *6 http write filter: last:0 flush:1 size:32768
+2017/03/24 19:17:08[                   ngx_http_write_filter,   380]  [debug] 28548#28548: *6 http write filter limit 0
+2017/03/24 19:17:08[                  ngx_http_v2_send_chain,   744]  [debug] 28548#28548: *6 ngx_http_v2_send_chain
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:15 create DATA frame 00000000018DF188: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:15 create DATA frame 00000000018DF080: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:15 create DATA frame 00000000018DEF78: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:15 create DATA frame 00000000018DE450: len:8191 flags:0
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DE450 sid:15 bl:0 len:8191
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DEF78 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DF080 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DF188 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8174
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 16384
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 16384
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 18
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8156
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 16384
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 16384
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 35
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 35
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 35
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:15 DATA frame 00000000018DF188 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DF188 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:15 DATA frame 00000000018DF080 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DF080 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:15 DATA frame 00000000018DEF78 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DEF78 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:15 DATA frame 00000000018DE450 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DE450 sid:15 bl:0 len:8191
+2017/03/24 19:17:08[                   ngx_http_write_filter,   386]  [debug] 28548#28548: *6 http write filter 00000000018DEE48
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   376]  [debug] 28548#28548: *6 http copy filter rc: -2, buffered:4 "/logo2.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3125]  [debug] 28548#28548: *6 http writer output filter: -2, "/logo2.jpg?"
+2017/03/24 19:17:08[              ngx_http_v2_state_complete,  2378]  [debug] 28548#28548: *6 http2 frame complete pos:00007F055FAC8037 end:00007F055FAC8044
+2017/03/24 19:17:08[                  ngx_http_v2_state_head,   757]  [debug] 28548#28548: *6 process http2 frame type:8 f:0 l:4 sid:13
+2017/03/24 19:17:08[         ngx_http_v2_state_window_update,  2235]  [debug] 28548#28548: *6 http2 WINDOW_UPDATE frame sid:13 window:32767
+2017/03/24 19:17:08[              ngx_http_v2_state_complete,  2378]  [debug] 28548#28548: *6 http2 frame complete pos:00007F055FAC8044 end:00007F055FAC8044
+2017/03/24 19:17:08[                ngx_event_process_posted,    62]  [debug] 28548#28548: begin to run befor posted event 00007F055FB09130
+2017/03/24 19:17:08[                ngx_event_process_posted,    64]  [debug] 28548#28548: *6 delete posted event 00007F055FB09130
+2017/03/24 19:17:08[               ngx_http_v2_write_handler,   420]  [debug] 28548#28548: *6 http2 write handler
+2017/03/24 19:17:08[                ngx_trylock_accept_mutex,   406]  [debug] 28548#28548: accept mutex locked
+2017/03/24 19:17:08[                ngx_epoll_process_events,  1715]  [debug] 28548#28548: epoll: fd:3 EPOLLIN EPOLLOUT  (ev:0005) d:00007F05673092B1
+2017/03/24 19:17:08[                ngx_epoll_process_events,  1761]  [debug] 28548#28548: *6 post event 00007F0563709130
+2017/03/24 19:17:08[                ngx_epoll_process_events,  1788]  [debug] 28548#28548: *6 post event 00007F055FB09130
+2017/03/24 19:17:08[           ngx_process_events_and_timers,   395]  [debug] 28548#28548: epoll_wait timer range(delta): 2
+2017/03/24 19:17:08[                ngx_event_process_posted,    62]  [debug] 28548#28548: begin to run befor posted event 00007F0563709130
+2017/03/24 19:17:08[                ngx_event_process_posted,    64]  [debug] 28548#28548: *6 delete posted event 00007F0563709130
+2017/03/24 19:17:08[                ngx_http_v2_read_handler,   327]  [debug] 28548#28548: *6 http2 read handler
+2017/03/24 19:17:08[                            ngx_ssl_recv,  1347]  [debug] 28548#28548: *6 SSL_read: 26
+2017/03/24 19:17:08[                            ngx_ssl_recv,  1347]  [debug] 28548#28548: *6 SSL_read: 26
+2017/03/24 19:17:08[                            ngx_ssl_recv,  1347]  [debug] 28548#28548: *6 SSL_read: -1
+2017/03/24 19:17:08[                     ngx_ssl_handle_recv,  1446]  [debug] 28548#28548: *6 SSL_get_error: 2
+2017/03/24 19:17:08[                  ngx_http_v2_state_head,   757]  [debug] 28548#28548: *6 process http2 frame type:8 f:0 l:4 sid:0
+2017/03/24 19:17:08[         ngx_http_v2_state_window_update,  2235]  [debug] 28548#28548: *6 http2 WINDOW_UPDATE frame sid:0 window:32768
+2017/03/24 19:17:08[                ngx_http_request_handler,  2424]  [debug] 28548#28548: *6 http run request(ev->write:1): "/logo.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3059]  [debug] 28548#28548: *6 http writer handler: "/logo.jpg?"
+2017/03/24 19:17:08[                  ngx_http_output_filter,  3411]  [debug] 28548#28548: *6 http output filter "/logo.jpg?"
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   297]  [debug] 28548#28548: *6 http copy filter: "/logo.jpg?", r->aio:0
+2017/03/24 19:17:08[                   ngx_output_chain,   161][yangya  [debug] 28548#28548: *6 ctx->sendfile:0, ctx->aio:0, ctx->directio:0
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                ngx_http_postpone_filter,   157]  [debug] 28548#28548: *6 http postpone filter "/logo.jpg?" 0000000000000000
+2017/03/24 19:17:08[                   ngx_http_write_filter,   151]  [debug] 28548#28548: *6 write old buf t:1 f:0 00000000018F0B90, pos 00000000018F8B8F, size: 1 file: 0, size: 0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   248]  [debug] 28548#28548: *6 http write filter: last:0 flush:1 size:1
+2017/03/24 19:17:08[                   ngx_http_write_filter,   380]  [debug] 28548#28548: *6 http write filter limit 0
+2017/03/24 19:17:08[                  ngx_http_v2_send_chain,   744]  [debug] 28548#28548: *6 ngx_http_v2_send_chain
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:13 create DATA frame 00000000018A6770: len:1 flags:0
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018A6770 sid:13 bl:0 len:1
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 1
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 10
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 10
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:13 DATA frame 00000000018A6770 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018A6770 sid:13 bl:0 len:1
+2017/03/24 19:17:08[                   ngx_http_write_filter,   386]  [debug] 28548#28548: *6 http write filter 0000000000000000
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                           ngx_read_file,    73]  [debug] 28548#28548: *6 read file /usr/local/nginx/html/logo.jpg: 14, 00000000018F0B90, 32768, 65536
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                ngx_http_postpone_filter,   157]  [debug] 28548#28548: *6 http postpone filter "/logo.jpg?" 00000000018DBDD0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   208]  [debug] 28548#28548: *6 write new buf temporary:1 buf-in-file:0, buf->start:00000000018F0B90, buf->pos:00000000018F0B90, buf_size: 32768 file_pos: 0, in_file_size: 0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   248]  [debug] 28548#28548: *6 http write filter: last:0 flush:1 size:32768
+2017/03/24 19:17:08[                   ngx_http_write_filter,   380]  [debug] 28548#28548: *6 http write filter limit 0
+2017/03/24 19:17:08[                  ngx_http_v2_send_chain,   744]  [debug] 28548#28548: *6 ngx_http_v2_send_chain
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:13 create DATA frame 00000000018A6770: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:13 create DATA frame 00000000018DBF20: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:13 create DATA frame 00000000018DC028: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:13 create DATA frame 00000000018DC130: len:8191 flags:0
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DC130 sid:13 bl:0 len:8191
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DC028 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DBF20 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018A6770 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8174
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 16384
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 16384
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 18
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8156
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 16384
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 16384
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 35
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 35
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 35
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:13 DATA frame 00000000018A6770 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018A6770 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:13 DATA frame 00000000018DBF20 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DBF20 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:13 DATA frame 00000000018DC028 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DC028 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:13 DATA frame 00000000018DC130 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DC130 sid:13 bl:0 len:8191
+2017/03/24 19:17:08[                   ngx_http_write_filter,   386]  [debug] 28548#28548: *6 http write filter 00000000018DBDE0
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   376]  [debug] 28548#28548: *6 http copy filter rc: -2, buffered:4 "/logo.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3125]  [debug] 28548#28548: *6 http writer output filter: -2, "/logo.jpg?"
+2017/03/24 19:17:08[              ngx_http_v2_state_complete,  2378]  [debug] 28548#28548: *6 http2 frame complete pos:00007F055FAC801D end:00007F055FAC8044
+2017/03/24 19:17:08[                  ngx_http_v2_state_head,   757]  [debug] 28548#28548: *6 process http2 frame type:8 f:0 l:4 sid:15
+2017/03/24 19:17:08[         ngx_http_v2_state_window_update,  2235]  [debug] 28548#28548: *6 http2 WINDOW_UPDATE frame sid:15 window:32768
+2017/03/24 19:17:08[                ngx_http_request_handler,  2424]  [debug] 28548#28548: *6 http run request(ev->write:1): "/logo2.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3059]  [debug] 28548#28548: *6 http writer handler: "/logo2.jpg?"
+2017/03/24 19:17:08[                  ngx_http_output_filter,  3411]  [debug] 28548#28548: *6 http output filter "/logo2.jpg?"
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   297]  [debug] 28548#28548: *6 http copy filter: "/logo2.jpg?", r->aio:0
+2017/03/24 19:17:08[                   ngx_output_chain,   161][yangya  [debug] 28548#28548: *6 ctx->sendfile:0, ctx->aio:0, ctx->directio:0
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                ngx_http_postpone_filter,   157]  [debug] 28548#28548: *6 http postpone filter "/logo2.jpg?" 0000000000000000
+2017/03/24 19:17:08[                   ngx_http_write_filter,   151]  [debug] 28548#28548: *6 write old buf t:1 f:0 00000000018F8BA0, pos 0000000001900B9F, size: 1 file: 0, size: 0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   248]  [debug] 28548#28548: *6 http write filter: last:0 flush:1 size:1
+2017/03/24 19:17:08[                   ngx_http_write_filter,   380]  [debug] 28548#28548: *6 http write filter limit 0
+2017/03/24 19:17:08[                  ngx_http_v2_send_chain,   744]  [debug] 28548#28548: *6 ngx_http_v2_send_chain
+2017/03/24 19:17:08[                   ngx_http_write_filter,   386]  [debug] 28548#28548: *6 http write filter 00000000018DEE48
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   376]  [debug] 28548#28548: *6 http copy filter rc: -2, buffered:4 "/logo2.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3125]  [debug] 28548#28548: *6 http writer output filter: -2, "/logo2.jpg?"
+2017/03/24 19:17:08[              ngx_http_v2_state_complete,  2378]  [debug] 28548#28548: *6 http2 frame complete pos:00007F055FAC802A end:00007F055FAC8044
+2017/03/24 19:17:08[                  ngx_http_v2_state_head,   757]  [debug] 28548#28548: *6 process http2 frame type:8 f:0 l:4 sid:0
+2017/03/24 19:17:08[         ngx_http_v2_state_window_update,  2235]  [debug] 28548#28548: *6 http2 WINDOW_UPDATE frame sid:0 window:32767
+2017/03/24 19:17:08[                ngx_http_request_handler,  2424]  [debug] 28548#28548: *6 http run request(ev->write:1): "/logo.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3059]  [debug] 28548#28548: *6 http writer handler: "/logo.jpg?"
+2017/03/24 19:17:08[                  ngx_http_output_filter,  3411]  [debug] 28548#28548: *6 http output filter "/logo.jpg?"
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   297]  [debug] 28548#28548: *6 http copy filter: "/logo.jpg?", r->aio:0
+2017/03/24 19:17:08[                   ngx_output_chain,   161][yangya  [debug] 28548#28548: *6 ctx->sendfile:0, ctx->aio:0, ctx->directio:0
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                ngx_http_postpone_filter,   157]  [debug] 28548#28548: *6 http postpone filter "/logo.jpg?" 0000000000000000
+2017/03/24 19:17:08[                   ngx_http_write_filter,   151]  [debug] 28548#28548: *6 write old buf t:1 f:0 00000000018F0B90, pos 00000000018F8B8F, size: 1 file: 0, size: 0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   248]  [debug] 28548#28548: *6 http write filter: last:0 flush:1 size:1
+2017/03/24 19:17:08[                   ngx_http_write_filter,   380]  [debug] 28548#28548: *6 http write filter limit 0
+2017/03/24 19:17:08[                  ngx_http_v2_send_chain,   744]  [debug] 28548#28548: *6 ngx_http_v2_send_chain
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:13 create DATA frame 00000000018DC130: len:1 flags:0
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DC130 sid:13 bl:0 len:1
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 1
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 10
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 10
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:13 DATA frame 00000000018DC130 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DC130 sid:13 bl:0 len:1
+2017/03/24 19:17:08[                   ngx_http_write_filter,   386]  [debug] 28548#28548: *6 http write filter 0000000000000000
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                           ngx_read_file,    73]  [debug] 28548#28548: *6 read file /usr/local/nginx/html/logo.jpg: 14, 00000000018F0B90, 32768, 98304
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                ngx_http_postpone_filter,   157]  [debug] 28548#28548: *6 http postpone filter "/logo.jpg?" 00000000018DBDD0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   208]  [debug] 28548#28548: *6 write new buf temporary:1 buf-in-file:0, buf->start:00000000018F0B90, buf->pos:00000000018F0B90, buf_size: 32768 file_pos: 0, in_file_size: 0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   248]  [debug] 28548#28548: *6 http write filter: last:0 flush:1 size:32768
+2017/03/24 19:17:08[                   ngx_http_write_filter,   380]  [debug] 28548#28548: *6 http write filter limit 0
+2017/03/24 19:17:08[                  ngx_http_v2_send_chain,   744]  [debug] 28548#28548: *6 ngx_http_v2_send_chain
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:13 create DATA frame 00000000018DC130: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:13 create DATA frame 00000000018DC028: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:13 create DATA frame 00000000018DBF20: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:13 create DATA frame 00000000018A6770: len:8190 flags:0
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018A6770 sid:13 bl:0 len:8190
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DBF20 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DC028 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DC130 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8174
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 16384
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 16384
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 18
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8156
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 16384
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 16384
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 34
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 34
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 34
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:13 DATA frame 00000000018DC130 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DC130 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:13 DATA frame 00000000018DC028 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DC028 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:13 DATA frame 00000000018DBF20 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DBF20 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:13 DATA frame 00000000018A6770 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018A6770 sid:13 bl:0 len:8190
+2017/03/24 19:17:08[                   ngx_http_write_filter,   386]  [debug] 28548#28548: *6 http write filter 00000000018DBDE0
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   376]  [debug] 28548#28548: *6 http copy filter rc: -2, buffered:4 "/logo.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3125]  [debug] 28548#28548: *6 http writer output filter: -2, "/logo.jpg?"
+2017/03/24 19:17:08[              ngx_http_v2_state_complete,  2378]  [debug] 28548#28548: *6 http2 frame complete pos:00007F055FAC8037 end:00007F055FAC8044
+2017/03/24 19:17:08[                  ngx_http_v2_state_head,   757]  [debug] 28548#28548: *6 process http2 frame type:8 f:0 l:4 sid:15
+2017/03/24 19:17:08[         ngx_http_v2_state_window_update,  2235]  [debug] 28548#28548: *6 http2 WINDOW_UPDATE frame sid:15 window:32767
+2017/03/24 19:17:08[              ngx_http_v2_state_complete,  2378]  [debug] 28548#28548: *6 http2 frame complete pos:00007F055FAC8044 end:00007F055FAC8044
+2017/03/24 19:17:08[                ngx_event_process_posted,    62]  [debug] 28548#28548: begin to run befor posted event 00007F055FB09130
+2017/03/24 19:17:08[                ngx_event_process_posted,    64]  [debug] 28548#28548: *6 delete posted event 00007F055FB09130
+2017/03/24 19:17:08[               ngx_http_v2_write_handler,   420]  [debug] 28548#28548: *6 http2 write handler
+2017/03/24 19:17:08[                ngx_trylock_accept_mutex,   406]  [debug] 28548#28548: accept mutex locked
+2017/03/24 19:17:08[                ngx_epoll_process_events,  1715]  [debug] 28548#28548: epoll: fd:3 EPOLLIN EPOLLOUT  (ev:0005) d:00007F05673092B1
+2017/03/24 19:17:08[                ngx_epoll_process_events,  1761]  [debug] 28548#28548: *6 post event 00007F0563709130
+2017/03/24 19:17:08[                ngx_epoll_process_events,  1788]  [debug] 28548#28548: *6 post event 00007F055FB09130
+2017/03/24 19:17:08[           ngx_process_events_and_timers,   395]  [debug] 28548#28548: epoll_wait timer range(delta): 2
+2017/03/24 19:17:08[                ngx_event_process_posted,    62]  [debug] 28548#28548: begin to run befor posted event 00007F0563709130
+2017/03/24 19:17:08[                ngx_event_process_posted,    64]  [debug] 28548#28548: *6 delete posted event 00007F0563709130
+2017/03/24 19:17:08[                ngx_http_v2_read_handler,   327]  [debug] 28548#28548: *6 http2 read handler
+2017/03/24 19:17:08[                            ngx_ssl_recv,  1347]  [debug] 28548#28548: *6 SSL_read: 26
+2017/03/24 19:17:08[                            ngx_ssl_recv,  1347]  [debug] 28548#28548: *6 SSL_read: -1
+2017/03/24 19:17:08[                     ngx_ssl_handle_recv,  1446]  [debug] 28548#28548: *6 SSL_get_error: 2
+2017/03/24 19:17:08[                  ngx_http_v2_state_head,   757]  [debug] 28548#28548: *6 process http2 frame type:8 f:0 l:4 sid:0
+2017/03/24 19:17:08[         ngx_http_v2_state_window_update,  2235]  [debug] 28548#28548: *6 http2 WINDOW_UPDATE frame sid:0 window:32768
+2017/03/24 19:17:08[                ngx_http_request_handler,  2424]  [debug] 28548#28548: *6 http run request(ev->write:1): "/logo2.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3059]  [debug] 28548#28548: *6 http writer handler: "/logo2.jpg?"
+2017/03/24 19:17:08[                  ngx_http_output_filter,  3411]  [debug] 28548#28548: *6 http output filter "/logo2.jpg?"
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   297]  [debug] 28548#28548: *6 http copy filter: "/logo2.jpg?", r->aio:0
+2017/03/24 19:17:08[                   ngx_output_chain,   161][yangya  [debug] 28548#28548: *6 ctx->sendfile:0, ctx->aio:0, ctx->directio:0
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                ngx_http_postpone_filter,   157]  [debug] 28548#28548: *6 http postpone filter "/logo2.jpg?" 0000000000000000
+2017/03/24 19:17:08[                   ngx_http_write_filter,   151]  [debug] 28548#28548: *6 write old buf t:1 f:0 00000000018F8BA0, pos 0000000001900B9F, size: 1 file: 0, size: 0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   248]  [debug] 28548#28548: *6 http write filter: last:0 flush:1 size:1
+2017/03/24 19:17:08[                   ngx_http_write_filter,   380]  [debug] 28548#28548: *6 http write filter limit 0
+2017/03/24 19:17:08[                  ngx_http_v2_send_chain,   744]  [debug] 28548#28548: *6 ngx_http_v2_send_chain
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:15 create DATA frame 00000000018DE450: len:1 flags:0
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DE450 sid:15 bl:0 len:1
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 1
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 10
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 10
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:15 DATA frame 00000000018DE450 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DE450 sid:15 bl:0 len:1
+2017/03/24 19:17:08[                   ngx_http_write_filter,   386]  [debug] 28548#28548: *6 http write filter 0000000000000000
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                           ngx_read_file,    73]  [debug] 28548#28548: *6 read file /usr/local/nginx/html/logo2.jpg: 15, 00000000018F8BA0, 32768, 65536
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                ngx_http_postpone_filter,   157]  [debug] 28548#28548: *6 http postpone filter "/logo2.jpg?" 00000000018DEE38
+2017/03/24 19:17:08[                   ngx_http_write_filter,   208]  [debug] 28548#28548: *6 write new buf temporary:1 buf-in-file:0, buf->start:00000000018F8BA0, buf->pos:00000000018F8BA0, buf_size: 32768 file_pos: 0, in_file_size: 0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   248]  [debug] 28548#28548: *6 http write filter: last:0 flush:1 size:32768
+2017/03/24 19:17:08[                   ngx_http_write_filter,   380]  [debug] 28548#28548: *6 http write filter limit 0
+2017/03/24 19:17:08[                  ngx_http_v2_send_chain,   744]  [debug] 28548#28548: *6 ngx_http_v2_send_chain
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:15 create DATA frame 00000000018DE450: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:15 create DATA frame 00000000018DEF78: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:15 create DATA frame 00000000018DF080: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:15 create DATA frame 00000000018DF188: len:8191 flags:0
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DF188 sid:15 bl:0 len:8191
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DF080 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DEF78 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DE450 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8174
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 16384
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 16384
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 18
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8156
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 16384
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 16384
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 35
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 35
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 35
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:15 DATA frame 00000000018DE450 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DE450 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:15 DATA frame 00000000018DEF78 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DEF78 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:15 DATA frame 00000000018DF080 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DF080 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:15 DATA frame 00000000018DF188 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DF188 sid:15 bl:0 len:8191
+2017/03/24 19:17:08[                   ngx_http_write_filter,   386]  [debug] 28548#28548: *6 http write filter 00000000018DEE48
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   376]  [debug] 28548#28548: *6 http copy filter rc: -2, buffered:4 "/logo2.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3125]  [debug] 28548#28548: *6 http writer output filter: -2, "/logo2.jpg?"
+2017/03/24 19:17:08[              ngx_http_v2_state_complete,  2378]  [debug] 28548#28548: *6 http2 frame complete pos:00007F055FAC801D end:00007F055FAC802A
+2017/03/24 19:17:08[                  ngx_http_v2_state_head,   757]  [debug] 28548#28548: *6 process http2 frame type:8 f:0 l:4 sid:13
+2017/03/24 19:17:08[         ngx_http_v2_state_window_update,  2235]  [debug] 28548#28548: *6 http2 WINDOW_UPDATE frame sid:13 window:32768
+2017/03/24 19:17:08[                ngx_http_request_handler,  2424]  [debug] 28548#28548: *6 http run request(ev->write:1): "/logo.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3059]  [debug] 28548#28548: *6 http writer handler: "/logo.jpg?"
+2017/03/24 19:17:08[                  ngx_http_output_filter,  3411]  [debug] 28548#28548: *6 http output filter "/logo.jpg?"
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   297]  [debug] 28548#28548: *6 http copy filter: "/logo.jpg?", r->aio:0
+2017/03/24 19:17:08[                   ngx_output_chain,   161][yangya  [debug] 28548#28548: *6 ctx->sendfile:0, ctx->aio:0, ctx->directio:0
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                ngx_http_postpone_filter,   157]  [debug] 28548#28548: *6 http postpone filter "/logo.jpg?" 0000000000000000
+2017/03/24 19:17:08[                   ngx_http_write_filter,   151]  [debug] 28548#28548: *6 write old buf t:1 f:0 00000000018F0B90, pos 00000000018F8B8E, size: 2 file: 0, size: 0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   248]  [debug] 28548#28548: *6 http write filter: last:0 flush:1 size:2
+2017/03/24 19:17:08[                   ngx_http_write_filter,   380]  [debug] 28548#28548: *6 http write filter limit 0
+2017/03/24 19:17:08[                  ngx_http_v2_send_chain,   744]  [debug] 28548#28548: *6 ngx_http_v2_send_chain
+2017/03/24 19:17:08[                   ngx_http_write_filter,   386]  [debug] 28548#28548: *6 http write filter 00000000018DBDE0
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   376]  [debug] 28548#28548: *6 http copy filter rc: -2, buffered:4 "/logo.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3125]  [debug] 28548#28548: *6 http writer output filter: -2, "/logo.jpg?"
+2017/03/24 19:17:08[              ngx_http_v2_state_complete,  2378]  [debug] 28548#28548: *6 http2 frame complete pos:00007F055FAC802A end:00007F055FAC802A
+2017/03/24 19:17:08[                ngx_event_process_posted,    62]  [debug] 28548#28548: begin to run befor posted event 00007F055FB09130
+2017/03/24 19:17:08[                ngx_event_process_posted,    64]  [debug] 28548#28548: *6 delete posted event 00007F055FB09130
+2017/03/24 19:17:08[               ngx_http_v2_write_handler,   420]  [debug] 28548#28548: *6 http2 write handler
+2017/03/24 19:17:08[                ngx_trylock_accept_mutex,   406]  [debug] 28548#28548: accept mutex locked
+2017/03/24 19:17:08[                ngx_epoll_process_events,  1715]  [debug] 28548#28548: epoll: fd:3 EPOLLIN EPOLLOUT  (ev:0005) d:00007F05673092B1
+2017/03/24 19:17:08[                ngx_epoll_process_events,  1761]  [debug] 28548#28548: *6 post event 00007F0563709130
+2017/03/24 19:17:08[                ngx_epoll_process_events,  1788]  [debug] 28548#28548: *6 post event 00007F055FB09130
+2017/03/24 19:17:08[           ngx_process_events_and_timers,   395]  [debug] 28548#28548: epoll_wait timer range(delta): 2
+2017/03/24 19:17:08[                ngx_event_process_posted,    62]  [debug] 28548#28548: begin to run befor posted event 00007F0563709130
+2017/03/24 19:17:08[                ngx_event_process_posted,    64]  [debug] 28548#28548: *6 delete posted event 00007F0563709130
+2017/03/24 19:17:08[                ngx_http_v2_read_handler,   327]  [debug] 28548#28548: *6 http2 read handler
+2017/03/24 19:17:08[                            ngx_ssl_recv,  1347]  [debug] 28548#28548: *6 SSL_read: 26
+2017/03/24 19:17:08[                            ngx_ssl_recv,  1347]  [debug] 28548#28548: *6 SSL_read: 26
+2017/03/24 19:17:08[                            ngx_ssl_recv,  1347]  [debug] 28548#28548: *6 SSL_read: -1
+2017/03/24 19:17:08[                     ngx_ssl_handle_recv,  1446]  [debug] 28548#28548: *6 SSL_get_error: 2
+2017/03/24 19:17:08[                  ngx_http_v2_state_head,   757]  [debug] 28548#28548: *6 process http2 frame type:8 f:0 l:4 sid:0
+2017/03/24 19:17:08[         ngx_http_v2_state_window_update,  2235]  [debug] 28548#28548: *6 http2 WINDOW_UPDATE frame sid:0 window:32767
+2017/03/24 19:17:08[                ngx_http_request_handler,  2424]  [debug] 28548#28548: *6 http run request(ev->write:1): "/logo2.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3059]  [debug] 28548#28548: *6 http writer handler: "/logo2.jpg?"
+2017/03/24 19:17:08[                  ngx_http_output_filter,  3411]  [debug] 28548#28548: *6 http output filter "/logo2.jpg?"
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   297]  [debug] 28548#28548: *6 http copy filter: "/logo2.jpg?", r->aio:0
+2017/03/24 19:17:08[                   ngx_output_chain,   161][yangya  [debug] 28548#28548: *6 ctx->sendfile:0, ctx->aio:0, ctx->directio:0
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                ngx_http_postpone_filter,   157]  [debug] 28548#28548: *6 http postpone filter "/logo2.jpg?" 0000000000000000
+2017/03/24 19:17:08[                   ngx_http_write_filter,   151]  [debug] 28548#28548: *6 write old buf t:1 f:0 00000000018F8BA0, pos 0000000001900B9F, size: 1 file: 0, size: 0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   248]  [debug] 28548#28548: *6 http write filter: last:0 flush:1 size:1
+2017/03/24 19:17:08[                   ngx_http_write_filter,   380]  [debug] 28548#28548: *6 http write filter limit 0
+2017/03/24 19:17:08[                  ngx_http_v2_send_chain,   744]  [debug] 28548#28548: *6 ngx_http_v2_send_chain
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:15 create DATA frame 00000000018DF188: len:1 flags:0
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DF188 sid:15 bl:0 len:1
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 1
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 10
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 10
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:15 DATA frame 00000000018DF188 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DF188 sid:15 bl:0 len:1
+2017/03/24 19:17:08[                   ngx_http_write_filter,   386]  [debug] 28548#28548: *6 http write filter 0000000000000000
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                           ngx_read_file,    73]  [debug] 28548#28548: *6 read file /usr/local/nginx/html/logo2.jpg: 15, 00000000018F8BA0, 32768, 98304
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                ngx_http_postpone_filter,   157]  [debug] 28548#28548: *6 http postpone filter "/logo2.jpg?" 00000000018DEE38
+2017/03/24 19:17:08[                   ngx_http_write_filter,   208]  [debug] 28548#28548: *6 write new buf temporary:1 buf-in-file:0, buf->start:00000000018F8BA0, buf->pos:00000000018F8BA0, buf_size: 32768 file_pos: 0, in_file_size: 0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   248]  [debug] 28548#28548: *6 http write filter: last:0 flush:1 size:32768
+2017/03/24 19:17:08[                   ngx_http_write_filter,   380]  [debug] 28548#28548: *6 http write filter limit 0
+2017/03/24 19:17:08[                  ngx_http_v2_send_chain,   744]  [debug] 28548#28548: *6 ngx_http_v2_send_chain
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:15 create DATA frame 00000000018DF188: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:15 create DATA frame 00000000018DF080: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:15 create DATA frame 00000000018DEF78: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:15 create DATA frame 00000000018DE450: len:8190 flags:0
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DE450 sid:15 bl:0 len:8190
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DEF78 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DF080 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DF188 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8174
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 16384
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 16384
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 18
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8156
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 16384
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 16384
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 34
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 34
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 34
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:15 DATA frame 00000000018DF188 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DF188 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:15 DATA frame 00000000018DF080 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DF080 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:15 DATA frame 00000000018DEF78 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DEF78 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:15 DATA frame 00000000018DE450 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DE450 sid:15 bl:0 len:8190
+2017/03/24 19:17:08[                   ngx_http_write_filter,   386]  [debug] 28548#28548: *6 http write filter 00000000018DEE48
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   376]  [debug] 28548#28548: *6 http copy filter rc: -2, buffered:4 "/logo2.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3125]  [debug] 28548#28548: *6 http writer output filter: -2, "/logo2.jpg?"
+2017/03/24 19:17:08[              ngx_http_v2_state_complete,  2378]  [debug] 28548#28548: *6 http2 frame complete pos:00007F055FAC801D end:00007F055FAC8044
+2017/03/24 19:17:08[                  ngx_http_v2_state_head,   757]  [debug] 28548#28548: *6 process http2 frame type:8 f:0 l:4 sid:13
+2017/03/24 19:17:08[         ngx_http_v2_state_window_update,  2235]  [debug] 28548#28548: *6 http2 WINDOW_UPDATE frame sid:13 window:32767
+2017/03/24 19:17:08[              ngx_http_v2_state_complete,  2378]  [debug] 28548#28548: *6 http2 frame complete pos:00007F055FAC802A end:00007F055FAC8044
+2017/03/24 19:17:08[                  ngx_http_v2_state_head,   757]  [debug] 28548#28548: *6 process http2 frame type:8 f:0 l:4 sid:0
+2017/03/24 19:17:08[         ngx_http_v2_state_window_update,  2235]  [debug] 28548#28548: *6 http2 WINDOW_UPDATE frame sid:0 window:32768
+2017/03/24 19:17:08[                ngx_http_request_handler,  2424]  [debug] 28548#28548: *6 http run request(ev->write:1): "/logo.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3059]  [debug] 28548#28548: *6 http writer handler: "/logo.jpg?"
+2017/03/24 19:17:08[                  ngx_http_output_filter,  3411]  [debug] 28548#28548: *6 http output filter "/logo.jpg?"
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   297]  [debug] 28548#28548: *6 http copy filter: "/logo.jpg?", r->aio:0
+2017/03/24 19:17:08[                   ngx_output_chain,   161][yangya  [debug] 28548#28548: *6 ctx->sendfile:0, ctx->aio:0, ctx->directio:0
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                ngx_http_postpone_filter,   157]  [debug] 28548#28548: *6 http postpone filter "/logo.jpg?" 0000000000000000
+2017/03/24 19:17:08[                   ngx_http_write_filter,   151]  [debug] 28548#28548: *6 write old buf t:1 f:0 00000000018F0B90, pos 00000000018F8B8E, size: 2 file: 0, size: 0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   248]  [debug] 28548#28548: *6 http write filter: last:0 flush:1 size:2
+2017/03/24 19:17:08[                   ngx_http_write_filter,   380]  [debug] 28548#28548: *6 http write filter limit 0
+2017/03/24 19:17:08[                  ngx_http_v2_send_chain,   744]  [debug] 28548#28548: *6 ngx_http_v2_send_chain
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:13 create DATA frame 00000000018A6770: len:2 flags:0
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018A6770 sid:13 bl:0 len:2
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 2
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 11
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 11
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:13 DATA frame 00000000018A6770 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018A6770 sid:13 bl:0 len:2
+2017/03/24 19:17:08[                   ngx_http_write_filter,   386]  [debug] 28548#28548: *6 http write filter 0000000000000000
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                           ngx_read_file,    73]  [debug] 28548#28548: *6 read file /usr/local/nginx/html/logo.jpg: 14, 00000000018F0B90, 32259, 131072
+2017/03/24 19:17:08[                ngx_http_postpone_filter,   157]  [debug] 28548#28548: *6 http postpone filter "/logo.jpg?" 00000000018DBDD0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   208]  [debug] 28548#28548: *6 write new buf temporary:1 buf-in-file:0, buf->start:00000000018F0B90, buf->pos:00000000018F0B90, buf_size: 32259 file_pos: 0, in_file_size: 0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   248]  [debug] 28548#28548: *6 http write filter: last:1 flush:1 size:32259
+2017/03/24 19:17:08[                   ngx_http_write_filter,   380]  [debug] 28548#28548: *6 http write filter limit 0
+2017/03/24 19:17:08[                  ngx_http_v2_send_chain,   744]  [debug] 28548#28548: *6 ngx_http_v2_send_chain
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:13 create DATA frame 00000000018A6770: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:13 create DATA frame 00000000018DBF20: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:13 create DATA frame 00000000018DC028: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:13 create DATA frame 00000000018DC130: len:7683 flags:1
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DC130 sid:13 bl:0 len:7683
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DC028 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DBF20 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018A6770 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8174
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 16384
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 16384
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 18
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 7683
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 15911
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 15911
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:13 DATA frame 00000000018A6770 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018A6770 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:13 DATA frame 00000000018DBF20 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DBF20 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:13 DATA frame 00000000018DC028 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DC028 sid:13 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:13 DATA frame 00000000018DC130 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DC130 sid:13 bl:0 len:7683
+2017/03/24 19:17:08[                   ngx_http_write_filter,   386]  [debug] 28548#28548: *6 http write filter 0000000000000000
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   376]  [debug] 28548#28548: *6 http copy filter rc: 0, buffered:0 "/logo.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3125]  [debug] 28548#28548: *6 http writer output filter: 0, "/logo.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3157]  [debug] 28548#28548: *6 http writer done: "/logo.jpg?"
+2017/03/24 19:17:08[               ngx_http_finalize_request,  2603]  [debug] 28548#28548: *6 http finalize request rc: 0, "/logo.jpg?" a:1, c:1, b:0, p:0000000000000000
+2017/03/24 19:17:08[                  ngx_http_close_request,  3932]  [debug] 28548#28548: *6 http request count:1 blk:0
+2017/03/24 19:17:08[                ngx_http_v2_close_stream,  3772]  [debug] 28548#28548: *6 http2 close stream 13, queued 0, processing 2
+2017/03/24 19:17:08[                   ngx_http_free_request,  3995]  [debug] 28548#28548: *6 http close request
+2017/03/24 19:17:08[                    ngx_http_log_handler,   376]  [debug] 28548#28548: *6 http log handler
+2017/03/24 19:17:08[                        ngx_destroy_pool,    67]  [debug] 28548#28548: *6 run cleanup: 00000000018A6580
+2017/03/24 19:17:08[                   ngx_pool_cleanup_file,   470]  [debug] 28548#28548: *6 file cleanup: fd:14
+2017/03/24 19:17:08[                        ngx_destroy_pool,    74]  [debug] 28548#28548: *6 free: 00000000018F0B90
+2017/03/24 19:17:08[                        ngx_destroy_pool,    90]  [debug] 28548#28548: *6 free: 00000000018A57D0, unused: 0
+2017/03/24 19:17:08[                        ngx_destroy_pool,    90]  [debug] 28548#28548: *6 free: 00000000018DB470, unused: 418
+2017/03/24 19:17:08[              ngx_http_v2_state_complete,  2378]  [debug] 28548#28548: *6 http2 frame complete pos:00007F055FAC8037 end:00007F055FAC8044
+2017/03/24 19:17:08[                  ngx_http_v2_state_head,   757]  [debug] 28548#28548: *6 process http2 frame type:8 f:0 l:4 sid:15
+2017/03/24 19:17:08[         ngx_http_v2_state_window_update,  2235]  [debug] 28548#28548: *6 http2 WINDOW_UPDATE frame sid:15 window:32768
+2017/03/24 19:17:08[                ngx_http_request_handler,  2424]  [debug] 28548#28548: *6 http run request(ev->write:1): "/logo2.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3059]  [debug] 28548#28548: *6 http writer handler: "/logo2.jpg?"
+2017/03/24 19:17:08[                  ngx_http_output_filter,  3411]  [debug] 28548#28548: *6 http output filter "/logo2.jpg?"
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   297]  [debug] 28548#28548: *6 http copy filter: "/logo2.jpg?", r->aio:0
+2017/03/24 19:17:08[                   ngx_output_chain,   161][yangya  [debug] 28548#28548: *6 ctx->sendfile:0, ctx->aio:0, ctx->directio:0
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                ngx_http_postpone_filter,   157]  [debug] 28548#28548: *6 http postpone filter "/logo2.jpg?" 0000000000000000
+2017/03/24 19:17:08[                   ngx_http_write_filter,   151]  [debug] 28548#28548: *6 write old buf t:1 f:0 00000000018F8BA0, pos 0000000001900B9E, size: 2 file: 0, size: 0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   248]  [debug] 28548#28548: *6 http write filter: last:0 flush:1 size:2
+2017/03/24 19:17:08[                   ngx_http_write_filter,   380]  [debug] 28548#28548: *6 http write filter limit 0
+2017/03/24 19:17:08[                  ngx_http_v2_send_chain,   744]  [debug] 28548#28548: *6 ngx_http_v2_send_chain
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:15 create DATA frame 00000000018DE450: len:2 flags:0
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DE450 sid:15 bl:0 len:2
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 2
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 11
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 11
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:15 DATA frame 00000000018DE450 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DE450 sid:15 bl:0 len:2
+2017/03/24 19:17:08[                   ngx_http_write_filter,   386]  [debug] 28548#28548: *6 http write filter 0000000000000000
+2017/03/24 19:17:08[             ngx_output_chain_as_is,   406][yangya  [debug] 28548#28548: ngx_output_chain_as_is--- buf_special:0, in_file:1, directio:0, buf_in_mem:0,need_in_memory:1, need_in_temp:0, memory:0, mmap:0
+2017/03/24 19:17:08[                           ngx_read_file,    73]  [debug] 28548#28548: *6 read file /usr/local/nginx/html/logo2.jpg: 15, 00000000018F8BA0, 32259, 131072
+2017/03/24 19:17:08[                ngx_http_postpone_filter,   157]  [debug] 28548#28548: *6 http postpone filter "/logo2.jpg?" 00000000018DEE38
+2017/03/24 19:17:08[                   ngx_http_write_filter,   208]  [debug] 28548#28548: *6 write new buf temporary:1 buf-in-file:0, buf->start:00000000018F8BA0, buf->pos:00000000018F8BA0, buf_size: 32259 file_pos: 0, in_file_size: 0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   248]  [debug] 28548#28548: *6 http write filter: last:1 flush:1 size:32259
+2017/03/24 19:17:08[                   ngx_http_write_filter,   380]  [debug] 28548#28548: *6 http write filter limit 0
+2017/03/24 19:17:08[                  ngx_http_v2_send_chain,   744]  [debug] 28548#28548: *6 ngx_http_v2_send_chain
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:15 create DATA frame 00000000018DE450: len:505 flags:0
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DE450 sid:15 bl:0 len:505
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 505
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 514
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 514
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:15 DATA frame 00000000018DE450 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DE450 sid:15 bl:0 len:505
+2017/03/24 19:17:08[                   ngx_http_write_filter,   386]  [debug] 28548#28548: *6 http write filter 00000000018DEE48
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   376]  [debug] 28548#28548: *6 http copy filter rc: -2, buffered:0 "/logo2.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3125]  [debug] 28548#28548: *6 http writer output filter: -2, "/logo2.jpg?"
+2017/03/24 19:17:08[              ngx_http_v2_state_complete,  2378]  [debug] 28548#28548: *6 http2 frame complete pos:00007F055FAC8044 end:00007F055FAC8044
+2017/03/24 19:17:08[                ngx_event_process_posted,    62]  [debug] 28548#28548: begin to run befor posted event 00007F055FB09130
+2017/03/24 19:17:08[                ngx_event_process_posted,    64]  [debug] 28548#28548: *6 delete posted event 00007F055FB09130
+2017/03/24 19:17:08[               ngx_http_v2_write_handler,   420]  [debug] 28548#28548: *6 http2 write handler
+2017/03/24 19:17:08[                ngx_trylock_accept_mutex,   406]  [debug] 28548#28548: accept mutex locked
+2017/03/24 19:17:08[                ngx_epoll_process_events,  1715]  [debug] 28548#28548: epoll: fd:3 EPOLLIN EPOLLOUT  (ev:0005) d:00007F05673092B1
+2017/03/24 19:17:08[                ngx_epoll_process_events,  1761]  [debug] 28548#28548: *6 post event 00007F0563709130
+2017/03/24 19:17:08[                ngx_epoll_process_events,  1788]  [debug] 28548#28548: *6 post event 00007F055FB09130
+2017/03/24 19:17:08[           ngx_process_events_and_timers,   395]  [debug] 28548#28548: epoll_wait timer range(delta): 2
+2017/03/24 19:17:08[                ngx_event_process_posted,    62]  [debug] 28548#28548: begin to run befor posted event 00007F0563709130
+2017/03/24 19:17:08[                ngx_event_process_posted,    64]  [debug] 28548#28548: *6 delete posted event 00007F0563709130
+2017/03/24 19:17:08[                ngx_http_v2_read_handler,   327]  [debug] 28548#28548: *6 http2 read handler
+2017/03/24 19:17:08[                            ngx_ssl_recv,  1347]  [debug] 28548#28548: *6 SSL_read: 26
+2017/03/24 19:17:08[                            ngx_ssl_recv,  1347]  [debug] 28548#28548: *6 SSL_read: 13
+2017/03/24 19:17:08[                            ngx_ssl_recv,  1347]  [debug] 28548#28548: *6 SSL_read: -1
+2017/03/24 19:17:08[                     ngx_ssl_handle_recv,  1446]  [debug] 28548#28548: *6 SSL_get_error: 2
+2017/03/24 19:17:08[                  ngx_http_v2_state_head,   757]  [debug] 28548#28548: *6 process http2 frame type:8 f:0 l:4 sid:0
+2017/03/24 19:17:08[         ngx_http_v2_state_window_update,  2235]  [debug] 28548#28548: *6 http2 WINDOW_UPDATE frame sid:0 window:32767
+2017/03/24 19:17:08[                ngx_http_request_handler,  2424]  [debug] 28548#28548: *6 http run request(ev->write:1): "/logo2.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3059]  [debug] 28548#28548: *6 http writer handler: "/logo2.jpg?"
+2017/03/24 19:17:08[                  ngx_http_output_filter,  3411]  [debug] 28548#28548: *6 http output filter "/logo2.jpg?"
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   297]  [debug] 28548#28548: *6 http copy filter: "/logo2.jpg?", r->aio:0
+2017/03/24 19:17:08[                   ngx_output_chain,   161][yangya  [debug] 28548#28548: *6 ctx->sendfile:0, ctx->aio:0, ctx->directio:0
+2017/03/24 19:17:08[                ngx_http_postpone_filter,   157]  [debug] 28548#28548: *6 http postpone filter "/logo2.jpg?" 0000000000000000
+2017/03/24 19:17:08[                   ngx_http_write_filter,   151]  [debug] 28548#28548: *6 write old buf t:1 f:0 00000000018F8BA0, pos 00000000018F8D99, size: 31754 file: 0, size: 0
+2017/03/24 19:17:08[                   ngx_http_write_filter,   248]  [debug] 28548#28548: *6 http write filter: last:1 flush:1 size:31754
+2017/03/24 19:17:08[                   ngx_http_write_filter,   380]  [debug] 28548#28548: *6 http write filter limit 0
+2017/03/24 19:17:08[                  ngx_http_v2_send_chain,   744]  [debug] 28548#28548: *6 ngx_http_v2_send_chain
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:15 create DATA frame 00000000018DE450: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:15 create DATA frame 00000000018DEF78: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:15 create DATA frame 00000000018DF080: len:8192 flags:0
+2017/03/24 19:17:08[       ngx_http_v2_filter_get_data_frame,   982]  [debug] 28548#28548: *6 http2:15 create DATA frame 00000000018DF188: len:7178 flags:1
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DF188 sid:15 bl:0 len:7178
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DF080 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DEF78 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   495]  [debug] 28548#28548: *6 http2 frame out: 00000000018DE450 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8174
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 16384
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 16384
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 18
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 8192
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 9
+2017/03/24 19:17:08[                      ngx_ssl_send_chain,  1601]  [debug] 28548#28548: *6 SSL buf copy: 7178
+2017/03/24 19:17:08[                           ngx_ssl_write,  1673]  [debug] 28548#28548: *6 SSL to write: 15406
+2017/03/24 19:17:08[                           ngx_ssl_write,  1677]  [debug] 28548#28548: *6 SSL_write: 15406
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:15 DATA frame 00000000018DE450 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DE450 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:15 DATA frame 00000000018DEF78 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DEF78 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:15 DATA frame 00000000018DF080 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DF080 sid:15 bl:0 len:8192
+2017/03/24 19:17:08[          ngx_http_v2_data_frame_handler,  1216]  [debug] 28548#28548: *6 http2:15 DATA frame 00000000018DF188 was sent
+2017/03/24 19:17:08[           ngx_http_v2_send_output_queue,   570]  [debug] 28548#28548: *6 http2 frame sent: 00000000018DF188 sid:15 bl:0 len:7178
+2017/03/24 19:17:08[                   ngx_http_write_filter,   386]  [debug] 28548#28548: *6 http write filter 0000000000000000
+2017/03/24 19:17:08[                    ngx_http_copy_filter,   376]  [debug] 28548#28548: *6 http copy filter rc: 0, buffered:0 "/logo2.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3125]  [debug] 28548#28548: *6 http writer output filter: 0, "/logo2.jpg?"
+2017/03/24 19:17:08[                         ngx_http_writer,  3157]  [debug] 28548#28548: *6 http writer done: "/logo2.jpg?"
+2017/03/24 19:17:08[               ngx_http_finalize_request,  2603]  [debug] 28548#28548: *6 http finalize request rc: 0, "/logo2.jpg?" a:1, c:1, b:0, p:0000000000000000
+2017/03/24 19:17:08[                  ngx_http_close_request,  3932]  [debug] 28548#28548: *6 http request count:1 blk:0
+2017/03/24 19:17:08[                ngx_http_v2_close_stream,  3772]  [debug] 28548#28548: *6 http2 close stream 15, queued 0, processing 1
+2017/03/24 19:17:08[                   ngx_http_free_request,  3995]  [debug] 28548#28548: *6 http close request
+2017/03/24 19:17:08[                    ngx_http_log_handler,   376]  [debug] 28548#28548: *6 http log handler
+2017/03/24 19:17:08[                        ngx_destroy_pool,    67]  [debug] 28548#28548: *6 run cleanup: 00000000018DE260
+2017/03/24 19:17:08[                   ngx_pool_cleanup_file,   470]  [debug] 28548#28548: *6 file cleanup: fd:15
+2017/03/24 19:17:08[                        ngx_destroy_pool,    74]  [debug] 28548#28548: *6 free: 00000000018F8BA0
+2017/03/24 19:17:08[                        ngx_destroy_pool,    90]  [debug] 28548#28548: *6 free: 00000000018DD490, unused: 8
+2017/03/24 19:17:08[                        ngx_destroy_pool,    90]  [debug] 28548#28548: *6 free: 00000000018DE4A0, unused: 377
+2017/03/24 19:17:08[              ngx_http_v2_state_complete,  2378]  [debug] 28548#28548: *6 http2 frame complete pos:00007F055FAC801D end:00007F055FAC8037
+2017/03/24 19:17:08[                  ngx_http_v2_state_head,   757]  [debug] 28548#28548: *6 process http2 frame type:8 f:0 l:4 sid:15
+2017/03/24 19:17:08[         ngx_http_v2_state_window_update,  2235]  [debug] 28548#28548: *6 http2 WINDOW_UPDATE frame sid:15 window:32767
+2017/03/24 19:17:08[         ngx_http_v2_state_window_update,  2242]  [debug] 28548#28548: *6 unknown http2 stream
+2017/03/24 19:17:08[              ngx_http_v2_state_complete,  2378]  [debug] 28548#28548: *6 http2 frame complete pos:00007F055FAC802A end:00007F055FAC8037
+2017/03/24 19:17:08[                  ngx_http_v2_state_head,   757]  [debug] 28548#28548: *6 process http2 frame type:8 f:0 l:4 sid:0
+2017/03/24 19:17:08[         ngx_http_v2_state_window_update,  2235]  [debug] 28548#28548: *6 http2 WINDOW_UPDATE frame sid:0 window:32768
+2017/03/24 19:17:08[              ngx_http_v2_state_complete,  2378]  [debug] 28548#28548: *6 http2 frame complete pos:00007F055FAC8037 end:00007F055FAC8037
+2017/03/24 19:17:08[                        ngx_destroy_pool,    90]  [debug] 28548#28548: *6 free: 00000000018AD540, unused: 2808
+2017/03/24 19:17:08[                               ngx_pfree,   336]  [debug] 28548#28548: *6 free: 00000000018ECB80
+2017/03/24 19:17:08[                 ngx_reusable_connection,  1177]  [debug] 28548#28548: *6 reusable connection: 1
+2017/03/24 19:17:08[                     ngx_event_add_timer,   100]  [debug] 28548#28548: *6 <ngx_http_v2_handle_connection,   654>  event timer add fd:3, expire-time:180 s, timer.key:1490354408618
+2017/03/24 19:17:08[                ngx_event_process_posted,    62]  [debug] 28548#28548: begin to run befor posted event 00007F055FB09130
+2017/03/24 19:17:08[                ngx_event_process_posted,    64]  [debug] 28548#28548: *6 delete posted event 00007F055FB09130
+2017/03/24 19:17:08[                  ngx_http_empty_handler,  3817]  [debug] 28548#28548: *6 http empty handler
+2017/03/24 19:17:08[                ngx_trylock_accept_mutex,   406]  [debug] 28548#28548: accept mutex locked
+2017/03/24 19:17:08[                ngx_epoll_process_events,  1715]  [debug] 28548#28548: epoll: fd:3 EPOLLIN EPOLLOUT  (ev:2005) d:00007F05673092B1
+2017/03/24 19:17:08[                ngx_epoll_process_events,  1761]  [debug] 28548#28548: *6 post event 00007F0563709130
+2017/03/24 19:17:08[                ngx_epoll_process_events,  1788]  [debug] 28548#28548: *6 post event 00007F055FB09130
+2017/03/24 19:17:08[           ngx_process_events_and_timers,   395]  [debug] 28548#28548: epoll_wait timer range(delta): 2
+2017/03/24 19:17:08[                ngx_event_process_posted,    62]  [debug] 28548#28548: begin to run befor posted event 00007F0563709130
+2017/03/24 19:17:08[                ngx_event_process_posted,    64]  [debug] 28548#28548: *6 delete posted event 00007F0563709130
+2017/03/24 19:17:08[                ngx_http_v2_idle_handler,  3887]  [debug] 28548#28548: *6 http2 idle handler
+2017/03/24 19:17:08[                 ngx_reusable_connection,  1177]  [debug] 28548#28548: *6 reusable connection: 0
+2017/03/24 19:17:08[                            ngx_memalign,    72]  [debug] 28548#28548: *6 posix_memalign: 00000000018DB470:4096 @16
+2017/03/24 19:17:08[                ngx_http_v2_read_handler,   327]  [debug] 28548#28548: *6 http2 read handler
+2017/03/24 19:17:08[                            ngx_ssl_recv,  1347]  [debug] 28548#28548: *6 SSL_read: 17
+2017/03/24 19:17:08[                            ngx_ssl_recv,  1347]  [debug] 28548#28548: *6 SSL_read: 0
+2017/03/24 19:17:08[                     ngx_ssl_handle_recv,  1446]  [debug] 28548#28548: *6 SSL_get_error: 6
+2017/03/24 19:17:08[                     ngx_ssl_handle_recv,  1481]  [debug] 28548#28548: *6 peer shutdown SSL cleanly
+2017/03/24 19:17:08[                  ngx_http_v2_state_head,   757]  [debug] 28548#28548: *6 process http2 frame type:7 f:0 l:8 sid:0
+2017/03/24 19:17:08[                ngx_http_v2_state_goaway,  2199]  [debug] 28548#28548: *6 http2 GOAWAY frame: last sid 0, error 0
+2017/03/24 19:17:08[                  ngx_http_v2_state_skip,  2421]  [debug] 28548#28548: *6 http2 frame skip 0
+2017/03/24 19:17:08[              ngx_http_v2_state_complete,  2378]  [debug] 28548#28548: *6 http2 frame complete pos:00007F055FAC8021 end:00007F055FAC8021
+2017/03/24 19:17:08[               ngx_http_close_connection,  4181]  [debug] 28548#28548: *6 close http connection: 3
+2017/03/24 19:17:08[                        ngx_ssl_shutdown,  1798]  [debug] 28548#28548: *6 SSL_shutdown: 1
+2017/03/24 19:17:08[                     ngx_event_del_timer,    39]  [debug] 28548#28548: *6 <     ngx_close_connection,  1090>  event timer del: 3: 1490354408618
+2017/03/24 19:17:08[                    ngx_close_connection,  1120]  [debug] 28548#28548: *6 delete posted event 00007F055FB09130
+2017/03/24 19:17:08[                 ngx_reusable_connection,  1177]  [debug] 28548#28548: *6 reusable connection: 0
+2017/03/24 19:17:08[               ngx_close_connection,  1139][yangya  [debug] 28548#28548: close socket:3
+2017/03/24 19:17:08[                        ngx_destroy_pool,    67]  [debug] 28548#28548: *6 run cleanup: 00000000018A3848
+2017/03/24 19:17:08[                        ngx_destroy_pool,    90]  [debug] 28548#28548: *6 free: 00000000018DB470, unused: 4016
+2017/03/24 19:17:08[                        ngx_destroy_pool,    74]  [debug] 28548#28548: *6 free: 0000000000000000
+2017/03/24 19:17:08[                        ngx_destroy_pool,    74]  [debug] 28548#28548: *6 free: 00000000018DC480
+2017/03/24 19:17:08[                        ngx_destroy_pool,    74]  [debug] 28548#28548: *6 free: 00000000018A4D60
+2017/03/24 19:17:08[                        ngx_destroy_pool,    74]  [debug] 28548#28548: *6 free: 00000000018A50F0
+2017/03/24 19:17:08[                        ngx_destroy_pool,    74]  [debug] 28548#28548: *6 free: 00000000018A41A0
+2017/03/24 19:17:08[                        ngx_destroy_pool,    90]  [debug] 28548#28548: *6 free: 00000000018A3760, unused: 0
+2017/03/24 19:17:08[                        ngx_destroy_pool,    90]  [debug] 28548#28548: *6 free: 000000000189EB90, unused: 0
+2017/03/24 19:17:08[                        ngx_destroy_pool,    90]  [debug] 28548#28548: *6 free: 00000000018AE860, unused: 8
+2017/03/24 19:17:08[                        ngx_destroy_pool,    90]  [debug] 28548#28548: *6 free: 00000000018AE970, unused: 16
+2017/03/24 19:17:08[                        ngx_destroy_pool,    90]  [debug] 28548#28548: *6 free: 00000000018AE550, unused: 16
+2017/03/24 19:17:08[                        ngx_destroy_pool,    90]  [debug] 28548#28548: *6 free: 00000000018AE660, unused: 56
+2017/03/24 19:17:08[                        ngx_destroy_pool,    90]  [debug] 28548#28548: *6 free: 00000000018AEB50, unused: 120
+2017/03/24 19:17:08[                ngx_trylock_accept_mutex,   406]  [debug] 28548#28548: accept mutex locked

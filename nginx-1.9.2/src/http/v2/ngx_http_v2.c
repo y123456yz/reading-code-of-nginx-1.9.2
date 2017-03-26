@@ -736,7 +736,7 @@ ngx_http_v2_state_preface_end(ngx_http_v2_connection_t *h2c, u_char *pos,
     return ngx_http_v2_state_head(h2c, pos + sizeof(preface) - 1, end);
 }
 
-
+//ngx_http_v2_read_handler读取到HTTP2客户端数据后调用该函数执行
 static u_char *
 ngx_http_v2_state_head(ngx_http_v2_connection_t *h2c, u_char *pos, u_char *end)
 {
@@ -780,6 +780,7 @@ ngx_http_v2_state_data(ngx_http_v2_connection_t *h2c, u_char *pos, u_char *end)
     ngx_http_v2_node_t    *node;
     ngx_http_v2_stream_t  *stream;
 
+    /* 跳过pad数据部分 */
     if (h2c->state.flags & NGX_HTTP_V2_PADDED_FLAG) {
 
         if (h2c->state.length == 0) {
@@ -814,6 +815,7 @@ ngx_http_v2_state_data(ngx_http_v2_connection_t *h2c, u_char *pos, u_char *end)
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, h2c->connection->log, 0,
                    "http2 DATA frame");
 
+    /* 如果对端发送过来的数据大于本端接收窗口，直接报错 */
     if (h2c->state.length > h2c->recv_window) {
         ngx_log_error(NGX_LOG_INFO, h2c->connection->log, 0,
                       "client violated connection flow control: "
@@ -823,10 +825,14 @@ ngx_http_v2_state_data(ngx_http_v2_connection_t *h2c, u_char *pos, u_char *end)
         return ngx_http_v2_connection_error(h2c, NGX_HTTP_V2_FLOW_CTRL_ERROR);
     }
 
+    /* 接收到DATA帧数据后，调整接收窗口大小 */
     h2c->recv_window -= h2c->state.length;
 
-    if (h2c->recv_window < NGX_HTTP_V2_MAX_WINDOW / 4) {
-
+    /* 当本端收到DATA帧的时候，如果发现该连接上的recv_window大小已经小于NGX_HTTP_V2_MAX_WINDOW / 4了，
+    则通知本发送端把h2c->send_window调整为NGX_HTTP_V2_MAX_WINDOW，同时本端也把连接的接收recv_window恢复到该MAX值 */
+    if (h2c->recv_window < NGX_HTTP_V2_MAX_WINDOW / 4) { 
+        //这里为什么是NGX_HTTP_V2_MAX_WINDOW?因为整个连接的recv_window(即h2c->recv_window)初始值就为NGX_HTTP_V2_MAX_WINDOW，
+        //而且不会变化,也就是协议规定HTTP2 一个连接对应的recv_window为NGX_HTTP_V2_MAX_WINDOW
         if (ngx_http_v2_send_window_update(h2c, 0, NGX_HTTP_V2_MAX_WINDOW
                                                    - h2c->recv_window)
             == NGX_ERROR)
@@ -835,7 +841,7 @@ ngx_http_v2_state_data(ngx_http_v2_connection_t *h2c, u_char *pos, u_char *end)
                                                 NGX_HTTP_V2_INTERNAL_ERROR);
         }
 
-        h2c->recv_window = NGX_HTTP_V2_MAX_WINDOW;
+        h2c->recv_window = NGX_HTTP_V2_MAX_WINDOW; //
     }
 
     node = ngx_http_v2_get_node_by_id(h2c, h2c->state.sid, 0);
@@ -867,9 +873,12 @@ ngx_http_v2_state_data(ngx_http_v2_connection_t *h2c, u_char *pos, u_char *end)
     }
 
     stream->recv_window -= h2c->state.length;
-
+    
+    //流的recv_window小于NGX_HTTP_V2_MAX_WINDOW / 4后，恢复本流recv_window为NGX_HTTP_V2_MAX_WINDOW，同时发送
+    //更新帧个会对端使其也更新为NGX_HTTP_V2_MAX_WINDOW，从而保持同步
     if (stream->recv_window < NGX_HTTP_V2_MAX_WINDOW / 4) {
-
+     //为什么这里是和NGX_HTTP_V2_MAX_WINDOW比较? 因为nginx通过ngx_http_v2_send_settings发送的setting帧
+    //把init_window设置为NGX_HTTP_V2_MAX_WINDOW对端收到后就会把自己的strem->send_window设置为NGX_HTTP_V2_MAX_WINDOW
         if (ngx_http_v2_send_window_update(h2c, node->id,
                                            NGX_HTTP_V2_MAX_WINDOW
                                            - stream->recv_window)
@@ -904,6 +913,7 @@ ngx_http_v2_state_data(ngx_http_v2_connection_t *h2c, u_char *pos, u_char *end)
 }
 
 
+//接收到数据帧后在ngx_http_v2_state_data调用该函数读取数据帧中的真实数据
 static u_char *
 ngx_http_v2_state_read_data(ngx_http_v2_connection_t *h2c, u_char *pos,
     u_char *end)
@@ -1936,6 +1946,7 @@ ngx_http_v2_state_priority(ngx_http_v2_connection_t *h2c, u_char *pos,
     return ngx_http_v2_state_complete(h2c, pos, end);
 }
 
+//接收到RST_STREAM帧，需要关闭对应流，因此流也要处于关闭状态。 - 接收者不能够在此流上发送任何帧
 //见ngx_http_v2_frame_states
 static u_char *
 ngx_http_v2_state_rst_stream(ngx_http_v2_connection_t *h2c, u_char *pos,
@@ -2051,7 +2062,8 @@ ngx_http_v2_state_settings(ngx_http_v2_connection_t *h2c, u_char *pos,
     return ngx_http_v2_state_settings_params(h2c, pos, end);
 }
 
-
+//setting帧决定接收到HEAD帧后创建流的时候，确定发送窗口的大小。同时决定在通过write chain发送frame帧的时候，决定没个数据块的大小
+//例如一个frame帧为10K，但是对端指定其接收数据的frame_size=5K，则该frame会被拆成两个frame_size大小的包体发送
 static u_char *
 ngx_http_v2_state_settings_params(ngx_http_v2_connection_t *h2c, u_char *pos,
     u_char *end)
@@ -2091,6 +2103,7 @@ ngx_http_v2_state_settings_params(ngx_http_v2_connection_t *h2c, u_char *pos,
                                                     NGX_HTTP_V2_INTERNAL_ERROR);
             }
 
+            //决定流的发送窗口大小  
             h2c->init_window = value;
             break;
 
@@ -2106,6 +2119,7 @@ ngx_http_v2_state_settings_params(ngx_http_v2_connection_t *h2c, u_char *pos,
                                                     NGX_HTTP_V2_PROTOCOL_ERROR);
             }
 
+            //决定发送FRAME帧的时候，每帧数据大小不超过该值
             h2c->frame_size = value;
             break;
 
@@ -2152,10 +2166,11 @@ ngx_http_v2_state_ping(ngx_http_v2_connection_t *h2c, u_char *pos, u_char *end)
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, h2c->connection->log, 0,
                    "http2 PING frame, flags: %ui", h2c->state.flags);
 
-    if (h2c->state.flags & NGX_HTTP_V2_ACK_FLAG) {
+    if (h2c->state.flags & NGX_HTTP_V2_ACK_FLAG) { //ping帧的ACK信息
         return ngx_http_v2_state_skip(h2c, pos, end);
     }
 
+    //发送PING帧的ACK帧
     frame = ngx_http_v2_get_frame(h2c, NGX_HTTP_V2_PING_SIZE,
                                   NGX_HTTP_V2_PING_FRAME,
                                   NGX_HTTP_V2_ACK_FLAG, 0);
@@ -2165,6 +2180,7 @@ ngx_http_v2_state_ping(ngx_http_v2_connection_t *h2c, u_char *pos, u_char *end)
 
     buf = frame->first->buf;
 
+    //PING帧带有8字节负载，8个字节负载，值随意填写。
     buf->last = ngx_cpymem(buf->last, pos, NGX_HTTP_V2_PING_SIZE);
 
     ngx_http_v2_queue_blocked_frame(h2c, frame);
@@ -2172,7 +2188,8 @@ ngx_http_v2_state_ping(ngx_http_v2_connection_t *h2c, u_char *pos, u_char *end)
     return ngx_http_v2_state_complete(h2c, pos + NGX_HTTP_V2_PING_SIZE, end);
 }
 
-//见ngx_http_v2_frame_states
+//见ngx_http_v2_frame_states 
+//GOAWAY帧直接跳过的，啥也没处理
 static u_char *
 ngx_http_v2_state_goaway(ngx_http_v2_connection_t *h2c, u_char *pos,
     u_char *end)
@@ -2233,7 +2250,7 @@ ngx_http_v2_state_window_update(ngx_http_v2_connection_t *h2c, u_char *pos,
                                       ngx_http_v2_state_window_update);
     }
 
-    window = ngx_http_v2_parse_window(pos);
+    window = ngx_http_v2_parse_window(pos); //获取对方发送过来的更新窗口大小
 
     pos += NGX_HTTP_V2_WINDOW_UPDATE_SIZE;
 
@@ -2241,7 +2258,7 @@ ngx_http_v2_state_window_update(ngx_http_v2_connection_t *h2c, u_char *pos,
                    "http2 WINDOW_UPDATE frame sid:%ui window:%uz",
                    h2c->state.sid, window);
 
-    if (h2c->state.sid) {
+    if (h2c->state.sid) { //是针对某个流进行窗口更新，则把该流的发送窗口增加window大小
         node = ngx_http_v2_get_node_by_id(h2c, h2c->state.sid, 0);
 
         if (node == NULL || node->stream == NULL) {
@@ -2253,6 +2270,7 @@ ngx_http_v2_state_window_update(ngx_http_v2_connection_t *h2c, u_char *pos,
 
         stream = node->stream;
 
+        /* 对端告诉本端我们可以把发送窗口调大window大小，但是本端发送窗口调大window后会超过NGX_HTTP_V2_MAX_WINDOW限制，这是不规范的 */
         if (window > (size_t) (NGX_HTTP_V2_MAX_WINDOW - stream->send_window)) {
 
             ngx_log_error(NGX_LOG_INFO, h2c->connection->log, 0,
@@ -2288,6 +2306,8 @@ ngx_http_v2_state_window_update(ngx_http_v2_connection_t *h2c, u_char *pos,
 
         return ngx_http_v2_state_complete(h2c, pos, end);
     }
+
+    /* 说明是针对整个连接的发送窗口更新，对整个连接的发送窗口增加window大小 */
 
     if (window > NGX_HTTP_V2_MAX_WINDOW - h2c->send_window) {
         ngx_log_error(NGX_LOG_INFO, h2c->connection->log, 0,
@@ -2704,7 +2724,7 @@ ngx_http_v2_send_rst_stream(ngx_http_v2_connection_t *h2c, ngx_uint_t sid,
     return NGX_OK;
 }
 
-
+//http2处理完成后，在ngx_http_v2_finalize_connection中调用该函数和对端说拜拜
 static ngx_int_t
 ngx_http_v2_send_goaway(ngx_http_v2_connection_t *h2c, ngx_uint_t status)
 {
@@ -4014,9 +4034,9 @@ ngx_http_v2_finalize_connection(ngx_http_v2_connection_t *h2c,
     ngx_http_close_connection(c);
 }
 
-
+//调整连接h2c上的所有流的发送窗口大小，增加delta，如果加上delta后超过了阈值，则直接发送RST复位帧
 static ngx_int_t
-ngx_http_v2_adjust_windows(ngx_http_v2_connection_t *h2c, ssize_t delta)
+ngx_http_v2_adjust_windows(ngx_http_v2_connection_t *h2c, ssize_t delta) //delta为流的发送窗口增加量
 {
     ngx_uint_t               i, size;
     ngx_event_t             *wev;
@@ -4038,6 +4058,7 @@ ngx_http_v2_adjust_windows(ngx_http_v2_connection_t *h2c, ssize_t delta)
                 continue;
             }
 
+            /* 如果流的发送窗口加上delta后超过了NGX_HTTP_V2_MAX_WINDOW最大限制，则发送RST帧 */
             if (delta > 0
                 && stream->send_window
                       > (ssize_t) (NGX_HTTP_V2_MAX_WINDOW - delta))
