@@ -3,3 +3,15 @@ HPACK   https://imququ.com/post/header-compression-in-http2.html
 使用 nghttp2 调试 HTTP/2 流量 https://imququ.com/post/intro-to-nghttp2.html
 NGINX HTTP2官方说明:https://www.nginx.com/blog/http2-r7/
 Rules of Thumb for HTTP/2 Push:https://docs.google.com/document/d/1K0NykTXBbbbTlv60t5MyJvXjqKGsCVNYHyLEXIxYMv0/edit#
+百度团队翻译的http2中文协议：https://github.com/fex-team/http2-spec/blob/master/HTTP2%E4%B8%AD%E8%8B%B1%E5%AF%B9%E7%85%A7%E7%89%88(06-29).md
+
+netstat -n | awk '/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}'   TCP状态统计
+
+
+
+http2环境搭建: 
+初次使用nginx 搭建http2.0    	http://www.open-open.com/lib/view/open1452660300917.html 
+源码安装升级 Nginx 到最新版（当前是1.9.14） http://www.tuicool.com/articles/aqyMve Nginx+HTTPS(SSL/TLS)  http://www.cnblogs.com/doseoer/p/5663203.html
+SSL/TLS协议运行机制的概述		http://www.ruanyifeng.com/blog/2014/02/ssl_tls.html
+HTTP2帧格式						http://www.blogjava.net/yongboy/archive/2015/03/20/423655.html
+HTTP/2笔记之流和多路复用        http://www.blogjava.net/yongboy/archive/2015/03/19/423611.aspx

@@ -478,9 +478,10 @@ Stream Identifier若为0x0，则表示针对整个连接，否则针对具体流
 #define NGX_HTTP_V2_RST_STREAM_FRAME     0x3 
 //setting帧决定接收到HEAD帧后创建流的时候，确定发送窗口的大小和流窗口大小。同时决定在通过write chain发送frame帧的时候，决定没个数据块的大小
 //例如一个frame帧为10K，但是对端指定其接收数据的frame_size=5K，则该frame会被拆成两个frame_size大小的包体发送
-#define NGX_HTTP_V2_SETTINGS_FRAME       0x4
+#define NGX_HTTP_V2_SETTINGS_FRAME       0x4 //数据帧发送优先级控制见ngx_http_v2_queue_frame
 #define NGX_HTTP_V2_PUSH_PROMISE_FRAME   0x5
 #define NGX_HTTP_V2_PING_FRAME           0x6
+//http2处理完成后，在ngx_http_v2_finalize_connection中调用该函数和对端说拜拜. nginx收到goaway帧的时候啥也没做
 #define NGX_HTTP_V2_GOAWAY_FRAME         0x7
 //HTTP/2定义的帧类型的一种，用途是通知对端增加窗口值，WINDOW_UPDATE会指定增加的大小
 #define NGX_HTTP_V2_WINDOW_UPDATE_FRAME  0x8
@@ -638,6 +639,22 @@ struct ngx_http_v2_connection_s {
     //例如通过同一个connect来下载两个文件，则2个文件的相关信息会被组成一个一个交替的帧挂载到该链表上进行交替发送
     ngx_http_v2_out_frame_t         *last_out; /* http2 header帧和data帧都挂载到该链表中 */
     ngx_queue_t                      posted;
+    /*
+                         NGX_HTTP_V2_ROOT
+                         /|\            /|\
+                          /               \
+                         /                 \parent          
+                        /                   \           
+      (代表一个连接)h2c->dependencies      h2c->dependencies(代表一个连接)
+                      |                          |
+                      |                          |
+                      |                          |children
+                      |                          |
+            queue    \|/                        \|/     queue      queue
+    nodeB<--------nodeA                         nodeA-------->nodeB------->nodeC (同一个父节点下的子节点，例如某个A B C都依赖于节点dependencies)
+
+    */
+    //该连接各个流的依赖树结构挂接在NGX_HTTP_V2_ROOT下面， 最终同一个连接下面的多个流对应的所有node节点都通过h2c->dependencies连接在一起
     ngx_queue_t                      dependencies;
     /* 队列成员为ngx_http_v2_node_t，赋值见ngx_http_v2_state_priority */
     ngx_queue_t                      closed;
@@ -648,9 +665,25 @@ struct ngx_http_v2_connection_s {
     unsigned                         blocked:1;
 };
 
+/*
+                     NGX_HTTP_V2_ROOT
+                     /|\            /|\
+                      /               \
+                     /                 \parent          
+                    /                   \           
+  (代表一个连接)h2c->dependencies      h2c->dependencies(代表一个连接)
+                  |                          |
+                  |                          |
+                  |                          |children
+                  |                          |
+        queue    \|/                        \|/     queue      queue        (A先依赖parent，过后B又依赖parent，过后C又依赖parent)
+nodeA<--------nodeB                         nodeC-------->nodeB------->nodeA (同一个父节点下的子节点，例如某个A B C都依赖于节点dependencies)
+*/
+
 /* ngx_http_v2_connection_t.streams_index指针数组成员为该类型，一个流ID对应一个该结构，见ngx_http_v2_get_node_by_id */
-/* 一个ngx_http_v2_stream_s.node流对应一个ngx_http_v2_node_t */
-struct ngx_http_v2_node_s { 
+/* 一个ngx_http_v2_stream_s.node流对应一个ngx_http_v2_node_t */ 
+//最终所有的node节点都通过h2c->dependencies连接在一起
+struct ngx_http_v2_node_s {  //接收到header帧的时候，在ngx_http_v2_get_node_by_id
 /* PRIORITY帧通告的某个流ID对应的weight和dependecy都保存在该结构中，见ngx_http_v2_state_priority */
     ngx_uint_t                       id; /* stream id */
     ngx_http_v2_node_t              *index;
@@ -660,10 +693,25 @@ struct ngx_http_v2_node_s {
     如果该node没有parent则通过该queue加入到&h2c->dependencies，见ngx_http_v2_set_dependency,*/
     ngx_queue_t                      queue;
     /* 所有的children节点挂到该队列中 */
+    //把children(也就是父节点的children节点)指向node节点，如果有多个node依赖parent节点，则这多个node节点通过queue连接在一起，如下图:
+    /*
+        parent
+          ^
+          |children
+          |
+          |       queue      queue
+          nodeC-------->nodeB------->nodeA (A先依赖parent，过后B又依赖parent，过后C又依赖parent)
+    */
     ngx_queue_t                      children;
     ngx_queue_t                      reuse;
+    //表示该node为NGX_HTTP_V2_ROOT下的第几层，rank = parent->rank + 1 //只有优先级帧和headder帧涉及到流依赖和流优先级，
     ngx_uint_t                       rank;
+    //从优先级priority帧或者headder帧中解析出来,见ngx_http_v2_state_priority，ngx_http_v2_state_headers
+    //只有优先级帧和headder帧涉及到流依赖和流优先级， 优先级发送控制见ngx_http_v2_queue_frame
+    /* stream流依赖参考http://www.blogjava.net/yongboy/archive/2015/03/19/423611.aspx */
     ngx_uint_t                       weight;
+    //和ngx_http_v2_node_s.weight权重有关，参考ngx_http_v2_set_dependency
+    //该node权重占总权重256的百分比  优先级发送控制见ngx_http_v2_queue_frame
     double                           rel_weight;
     /* 该node对应的流，一个node对应一个流，赋值见ngx_http_v2_state_headers */
     ngx_http_v2_stream_t            *stream; 
@@ -723,7 +771,8 @@ struct ngx_http_v2_stream_s {
 
 
 /* 创建空间和赋值见ngx_http_v2_send_settings，对应一种setting、HEADER等帧，每个帧对应一个该结构，最终加入ngx_http_v2_connection_t->last_out */
-struct ngx_http_v2_out_frame_s {//该结构stream->free_frames会进行重复利用
+//该结构stream->free_frames会进行重复利用，同一连接对应的多个stream id上的frame帧信息发送通过ngx_http_v2_queue_frame进行优先级控制
+struct ngx_http_v2_out_frame_s {
     ngx_http_v2_out_frame_t         *next;
     ngx_chain_t                     *first;
     ngx_chain_t                     *last;
@@ -745,18 +794,23 @@ struct ngx_http_v2_out_frame_s {//该结构stream->free_frames会进行重复利用
     unsigned                         fin:1;
 };
 
+//ngx_http_v2_queue_frame对需要发送的帧进行优先级控制，权限高的放入队列首部，低的放入尾部，真正发送在ngx_http_v2_send_output_queue
 static ngx_inline void
 ngx_http_v2_queue_frame(ngx_http_v2_connection_t *h2c,
     ngx_http_v2_out_frame_t *frame)
 {
     ngx_http_v2_out_frame_t  **out;
 
+    /* 按照优先级入队到last_out  */
     for (out = &h2c->last_out; *out; out = &(*out)->next) {
 
         if ((*out)->blocked || (*out)->stream == NULL) {
             break;
         }
 
+        /* 树形结构中不同的rank层，上面的优先级比下面层的优先级高，先发送
+           同一层的数据，rel_weight大的先发送
+        */
         if ((*out)->stream->node->rank < frame->stream->node->rank
             || ((*out)->stream->node->rank == frame->stream->node->rank
                 && (*out)->stream->node->rel_weight

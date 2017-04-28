@@ -721,7 +721,9 @@ ngx_http_v2_write_continuation_head(u_char *pos, size_t length, ngx_uint_t sid,
 }
 
 /*
-EADER帧发送流程:ngx_http_v2_filter_send->ngx_http_v2_send_output_queue
+客户端一次uri请求发送过来header帧后，nginx应答给客户端的header帧和数据帧的stream id就是客户端请求header帧的id信息
+
+HEADER帧发送流程:ngx_http_v2_filter_send->ngx_http_v2_send_output_queue
 DATA帧发送流程:ngx_http_v2_send_chain->ngx_http_v2_send_output_queue
 一次发送不完(例如协议栈写满返回AGAIN)则下次通过ngx_http_v2_write_handler->ngx_http_v2_send_output_queue再次发送
 
@@ -1037,7 +1039,8 @@ ngx_http_v2_filter_get_data_frame(ngx_http_v2_stream_t *stream,
 }
 
 /*
-EADER帧发送流程:ngx_http_v2_filter_send->ngx_http_v2_send_output_queue
+客户端一次uri请求发送过来header帧后，nginx应答给客户端的header帧和数据帧的stream id就是客户端请求header帧的id信息
+HEADER帧发送流程:ngx_http_v2_filter_send->ngx_http_v2_send_output_queue
 DATA帧发送流程:ngx_http_v2_send_chain->ngx_http_v2_send_output_queue
 一次发送不完(例如协议栈写满返回AGAIN)则下次通过ngx_http_v2_write_handler->ngx_http_v2_send_output_queue再次发送
 

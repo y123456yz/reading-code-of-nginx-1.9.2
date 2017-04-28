@@ -3,7 +3,7 @@ http2环境搭建:
 源码安装升级 Nginx 到最新版（当前是1.9.14） http://www.tuicool.com/articles/aqyMve Nginx+HTTPS(SSL/TLS)  http://www.cnblogs.com/doseoer/p/5663203.html
 SSL/TLS协议运行机制的概述		http://www.ruanyifeng.com/blog/2014/02/ssl_tls.html
 HTTP2帧格式						http://www.blogjava.net/yongboy/archive/2015/03/20/423655.html
-
+HTTP/2笔记之流和多路复用        http://www.blogjava.net/yongboy/archive/2015/03/19/423611.aspx
 
 2017/03/08 15:31:43[                ngx_epoll_process_events,  1715]  [debug] 2906#2906: epoll: fd:6 EPOLLIN  (ev:0001) d:00007FD79218D010
 2017/03/08 15:31:43[                ngx_epoll_process_events,  1761]  [debug] 2906#2906: post event 00007FD78E58D010

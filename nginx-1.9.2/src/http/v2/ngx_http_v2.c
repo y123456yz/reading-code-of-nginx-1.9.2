@@ -11,6 +11,21 @@
 #include <ngx_http_v2_module.h>
 
 
+/*
+NO_ERROR (0) ： 相关的条件并不是错误的结果。例如超时帧可以携带此错误码指示连接的平滑关闭。
+PROTOCOL_ERROR (1) : 终端检测到一个不确定的协议错误。这个错误用在一个更具体的错误码不可用的时候。
+INTERNAL_ERROR (2) : 终端遇到意外的内部错误。
+FLOW_CONTROL_ERROR (3) : 终端检测到对等端违反了流量控制协议。
+SETTINGS_TIMEOUT (4) : 终端发送了设置帧，但是没有及时收到响应。见Settings Synchronization。
+STREAM_CLOSED (5) : 终端在流半封闭的时候收到帧。
+FRAME_SIZE_ERROR (6) : 终端收到大小超过最大尺寸的帧。
+REFUSED_STREAM (7) : 终端拒绝流在它执行任何应用处理之前，详见Reliability（章节 8.1.4）
+CANCEL (8) : 终端使用这个标示某个流不再需要。
+COMPRESSION_ERROR (9) : 终端无法维持报头压缩上下文的连接
+CONNECT_ERROR (10) : 响应某个连接请求建立的连接被服为异常关闭。
+ENHANCE_YOUR_CALM (11) : 终端检测出对等端在表现出可能会产生过大负荷的行为。
+INADEQUATE_SECURITY (12) ： 基础传输包含属性不满足文档或者终端申明的最小要求。
+*/
 /* errors */
 #define NGX_HTTP_V2_NO_ERROR                     0x0
 #define NGX_HTTP_V2_PROTOCOL_ERROR               0x1
@@ -54,6 +69,24 @@
 #define NGX_HTTP_V2_MAX_WINDOW                   ((1U << 31) - 1)
 #define NGX_HTTP_V2_DEFAULT_WINDOW               65535
 
+
+/*
+                     NGX_HTTP_V2_ROOT
+                     /|\            /|\
+                      /               \
+                     /                 \parent          
+                    /                   \           
+  (代表一个连接)h2c->dependencies      h2c->dependencies(代表一个连接)
+                  |                          |
+                  |                          |
+                  |                          |children
+                  |                          |
+        queue    \|/                        \|/     queue      queue        (A先依赖parent，过后B又依赖parent，过后C又依赖parent)
+nodeA<--------nodeB                         nodeC-------->nodeB------->nodeA (同一个父节点下的子节点，例如某个A B C都依赖于节点dependencies)
+
+
+所有的ngx_http_v2_node_t节点最终都挂接到root下面组成树形结构，见ngx_http_v2_set_dependency
+*/
 #define NGX_HTTP_V2_ROOT                         (void *) -1
 
 
@@ -397,6 +430,16 @@ data帧读取在ngx_http_read_client_request_body->ngx_http_v2_read_request_body */
 }
 
 
+/*
+客户端一次uri请求发送过来header帧后，nginx应答给客户端的header帧和数据帧的stream id就是客户端请求header帧的id信息
+
+HEADER帧发送流程:ngx_http_v2_filter_send->ngx_http_v2_send_output_queue
+DATA帧发送流程:ngx_http_v2_send_chain->ngx_http_v2_send_output_queue
+一次发送不完(例如协议栈写满返回AGAIN)则下次通过ngx_http_v2_write_handler->ngx_http_v2_send_output_queue再次发送
+
+例如通过同一个connect来下载两个文件，则2个文件的相关信息会被组成一个一个交替的帧挂载到该链表上，通过该函数进行交替发送
+发送队列last_out中的数据
+*/
 static void
 ngx_http_v2_write_handler(ngx_event_t *wev)
 {
@@ -454,12 +497,18 @@ ngx_http_v2_write_handler(ngx_event_t *wev)
 }
 
 /*
-EADER帧发送流程:ngx_http_v2_filter_send->ngx_http_v2_send_output_queue
+客户端一次uri请求发送过来header帧后，nginx应答给客户端的header帧和数据帧的stream id就是客户端请求header帧的id信息
+
+客户端一次uri请求发送过来header帧后，nginx应答给客户端的header帧和数据帧的stream id就是客户端请求header帧的id信息
+
+HEADER帧发送流程:ngx_http_v2_filter_send->ngx_http_v2_send_output_queue
 DATA帧发送流程:ngx_http_v2_send_chain->ngx_http_v2_send_output_queue
 一次发送不完(例如协议栈写满返回AGAIN)则下次通过ngx_http_v2_write_handler->ngx_http_v2_send_output_queue再次发送
 
 例如通过同一个connect来下载两个文件，则2个文件的相关信息会被组成一个一个交替的帧挂载到该链表上，通过该函数进行交替发送
 发送队列last_out中的数据
+
+ngx_http_v2_queue_frame对需要发送的帧进行优先级控制，权限高的放入队列首部，低的放入尾部，真正发送在ngx_http_v2_send_output_queue
 */
 ngx_int_t
 ngx_http_v2_send_output_queue(ngx_http_v2_connection_t *h2c)
@@ -1874,9 +1923,18 @@ ngx_http_v2_state_priority(ngx_http_v2_connection_t *h2c, u_char *pos,
                                       ngx_http_v2_state_priority);
     }
 
+    /* stream流依赖参考http://www.blogjava.net/yongboy/archive/2015/03/19/423611.aspx */
     dependency = ngx_http_v2_parse_uint32(pos);
 
     depend = dependency & 0x7fffffff;
+    /*
+    独家专属标志（exclusive flag）将为现有依赖插入一个水平的依赖关系，其父级流只能被插入的新流所依赖。比如流D设置专属标志并依赖于流A：
+                      A
+    A                 |
+   / \      ==>       D
+  B   C              / \
+                    B   C
+    */
     excl = dependency >> 31;
     weight = pos[4] + 1;
 
@@ -1886,7 +1944,7 @@ ngx_http_v2_state_priority(ngx_http_v2_connection_t *h2c, u_char *pos,
                    "http2 PRIORITY frame sid:%ui on %ui excl:%ui weight:%ui",
                    h2c->state.sid, depend, excl, weight);
 
-    if (h2c->state.sid == 0) {
+    if (h2c->state.sid == 0) { //stream id为0的不能设置依赖
         ngx_log_error(NGX_LOG_INFO, h2c->connection->log, 0,
                       "client sent PRIORITY frame with incorrect identifier");
 
@@ -2658,7 +2716,6 @@ ngx_http_v2_send_settings(ngx_http_v2_connection_t *h2c, ngx_uint_t ack)
     return NGX_OK;
 }
 
-
 static ngx_int_t
 ngx_http_v2_settings_frame_handler(ngx_http_v2_connection_t *h2c,
     ngx_http_v2_out_frame_t *frame)
@@ -2960,7 +3017,7 @@ ngx_http_v2_create_stream(ngx_http_v2_connection_t *h2c)
     return stream;
 }
 
-/* 根据sid查找对应的node，如果找到直接返回，找不到则创建一个node节点 */
+/* 根据sid查找对应的node，如果找到直接返回，找不到并在alloc=1(允许开辟新的空间创建新的node节点)则创建一个node节点 */
 static ngx_http_v2_node_t *
 ngx_http_v2_get_node_by_id(ngx_http_v2_connection_t *h2c, ngx_uint_t sid,
     ngx_uint_t alloc)
@@ -4096,6 +4153,29 @@ ngx_http_v2_adjust_windows(ngx_http_v2_connection_t *h2c, ssize_t delta) //delta
 }
 
 
+/*
+exclusive:独家专属标志（exclusive flag）将为现有依赖插入一个水平的依赖关系，其父级流只能被插入的新流所依赖。比如流D设置专属标志并依赖于流A：
+                      A
+    A                 |
+   / \      ==>       D
+  B   C              / \
+                    B   C
+流依赖可以参考:http://www.blogjava.net/yongboy/archive/2015/03/19/423611.aspx
+
+                     NGX_HTTP_V2_ROOT
+                     /|\            /|\
+                      /               \
+                     /                 \parent          
+                    /                   \           
+  (代表一个连接)h2c->dependencies      h2c->dependencies(代表一个连接)
+                  |                          |
+                  |                          |
+                  |                          |children
+                  |                          |
+        queue    \|/                        \|/     queue      queue             (A先依赖parent，过后B又依赖parent，过后C又依赖parent)
+nodeA<--------nodeB                         nodeC-------->nodeB------->nodeA (同一个父节点下的子节点，例如某个A B C都依赖于节点dependencies)
+
+*/
 static void
 ngx_http_v2_set_dependency(ngx_http_v2_connection_t *h2c,
     ngx_http_v2_node_t *node, ngx_uint_t depend, ngx_uint_t exclusive)
@@ -4103,16 +4183,19 @@ ngx_http_v2_set_dependency(ngx_http_v2_connection_t *h2c,
     ngx_queue_t         *children;
     ngx_http_v2_node_t  *parent, *next;
 
+    /* 根据depend查找parent对应的node节点，如果depend为0，则parent=NGX_HTTP_V2_ROOT */
     parent = depend ? ngx_http_v2_get_node_by_id(h2c, depend, 0) : NULL;
 
     if (parent == NULL) {
+        //这里可以看出所有连接是公用了同一个ROOT跟节点，而且权重也是共用的
         parent = NGX_HTTP_V2_ROOT;
 
         if (depend != 0) {
             exclusive = 0;
         }
 
-        node->rank = 1;
+        node->rank = 1; //跟ROOT下的第一层节点
+        //该node权重占总权重256的百分之多少呢
         node->rel_weight = (1.0 / 256) * node->weight;
 
         children = &h2c->dependencies;
@@ -4152,6 +4235,7 @@ ngx_http_v2_set_dependency(ngx_http_v2_connection_t *h2c,
         }
 
         node->rank = parent->rank + 1;
+        //占整个父节点权重的百分比，例如父节点权重比为0.5，本节点weight为128，则本节点真实权重为0.5*0.5也就是0.25
         node->rel_weight = (parent->rel_weight / 256) * node->weight;
 
         if (parent->stream == NULL) {
@@ -4162,23 +4246,49 @@ ngx_http_v2_set_dependency(ngx_http_v2_connection_t *h2c,
         children = &parent->children;
     }
 
+    /*
+    一旦设置独家专属标志（exclusive flag）将为现有依赖插入一个水平的依赖关系，其父级流只能被插入的新流所依赖。比如流D设置专属标志并依赖于流A：
+                          A
+        A                 |
+       / \      ==>       D
+      B   C              / \
+                        B   C
+    */
     if (exclusive) {
         ngx_queue_add(&node->children, children);
         ngx_queue_init(children);
     }
 
-    if (node->parent != NULL) {
+    if (node->parent != NULL) { //之前node依赖A，现在改为依赖D了，则先清除依赖关系
         ngx_queue_remove(&node->queue);
     }
 
+    //把children(也就是父节点的children节点)指向node节点，如果有多个node依赖parent节点，则这多个node节点通过queue连接在一起，如下图:
+    /*
+        parent
+          |
+          |children
+          |
+          |       queue      queue
+          nodeC--------nodeB-------nodeA  (A先依赖parent，过后B又依赖parent，过后C又依赖parent)
+    */
     ngx_queue_insert_tail(children, &node->queue);
 
-    node->parent = parent;
+    node->parent = parent; //指定父节点
 
-    ngx_http_v2_node_children_update(node);
+    ngx_http_v2_node_children_update(node); //例如上面exclusive置1的时候，就需要从新计算D下面B C的真实权重
 }
 
+/*
+children权重更新，例如如下情况:
 
+一旦设置独家专属标志（exclusive flag）将为现有依赖插入一个水平的依赖关系，其父级流只能被插入的新流所依赖。比如流D设置专属标志并依赖于流A：
+                      A
+    A                 |
+   / \      ==>       D
+  B   C              / \
+                    B   C
+*/
 static void
 ngx_http_v2_node_children_update(ngx_http_v2_node_t *node)
 {
