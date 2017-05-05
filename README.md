@@ -172,7 +172,12 @@ nginx的以下功能模块的相关代码已经阅读，并对其源码及相关
 	2.[限流不准确分析](https://github.com/alibaba/tengine/issues/855)<br />  
 	3.
 	 
-   
+
+http2 quic学习参考:    
+===================================     
+libquic goquic编译安装，源码分析注释：https://github.com/y123456yz/reading-and-annotate-quic    
+nghttp2相关参考：https://github.com/y123456yz/reading-and-annotate-nghttp2  
+	 
   
 ===================================    
 编译方法：  
