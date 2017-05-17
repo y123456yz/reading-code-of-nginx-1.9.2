@@ -30,11 +30,11 @@ static ngx_conf_enum_t  ngx_debug_points[] = {
     { ngx_string("abort"), NGX_DEBUG_POINTS_ABORT },
     { ngx_null_string, 0 }
 };
-//Ïà¹ØÅäÖÃ¼ûngx_event_core_commands ngx_http_core_commands ngx_stream_commands ngx_http_core_commands ngx_core_commands  ngx_mail_commands
+//ç›¸å…³é…ç½®è§ngx_event_core_commands ngx_http_core_commands ngx_stream_commands ngx_http_core_commands ngx_core_commands  ngx_mail_commands
 
-//¶ÔÓ¦µÄ´æ·Å²ÎÊıµÄÖµµÄ½á¹¹ÌåÎªngx_core_conf_t
+//å¯¹åº”çš„å­˜æ”¾å‚æ•°çš„å€¼çš„ç»“æ„ä½“ä¸ºngx_core_conf_t
 static ngx_command_t  ngx_core_commands[] = {
-    //daemon on|off ÊÇ·ñÒÑÊØ»¤½ø³Ì·½Ê½ÔËĞĞ£¬ÊØ»¤½ø³ÌÊÇÍÑÀëÖÕ¶ËÔÚºóÌ¨ÔËĞĞµÄ½ø³Ì£¬ÍÑÀëÖÕ¶ËÊÇ±ÜÃâ½ø³ÌÖ´ĞĞ¹ı³ÌÖĞµÄ´òÓ¡ÔÚÈÎºÎÖÕ¶ËÉÏÃæÏÔÊ¾
+    //daemon on|off æ˜¯å¦å·²å®ˆæŠ¤è¿›ç¨‹æ–¹å¼è¿è¡Œï¼Œå®ˆæŠ¤è¿›ç¨‹æ˜¯è„±ç¦»ç»ˆç«¯åœ¨åå°è¿è¡Œçš„è¿›ç¨‹ï¼Œè„±ç¦»ç»ˆç«¯æ˜¯é¿å…è¿›ç¨‹æ‰§è¡Œè¿‡ç¨‹ä¸­çš„æ‰“å°åœ¨ä»»ä½•ç»ˆç«¯ä¸Šé¢æ˜¾ç¤º
     { ngx_string("daemon"),
       NGX_MAIN_CONF|NGX_DIRECT_CONF|NGX_CONF_FLAG,
       ngx_conf_set_flag_slot,
@@ -42,7 +42,7 @@ static ngx_command_t  ngx_core_commands[] = {
       offsetof(ngx_core_conf_t, daemon),
       NULL },
 
-    //ÊÇ·ñÒÔmaster/slave·½Ê½ÔËĞĞ  master_process on | off,Èç¹ûÒÔmaster/slave·½Ê½ÔËĞĞ½«ÒÔslaveÀ´½ÓÊÕÁ¬½Ó£¬·ñÔòÒÔmaster½ÓÊÕÁ¬½Ó
+    //æ˜¯å¦ä»¥master/slaveæ–¹å¼è¿è¡Œ  master_process on | off,å¦‚æœä»¥master/slaveæ–¹å¼è¿è¡Œå°†ä»¥slaveæ¥æ¥æ”¶è¿æ¥ï¼Œå¦åˆ™ä»¥masteræ¥æ”¶è¿æ¥
     { ngx_string("master_process"),
       NGX_MAIN_CONF|NGX_DIRECT_CONF|NGX_CONF_FLAG,
       ngx_conf_set_flag_slot,
@@ -50,30 +50,30 @@ static ngx_command_t  ngx_core_commands[] = {
       offsetof(ngx_core_conf_t, master),
       NULL },
 
-    //timer_resolution t±íÊ¾ÖÁÉÙtÃëºó²Åµ÷ÓÃÒ»´Îgettimeofday
+    //timer_resolution tè¡¨ç¤ºè‡³å°‘tç§’åæ‰è°ƒç”¨ä¸€æ¬¡gettimeofday
     /*
-     Èç¹ûnginx.confÅäÖÃÎÄ¼şÖĞÉèÖÃÁËtimer_resolutionõ¢ÖÃÏî£¬¼´±íÃ÷ĞèÒª¿ØÖÆÊ±¼ä¾«¶È£¬ÕâÊ±»áµ÷ÓÃsetitimer·½·¨£¬ÉèÖÃÊ±¼ä¼ä¸ô
-     Îªtimer_resolutionºÁÃëÀ´»Øµ÷ngx_timer_signal_handler·½·¨
-     */ //timer_resolutionÕâ¸ö²ÎÊı¼ÓÉÏ¿ÉÒÔ±£Ö¤¶¨Ê±Æ÷Ã¿¸öÕâÃ´¶àÃëÖĞ¶ÏÒ»´Î£¬´Ó¶ø¿ÉÒÔ´ÓepollÖĞ·µ»Ø£¬²¢¸úĞÂÊ±¼ä£¬ÅĞ¶ÏÄÄĞ©ÊÂ¼şÓĞ³¬Ê±£¬Ö´ĞĞ³¬Ê±ÊÂ¼ş£¬ÀıÈç¿Í»§¶Ë¼ÌÉÏ´Î
-     //·¢ÇëÇó¹ıÀ´£¬¸ôÁËclient_header_timeoutÊ±¼äºó»¹Ã»ÓĞĞÂÇëÇó¹ıÀ´£¬Õâ»á¹Ø±ÕÁ¬½Ó
-    { ngx_string("timer_resolution"), //µ¥Î»ÊÇs
+     å¦‚æœnginx.confé…ç½®æ–‡ä»¶ä¸­è®¾ç½®äº†timer_resolutioné…¡ç½®é¡¹ï¼Œå³è¡¨æ˜éœ€è¦æ§åˆ¶æ—¶é—´ç²¾åº¦ï¼Œè¿™æ—¶ä¼šè°ƒç”¨setitimeræ–¹æ³•ï¼Œè®¾ç½®æ—¶é—´é—´éš”
+     ä¸ºtimer_resolutionæ¯«ç§’æ¥å›è°ƒngx_timer_signal_handleræ–¹æ³•
+     */ //timer_resolutionè¿™ä¸ªå‚æ•°åŠ ä¸Šå¯ä»¥ä¿è¯å®šæ—¶å™¨æ¯ä¸ªè¿™ä¹ˆå¤šç§’ä¸­æ–­ä¸€æ¬¡ï¼Œä»è€Œå¯ä»¥ä»epollä¸­è¿”å›ï¼Œå¹¶è·Ÿæ–°æ—¶é—´ï¼Œåˆ¤æ–­å“ªäº›äº‹ä»¶æœ‰è¶…æ—¶ï¼Œæ‰§è¡Œè¶…æ—¶äº‹ä»¶ï¼Œä¾‹å¦‚å®¢æˆ·ç«¯ç»§ä¸Šæ¬¡
+     //å‘è¯·æ±‚è¿‡æ¥ï¼Œéš”äº†client_header_timeoutæ—¶é—´åè¿˜æ²¡æœ‰æ–°è¯·æ±‚è¿‡æ¥ï¼Œè¿™ä¼šå…³é—­è¿æ¥
+    { ngx_string("timer_resolution"), //å•ä½æ˜¯s
       NGX_MAIN_CONF|NGX_DIRECT_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
       0,
       offsetof(ngx_core_conf_t, timer_resolution),
       NULL },
 
-    //ÉèÖÃpidÎÄ¼şÂ·¾¶
+    //è®¾ç½®pidæ–‡ä»¶è·¯å¾„
     { ngx_string("pid"),
       NGX_MAIN_CONF|NGX_DIRECT_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_str_slot,
       0,
       offsetof(ngx_core_conf_t, pid),
       NULL },
-    //lock_file logs/nginx.lock£¬Èç¹û²»´ò¿ªlock_file£¬Ôò¸Ãnginx.lockÎÄ¼ş²»ÉúĞ§£¬Ã»×÷ÓÃ£¬Èç¹û´ò¿ª£¬Ôò¿ª²Ù×÷ÏµÍ³ÊÇ·ñÖ§³ÖÔ­×ÓËø£¬Èç¹û²»Ö§³ÖÔòÓÃÎÄ¼şËøÊµÏÖ
-    //Ò»°ãlinuxÊÇÖ§³ÖÔ­×ÓËøµÄ£¬ËùÒÔ¸ÃÎÄ¼şÃ»ÓĞÒâÒå
+    //lock_file logs/nginx.lockï¼Œå¦‚æœä¸æ‰“å¼€lock_fileï¼Œåˆ™è¯¥nginx.lockæ–‡ä»¶ä¸ç”Ÿæ•ˆï¼Œæ²¡ä½œç”¨ï¼Œå¦‚æœæ‰“å¼€ï¼Œåˆ™å¼€æ“ä½œç³»ç»Ÿæ˜¯å¦æ”¯æŒåŸå­é”ï¼Œå¦‚æœä¸æ”¯æŒåˆ™ç”¨æ–‡ä»¶é”å®ç°
+    //ä¸€èˆ¬linuxæ˜¯æ”¯æŒåŸå­é”çš„ï¼Œæ‰€ä»¥è¯¥æ–‡ä»¶æ²¡æœ‰æ„ä¹‰
     /*
-      ¼ûngx_trylock_fd
+      è§ngx_trylock_fd
      */
     { ngx_string("lock_file"),
       NGX_MAIN_CONF|NGX_DIRECT_CONF|NGX_CONF_TAKE1,
@@ -82,22 +82,22 @@ static ngx_command_t  ngx_core_commands[] = {
       offsetof(ngx_core_conf_t, lock_file),
       NULL },
 
-    //worker_processes 4ÉèÖÃ½ø³Ì¸öÊı
+    //worker_processes 4è®¾ç½®è¿›ç¨‹ä¸ªæ•°
     { ngx_string("worker_processes"),
       NGX_MAIN_CONF|NGX_DIRECT_CONF|NGX_CONF_TAKE1,
       ngx_set_worker_processes,
       0,
       0,
       NULL },
-    //debug_points [stop|abort] nginxÔÚÒ»Ğ©¹Ø¼üÂß¼­´íÎó´¦ÉèÖÃÁËµ÷ÊÔµã£¬Èç¹ûÉèÖÃÎªstop,nginxÔÚÖ´ĞĞµ½ÕâĞ©µ÷ÊÔµã½²·¢³öSIGSTOPĞÅºÅÒÔÓÃÒÔµ÷ÊÔ¡£
-    //Èç¹ûÉèÖÃÎªabortÔòÔÚÕâĞ©µ÷ÊÔµã»á²úÉúcoredumpÎÄ¼ş£¬´Ó¶ø¿ÉÒÔÊ¹ÓÃgdb²é¿´nginxµ±Ê±µÄ¸÷ÖÖĞÅÏ¢
+    //debug_points [stop|abort] nginxåœ¨ä¸€äº›å…³é”®é€»è¾‘é”™è¯¯å¤„è®¾ç½®äº†è°ƒè¯•ç‚¹ï¼Œå¦‚æœè®¾ç½®ä¸ºstop,nginxåœ¨æ‰§è¡Œåˆ°è¿™äº›è°ƒè¯•ç‚¹è®²å‘å‡ºSIGSTOPä¿¡å·ä»¥ç”¨ä»¥è°ƒè¯•ã€‚
+    //å¦‚æœè®¾ç½®ä¸ºabortåˆ™åœ¨è¿™äº›è°ƒè¯•ç‚¹ä¼šäº§ç”Ÿcoredumpæ–‡ä»¶ï¼Œä»è€Œå¯ä»¥ä½¿ç”¨gdbæŸ¥çœ‹nginxå½“æ—¶çš„å„ç§ä¿¡æ¯
     { ngx_string("debug_points"),
       NGX_MAIN_CONF|NGX_DIRECT_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_enum_slot,
       0,
       offsetof(ngx_core_conf_t, debug_points),
       &ngx_debug_points },
-    //worker½ø³ÌÔËĞĞµÄÓÃ»§ºÍÓÃ»§×é  user username [groupname],²»ÉèÖÃgroupnameÔògroupÄ¬ÈÏÎªusername
+    //workerè¿›ç¨‹è¿è¡Œçš„ç”¨æˆ·å’Œç”¨æˆ·ç»„  user username [groupname],ä¸è®¾ç½®groupnameåˆ™groupé»˜è®¤ä¸ºusername
     { ngx_string("user"),
       NGX_MAIN_CONF|NGX_DIRECT_CONF|NGX_CONF_TAKE12,
       ngx_set_user,
@@ -105,7 +105,7 @@ static ngx_command_t  ngx_core_commands[] = {
       0,
       NULL },
 
-    //½ø³ÌÓÅÏÈ¼¶£¬È¡Öµ·¶Î§-20 - 19 Ô½Ğ¡ÓÅÏÈÈ¨Ô½¸ß
+    //è¿›ç¨‹ä¼˜å…ˆçº§ï¼Œå–å€¼èŒƒå›´-20 - 19 è¶Šå°ä¼˜å…ˆæƒè¶Šé«˜
     { ngx_string("worker_priority"),
       NGX_MAIN_CONF|NGX_DIRECT_CONF|NGX_CONF_TAKE1,
       ngx_set_priority,
@@ -113,28 +113,28 @@ static ngx_command_t  ngx_core_commands[] = {
       0,
       NULL },
 
-     //worker_processes 4ÉèÖÃ½ø³Ì¸öÊı  worker_cpu_affinity 1000 0100 0010 0001
+     //worker_processes 4è®¾ç½®è¿›ç¨‹ä¸ªæ•°  worker_cpu_affinity 1000 0100 0010 0001
     { ngx_string("worker_cpu_affinity"),
       NGX_MAIN_CONF|NGX_DIRECT_CONF|NGX_CONF_1MORE,
       ngx_set_cpu_affinity,
       0,
       0,
       NULL },
-    //ÉèÖÃworker½ø³Ì´ò¿ªÎÄ¼şÃèÊö·ûµÄ×î´ó¸öÊı
+    //è®¾ç½®workerè¿›ç¨‹æ‰“å¼€æ–‡ä»¶æè¿°ç¬¦çš„æœ€å¤§ä¸ªæ•°
     { ngx_string("worker_rlimit_nofile"),
       NGX_MAIN_CONF|NGX_DIRECT_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_num_slot,
       0,
       offsetof(ngx_core_conf_t, rlimit_nofile),
       NULL },
-    //ÉèÖÃcoredumpÎÄ¼şµÄ´óĞ¡
+    //è®¾ç½®coredumpæ–‡ä»¶çš„å¤§å°
     { ngx_string("worker_rlimit_core"),
       NGX_MAIN_CONF|NGX_DIRECT_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_off_slot,
       0,
       offsetof(ngx_core_conf_t, rlimit_core),
       NULL },
-    //ÉèÖÃcoredump pathÎÄ¼şµÄ²úÉúÂ·¾¶
+    //è®¾ç½®coredump pathæ–‡ä»¶çš„äº§ç”Ÿè·¯å¾„
     { ngx_string("working_directory"),
       NGX_MAIN_CONF|NGX_DIRECT_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_str_slot,
@@ -142,7 +142,7 @@ static ngx_command_t  ngx_core_commands[] = {
       offsetof(ngx_core_conf_t, working_directory),
       NULL },
 
-    //ÉèÖÃÏµÍ³»·¾³±äÁ¿
+    //è®¾ç½®ç³»ç»Ÿç¯å¢ƒå˜é‡
     { ngx_string("env"),
       NGX_MAIN_CONF|NGX_DIRECT_CONF|NGX_CONF_TAKE1,
       ngx_set_env,
@@ -153,7 +153,7 @@ static ngx_command_t  ngx_core_commands[] = {
       ngx_null_command
 };
 
-//http{}ÍâµÄÅäÖÃ¼ûngx_core_module_ctx£¬ http{}ÄÚµÄÅäÖÃ¼ûngx_http_module
+//http{}å¤–çš„é…ç½®è§ngx_core_module_ctxï¼Œ http{}å†…çš„é…ç½®è§ngx_http_module
 static ngx_core_module_t  ngx_core_module_ctx = {
     ngx_string("core"),
     ngx_core_module_create_conf,
@@ -175,36 +175,36 @@ ngx_module_t  ngx_core_module = {
     NGX_MODULE_V1_PADDING
 };
 
-ngx_uint_t          ngx_max_module; //Ä£¿é×ÜÊı
+ngx_uint_t          ngx_max_module; //æ¨¡å—æ€»æ•°
 
 static ngx_uint_t   ngx_show_help;
 static ngx_uint_t   ngx_show_version;
 static ngx_uint_t   ngx_show_configure;
-static u_char      *ngx_prefix; //¸³Öµ¼ûngx_log_init£¬ÖµÎªNGX_PREFIX »òÕßÎªnginx -p²ÎÊıĞ¯´øµÄ²ÎÊı
-static u_char      *ngx_conf_file; //nginx -c²ÎÊıĞ¯´øµÄ²ÎÊı
+static u_char      *ngx_prefix; //èµ‹å€¼è§ngx_log_initï¼Œå€¼ä¸ºNGX_PREFIX æˆ–è€…ä¸ºnginx -på‚æ•°æºå¸¦çš„å‚æ•°
+static u_char      *ngx_conf_file; //nginx -cå‚æ•°æºå¸¦çš„å‚æ•°
 static u_char      *ngx_conf_params;
 
 /*
-Èç¹û¼ÓÁË-s ²ÎÊı  Õâ¸ö¼ÇÂ¼µÄÊÇ-s²ÎÊı´øµÄ²ÎÊı£¬ÔÚmainÖĞµÄ
-if (ngx_signal) { //¼ÓÁË-S²ÎÊı
+å¦‚æœåŠ äº†-s å‚æ•°  è¿™ä¸ªè®°å½•çš„æ˜¯-så‚æ•°å¸¦çš„å‚æ•°ï¼Œåœ¨mainä¸­çš„
+if (ngx_signal) { //åŠ äº†-Så‚æ•°
         return ngx_signal_process(cycle, ngx_signal);
     }
-*/ //ĞÅºÅ·¢ËÍngx_signal_process
+*/ //ä¿¡å·å‘é€ngx_signal_process
 static char        *ngx_signal; //stop, quit, reopen, reload
 
 
 static char **ngx_os_environ;
 
-//1.Ê±¼ä¡¢ÕıÔò¡¢´íÎóÈÕÖ¾¡¢sslµÈ³õÊ¼»¯
-//2.¶ÁÈëÃüÁîĞĞ²ÎÊı
-//3.OSÏà¹Ø³õÊ¼»¯
-//4.¶ÁÈë²¢½âÎöÅäÖÃ
-//5.ºËĞÄÄ£¿é³õÊ¼»¯
-//6.´´½¨¸÷ÖÖÁÙÊ±ÎÄ¼şºÍÄ¿Â¼
-//7.´´½¨¹²ÏíÄÚ´æ
-//8.´ò¿ªlistenµÄ¶Ë¿Ú
-//9.ËùÓĞÄ£¿é³õÊ¼»¯
-//10.Æô¶¯worker½ø³Ì
+//1.æ—¶é—´ã€æ­£åˆ™ã€é”™è¯¯æ—¥å¿—ã€sslç­‰åˆå§‹åŒ–
+//2.è¯»å…¥å‘½ä»¤è¡Œå‚æ•°
+//3.OSç›¸å…³åˆå§‹åŒ–
+//4.è¯»å…¥å¹¶è§£æé…ç½®
+//5.æ ¸å¿ƒæ¨¡å—åˆå§‹åŒ–
+//6.åˆ›å»ºå„ç§ä¸´æ—¶æ–‡ä»¶å’Œç›®å½•
+//7.åˆ›å»ºå…±äº«å†…å­˜
+//8.æ‰“å¼€listençš„ç«¯å£
+//9.æ‰€æœ‰æ¨¡å—åˆå§‹åŒ–
+//10.å¯åŠ¨workerè¿›ç¨‹
 int ngx_cdecl
 main(int argc, char *const *argv)
 {
@@ -221,8 +221,8 @@ main(int argc, char *const *argv)
         return 1;
     }
 
-    //»ñÈ¡²ÎÊıºÍÅäÖÃ²ÎÊı£¬±ÈÈçÃüÁîÊÇnginx -v ÄÇÃ´ngx_show_version¾ÍÉèÖÃÎª1
-    if (ngx_get_options(argc, argv) != NGX_OK) { //½âÎöÃüÁî²ÎÊı
+    //è·å–å‚æ•°å’Œé…ç½®å‚æ•°ï¼Œæ¯”å¦‚å‘½ä»¤æ˜¯nginx -v é‚£ä¹ˆngx_show_versionå°±è®¾ç½®ä¸º1
+    if (ngx_get_options(argc, argv) != NGX_OK) { //è§£æå‘½ä»¤å‚æ•°
         return 1;
     }
 
@@ -237,23 +237,23 @@ main(int argc, char *const *argv)
                 "Options:" NGX_LINEFEED
                 "  -?,-h         : this help" NGX_LINEFEED
                 "  -v            : show version and exit" NGX_LINEFEED
-                "  -V            : show version and configure options then exit" //³ıÁËversionÍâ»¹¿ÉÒÔÏÔÊ¾²Ù×÷ÏµÍ³ºÍconfigure½×¶ÎµÈÏà¹ØĞÅÏ¢
+                "  -V            : show version and configure options then exit" //é™¤äº†versionå¤–è¿˜å¯ä»¥æ˜¾ç¤ºæ“ä½œç³»ç»Ÿå’Œconfigureé˜¶æ®µç­‰ç›¸å…³ä¿¡æ¯
                                    NGX_LINEFEED
-                "  -t            : test configuration and exit" NGX_LINEFEED  //²»Æô¶¯nginx½ø³Ì£¬Ö»ÊÇ²âÊÔÅäÖÃÎÄ¼şÊÇ·ñÓĞ´íÎó
+                "  -t            : test configuration and exit" NGX_LINEFEED  //ä¸å¯åŠ¨nginxè¿›ç¨‹ï¼Œåªæ˜¯æµ‹è¯•é…ç½®æ–‡ä»¶æ˜¯å¦æœ‰é”™è¯¯
                 "  -T            : test configuration, dump it and exit"
                                    NGX_LINEFEED
                 "  -q            : suppress non-error messages "
-                                   "during configuration testing" NGX_LINEFEED //Í¨¹ı-t²âÊÔÅäÖÃÎÄ¼şÊÇ·ñ´íÎóµÄÊ±ºò,nginx -t -q¿ÉÒÔ°Ñerror¼¶±ğÒÔÏÂµÄÈÕÖ¾²»Êä³öµÄÆÁÄ»
+                                   "during configuration testing" NGX_LINEFEED //é€šè¿‡-tæµ‹è¯•é…ç½®æ–‡ä»¶æ˜¯å¦é”™è¯¯çš„æ—¶å€™,nginx -t -qå¯ä»¥æŠŠerrorçº§åˆ«ä»¥ä¸‹çš„æ—¥å¿—ä¸è¾“å‡ºçš„å±å¹•
                 "  -s signal     : send signal to a master process: "
                                    "stop, quit, reopen, reload" NGX_LINEFEED
 #ifdef NGX_PREFIX
                 "  -p prefix     : set prefix path (default: "
-                                   NGX_PREFIX ")" NGX_LINEFEED  //Ö¸¶¨°²×°Ä¿Â¼  
+                                   NGX_PREFIX ")" NGX_LINEFEED  //æŒ‡å®šå®‰è£…ç›®å½•  
 #else
                 "  -p prefix     : set prefix path (default: NONE)" NGX_LINEFEED
 #endif
                 "  -c filename   : set configuration file (default: "
-                                   NGX_CONF_PATH ")" NGX_LINEFEED //Ö¸¶¨ÅäÖÃÎÄ¼ş
+                                   NGX_CONF_PATH ")" NGX_LINEFEED //æŒ‡å®šé…ç½®æ–‡ä»¶
                 "  -g directives : set global directives out of configuration "
                                    "file" NGX_LINEFEED NGX_LINEFEED
                 );
@@ -293,7 +293,7 @@ main(int argc, char *const *argv)
 
     /* TODO */ ngx_max_sockets = -1;
 
-    ngx_time_init(); //³õÊ¼»¯nginx»·¾³µÄµ±Ç°Ê±¼ä
+    ngx_time_init(); //åˆå§‹åŒ–nginxç¯å¢ƒçš„å½“å‰æ—¶é—´
 
 #if (NGX_PCRE)
     ngx_regex_init();
@@ -302,9 +302,9 @@ main(int argc, char *const *argv)
     ngx_pid = ngx_getpid();
 
     /*
-    Ö÷½ø³ÌÆô¶¯µÄÊ±ºò£¬´ËÊ±»¹Ã»ÓĞ¶ÁÈ¡ÅäÖÃÎÄ¼ş£¬¼´Ã»ÓĞÖ¸¶¨ÈÕÖ¾´òÓ¡ÔÚÄÄÀï¡£nginxÕâÊ±ºòËäÈ»¿ÉÒÔ½«Ò»Ğ©³ö´íÄÚÈİ»òÕß½á¹ûÊäµ½±ê×¼Êä³ö£¬µ«ÊÇÈç¹ûÒª¼ÇÂ¼Ò»Ğ©ÏµÍ³³õÊ¼»¯Çé¿ö£¬
-socket¼àÌı×´¿ö£¬»¹ÊÇĞèÒªĞ´µ½ÈÕÖ¾ÎÄ¼şÖĞÈ¥µÄ¡£ÔÚnginxµÄmainº¯ÊıÖĞ£¬Ê×ÏÈ»áµ÷ÓÃngx_log_init º¯Êı£¬Ä¬ÈÏÈÕÖ¾ÎÄ¼şÎª£º°²×°Â·¾¶/logs/error.log£¬Èç¹ûÕâ¸öÎÄ¼şÃ»ÓĞÈ¨ÏŞ·ÃÎÊµÄ»°£¬
-»áÖ±½Ó±¨´íÍË³ö¡£ÔÚmianº¯Êı½áÎ²´¦£¬ÔÚngx_master_process_cycleº¯Êıµ÷ÓÃÖ®Ç°£¬»ácloseµôÕâ¸öÈÕÖ¾ÎÄ¼ş¡£
+    ä¸»è¿›ç¨‹å¯åŠ¨çš„æ—¶å€™ï¼Œæ­¤æ—¶è¿˜æ²¡æœ‰è¯»å–é…ç½®æ–‡ä»¶ï¼Œå³æ²¡æœ‰æŒ‡å®šæ—¥å¿—æ‰“å°åœ¨å“ªé‡Œã€‚nginxè¿™æ—¶å€™è™½ç„¶å¯ä»¥å°†ä¸€äº›å‡ºé”™å†…å®¹æˆ–è€…ç»“æœè¾“åˆ°æ ‡å‡†è¾“å‡ºï¼Œä½†æ˜¯å¦‚æœè¦è®°å½•ä¸€äº›ç³»ç»Ÿåˆå§‹åŒ–æƒ…å†µï¼Œ
+socketç›‘å¬çŠ¶å†µï¼Œè¿˜æ˜¯éœ€è¦å†™åˆ°æ—¥å¿—æ–‡ä»¶ä¸­å»çš„ã€‚åœ¨nginxçš„mainå‡½æ•°ä¸­ï¼Œé¦–å…ˆä¼šè°ƒç”¨ngx_log_init å‡½æ•°ï¼Œé»˜è®¤æ—¥å¿—æ–‡ä»¶ä¸ºï¼šå®‰è£…è·¯å¾„/logs/error.logï¼Œå¦‚æœè¿™ä¸ªæ–‡ä»¶æ²¡æœ‰æƒé™è®¿é—®çš„è¯ï¼Œ
+ä¼šç›´æ¥æŠ¥é”™é€€å‡ºã€‚åœ¨mianå‡½æ•°ç»“å°¾å¤„ï¼Œåœ¨ngx_master_process_cycleå‡½æ•°è°ƒç”¨ä¹‹å‰ï¼Œä¼šcloseæ‰è¿™ä¸ªæ—¥å¿—æ–‡ä»¶ã€‚
      */
     log = ngx_log_init(ngx_prefix);
     if (log == NULL) {
@@ -395,7 +395,7 @@ socket¼àÌı×´¿ö£¬»¹ÊÇĞèÒªĞ´µ½ÈÕÖ¾ÎÄ¼şÖĞÈ¥µÄ¡£ÔÚnginxµÄmainº¯ÊıÖĞ£¬Ê×ÏÈ»áµ÷ÓÃngx_l
         return 0;
     }
 
-    if (ngx_signal) { //¼ÓÁË-S²ÎÊı
+    if (ngx_signal) { //åŠ äº†-Så‚æ•°
         return ngx_signal_process(cycle, ngx_signal);
     }
 
@@ -406,7 +406,7 @@ socket¼àÌı×´¿ö£¬»¹ÊÇĞèÒªĞ´µ½ÈÕÖ¾ÎÄ¼şÖĞÈ¥µÄ¡£ÔÚnginxµÄmainº¯ÊıÖĞ£¬Ê×ÏÈ»áµ÷ÓÃngx_l
 
     ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx, ngx_core_module);
 
-    if (ccf->master && ngx_process == NGX_PROCESS_SINGLE) { //ÔÚÕâÀï»á°Ñ½ø³ÌÄ£Ê½ÉèÖÃÎªMASTERÄ£Ê½
+    if (ccf->master && ngx_process == NGX_PROCESS_SINGLE) { //åœ¨è¿™é‡Œä¼šæŠŠè¿›ç¨‹æ¨¡å¼è®¾ç½®ä¸ºMASTERæ¨¡å¼
         ngx_process = NGX_PROCESS_MASTER;
     }
 
@@ -439,7 +439,7 @@ socket¼àÌı×´¿ö£¬»¹ÊÇĞèÒªĞ´µ½ÈÕÖ¾ÎÄ¼şÖĞÈ¥µÄ¡£ÔÚnginxµÄmainº¯ÊıÖĞ£¬Ê×ÏÈ»áµ÷ÓÃngx_l
     }
 
     if (log->file->fd != ngx_stderr) {
-        //Ç°ÃæµÄlog = ngx_log_init(ngx_prefix);
+        //å‰é¢çš„log = ngx_log_init(ngx_prefix);
         if (ngx_close_file(log->file->fd) == NGX_FILE_ERROR) {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           ngx_close_file_n " built-in log failed");
@@ -449,12 +449,12 @@ socket¼àÌı×´¿ö£¬»¹ÊÇĞèÒªĞ´µ½ÈÕÖ¾ÎÄ¼şÖĞÈ¥µÄ¡£ÔÚnginxµÄmainº¯ÊıÖĞ£¬Ê×ÏÈ»áµ÷ÓÃngx_l
     ngx_use_stderr = 0;
 
     /*
-    Èç¹ûhginx.confÖĞÅäÖÃÎªµ¥½ø³Ì¹¤×÷Ä£Ê½£¬ÕâÊ±½«»áµ÷ÓÃngx_single_process_cycle·½·¨½øÈëµ¥±Å³Ì¹¤×÷Ä£Ê½¡£
+    å¦‚æœhginx.confä¸­é…ç½®ä¸ºå•è¿›ç¨‹å·¥ä½œæ¨¡å¼ï¼Œè¿™æ—¶å°†ä¼šè°ƒç”¨ngx_single_process_cycleæ–¹æ³•è¿›å…¥å•è¿¸ç¨‹å·¥ä½œæ¨¡å¼ã€‚
     */
-    if (ngx_process == NGX_PROCESS_SINGLE) { //Èç¹ûÅäÖÃµÄÊÇµ¥½ø³Ì¹¤×÷Ä£Ê½£¬ºÃÏñ²»»á×ßµ½ÕâÀï
-        ngx_single_process_cycle(cycle);
+    if (ngx_process == NGX_PROCESS_SINGLE) { //å¦‚æœé…ç½®çš„æ˜¯å•è¿›ç¨‹å·¥ä½œæ¨¡å¼ï¼Œå¥½åƒä¸ä¼šèµ°åˆ°è¿™é‡Œ
+        ngx_single_process_cycle(cycle);     //ä¸ä¼šèµ°åˆ°å•è¿›ç¨‹æ¨¡å¼çš„åŸå› å¤§æ¦‚æ˜¯https://forum.nginx.org/read.php?2,249686,249696#msg-249696
         
-    } else { //Ò»°ã¶¼ÊÇ×ßµ½ÕâÀï£¬master·½Ê½
+    } else { //ä¸€èˆ¬éƒ½æ˜¯èµ°åˆ°è¿™é‡Œï¼Œmasteræ–¹å¼
         ngx_master_process_cycle(cycle);
 
     }
@@ -463,36 +463,36 @@ socket¼àÌı×´¿ö£¬»¹ÊÇĞèÒªĞ´µ½ÈÕÖ¾ÎÄ¼şÖĞÈ¥µÄ¡£ÔÚnginxµÄmainº¯ÊıÖĞ£¬Ê×ÏÈ»áµ÷ÓÃngx_l
 }
 
 /*
-ÔÚÖ´ĞĞ²»ÖØÆô·şÎñÉı¼¶NginxµÄ²Ù×÷Ê±£¬ÀÏµÄNginx½ø³Ì»áÍ¨¹ı»·¾³±äÁ¿¡°NGINX¡±À´´«µİĞèÒª´ò¿ªµÄ¼àÌı¶Ë¿Ú£¬
-ĞÂµÄNginx½ø³Ì»áÍ¨¹ıngx_add_inherited_sockets·½·¨À´Ê¹ÓÃÒÑ¾­´ò¿ªµÄTCP¼àÌı¶Ë¿Ú,²»²ÉÓÃÕâÖÖ·½Ê½µÄ»°»á±¨´í£¬Ëµ¸Ã¶Ë¿ÚÒÑ¾­bind   
+åœ¨æ‰§è¡Œä¸é‡å¯æœåŠ¡å‡çº§Nginxçš„æ“ä½œæ—¶ï¼Œè€çš„Nginxè¿›ç¨‹ä¼šé€šè¿‡ç¯å¢ƒå˜é‡â€œNGINXâ€æ¥ä¼ é€’éœ€è¦æ‰“å¼€çš„ç›‘å¬ç«¯å£ï¼Œ
+æ–°çš„Nginxè¿›ç¨‹ä¼šé€šè¿‡ngx_add_inherited_socketsæ–¹æ³•æ¥ä½¿ç”¨å·²ç»æ‰“å¼€çš„TCPç›‘å¬ç«¯å£,ä¸é‡‡ç”¨è¿™ç§æ–¹å¼çš„è¯ä¼šæŠ¥é”™ï¼Œè¯´è¯¥ç«¯å£å·²ç»bind   
 
-ngx_add_inherited_sockets º¯ÊıÍ¨¹ı»·¾³±äÁ¿NGINXÍê³ÉsocketµÄ¼Ì³Ğ£¬¼Ì³ĞÀ´µÄsocket½«»á·Åµ½init_cycleµÄlisteningÊı×éÖĞ¡£ÔÚNGINX»·
-¾³±äÁ¿ÖĞ£¬Ã¿¸ösocketÖĞ¼äÓÃÃ°ºÅ»ò·ÖºÅ¸ô¿ª¡£Íê³É¼Ì³ĞÍ¬Ê±ÉèÖÃÈ«¾Ö±äÁ¿ngx_inheritedÎª1
+ngx_add_inherited_sockets å‡½æ•°é€šè¿‡ç¯å¢ƒå˜é‡NGINXå®Œæˆsocketçš„ç»§æ‰¿ï¼Œç»§æ‰¿æ¥çš„socketå°†ä¼šæ”¾åˆ°init_cycleçš„listeningæ•°ç»„ä¸­ã€‚åœ¨NGINXç¯
+å¢ƒå˜é‡ä¸­ï¼Œæ¯ä¸ªsocketä¸­é—´ç”¨å†’å·æˆ–åˆ†å·éš”å¼€ã€‚å®Œæˆç»§æ‰¿åŒæ—¶è®¾ç½®å…¨å±€å˜é‡ngx_inheritedä¸º1
 */
 /*  
-NginxÔÚ²»ÖØÆô·şÎñÉı¼¶Ê±£¬Ò²¾ÍÊÇÎÒÃÇËµ¹ıµÄÆ½»¬Éı¼¶Ê±£¬Ëü»á²»ÖØÆômaster½ø³Ì¶øÆô¶¯ĞÂ°æ±¾µÄNginx³ÌĞò¡£ÕâÑù£¬¾É°æ±¾µÄ
-master½ø³Ì»áÍ¨¹ıexecveÏµÍ³µ÷ÓÃÀ´Æô¶¯ĞÂ°æ±¾µÄmaster½ø³Ì£¨ÏÈfork³ö×Ó½ø³ÌÔÙµ÷ÓÃexecÀ´ÔËĞĞĞÂ³ÌĞò£©£¬ÕâÊ±¾É°æ±¾µÄmaster
-½ø³Ì±ØĞëÒªÍ¨¹ıÒ»ÖÖ·½Ê½¸æËßĞÂ°æ±¾µÄmaster½ø³ÌÕâÊÇÔÚÆ½»¬Éı¼¶£¬²¢ÇÒ´«µİÒ»Ğ©±ØÒªµÄĞÅÏ¢¡£NginxÊÇÍ¨¹ı»·¾³±äÁ¿À´´«µİÕâĞ©
-ĞÅÏ¢µÄ£¬ĞÂ°æ±¾µÄmaster½ø³ÌÍ¨¹ıngx_add_inherited_sockets·½·¨ÓÉ»·¾³±äÁ¿Àï¶ÁÈ¡Æ½»¬Éı¼¶ĞÅÏ¢£¬²¢¶Ô¾É°æ±¾Nginx·şÎñ¼àÌıµÄ¾ä±ú×ö¼Ì³Ğ´¦Àí¡£
+Nginxåœ¨ä¸é‡å¯æœåŠ¡å‡çº§æ—¶ï¼Œä¹Ÿå°±æ˜¯æˆ‘ä»¬è¯´è¿‡çš„å¹³æ»‘å‡çº§æ—¶ï¼Œå®ƒä¼šä¸é‡å¯masterè¿›ç¨‹è€Œå¯åŠ¨æ–°ç‰ˆæœ¬çš„Nginxç¨‹åºã€‚è¿™æ ·ï¼Œæ—§ç‰ˆæœ¬çš„
+masterè¿›ç¨‹ä¼šé€šè¿‡execveç³»ç»Ÿè°ƒç”¨æ¥å¯åŠ¨æ–°ç‰ˆæœ¬çš„masterè¿›ç¨‹ï¼ˆå…ˆforkå‡ºå­è¿›ç¨‹å†è°ƒç”¨execæ¥è¿è¡Œæ–°ç¨‹åºï¼‰ï¼Œè¿™æ—¶æ—§ç‰ˆæœ¬çš„master
+è¿›ç¨‹å¿…é¡»è¦é€šè¿‡ä¸€ç§æ–¹å¼å‘Šè¯‰æ–°ç‰ˆæœ¬çš„masterè¿›ç¨‹è¿™æ˜¯åœ¨å¹³æ»‘å‡çº§ï¼Œå¹¶ä¸”ä¼ é€’ä¸€äº›å¿…è¦çš„ä¿¡æ¯ã€‚Nginxæ˜¯é€šè¿‡ç¯å¢ƒå˜é‡æ¥ä¼ é€’è¿™äº›
+ä¿¡æ¯çš„ï¼Œæ–°ç‰ˆæœ¬çš„masterè¿›ç¨‹é€šè¿‡ngx_add_inherited_socketsæ–¹æ³•ç”±ç¯å¢ƒå˜é‡é‡Œè¯»å–å¹³æ»‘å‡çº§ä¿¡æ¯ï¼Œå¹¶å¯¹æ—§ç‰ˆæœ¬NginxæœåŠ¡ç›‘å¬çš„å¥æŸ„åšç»§æ‰¿å¤„ç†ã€‚
 */
 static ngx_int_t
-ngx_add_inherited_sockets(ngx_cycle_t *cycle)  //ngx_add_inherited_socketsºÍngx_exec_new_binary¶ÔÓ¦
+ngx_add_inherited_sockets(ngx_cycle_t *cycle)  //ngx_add_inherited_socketså’Œngx_exec_new_binaryå¯¹åº”
 {
     u_char           *p, *v, *inherited;
     ngx_int_t         s;
     ngx_listening_t  *ls;
 
-    //getenv()ÓÃÀ´È¡µÃ²ÎÊıenvvar»·¾³±äÁ¿µÄÄÚÈİ¡£²ÎÊıenvvarÎª»·¾³±äÁ¿µÄÃû³Æ£¬Èç¹û¸Ã±äÁ¿´æÔÚÔò»á·µ»ØÖ¸Ïò¸ÃÄÚÈİµÄÖ¸Õë
-    inherited = (u_char *) getenv(NGINX_VAR); //»ñÈ¡»·¾³±äÁ¿ ÕâÀïµÄ"NGINX_VAR"ÊÇºê¶¨Òå£¬ÖµÎª"NGINX"   
+    //getenv()ç”¨æ¥å–å¾—å‚æ•°envvarç¯å¢ƒå˜é‡çš„å†…å®¹ã€‚å‚æ•°envvarä¸ºç¯å¢ƒå˜é‡çš„åç§°ï¼Œå¦‚æœè¯¥å˜é‡å­˜åœ¨åˆ™ä¼šè¿”å›æŒ‡å‘è¯¥å†…å®¹çš„æŒ‡é’ˆ
+    inherited = (u_char *) getenv(NGINX_VAR); //è·å–ç¯å¢ƒå˜é‡ è¿™é‡Œçš„"NGINX_VAR"æ˜¯å®å®šä¹‰ï¼Œå€¼ä¸º"NGINX"   
     if (inherited == NULL) {
         return NGX_OK;
     }
     ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0,
                   "using inherited sockets from \"%s\"", inherited);
 
-    /* Èç¹ûÊÇÈÈÉı¼¶nginxµÄÊ±ºòinherit²»ÎªNULL£¬×ßµ½ÕâÀï£¬ÅäºÏngx_exec_new_binaryÔÄ¶Á */
+    /* å¦‚æœæ˜¯çƒ­å‡çº§nginxçš„æ—¶å€™inheritä¸ä¸ºNULLï¼Œèµ°åˆ°è¿™é‡Œï¼Œé…åˆngx_exec_new_binaryé˜…è¯» */
 
-    //³õÊ¼»¯ngx_cycle.listeningÊı×é£¬²¢ÇÒÊı×éÖĞ°üº¬10¸öÔªËØ   
+    //åˆå§‹åŒ–ngx_cycle.listeningæ•°ç»„ï¼Œå¹¶ä¸”æ•°ç»„ä¸­åŒ…å«10ä¸ªå…ƒç´    
     if (ngx_array_init(&cycle->listening, cycle->pool, 10,
                        sizeof(ngx_listening_t))
         != NGX_OK)
@@ -500,9 +500,9 @@ ngx_add_inherited_sockets(ngx_cycle_t *cycle)  //ngx_add_inherited_socketsºÍngx_
         return NGX_ERROR;
     }
 
-    for (p = inherited, v = p; *p; p++) { //±éÀú»·¾³±äÁ¿   
-        if (*p == ':' || *p == ';') {//»·¾³±äÁ¿µÄÖµÒÔ':'or';'·Ö¿ª   
-            s = ngx_atoi(v, p - v); //×ª»»Ê®½øÖÆsockets   
+    for (p = inherited, v = p; *p; p++) { //éå†ç¯å¢ƒå˜é‡   
+        if (*p == ':' || *p == ';') {//ç¯å¢ƒå˜é‡çš„å€¼ä»¥':'or';'åˆ†å¼€   
+            s = ngx_atoi(v, p - v); //è½¬æ¢åè¿›åˆ¶sockets   
             if (s == NGX_ERROR) {
                 ngx_log_error(NGX_LOG_EMERG, cycle->log, 0,
                               "invalid socket number \"%s\" in " NGINX_VAR
@@ -513,18 +513,18 @@ ngx_add_inherited_sockets(ngx_cycle_t *cycle)  //ngx_add_inherited_socketsºÍngx_
 
             v = p + 1;
 
-            ls = ngx_array_push(&cycle->listening); //·µ»ØĞÂ·ÖÅäµÄÊı×éÖ¸ÕëµØÖ·(ÔÚ²Î¿¼µÄblogÀïÃæÕâÀï½âÊÍ¿ÉÄÜÓĞµã´íÎó)   
+            ls = ngx_array_push(&cycle->listening); //è¿”å›æ–°åˆ†é…çš„æ•°ç»„æŒ‡é’ˆåœ°å€(åœ¨å‚è€ƒçš„blogé‡Œé¢è¿™é‡Œè§£é‡Šå¯èƒ½æœ‰ç‚¹é”™è¯¯)   
             if (ls == NULL) {
                 return NGX_ERROR;
             }
 
             ngx_memzero(ls, sizeof(ngx_listening_t));
 
-            ls->fd = (ngx_socket_t) s;//±£´æsocketÎÄ¼şÃèÊö·ûµ½Êı×éÖĞ
+            ls->fd = (ngx_socket_t) s;//ä¿å­˜socketæ–‡ä»¶æè¿°ç¬¦åˆ°æ•°ç»„ä¸­
         }
     }
 
-    ngx_inherited = 1;  //±íÊ¾ÒÑ¾­µÄµÃµ½Òª¼Ì³ĞµÄsocket   
+    ngx_inherited = 1;  //è¡¨ç¤ºå·²ç»çš„å¾—åˆ°è¦ç»§æ‰¿çš„socket   
 
     return ngx_set_inherited_sockets(cycle);
 }
@@ -554,7 +554,7 @@ ngx_set_environment(ngx_cycle_t *cycle, ngx_uint_t *last)
         }
     }
 
-    /* ÏÈÌí¼ÓTZµ½Êı×éccf->env */
+    /* å…ˆæ·»åŠ TZåˆ°æ•°ç»„ccf->env */
     var = ngx_array_push(&ccf->env);
     if (var == NULL) {
         return NULL;
@@ -569,9 +569,9 @@ tz_found:
 
     n = 0;
 
-    /* ¼ÆËã³öÓĞ¶àÉÙ¸ö»·¾³±äÁ¿£¬È»ºó´æÈën±äÁ¿ÖĞ */
+    /* è®¡ç®—å‡ºæœ‰å¤šå°‘ä¸ªç¯å¢ƒå˜é‡ï¼Œç„¶åå­˜å…¥nå˜é‡ä¸­ */
     for (i = 0; i < ccf->env.nelts; i++) {
-        if (var[i].data[var[i].len] == '=') { //ÀıÈçkye=   =ºÅºóÃæÃ»ÓĞÖµÔòcontinue
+        if (var[i].data[var[i].len] == '=') { //ä¾‹å¦‚kye=   =å·åé¢æ²¡æœ‰å€¼åˆ™continue
             n++;
             continue;
         }
@@ -579,7 +579,7 @@ tz_found:
         for (p = ngx_os_environ; *p; p++) {
             
             if (ngx_strncmp(*p, var[i].data, var[i].len) == 0
-                && (*p)[var[i].len] == '=') //ËµÃ÷ÊÇkey=value¸ñÊ½
+                && (*p)[var[i].len] == '=') //è¯´æ˜æ˜¯key=valueæ ¼å¼
             {
                 n++;
                 break;
@@ -587,7 +587,7 @@ tz_found:
         }
     }
 
-    if (last) { //last±íÊ¾ĞèÒª¶à·ÖÅälast¸ö»·¾³±äÁ¿£¬+1µÄÔ­ÒòÊÇÄ©Î²ÊÇÒ»¸öNULL£¬¼ûºóÃæµÄenv[n] = NULL;
+    if (last) { //lastè¡¨ç¤ºéœ€è¦å¤šåˆ†é…lastä¸ªç¯å¢ƒå˜é‡ï¼Œ+1çš„åŸå› æ˜¯æœ«å°¾æ˜¯ä¸€ä¸ªNULLï¼Œè§åé¢çš„env[n] = NULL;
         env = ngx_alloc((*last + n + 1) * sizeof(char *), cycle->log);
         *last = n;
 
@@ -601,9 +601,9 @@ tz_found:
 
     n = 0;
 
-    //°Ñccf->envÊı×éÖĞµÄ»·¾³±äÁ¿È«²¿´æÈëenvÊı×éÖĞ
+    //æŠŠccf->envæ•°ç»„ä¸­çš„ç¯å¢ƒå˜é‡å…¨éƒ¨å­˜å…¥envæ•°ç»„ä¸­
     for (i = 0; i < ccf->env.nelts; i++) {
-        if (var[i].data[var[i].len] == '=') {   //kye=    =ºÅºóÃæÃ»ÓĞÖµ
+        if (var[i].data[var[i].len] == '=') {   //kye=    =å·åé¢æ²¡æœ‰å€¼
             env[n++] = (char *) var[i].data;
             continue;
         }
@@ -611,7 +611,7 @@ tz_found:
         for (p = ngx_os_environ; *p; p++) {
 
             if (ngx_strncmp(*p, var[i].data, var[i].len) == 0
-                && (*p)[var[i].len] == '=') //±ê×¼µÄkey=value»·¾³±äÁ¿
+                && (*p)[var[i].len] == '=') //æ ‡å‡†çš„key=valueç¯å¢ƒå˜é‡
             {
                 env[n++] = *p;
                 break;
@@ -631,19 +631,19 @@ tz_found:
 
 
 /*
-ÓÉÓÚNginxÖ»ÓĞÒ»¸ö¿ÉÖ´ĞĞ³ÌĞò£¬µ±¸Ã¿ÉÖ´ĞĞ³ÌĞò¸üĞÂÊ±£¬¾Í´´½¨Ò»¸ö×Ó½ø³ÌÀ´Ö´ĞĞĞÂµÄ¶ş½øÖÆÎÄ¼ş¡£Í¬Ê±Òª×¢ÒâµÄÊÇ
-ÀÏ½ø³ÌÍ¨¹ı»·¾³±äÁ¿½«ËùÓĞµÄÕìÌıÃèÊö×Ö´«µİ¸øĞÂ½ø³Ì£¬ÓÖÒòÎªÎÄ¼şÃèÊö×Ö¿ÉÒÔ¿çexecveÏµÍ³µ÷ÓÃ±£Áô(¹ØÓÚ¿çexecº¯
-Êı±£ÁôÎÄ¼şÃèÊö×Ö£¬¿É²Î¿¼¡¶UnixÏµÍ³»·¾³¸ß¼¶±à³Ì¡·µÚ¶ş°æ8.10½Ú£ºexecº¯Êı¼¯)£¬ËùÒÔÔÚĞÂ½ø³ÌÖĞÕâĞ©ÕìÌıÃèÊö×Ö
-¿ÉÒÔ½ÓÊÜĞÂµÄÁ¬½ÓÇëÇó¡£ĞÂ½ø³Ì»ñÈ¡»·¾³±äÁ¿ÖĞµÄÃèÊö×ÖµÄÊµÏÖÔÚnginx.cµÄº¯Êıngx_add_inherited_socketsÖĞ
+ç”±äºNginxåªæœ‰ä¸€ä¸ªå¯æ‰§è¡Œç¨‹åºï¼Œå½“è¯¥å¯æ‰§è¡Œç¨‹åºæ›´æ–°æ—¶ï¼Œå°±åˆ›å»ºä¸€ä¸ªå­è¿›ç¨‹æ¥æ‰§è¡Œæ–°çš„äºŒè¿›åˆ¶æ–‡ä»¶ã€‚åŒæ—¶è¦æ³¨æ„çš„æ˜¯
+è€è¿›ç¨‹é€šè¿‡ç¯å¢ƒå˜é‡å°†æ‰€æœ‰çš„ä¾¦å¬æè¿°å­—ä¼ é€’ç»™æ–°è¿›ç¨‹ï¼Œåˆå› ä¸ºæ–‡ä»¶æè¿°å­—å¯ä»¥è·¨execveç³»ç»Ÿè°ƒç”¨ä¿ç•™(å…³äºè·¨execå‡½
+æ•°ä¿ç•™æ–‡ä»¶æè¿°å­—ï¼Œå¯å‚è€ƒã€ŠUnixç³»ç»Ÿç¯å¢ƒé«˜çº§ç¼–ç¨‹ã€‹ç¬¬äºŒç‰ˆ8.10èŠ‚ï¼šexecå‡½æ•°é›†)ï¼Œæ‰€ä»¥åœ¨æ–°è¿›ç¨‹ä¸­è¿™äº›ä¾¦å¬æè¿°å­—
+å¯ä»¥æ¥å—æ–°çš„è¿æ¥è¯·æ±‚ã€‚æ–°è¿›ç¨‹è·å–ç¯å¢ƒå˜é‡ä¸­çš„æè¿°å­—çš„å®ç°åœ¨nginx.cçš„å‡½æ•°ngx_add_inherited_socketsä¸­
 
 
-¸Ãº¯ÊıµÄÖ´ĞĞÁ÷³ÌÈçÏÂ£º
-1£©¹¹ÔìÆô¶¯ĞÂ½ø³ÌĞèÒªµÄ»·¾³±äÁ¿¡£¸Ã»·¾³±äÁ¿µÄÄÚÈİ°üÀ¨µ±Ç°½ø³ÌµÄ»·¾³±äÁ¿ÒÔ¼°µ±Ç°½ø³ÌµÄËùÓĞÕìÌısocketÃèÊö×Ö¡£
-2£©¸øµ±Ç°½ø³ÌµÄpidÎÄ¼şÌíÉÏºó×ºÃûoldbin¡£
-3£©forkÒ»¸ö×Ó½ø³Ì²¢´¥·¢ÏµÍ³µ÷ÓÃexecve£¬¸ÃÏµÍ³µ÷ÓÃÊ¹ÓÃ¸üĞÂºóµÄ¶ş½øÖÆÎÄ¼şÂ·¾¶×÷Îª²ÎÊı¡£
+è¯¥å‡½æ•°çš„æ‰§è¡Œæµç¨‹å¦‚ä¸‹ï¼š
+1ï¼‰æ„é€ å¯åŠ¨æ–°è¿›ç¨‹éœ€è¦çš„ç¯å¢ƒå˜é‡ã€‚è¯¥ç¯å¢ƒå˜é‡çš„å†…å®¹åŒ…æ‹¬å½“å‰è¿›ç¨‹çš„ç¯å¢ƒå˜é‡ä»¥åŠå½“å‰è¿›ç¨‹çš„æ‰€æœ‰ä¾¦å¬socketæè¿°å­—ã€‚
+2ï¼‰ç»™å½“å‰è¿›ç¨‹çš„pidæ–‡ä»¶æ·»ä¸Šåç¼€åoldbinã€‚
+3ï¼‰forkä¸€ä¸ªå­è¿›ç¨‹å¹¶è§¦å‘ç³»ç»Ÿè°ƒç”¨execveï¼Œè¯¥ç³»ç»Ÿè°ƒç”¨ä½¿ç”¨æ›´æ–°åçš„äºŒè¿›åˆ¶æ–‡ä»¶è·¯å¾„ä½œä¸ºå‚æ•°ã€‚
 */
 ngx_pid_t
-ngx_exec_new_binary(ngx_cycle_t *cycle, char *const *argv) //ngx_add_inherited_socketsºÍngx_exec_new_binary¶ÔÓ¦
+ngx_exec_new_binary(ngx_cycle_t *cycle, char *const *argv) //ngx_add_inherited_socketså’Œngx_exec_new_binaryå¯¹åº”
 {
     char             **env, *var;
     u_char            *p;
@@ -655,9 +655,9 @@ ngx_exec_new_binary(ngx_cycle_t *cycle, char *const *argv) //ngx_add_inherited_s
 
     ngx_memzero(&ctx, sizeof(ngx_exec_ctx_t));
 
-    ctx.path = argv[0]; //Ô­À´Æô¶¯nginxµÄÊ±ºòµÄÂ·¾¶
+    ctx.path = argv[0]; //åŸæ¥å¯åŠ¨nginxçš„æ—¶å€™çš„è·¯å¾„
     ctx.name = "new binary process";
-    ctx.argv = argv; //Ô­À´Æô¶¯nginxÊ±ºòËù´øµÄ²ÎÊı
+    ctx.argv = argv; //åŸæ¥å¯åŠ¨nginxæ—¶å€™æ‰€å¸¦çš„å‚æ•°
 
     n = 2;
     env = ngx_set_environment(cycle, &n);
@@ -665,7 +665,7 @@ ngx_exec_new_binary(ngx_cycle_t *cycle, char *const *argv) //ngx_add_inherited_s
         return NGX_INVALID_PID;
     }
 
-    //°Ñ¾Émaster¼àÌıµÄfdĞ´Èë»·¾³±äÁ¿NGINX
+    //æŠŠæ—§masterç›‘å¬çš„fdå†™å…¥ç¯å¢ƒå˜é‡NGINX
     var = ngx_alloc(sizeof(NGINX_VAR)
                     + cycle->listening.nelts * (NGX_INT32_LEN + 1) + 2,
                     cycle->log);
@@ -677,7 +677,7 @@ ngx_exec_new_binary(ngx_cycle_t *cycle, char *const *argv) //ngx_add_inherited_s
     p = ngx_cpymem(var, NGINX_VAR "=", sizeof(NGINX_VAR));
 
     ls = cycle->listening.elts;
-    for (i = 0; i < cycle->listening.nelts; i++) { //°Ñ¾Émaster¼àÌıµÄfdĞ´Èë»·¾³±äÁ¿NGINX
+    for (i = 0; i < cycle->listening.nelts; i++) { //æŠŠæ—§masterç›‘å¬çš„fdå†™å…¥ç¯å¢ƒå˜é‡NGINX
         p = ngx_sprintf(p, "%ud;", ls[i].fd);
     }
 
@@ -699,7 +699,7 @@ ngx_exec_new_binary(ngx_cycle_t *cycle, char *const *argv) //ngx_add_inherited_s
 
     env[n] = NULL;
 
-//#if (NGX_DEBUG)   yang add µ÷ÊÔ
+//#if (NGX_DEBUG)   yang add è°ƒè¯•
     {
     char  **e;
     for (e = env; *e; e++) {
@@ -727,7 +727,7 @@ ngx_exec_new_binary(ngx_cycle_t *cycle, char *const *argv) //ngx_add_inherited_s
     pid = ngx_execute(cycle, &ctx);
 
     if (pid == NGX_INVALID_PID) {
-        if (ngx_rename_file(ccf->oldpid.data, ccf->pid.data)//Ô´master½ø³ÌPIDÎÄ¼şÖØÃüÃûÎªnginx.pid.oldbin
+        if (ngx_rename_file(ccf->oldpid.data, ccf->pid.data)//æºmasterè¿›ç¨‹PIDæ–‡ä»¶é‡å‘½åä¸ºnginx.pid.oldbin
             == NGX_FILE_ERROR)
         {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
@@ -747,21 +747,21 @@ ngx_exec_new_binary(ngx_cycle_t *cycle, char *const *argv) //ngx_add_inherited_s
 Command-line parameters
 nginx supports the following command-line parameters: 
 
-?-? | -h ¡ª print help for command-line parameters. 
-?-c file ¡ª use an alternative configuration file instead of a default file. 
-?-g directives ¡ª set global configuration directives, for example, 
+?-? | -h â€” print help for command-line parameters. 
+?-c file â€” use an alternative configuration file instead of a default file. 
+?-g directives â€” set global configuration directives, for example, 
 nginx -g "pid /var/run/nginx.pid; worker_processes `sysctl -n hw.ncpu`;"
-?-p prefix ¡ª set nginx path prefix, i.e. a directory that will keep server files (default value is /usr/local/nginx). 
-?-q ¡ª suppress non-error messages during configuration testing. 
-?-s signal ¡ª send a signal to the master process. The argument signal can be one of: 
-?stop ¡ª shut down quickly 
-?quit ¡ª shut down gracefully 
-?reload ¡ª reload configuration, start the new worker process with a new configuration, gracefully shut down old worker processes. 
-?reopen ¡ª reopen log files 
-?-t ¡ª test the configuration file: nginx checks the configuration for correct syntax, and then tries to open files referred in the configuration. 
-?-T ¡ª same as -t, but additionally dump configuration files to standard output (1.9.2). 
-?-v ¡ª print nginx version. 
-?-V ¡ª print nginx version, compiler version, and configure parameters. 
+?-p prefix â€” set nginx path prefix, i.e. a directory that will keep server files (default value is /usr/local/nginx). 
+?-q â€” suppress non-error messages during configuration testing. 
+?-s signal â€” send a signal to the master process. The argument signal can be one of: 
+?stop â€” shut down quickly 
+?quit â€” shut down gracefully 
+?reload â€” reload configuration, start the new worker process with a new configuration, gracefully shut down old worker processes. 
+?reopen â€” reopen log files 
+?-t â€” test the configuration file: nginx checks the configuration for correct syntax, and then tries to open files referred in the configuration. 
+?-T â€” same as -t, but additionally dump configuration files to standard output (1.9.2). 
+?-v â€” print nginx version. 
+?-V â€” print nginx version, compiler version, and configure parameters. 
 */
 static ngx_int_t
 ngx_get_options(int argc, char *const *argv)
@@ -868,8 +868,8 @@ ngx_get_options(int argc, char *const *argv)
                     || ngx_strcmp(ngx_signal, "quit") == 0
                     || ngx_strcmp(ngx_signal, "reopen") == 0
       /* 
-         reloadÊµ¼ÊÉÏÊÇÖ´ĞĞreloadµÄnginx½ø³ÌÏòÔ­master+workerÖĞµÄmaster½ø³Ì·¢ËÍreloadĞÅºÅ£¬Ô´masterÊÕµ½ºó£¬Æô¶¯ĞÂµÄworker½ø³Ì£¬Í¬Ê±ÏòÔ´worker
-         ½ø³Ì·¢ËÍquitĞÅºÅ£¬µÈËûÃÇ´¦ÀíÍêÒÑÓĞµÄÊı¾İĞÅÏ¢ºó£¬ÍË³ö£¬ÕâÑù¾ÍÖ»ÓĞĞÂµÄworker½ø³ÌÔËĞĞ¡£¼ûngx_signal_handler
+         reloadå®é™…ä¸Šæ˜¯æ‰§è¡Œreloadçš„nginxè¿›ç¨‹å‘åŸmaster+workerä¸­çš„masterè¿›ç¨‹å‘é€reloadä¿¡å·ï¼Œæºmasteræ”¶åˆ°åï¼Œå¯åŠ¨æ–°çš„workerè¿›ç¨‹ï¼ŒåŒæ—¶å‘æºworker
+         è¿›ç¨‹å‘é€quitä¿¡å·ï¼Œç­‰ä»–ä»¬å¤„ç†å®Œå·²æœ‰çš„æ•°æ®ä¿¡æ¯åï¼Œé€€å‡ºï¼Œè¿™æ ·å°±åªæœ‰æ–°çš„workerè¿›ç¨‹è¿è¡Œã€‚è§ngx_signal_handler
       */
                     || ngx_strcmp(ngx_signal, "reload") == 0)
                 {
@@ -894,7 +894,7 @@ ngx_get_options(int argc, char *const *argv)
     return NGX_OK;
 }
 
-/*µ÷ÓÃngx_save_argv()±£´æÃüÁîĞĞ²ÎÊıÖÁÈ«¾Ö±äÁ¿ngx_os_argv¡¢ngx_argc¡¢ngx_argvÖĞ£»*/
+/*è°ƒç”¨ngx_save_argv()ä¿å­˜å‘½ä»¤è¡Œå‚æ•°è‡³å…¨å±€å˜é‡ngx_os_argvã€ngx_argcã€ngx_argvä¸­ï¼›*/
 static ngx_int_t
 ngx_save_argv(ngx_cycle_t *cycle, int argc, char *const *argv)
 {
@@ -936,7 +936,7 @@ ngx_save_argv(ngx_cycle_t *cycle, int argc, char *const *argv)
     return NGX_OK;
 }
 
-//µ÷ÓÃngx_process_options()³õÊ¼»¯ngx_cycleµÄprefix, conf_prefix, conf_file, conf_paramµÈ×Ö¶Î£»
+//è°ƒç”¨ngx_process_options()åˆå§‹åŒ–ngx_cycleçš„prefix, conf_prefix, conf_file, conf_paramç­‰å­—æ®µï¼›
 static ngx_int_t
 ngx_process_options(ngx_cycle_t *cycle)
 {
@@ -1338,10 +1338,10 @@ ngx_set_priority(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
 /*
 worker_processes 4;
-worker_cpu_affinity 0001 0010 0100 1000; ËÄ¸ö¹¤×÷½ø³Ì·Ö±ğÔÚËÄ¸öÖ¸¶¨µÄheÉÏÃæÔËĞĞ
+worker_cpu_affinity 0001 0010 0100 1000; å››ä¸ªå·¥ä½œè¿›ç¨‹åˆ†åˆ«åœ¨å››ä¸ªæŒ‡å®šçš„heä¸Šé¢è¿è¡Œ
 
-Èç¹ûÊÇ5he¿ÉÒÔÕâÑùÅäÖÃ
-worker_cpu_affinity 00001 00010 00100 01000 10000; ÆäËû¶àºËÀàËÆ
+å¦‚æœæ˜¯5heå¯ä»¥è¿™æ ·é…ç½®
+worker_cpu_affinity 00001 00010 00100 01000 10000; å…¶ä»–å¤šæ ¸ç±»ä¼¼
 */ 
 static char*
 ngx_set_cpu_affinity(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
@@ -1358,7 +1358,7 @@ ngx_set_cpu_affinity(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return "is duplicate";
     }
 
-    //Ò»¸ö64Î»µÄ¿Õ¼äÀ´´æ´¢64¸öÎ»
+    //ä¸€ä¸ª64ä½çš„ç©ºé—´æ¥å­˜å‚¨64ä¸ªä½
     mask = ngx_palloc(cf->pool, (cf->args->nelts - 1) * sizeof(uint64_t));
     if (mask == NULL) {
         return NGX_CONF_ERROR;
