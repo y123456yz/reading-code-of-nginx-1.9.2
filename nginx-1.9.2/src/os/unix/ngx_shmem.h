@@ -12,17 +12,26 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 
-//¹²ÏíÄÚ´æ¿Õ¼äÔÚngx_shm_allocÖĞ¿ª±Ù
+//å…±äº«å†…å­˜ç©ºé—´åœ¨ngx_shm_allocä¸­å¼€è¾Ÿ
 typedef struct {
 /*
-¹²ÏíÄÚ´æµÄÆäÊµµØÖ·¿ªÊ¼´¦Êı¾İ:ngx_slab_pool_t + 9 * sizeof(ngx_slab_page_t)(slots_m[]) + pages * sizeof(ngx_slab_page_t)(pages_m[]) +pages*ngx_pagesize(ÕâÊÇÊµ¼ÊµÄÊı¾İ²¿·Ö£¬
-Ã¿¸öngx_pagesize¶¼ÓÉÇ°ÃæµÄÒ»¸öngx_slab_page_t½øĞĞ¹ÜÀí£¬²¢ÇÒÃ¿¸öngx_pagesize×îÇ°¶ËµÚÒ»¸öobj´æ·ÅµÄÊÇÒ»¸ö»òÕß¶à¸öintÀàĞÍbitmap£¬ÓÃÓÚ¹ÜÀíÃ¿¿é·ÖÅä³öÈ¥µÄÄÚ´æ)
-*/ //¼ûngx_init_zone_pool£¬¹²ÏíÄÚ´æµÄÆğÊ¼µØÖ·¿ªÊ¼µÄsizeof(ngx_slab_pool_t)×Ö½ÚÊÇÓÃÀ´´æ´¢¹ÜÀí¹²ÏíÄÚ´æµÄslab pollµÄ
-    u_char      *addr; //¹²ÏíÄÚ´æÆğÊ¼µØÖ·  
-    size_t       size; //¹²ÏíÄÚ´æ¿Õ¼ä´óĞ¡
-    ngx_str_t    name; //Õâ¿é¹²ÏíÄÚ´æµÄÃû³Æ
-    ngx_log_t   *log;  //shm.log = cycle->log; ¼ÇÂ¼ÈÕÖ¾µÄngx_log_t¶ÔÏó
-    ngx_uint_t   exists;   /* unsigned  exists:1;  */ //±íÊ¾¹²ÏíÄÚ´æÊÇ·ñÒÑ¾­·ÖÅä¹ıµÄ±êÖ¾Î»£¬Îª1Ê±±íÊ¾ÒÑ¾­´æÔÚ
+ * å…±äº«å†…å­˜çš„èµ·å§‹åœ°å€å¼€å§‹å¤„æ•°æ®:
+ * ngx_slab_pool_t + 
+ * 9 * sizeof(ngx_slab_page_t)(slots_m[]) + 
+ * pages * sizeof(ngx_slab_page_t)(pages_m[]) +
+ * pages * ngx_pagesize
+ * (è¿™æ˜¯å®é™…çš„æ•°æ®éƒ¨åˆ†ï¼Œæ¯ä¸ª ngx_pagesize éƒ½ç”±å‰é¢çš„ä¸€ä¸ª ngx_slab_page_t è¿›è¡Œç®¡ç†ï¼Œ
+ * å¹¶ä¸”æ¯ä¸ª ngx_pagesize æœ€å‰ç«¯ç¬¬ä¸€ä¸ª obj å­˜æ”¾çš„æ˜¯ä¸€ä¸ªæˆ–è€…å¤šä¸ª int ç±»å‹ bitmapï¼Œ
+ * ç”¨äºç®¡ç†æ¯å—åˆ†é…å‡ºå»çš„å†…å­˜)
+ *
+ * è¯¦è§ ngx_init_zone_poolï¼š
+ * å…±äº«å†…å­˜çš„èµ·å§‹åœ°å€å¼€å§‹çš„ sizeof(ngx_slab_pool_t) å­—èŠ‚æ˜¯ç”¨æ¥å­˜å‚¨ç®¡ç†å…±äº«å†…å­˜çš„ slab poll çš„
+ */ 
+    u_char      *addr; //å…±äº«å†…å­˜èµ·å§‹åœ°å€  
+    size_t       size; //å…±äº«å†…å­˜ç©ºé—´å¤§å°
+    ngx_str_t    name; //è¿™å—å…±äº«å†…å­˜çš„åç§°
+    ngx_log_t   *log;  //shm.log = cycle->log; è®°å½•æ—¥å¿—çš„ngx_log_tå¯¹è±¡
+    ngx_uint_t   exists;   /* unsigned  exists:1;  */ //è¡¨ç¤ºå…±äº«å†…å­˜æ˜¯å¦å·²ç»åˆ†é…è¿‡çš„æ ‡å¿—ä½ï¼Œä¸º1æ—¶è¡¨ç¤ºå·²ç»å­˜åœ¨
 } ngx_shm_t;
 
 
