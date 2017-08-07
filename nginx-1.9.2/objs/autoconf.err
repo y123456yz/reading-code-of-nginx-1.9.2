@@ -35,7 +35,10 @@ checking for limits.h
 ----------------------------------------
 checking for sys/filio.h
 
-objs/autotest.c:3:23: error: sys/filio.h: No such file or directory
+objs/autotest.c:3:23: fatal error: sys/filio.h: No such file or directory
+ #include <sys/filio.h>
+                       ^
+compilation terminated.
 ----------
 
 
@@ -76,29 +79,6 @@ checking for EPOLLRDHUP
 ----------------------------------------
 checking for O_PATH
 
-objs/autotest.c: In function 'main':
-objs/autotest.c:10: error: 'O_PATH' undeclared (first use in this function)
-objs/autotest.c:10: error: (Each undeclared identifier is reported only once
-objs/autotest.c:10: error: for each function it appears in.)
-objs/autotest.c:11: error: 'AT_EMPTY_PATH' undeclared (first use in this function)
-----------
-
-#include <sys/types.h>
-#include <unistd.h>
-#include <sys/types.h>
-                  #include <sys/stat.h>
-                  #include <fcntl.h>
-
-int main() {
-    int fd; struct stat sb;
-                  fd = openat(AT_FDCWD, ".", O_PATH|O_DIRECTORY|O_NOFOLLOW);
-                  if (fstatat(fd, "", &sb, AT_EMPTY_PATH) != 0) return 1;
-    return 0;
-}
-
-----------
-cc -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -o objs/autotest objs/autotest.c
-----------
 
 ----------------------------------------
 checking for sendfile()
@@ -135,12 +115,10 @@ checking for poll()
 ----------------------------------------
 checking for /dev/poll
 
-objs/autotest.c:4:25: error: sys/devpoll.h: No such file or directory
-objs/autotest.c: In function 'main':
-objs/autotest.c:7: error: storage size of 'dvp' isn't known
-objs/autotest.c:12: error: 'DP_POLL' undeclared (first use in this function)
-objs/autotest.c:12: error: (Each undeclared identifier is reported only once
-objs/autotest.c:12: error: for each function it appears in.)
+objs/autotest.c:4:25: fatal error: sys/devpoll.h: No such file or directory
+ #include <sys/devpoll.h>
+                         ^
+compilation terminated.
 ----------
 
 #include <sys/types.h>
@@ -165,7 +143,10 @@ cc -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -o objs/autotest objs/autotest.c
 ----------------------------------------
 checking for kqueue
 
-objs/autotest.c:4:23: error: sys/event.h: No such file or directory
+objs/autotest.c:4:23: fatal error: sys/event.h: No such file or directory
+ #include <sys/event.h>
+                       ^
+compilation terminated.
 ----------
 
 #include <sys/types.h>
@@ -184,9 +165,9 @@ cc -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -o objs/autotest objs/autotest.c
 ----------------------------------------
 checking for crypt()
 
-/tmp/ccXI9IB5.o: In function `main':
+/tmp/cc3AHPen.o: In function `main':
 autotest.c:(.text+0xf): undefined reference to `crypt'
-collect2: ld returned 1 exit status
+collect2: error: ld returned 1 exit status
 ----------
 
 #include <sys/types.h>
@@ -210,9 +191,10 @@ checking for crypt() in libcrypt
 checking for F_READAHEAD
 
 objs/autotest.c: In function 'main':
-objs/autotest.c:7: error: 'F_READAHEAD' undeclared (first use in this function)
-objs/autotest.c:7: error: (Each undeclared identifier is reported only once
-objs/autotest.c:7: error: for each function it appears in.)
+objs/autotest.c:7:14: error: 'F_READAHEAD' undeclared (first use in this function)
+     fcntl(0, F_READAHEAD, 1);;
+              ^
+objs/autotest.c:7:14: note: each undeclared identifier is reported only once for each function it appears in
 ----------
 
 #include <sys/types.h>
@@ -240,9 +222,10 @@ checking for O_DIRECT
 checking for F_NOCACHE
 
 objs/autotest.c: In function 'main':
-objs/autotest.c:7: error: 'F_NOCACHE' undeclared (first use in this function)
-objs/autotest.c:7: error: (Each undeclared identifier is reported only once
-objs/autotest.c:7: error: for each function it appears in.)
+objs/autotest.c:7:14: error: 'F_NOCACHE' undeclared (first use in this function)
+     fcntl(0, F_NOCACHE, 1);;
+              ^
+objs/autotest.c:7:14: note: each undeclared identifier is reported only once for each function it appears in
 ----------
 
 #include <sys/types.h>
@@ -262,9 +245,10 @@ cc -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -o objs/autotest objs/autotest.c
 checking for directio()
 
 objs/autotest.c: In function 'main':
-objs/autotest.c:8: error: 'DIRECTIO_ON' undeclared (first use in this function)
-objs/autotest.c:8: error: (Each undeclared identifier is reported only once
-objs/autotest.c:8: error: for each function it appears in.)
+objs/autotest.c:8:17: error: 'DIRECTIO_ON' undeclared (first use in this function)
+     directio(0, DIRECTIO_ON);;
+                 ^
+objs/autotest.c:8:17: note: each undeclared identifier is reported only once for each function it appears in
 ----------
 
 #include <sys/types.h>
@@ -292,9 +276,9 @@ checking for statvfs()
 ----------------------------------------
 checking for dlopen()
 
-/tmp/ccaWkCPG.o: In function `main':
+/tmp/ccdXKB8A.o: In function `main':
 autotest.c:(.text+0xf): undefined reference to `dlopen'
-collect2: ld returned 1 exit status
+collect2: error: ld returned 1 exit status
 ----------
 
 #include <sys/types.h>
@@ -322,9 +306,10 @@ checking for sched_yield()
 checking for SO_SETFIB
 
 objs/autotest.c: In function 'main':
-objs/autotest.c:7: error: 'SO_SETFIB' undeclared (first use in this function)
-objs/autotest.c:7: error: (Each undeclared identifier is reported only once
-objs/autotest.c:7: error: for each function it appears in.)
+objs/autotest.c:7:31: error: 'SO_SETFIB' undeclared (first use in this function)
+     setsockopt(0, SOL_SOCKET, SO_SETFIB, NULL, 0);
+                               ^
+objs/autotest.c:7:31: note: each undeclared identifier is reported only once for each function it appears in
 ----------
 
 #include <sys/types.h>
@@ -348,9 +333,10 @@ checking for SO_REUSEPORT
 checking for SO_ACCEPTFILTER
 
 objs/autotest.c: In function 'main':
-objs/autotest.c:7: error: 'SO_ACCEPTFILTER' undeclared (first use in this function)
-objs/autotest.c:7: error: (Each undeclared identifier is reported only once
-objs/autotest.c:7: error: for each function it appears in.)
+objs/autotest.c:7:31: error: 'SO_ACCEPTFILTER' undeclared (first use in this function)
+     setsockopt(0, SOL_SOCKET, SO_ACCEPTFILTER, NULL, 0);
+                               ^
+objs/autotest.c:7:31: note: each undeclared identifier is reported only once for each function it appears in
 ----------
 
 #include <sys/types.h>
@@ -377,26 +363,6 @@ checking for TCP_KEEPIDLE
 ----------------------------------------
 checking for TCP_FASTOPEN
 
-objs/autotest.c: In function 'main':
-objs/autotest.c:9: error: 'TCP_FASTOPEN' undeclared (first use in this function)
-objs/autotest.c:9: error: (Each undeclared identifier is reported only once
-objs/autotest.c:9: error: for each function it appears in.)
-----------
-
-#include <sys/types.h>
-#include <unistd.h>
-#include <sys/socket.h>
-                  #include <netinet/in.h>
-                  #include <netinet/tcp.h>
-
-int main() {
-    setsockopt(0, IPPROTO_TCP, TCP_FASTOPEN, NULL, 0);
-    return 0;
-}
-
-----------
-cc -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -o objs/autotest objs/autotest.c
-----------
 
 ----------------------------------------
 checking for TCP_INFO
@@ -410,9 +376,10 @@ checking for accept4()
 checking for kqueue AIO support
 
 objs/autotest.c: In function 'main':
-objs/autotest.c:8: error: 'SIGEV_KEVENT' undeclared (first use in this function)
-objs/autotest.c:8: error: (Each undeclared identifier is reported only once
-objs/autotest.c:8: error: for each function it appears in.)
+objs/autotest.c:8:56: error: 'SIGEV_KEVENT' undeclared (first use in this function)
+                       iocb.aio_sigevent.sigev_notify = SIGEV_KEVENT;
+                                                        ^
+objs/autotest.c:8:56: note: each undeclared identifier is reported only once for each function it appears in
 ----------
 
 #include <sys/types.h>
@@ -497,9 +464,9 @@ checking for time_t size
 ----------------------------------------
 checking for setproctitle()
 
-/tmp/ccs4eRzB.o: In function `main':
+/tmp/cc3I4bFz.o: In function `main':
 autotest.c:(.text+0xf): undefined reference to `setproctitle'
-collect2: ld returned 1 exit status
+collect2: error: ld returned 1 exit status
 ----------
 
 #include <sys/types.h>
@@ -526,7 +493,7 @@ checking for pwrite()
 ----------------------------------------
 checking for sys_nerr
 
-/tmp/ccAWbcIQ.o: In function `main':
+/tmp/ccaYkSqx.o: In function `main':
 autotest.c:(.text+0x6): warning: `sys_nerr' is deprecated; use `strerror' or `strerror_r' instead
 135
 ----------------------------------------
@@ -556,10 +523,10 @@ checking for System V shared memory
 ----------------------------------------
 checking for POSIX semaphores
 
-/tmp/ccDI4Ali.o: In function `main':
+/tmp/ccsx9buP.o: In function `main':
 autotest.c:(.text+0x1a): undefined reference to `sem_init'
 autotest.c:(.text+0x32): undefined reference to `sem_destroy'
-collect2: ld returned 1 exit status
+collect2: error: ld returned 1 exit status
 ----------
 
 #include <sys/types.h>
@@ -597,8 +564,12 @@ checking for struct tm.tm_gmtoff
 checking for struct dirent.d_namlen
 
 objs/autotest.c: In function 'main':
-objs/autotest.c:8: error: 'struct dirent' has no member named 'd_namlen'
-objs/autotest.c:9: error: 'struct dirent' has no member named 'd_namlen'
+objs/autotest.c:8:28: error: 'struct dirent' has no member named 'd_namlen'
+     struct dirent  dir; dir.d_namlen = 0;
+                            ^
+objs/autotest.c:9:41: error: 'struct dirent' has no member named 'd_namlen'
+                   printf("%d", (int) dir.d_namlen);
+                                         ^
 ----------
 
 #include <sys/types.h>
@@ -633,66 +604,86 @@ checking for getaddrinfo()
 
 
 ----------------------------------------
-checking for LuaJIT library in /usr/local/lib and /usr/local/include/luajit-2.0 (specified by the LUAJIT_LIB and LUAJIT_INC env, with -ldl)
-
-
-----------------------------------------
-checking for export symbols by default (-E)
-
-
-----------------------------------------
-checking for export symbols by default (--export-all-symbols)
-
-/usr/bin/ld: unrecognized option '--export-all-symbols'
-/usr/bin/ld: use the --help option for usage information
-collect2: ld returned 1 exit status
-----------
-
-#include <sys/types.h>
-#include <unistd.h>
-#include <stdio.h>
-
-int main() {
-    printf("hello");;
-    return 0;
-}
-
-----------
-cc -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -o objs/autotest objs/autotest.c -Wl,--export-all-symbols
-----------
-
-----------------------------------------
-checking for SO_PASSCRED
-
-
-----------------------------------------
 checking for PCRE library
 
 
 ----------------------------------------
 checking for PCRE JIT support
 
-objs/autotest.c: In function 'main':
-objs/autotest.c:9: error: 'PCRE_CONFIG_JIT' undeclared (first use in this function)
-objs/autotest.c:9: error: (Each undeclared identifier is reported only once
-objs/autotest.c:9: error: for each function it appears in.)
+
+----------------------------------------
+checking for md5 in system md library
+
+objs/autotest.c:4:17: fatal error: md5.h: No such file or directory
+ #include <md5.h>
+                 ^
+compilation terminated.
 ----------
 
 #include <sys/types.h>
 #include <unistd.h>
-#include <pcre.h>
+#include <md5.h>
 
 int main() {
-    int jit = 0;
-                              pcre_free_study(NULL);
-                              pcre_config(PCRE_CONFIG_JIT, &jit);
-                              if (jit != 1) return 1;;
+    MD5_CTX md5; MD5Init(&md5);
     return 0;
 }
 
 ----------
-cc -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -o objs/autotest objs/autotest.c -lpcre
+cc -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -o objs/autotest objs/autotest.c -lmd
 ----------
+
+----------------------------------------
+checking for md5 in system md5 library
+
+objs/autotest.c:4:17: fatal error: md5.h: No such file or directory
+ #include <md5.h>
+                 ^
+compilation terminated.
+----------
+
+#include <sys/types.h>
+#include <unistd.h>
+#include <md5.h>
+
+int main() {
+    MD5_CTX md5; MD5Init(&md5);
+    return 0;
+}
+
+----------
+cc -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -o objs/autotest objs/autotest.c -lmd5
+----------
+
+----------------------------------------
+checking for md5 in system OpenSSL crypto library
+
+
+----------------------------------------
+checking for sha1 in system md library
+
+objs/autotest.c:4:17: fatal error: sha.h: No such file or directory
+ #include <sha.h>
+                 ^
+compilation terminated.
+----------
+
+#include <sys/types.h>
+#include <unistd.h>
+#include <sha.h>
+
+int main() {
+    SHA_CTX sha1; SHA1_Init(&sha1);
+    return 0;
+}
+
+----------
+cc -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -o objs/autotest objs/autotest.c -lmd
+----------
+
+----------------------------------------
+checking for sha1 in system OpenSSL crypto library
+
 
 ----------------------------------------
 checking for zlib library
