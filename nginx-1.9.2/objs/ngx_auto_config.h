@@ -1,4 +1,4 @@
-#define NGX_CONFIGURE " --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads --add-module=/root/yangyazhou/reading-code-of-nginx-1.9.2/nginx-1.9.2/src/echo-nginx-module-master/ --add-module=./src/nginx-requestkey-module-master/ --with-http_secure_link_module --add-module=./src/redis2-nginx-module-master/ --add-module=./src/lua-nginx-module-master/ --with-http_ssl_module --with-http_v2_module --with-openssl=/usr/local/openssl"
+#define NGX_CONFIGURE " --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads --add-module=./src/nginx-requestkey-module-master/ --with-http_secure_link_module --add-module=./src/redis2-nginx-module-master/"
 
 #ifndef NGX_DEBUG
 #define NGX_DEBUG  1
@@ -6,7 +6,7 @@
 
 
 #ifndef NGX_COMPILER
-#define NGX_COMPILER  "gcc 4.4.7 20120313 (Red Hat 4.4.7-16) (GCC) "
+#define NGX_COMPILER  "gcc 4.8.5 20150623 (Red Hat 4.8.5-11) (GCC) "
 #endif
 
 
@@ -37,6 +37,11 @@
 
 #ifndef NGX_HAVE_EPOLLRDHUP
 #define NGX_HAVE_EPOLLRDHUP  1
+#endif
+
+
+#ifndef NGX_HAVE_O_PATH
+#define NGX_HAVE_O_PATH  1
 #endif
 
 
@@ -120,6 +125,11 @@
 
 #ifndef NGX_HAVE_KEEPALIVE_TUNABLE
 #define NGX_HAVE_KEEPALIVE_TUNABLE  1
+#endif
+
+
+#ifndef NGX_HAVE_TCP_FASTOPEN
+#define NGX_HAVE_TCP_FASTOPEN  1
 #endif
 
 
@@ -308,11 +318,6 @@
 #endif
 
 
-#ifndef NGX_HTTP_V2
-#define NGX_HTTP_V2  1
-#endif
-
-
 #ifndef NGX_CRYPT
 #define NGX_CRYPT  1
 #endif
@@ -320,11 +325,6 @@
 
 #ifndef NGX_HTTP_X_FORWARDED_FOR
 #define NGX_HTTP_X_FORWARDED_FOR  1
-#endif
-
-
-#ifndef NGX_HTTP_SSL
-#define NGX_HTTP_SSL  1
 #endif
 
 
@@ -338,28 +338,13 @@
 #endif
 
 
-#ifndef NGX_HTTP_LUA_HAVE_SO_PASSCRED
-#define NGX_HTTP_LUA_HAVE_SO_PASSCRED  1
-#endif
-
-
 #ifndef NGX_PCRE
 #define NGX_PCRE  1
 #endif
 
 
-#ifndef NGX_OPENSSL
-#define NGX_OPENSSL  1
-#endif
-
-
-#ifndef NGX_SSL
-#define NGX_SSL  1
-#endif
-
-
-#ifndef NGX_HAVE_OPENSSL_MD5_H
-#define NGX_HAVE_OPENSSL_MD5_H  1
+#ifndef NGX_HAVE_PCRE_JIT
+#define NGX_HAVE_PCRE_JIT  1
 #endif
 
 
@@ -368,18 +353,23 @@
 #endif
 
 
+#ifndef NGX_HAVE_OPENSSL_MD5_H
+#define NGX_HAVE_OPENSSL_MD5_H  1
+#endif
+
+
 #ifndef NGX_HAVE_MD5
 #define NGX_HAVE_MD5  1
 #endif
 
 
-#ifndef NGX_HAVE_OPENSSL_SHA1_H
-#define NGX_HAVE_OPENSSL_SHA1_H  1
+#ifndef NGX_HAVE_SHA1
+#define NGX_HAVE_SHA1  1
 #endif
 
 
-#ifndef NGX_HAVE_SHA1
-#define NGX_HAVE_SHA1  1
+#ifndef NGX_HAVE_OPENSSL_SHA1_H
+#define NGX_HAVE_OPENSSL_SHA1_H  1
 #endif
 
 

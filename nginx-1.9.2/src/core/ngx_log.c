@@ -338,7 +338,7 @@ ngx_log_error_coreall(ngx_uint_t level, ngx_log_t *log, const char* filename, in
 #endif
     u_char      *p, *last, *msg;
     ssize_t      n;
-    ngx_uint_t   wrote_stderr, debug_connection;
+    ngx_uint_t   wrote_stderr;//, debug_connection;
     u_char       errstr[NGX_MAX_ERROR_STR];
     char filebuf[52];
 
@@ -389,7 +389,7 @@ ngx_log_error_coreall(ngx_uint_t level, ngx_log_t *log, const char* filename, in
     ngx_linefeed(p);
 
     wrote_stderr = 0;
-    debug_connection = (log->log_level & NGX_LOG_DEBUG_CONNECTION) != 0;
+    //debug_connection = (log->log_level & NGX_LOG_DEBUG_CONNECTION) != 0;
 
     while (log) {
 
