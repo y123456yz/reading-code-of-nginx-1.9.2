@@ -201,6 +201,7 @@ struct ngx_cycle_s {
 
 //ngx_http_optimize_servers->ngx_http_init_listening->ngx_http_add_listening->ngx_create_listening把解析到的listen配置项信息添加到cycle->listening中
     //通过"listen"配置创建ngx_listening_t加入到该数组中
+    //注意，有多少个worker进程就会复制多少个ngx_listening_t, 见ngx_clone_listening
     ngx_array_t               listening;// 动态数组，每个数组元素储存着ngx_listening_t成员，表示监听端口及相关的参数
 
     /*    动态数组容器，它保存着nginx所有要操作的目录。如果有目录不存在，就会试图创建，而创建目录失败就会导致nginx启动失败。    */

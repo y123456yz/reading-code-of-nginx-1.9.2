@@ -15,7 +15,12 @@ ngx_os_io_t  ngx_io; //epoll为ngx_os_io
 
 static void ngx_drain_connections(void);
 
+//ngx_event_process_init
+//master进程执行ngx_clone_listening中如果配置了多worker，监听80端口会有worker个listen赋值，master进程在ngx_open_listening_sockets
+//中会监听80端口worker次，那么子进程创建起来后，不是每个字进程都关注这worker多个 listen事件了吗?为了避免这个问题，nginx通过
+//在子进程运行ngx_event_process_init函数的时候，通过ngx_add_event来控制子进程关注的listen，最终实现只关注master进程中创建的一个listen事件
 
+//ngx_create_listening创建ngx_listening_t结构，如果是多个worker,则ngx_clone_listening中会复制worker个ngx_listening_t结构
 ngx_listening_t *
 ngx_create_listening(ngx_conf_t *cf, void *sockaddr, socklen_t socklen)
 {
@@ -29,7 +34,7 @@ ngx_create_listening(ngx_conf_t *cf, void *sockaddr, socklen_t socklen)
     if (ls == NULL) {
         return NULL;
     }
-
+   
     ngx_memzero(ls, sizeof(ngx_listening_t));
 
     sa = ngx_palloc(cf->pool, socklen);
@@ -90,7 +95,13 @@ ngx_create_listening(ngx_conf_t *cf, void *sockaddr, socklen_t socklen)
     return ls;
 }
 
+//ngx_event_process_init
+//master进程执行ngx_clone_listening中如果配置了多worker，监听80端口会有worker个listen赋值，master进程在ngx_open_listening_sockets
+//中会监听80端口worker次，那么子进程创建起来后，不是每个字进程都关注这worker多个 listen事件了吗?为了避免这个问题，nginx通过
+//在子进程运行ngx_event_process_init函数的时候，通过ngx_add_event来控制子进程关注的listen，最终实现只关注master进程中创建的一个listen事件
 
+
+//ngx_create_listening创建ngx_listening_t结构，如果是多个worker,则ngx_clone_listening中会复制worker个ngx_listening_t结构
 ngx_int_t
 ngx_clone_listening(ngx_conf_t *cf, ngx_listening_t *ls)
 {

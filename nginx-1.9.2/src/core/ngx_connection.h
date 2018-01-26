@@ -102,6 +102,10 @@ struct ngx_listening_s { //初始化及赋值见ngx_http_add_listening    热升级nginx的
     unsigned            ipv6only:1;
 #endif
 #if (NGX_HAVE_REUSEPORT)
+    //赋值见ngx_http_add_listening
+    //master进程执行ngx_clone_listening中如果配置了多worker，监听80端口会有worker个listen赋值，master进程在ngx_open_listening_sockets
+    //中会监听80端口worker次，那么子进程创建起来后，不是每个字进程都关注这worker多个 listen事件了吗?为了避免这个问题，nginx通过
+    //在子进程运行ngx_event_process_init函数的时候，通过ngx_add_event来控制子进程关注的listen，最终实现只关注master进程中创建的一个listen事件
     unsigned            reuseport:1;
     unsigned            add_reuseport:1;
 #endif

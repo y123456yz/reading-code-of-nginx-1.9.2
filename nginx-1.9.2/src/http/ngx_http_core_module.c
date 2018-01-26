@@ -6106,7 +6106,7 @@ ngx_http_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 #if (NGX_HAVE_TCP_FASTOPEN)
     lsopt.fastopen = -1;
 #endif
-    lsopt.wildcard = u.wildcard;
+    lsopt.wildcard = u.wildcard; 
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
     lsopt.ipv6only = 1;
 #endif

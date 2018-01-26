@@ -855,7 +855,7 @@ ngx_timer_signal_handler(int signo)
 }
 
 #endif
-//在创建子进程的里面执行  ngx_worker_process_init
+//在创建子进程的里面执行  ngx_worker_process_init，
 static ngx_int_t
 ngx_event_process_init(ngx_cycle_t *cycle)
 {
@@ -1044,14 +1044,17 @@ ngx_event_process_init(ngx_cycle_t *cycle)
      为ngx_event_accept，也就是说，有新连接事件时将调用ngx_event_accept方法建立新连接（）。
      */
     ls = cycle->listening.elts;
-    for (i = 0; i < cycle->listening.nelts; i++) {
+    for (i = 0; i < cycle->listening.nelts; i++) { 
 
 #if (NGX_HAVE_REUSEPORT)
+        //master进程执行ngx_clone_listening中如果配置了多worker，监听80端口会有worker个listen赋值，master进程在ngx_open_listening_sockets
+        //中会监听80端口worker次，那么子进程创建起来后，不是每个字进程都关注这worker多个 listen事件了吗?为了避免这个问题，nginx通过
+        //在子进程运行ngx_event_process_init函数的时候，通过ngx_add_event来控制子进程关注的listen，最终实现只关注master进程中创建的一个listen事件
         if (ls[i].reuseport && ls[i].worker != ngx_worker) {
             continue;
         }
 #endif
-
+        
         c = ngx_get_connection(ls[i].fd, cycle->log); //从连接池中获取一个ngx_connection_t
 
         if (c == NULL) {
