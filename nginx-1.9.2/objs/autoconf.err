@@ -165,7 +165,7 @@ cc -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -o objs/autotest objs/autotest.c
 ----------------------------------------
 checking for crypt()
 
-/tmp/ccd6tztX.o: In function `main':
+/tmp/ccvqjCnw.o: In function `main':
 autotest.c:(.text+0xf): undefined reference to `crypt'
 collect2: error: ld returned 1 exit status
 ----------
@@ -276,7 +276,7 @@ checking for statvfs()
 ----------------------------------------
 checking for dlopen()
 
-/tmp/ccm4TCq7.o: In function `main':
+/tmp/ccUW5zLD.o: In function `main':
 autotest.c:(.text+0xf): undefined reference to `dlopen'
 collect2: error: ld returned 1 exit status
 ----------
@@ -464,7 +464,7 @@ checking for time_t size
 ----------------------------------------
 checking for setproctitle()
 
-/tmp/ccWbobo6.o: In function `main':
+/tmp/ccowzSRx.o: In function `main':
 autotest.c:(.text+0xf): undefined reference to `setproctitle'
 collect2: error: ld returned 1 exit status
 ----------
@@ -493,7 +493,7 @@ checking for pwrite()
 ----------------------------------------
 checking for sys_nerr
 
-/tmp/ccuPQ5od.o: In function `main':
+/tmp/ccCaCIuD.o: In function `main':
 autotest.c:(.text+0x6): warning: `sys_nerr' is deprecated; use `strerror' or `strerror_r' instead
 135
 ----------------------------------------
@@ -523,7 +523,7 @@ checking for System V shared memory
 ----------------------------------------
 checking for POSIX semaphores
 
-/tmp/ccfCdvYk.o: In function `main':
+/tmp/cctSnZNL.o: In function `main':
 autotest.c:(.text+0x1a): undefined reference to `sem_init'
 autotest.c:(.text+0x32): undefined reference to `sem_destroy'
 collect2: error: ld returned 1 exit status
