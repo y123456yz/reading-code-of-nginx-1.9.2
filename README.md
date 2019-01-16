@@ -1,7 +1,11 @@
 # reading-code-of-nginx-1.9.2  
 nginx-1.9.2代码理解及详细注释  
  
-   
+  
+nginx的高性能低延时机制在缓存代理twemproxy中的应用，效果明显  
+===================================    
+Nginx多进程高并发、低时延、高可靠机制在缓存代理中的应用: https://mp.weixin.qq.com/s/j_kiR4XEvnEF-sWl1iRVyw  
+
    
 说明:  
 ===================================   
@@ -190,3 +194,12 @@ cd nginx-1.9.2
  ./configure --add-module=./src/mytest_config --add-module=./src/my_test_module --add-module=./src/mytest_subrequest --add-module=./src/mytest_upstream --add-module=./src/ngx_http_myfilter_module --with-debug --with-file-aio --add-module=./src/sendfile_test --with-threads  --add-module=./src/nginx-requestkey-module-master/ --with-http_secure_link_module --add-module=./src/redis2-nginx-module-master/ 
  
 步骤2：make && make install  
+
+
+  
+  
+nginx的高性能低延时机制在缓存代理twemproxy中的应用，效果明显  
+===================================    
+Nginx多进程高并发、低时延、高可靠机制在缓存代理中的应用: https://mp.weixin.qq.com/s/j_kiR4XEvnEF-sWl1iRVyw  
+
+
