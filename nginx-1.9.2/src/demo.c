@@ -138,7 +138,7 @@ worker_process_cycle(void *data)
 
     worker_process_init(worker);
 
-    setproctitle("nginx:worker process");
+    setproctitle("nutcracker:worker process");
 
     for ( ;; ) {
         if (exiting) {
@@ -182,7 +182,7 @@ dispatcher_process_cycle(void *data)
 
     dispatcher_process_init(worker);
 
-    setproctitle("nginx:dispatcher process");
+    setproctitle("nutcracker:worker process");
 
     for ( ;; ) {
         if (exiting) {
@@ -603,7 +603,7 @@ int main(int argc, char **argv)
     start_dispatcher_process(PROCESS_RESPAWN);
     printf("father pid2=%d\n", getpid());
 
-    setproctitle("nginx:master");
+    setproctitle("nutcracker:master");
     int live = 1;
     for (;;) {
         printf("father before suspend\n");
