@@ -1,6 +1,4 @@
 # reading-code-of-nginx-1.9.2  
-nginx-1.9.2代码理解及详细注释  
-群号: 581089275  
     主要针对有一定技术基础的开发人员，提升其基础组件源码技术深度(如nginx、redis、memcache、twemproxy、mongodb、存储引擎、内核网络协议栈等)    
    
 nginx高性能特性应用于其他项目，效果明显  
