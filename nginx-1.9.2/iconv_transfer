@@ -10,8 +10,6 @@ do
     then
         echo "convert $1/$child"
         iconv -f utf-8 -t gb2312 $1/$child > $2/$child
-	echo "iconv -f utf-8 -t gb2312 $1/$child > $2/$child"        
-
         if (( $? != 0 ))
             then
                 cp $1/$child $2/$child
@@ -34,7 +32,6 @@ if (( $# != 2 ))
 fun_dir ${1%/} ${2%/}
 
 exit
-
 
 
 
