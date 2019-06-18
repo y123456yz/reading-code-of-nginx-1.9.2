@@ -10,10 +10,8 @@ do
     then
         echo "convert $1/$child"
         iconv -f utf-8 -t gb2312 $1/$child > $2/$child
+	echo "iconv -f utf-8 -t gb2312 $1/$child > $2/$child"        
 
-        #or use gb18030 if "conv: illegal input sequence at position xx"
-        iconv -f utf-8 -t gb18030 $1/$child > $2/$child
-        echo "iconv -f utf-8 -t gb18030 $1/$child > $2/$child"
         if (( $? != 0 ))
             then
                 cp $1/$child $2/$child
