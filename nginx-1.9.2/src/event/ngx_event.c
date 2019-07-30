@@ -77,6 +77,7 @@ ngx_uint_t            ngx_use_accept_mutex; //ÄÇÃ´»á°Ñngx_use_accept_mutexÖÃÎª1£
 ngx_uint_t            ngx_accept_events; //Ö»ÓĞeventport»áÓÃµ½¸Ã±äÁ¿
 /* ngx_accept_mutex_heldÊÇµ±Ç°½ø³ÌµÄÒ»¸öÈ«¾Ö±äÁ¿£¬Èç¹ûÎªl£¬Ôò±íÊ¾Õâ¸ö½ø³ÌÒÑ¾­»ñÈ¡µ½ÁËngx_accept_mutexËø£»Èç¹ûÎª0£¬Ôò±íÊ¾Ã»ÓĞ»ñÈ¡µ½Ëø */
 //¼ûngx_process_events_and_timers»áÖÃÎ»¸ÃÎ»  Èç¹ûflagÖÃÎª¸ÃÎ»£¬Ôòngx_epoll_process_events»áÑÓºó´¦ÀíepollÊÂ¼şngx_post_event
+//ÓĞÁË¸Ã±ê¼Ç£¬±íÊ¾¸Ã½ø³ÌÒÑ¾­°ÑacceptÊÂ¼şÌí¼Óµ½epollÊÂ¼ş¼¯ÖĞÁË£¬²»ÓÃÖØ¸´Ö´ĞĞºóÃæµÄngx_enable_accept_events£¬¸Ãº¯ÊıÊÇÓĞÏµÍ³µ÷ÓÃ¹ı³Ì£¬Ó°ÏìĞÔÄÜ
 ngx_uint_t            ngx_accept_mutex_held; //1±íÊ¾µ±Ç°»ñÈ¡ÁËngx_accept_mutexËø   0±íÊ¾µ±Ç°²¢Ã»ÓĞ»ñÈ¡µ½ngx_accept_mutexËø   
 //Ä¬ÈÏ0.5s£¬¿ÉÒÔÓÉaccept_mutex_delay½øĞĞÅäÖÃ
 ngx_msec_t            ngx_accept_mutex_delay; //Èç¹ûÃ»»ñÈ¡µ½mutexËø£¬ÔòÑÓ³ÙÕâÃ´¶àºÁÃëÖØĞÂ»ñÈ¡¡£accept_mutex_delayÅäÖÃ£¬µ¥Î»500ms

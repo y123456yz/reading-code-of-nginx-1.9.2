@@ -280,7 +280,6 @@ content-length头部指定的长度，如果大干或等于则说明已经接收到完整的包体 */
         if (r->request_body_in_single_buf) { //需要缓存到同一个buf中，那么开辟的空间就必须一次分配完，这样可以存储后面所有的。
             size += preread; //如果是把读取的网络数据存到同一个single buffer中，则本次读到preread字节，但是还有size字节没读，所以需要相加，表示一共需要这么多空间，
         }
-
     } else {
         size = clcf->client_body_buffer_size; //如果不是缓存到同一个buf，则一次最多开辟这么多空间，这样可能需要多个buf才能读取完
     }

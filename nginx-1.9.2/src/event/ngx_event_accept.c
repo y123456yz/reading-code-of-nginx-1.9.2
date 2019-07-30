@@ -405,7 +405,8 @@ ngx_trylock_accept_mutex(ngx_cycle_t *cycle)
         ngx_log_debug0(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
                        "accept mutex locked");
 
-        //如果本来已经获得锁，则直接返回Ok   
+        //如果本来已经获得锁，则直接返回Ok,
+        //有了该标记，表示该进程已经把accept事件添加到epoll事件集中了，不用重复执行后面的ngx_enable_accept_events，该函数是有系统调用过程，影响性能
         if (ngx_accept_mutex_held && ngx_accept_events == 0) {
             return NGX_OK;
         }
